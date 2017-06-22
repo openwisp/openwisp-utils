@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.swp
 
 # C extensions
 *.so
@@ -99,3 +100,11 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# other
+*.DS_Store*
+*~
+._*
+local_settings.py
+*.db
+*.tar.gz
