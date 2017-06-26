@@ -8,15 +8,28 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'openwisp_utils.admin_theme',
+    # all-auth
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'django_extensions',
+    # openwisp2 modules
+    'openwisp_users',
+    # test project
+    'test_project',
+    # admin
+    'django.contrib.admin',
 ]
+
+EXTENDED_APPS = ['django_netjsonconfig'] # Just for testing purposes
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -41,8 +54,12 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [],
-        'APP_DIRS': True,
         'OPTIONS': {
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                'openwisp_utils.loaders.DependencyLoader',
+            ],
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
@@ -60,3 +77,14 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = 'openwisp_users.User'
+SITE_ID = '1'
+EMAIL_PORT = '1025'
+LOGIN_REDIRECT_URL = 'admin:index'
+ACCOUNT_LOGOUT_REDIRECT_URL = LOGIN_REDIRECT_URL
+
+# local settings must be imported before test runner otherwise they'll be ignored
+try:
+    from local_settings import *
+except ImportError:
+    pass
