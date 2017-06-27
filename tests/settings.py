@@ -31,6 +31,12 @@ INSTALLED_APPS = [
 
 EXTENDED_APPS = ['django_netjsonconfig'] # Just for testing purposes
 
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'openwisp_utils.staticfiles.DependencyFinder',
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
