@@ -16,7 +16,7 @@ openwisp-utils
 
 ------------
 
-Python and Django utilities shared between different OpenWISP modules
+Python and Django utilities shared between different OpenWISP modules.
 
 ------------
 
@@ -26,13 +26,14 @@ Python and Django utilities shared between different OpenWISP modules
 
 ------------
 
-Current utilities
------------------
+Current features
+----------------
 
 * **Customized admin theme** for OpenWISP modules
 * **Multitenant** admin interface and testing mixins
 * **TimeStamped** models and mixins which add self-updating ``created`` and ``modified`` fields.
-* **DependencyLoader**: template loader which looks in the templates dir of all django-apps listed in ``EXTENDED_APPS``
+* **DependencyLoader**: template loader which looks in the templates dir of all django-apps
+  listed in ``EXTENDED_APPS``
 * **DependencyFinder**: finds static files of django-apps listed in ``EXTENDED_APPS``
 
 Project goals
@@ -124,15 +125,21 @@ For using the customized admin theme,
 Using Multitenant and other admin mixins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-These are mixins which make a ModelAdmin class multitenant: users will see only the objects related to the organizations they are associated with.
+These are mixins which make a ModelAdmin class multitenant: users will see only the objects related to the
+organizations they are associated with.
 
-* **MultitenantAdminMixin**: inheriting this class would make a ModelAdmin class multitenant. set ``multitenant_shared_relations`` to the list of parameters you wish to have only organization specific options.
+* **MultitenantAdminMixin**: adding this mixin to a ``ModelAdmin`` class will make it multitenant.
+  Set ``multitenant_shared_relations`` to the list of parameters you wish to have only organization
+  specific options.
 
-* **MultitenantObjectFilter**: Admin filter that shows only organizations the current user is associated with in its available choices.
+* **MultitenantOrgFilter**: admin filter that shows only organizations the current user is associated with in its available choices.
 
-* **MultitenantObjectFilter**: Admin filter that shows only objects of organizations the current user is associated with.
+* **MultitenantRelatedOrgFilter**: similar ``MultitenantOrgFilter`` but shows only objects which have a relation with
+  one of the organizations the current user is associated with.
 
 * **TimeReadonlyAdminMixin**: Admin mixin which adds two readonly fields ``created`` and ``modified``. This is an admin mixin for models inheriting ``TimeStampedEditableModel`` which adds the fields ``created`` and ``modified`` to the database.
+
+Example usage:
 
 .. code-block:: python
 
@@ -166,13 +173,17 @@ These are mixins which make a ModelAdmin class multitenant: users will see only 
 Using ``DependencyLoader`` and ``DependencyFinder``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Add the list of all packages extended to ``EXTENDED_APPS`` in ``settings.py``. If you've extended ``django_netjsonconfig`` and ``django_x509``:
+Add the list of all packages extended to ``EXTENDED_APPS`` in ``settings.py``.
+If you've extended ``django_netjsonconfig`` and ``django_x509``:
 
 .. code-block:: python
 
     EXTENDED_APPS = ['django_netjsonconfig', 'django_x509']
 
-* **DependencyFinder**: Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``STATICFILES_FINDERS`` in ``settings.py``.
+**DependencyFinder**
+~~~~~~~~~~~~~~~~~~~~
+
+Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``STATICFILES_FINDERS`` in ``settings.py``.
 
 .. code-block:: python
 
@@ -182,7 +193,10 @@ Add the list of all packages extended to ``EXTENDED_APPS`` in ``settings.py``. I
         'openwisp_utils.staticfiles.DependencyFinder',
     ]
 
-* **DependencyLoader**: Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS`` in ``settings.py`` or as shown below.
+**DependencyLoader**
+~~~~~~~~~~~~~~~~~~~~
+
+Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS`` in ``settings.py`` or as shown below.
 
 .. code-block:: python
 
@@ -262,8 +276,10 @@ Run tests with:
 Contributing
 ------------
 
-1. Announce your intentions in the `OpenWISP Mailing List <https://groups.google.com/d/forum/openwisp>`_ and open relavant issues using the `issue tracker <https://github.com/openwisp/openwisp-utils/issues>`_
-2. Fork this repo and install the project following the `instructions <https://github.com/openwisp/openwisp-utils#install-development-version>`_
+1. Announce your intentions in the `OpenWISP Mailing List <https://groups.google.com/d/forum/openwisp>`_
+   and open relavant issues using the `issue tracker <https://github.com/openwisp/openwisp-utils/issues>`_
+2. Fork this repo and install the project following the
+   `instructions <https://github.com/openwisp/openwisp-utils#install-development-version>`_
 3. Follow `PEP8, Style Guide for Python Code`_
 4. Write code and corresponding tests
 5. Ensure that all tests pass and the test coverage does not decrease

@@ -82,8 +82,8 @@ class MultitenantOrgFilter(admin.RelatedFieldListFilter):
 
 class MultitenantRelatedOrgFilter(MultitenantOrgFilter):
     """
-    Admin filter that shows only which have a relation
-    with organizations the current user is associated with
+    Admin filter that shows only objects which have a relation with
+    one of the organizations the current user is associated with
     """
     multitenant_lookup = 'organization__in'
 
