@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-
 from openwisp_users.mixins import OrgMixin
 from openwisp_utils.base import TimeStampedEditableModel
 

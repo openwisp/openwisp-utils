@@ -1,7 +1,5 @@
 from django.contrib import admin
-
-from openwisp_utils.admin import (MultitenantAdminMixin,
-                                  MultitenantOrgFilter,
+from openwisp_utils.admin import (MultitenantAdminMixin, MultitenantOrgFilter,
                                   MultitenantRelatedOrgFilter,
                                   TimeReadonlyAdminMixin)
 

@@ -1,5 +1,4 @@
 from django.conf.urls import include, url
-
 from openwisp_utils.admin_theme.admin import admin, openwisp_admin
 
 openwisp_admin()
