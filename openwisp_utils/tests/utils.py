@@ -1,8 +1,14 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Q
 from django.urls import reverse
-from openwisp_users.models import OrganizationUser
+
+try:
+    from openwisp_users.models import OrganizationUser
+except ImportError:  # pragma: nocover
+    raise ImproperlyConfigured('openwisp-users package not installed, install '
+                               'it with:\n\n pip install openwisp-utils[users]')
 
 user_model = get_user_model()
 

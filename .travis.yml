@@ -12,7 +12,7 @@ branches:
 
 # command to install requirements
 install:
-  - python setup.py -q develop
+  - pip install -e .[users]
   - pip install -r requirements-test.txt
 
 before_script:

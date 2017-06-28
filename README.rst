@@ -49,6 +49,8 @@ Install from pypi:
 .. code-block:: shell
 
     pip install openwisp-utils
+    # install optional dependencies for openwisp-users too
+    pip install openwisp-utils[users]
 
 Install development version
 ---------------------------

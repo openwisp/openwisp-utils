@@ -1,2 +1,0 @@
-django-model-utils
-openwisp-users<0.2
