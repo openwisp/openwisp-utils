@@ -80,10 +80,10 @@ class MultitenantOrgFilter(admin.RelatedFieldListFilter):
                                  limit_choices_to={self.multitenant_lookup: organizations})
 
 
-class MultitenantObjectFilter(MultitenantOrgFilter):
+class MultitenantRelatedOrgFilter(MultitenantOrgFilter):
     """
-    Admin filter that shows only objects of
-    organizations the current user is associated with
+    Admin filter that shows only which have a relation
+    with organizations the current user is associated with
     """
     multitenant_lookup = 'organization__in'
 
