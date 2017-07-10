@@ -87,3 +87,11 @@ class TestAdmin(CreateMixin, TestMultitenantAdminMixin,
             hidden=[data['s2'].name, data['s3_inactive'].name],
             select_widget=True
         )
+
+    def test_additional_buttons(self):
+        data = self._create_multitenancy_test_env()
+        self._login()
+        url = reverse('admin:test_project_book_change', args=[data['b1'].pk])
+        response = self.client.get(url)
+        self.assertContains(response, 'Preview book')
+        self.assertContains(response, 'Download book')
