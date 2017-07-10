@@ -1,10 +1,10 @@
 Changelog
 =========
 
-Version 0.1.2 [unreleased]
+Version 0.1.2 [2017-07-10]
 --------------------------
 
-WIP
+- [admin_theme] Added ``submit_line.html`` template
 
 Version 0.1.1 [2017-06-28]
 --------------------------
