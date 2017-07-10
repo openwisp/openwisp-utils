@@ -15,8 +15,8 @@ Version 0.1.1 [2017-06-28]
 Version 0.1.0 [2017-06-28]
 --------------------------
 
-- Customized OpenWISP Admin theme
-- ``MultitenantAdminMixin`` and ``TestMultitenantAdminMixin``
-- Multitenant filters for admin
-- ``TimeStampedEditableModel`` and ``TimeReadonlyAdminMixin``
-- Dependency Loaders and Finders.
+- added ``admin_theme``
+- added ``MultitenantAdminMixin`` and ``TestMultitenantAdminMixin``
+- added ``MultitenantOrgFilter`` and ``MultitenantObjectFilter``
+- added ``TimeStampedEditableModel`` and ``TimeReadonlyAdminMixin``
+- added ``DependencyLoader`` and ``DependencyFinder``
