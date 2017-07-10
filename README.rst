@@ -102,10 +102,10 @@ Using the utilities in OpenWISP modules
         'django.contrib.admin',
     ]
 
-Adding admin theme
-^^^^^^^^^^^^^^^^^^
+Using the ``admin_theme``
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For using the customized admin theme, 
+For using the customized admin theme,
 
 * Make sure you've added ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS`` in ``settings.py``
 
@@ -124,8 +124,8 @@ For using the customized admin theme,
         url(r'^admin/', include(admin.site.urls)),
     ]
 
-Using Multitenant and other admin mixins
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Admin mixins
+^^^^^^^^^^^^
 
 These are mixins which make a ModelAdmin class multitenant: users will see only the objects related to the
 organizations they are associated with.
@@ -182,7 +182,7 @@ If you've extended ``django_netjsonconfig`` and ``django_x509``:
 
     EXTENDED_APPS = ['django_netjsonconfig', 'django_x509']
 
-**DependencyFinder**
+``DependencyFinder``
 ~~~~~~~~~~~~~~~~~~~~
 
 Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``STATICFILES_FINDERS`` in ``settings.py``.
@@ -195,7 +195,7 @@ Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``STATICFILES_FINDERS`` i
         'openwisp_utils.staticfiles.DependencyFinder',
     ]
 
-**DependencyLoader**
+``DependencyLoader``
 ~~~~~~~~~~~~~~~~~~~~
 
 Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS`` in ``settings.py`` or as shown below.
