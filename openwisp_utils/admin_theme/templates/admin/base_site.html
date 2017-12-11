@@ -12,4 +12,22 @@
 <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
 {% endblock %}
 
-{% block nav-global %}{% endblock %}
+{% block nav-global %}
+<label for="menu-toggle" tabindex="-1" id="nav-activate">
+    <img class="nav-icon" src="{% static "ui/openwisp/images/menu.svg" %}" />
+    <div class="nav-text">MENU</div>
+</label>
+<input type="checkbox" id="menu-toggle" tabindex="-1" />
+
+<div id="nav-top">
+    <a class="nav-button" href="/admin/">Home</a>
+    <a class="nav-button" href="/admin/config/device">Devices</a>
+    <a class="nav-button" href="/admin/config/template">Templates</a>
+    <a class="nav-button" href="/admin/config/vpn">VPN servers</a>
+    <a class="nav-button" href="/admin/pki/ca">Certification Authorities</a>
+    <a class="nav-button" href="/admin/pki/cert">Certificates</a>
+    <a class="nav-button" href="/admin/openwisp_users/user">Users</a>
+    <a class="nav-button" href="/admin/openwisp_users/group">Groups</a>
+    <a class="nav-button" href="/admin/openwisp_users/organization">Organizations</a>
+</div>
+{% endblock %}

@@ -1,3 +1,11 @@
+html, body, #container {
+    height: 100%;
+}
+
+body.login {
+    height: auto;
+}
+
 #header{
     background-color: #464646;
     color: #fff;
@@ -13,6 +21,71 @@
     background: url(../../../static/ui/openwisp/images/openwisp-logo.svg) no-repeat scroll 0 50% / 100%;
     text-indent: -2000px;
     overflow: hidden;
+}
+
+.nav-icon {
+    height: 16px;
+    vertical-align: middle;
+}
+
+.nav-text {
+    vertical-align: middle;
+    display: inline-block;
+}
+
+#nav-activate {
+    cursor: pointer;
+    margin-top: 10px;
+    padding: 0 20px;
+    float: left;
+    background-color: #353535;
+}
+
+#nav-activate:hover {
+    background-color: #222;
+}
+
+#nav-activate:focus {
+    outline: none;
+}
+
+#nav-top {
+    opacity: 0;
+    padding: 16px 16px;
+    margin-top: 90px;
+    min-height: 100vh;
+    height: 100%;
+    width: 180px;
+    overflow: hidden;
+    position: absolute;
+    left: -200px;
+    top: 0;
+    background-color: #464646;
+    transition: all .5s;
+    z-index: 998;
+}
+
+#menu-toggle {
+    position: absolute;
+    left: -20px;
+}
+
+#menu-toggle:checked ~ #nav-top, #nav-top:hover, #nav-top:focus-within {
+    opacity: 1;
+    left: 0;
+}
+
+.nav-button {
+    display: block;
+    text-align: center;
+    padding: 0 10px;
+    margin: 5px 0;
+    background-color: #333;
+}
+
+.nav-button:hover {
+    text-decoration: none !important;
+    background-color: #3a3a3a;
 }
 
 .login #branding{
