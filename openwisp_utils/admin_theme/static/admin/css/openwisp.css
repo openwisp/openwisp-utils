@@ -4,7 +4,10 @@
     height: auto
 }
 
-#user-tools{ margin-top: 12px }
+#user-tools{
+    margin-top: 12px;
+    font-size: 13px;
+}
 
 #site-name a{
     display: block;
