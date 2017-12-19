@@ -9,6 +9,7 @@
     font-size: 13px;
 }
 
+#user-tools a{ font-size: 13px }
 #site-name a{
     display: block;
     width: 150px;
@@ -42,6 +43,10 @@ input[type=submit].default,
     color: #fff;
 }
 
+#content-related h3{
+    font-size: 15px;
+}
+
 div.breadcrumbs,
 .module h2, .module caption, .inline-group h2,
 #container .selector-chosen h2{
@@ -67,6 +72,10 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
     background-color: #444;
 }
 
+.required label, label.required { font-size: 14px }
+
+.result_list tbody { font-size: 13px }
+
 #user-tools a:focus, #user-tools a:hover{
     border-bottom-color: #ffcbc0;
     color: #ffcbc0;
@@ -76,7 +85,14 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
     padding: 5px 15px;
 }
 
-#container .object-tools a.addlink{ padding-right: 28px }
+#container .object-tools a.addlink{
+    padding-right: 28px;
+    font-size: 13px;
+ }
+
+a { font-size: 14px }
+
+.field-name {font-size: 14px}
 
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
@@ -102,4 +118,9 @@ a.button.secondaryAction{
     padding: 0;
     margin: 15px 0;
     display: block;
+}
+
+/* Increasing default font sizes of html elements */
+h1 {
+    font-size: 22px;
 }
