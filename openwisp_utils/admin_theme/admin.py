@@ -1,4 +1,5 @@
 from django.contrib import admin
+#from .. import admin # Use this instead of django.contrib to enable
 from django.utils.translation import ugettext_lazy
 
 

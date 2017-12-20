@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
-
 class MultitenantAdminMixin(object):
     """
     Mixin that makes a ModelAdmin class multitenant:
@@ -96,3 +95,44 @@ class TimeReadonlyAdminMixin(object):
     def __init__(self, *args, **kwargs):
         self.readonly_fields += ('created', 'modified',)
         super(TimeReadonlyAdminMixin, self).__init__(*args, **kwargs)
+
+class MyAdminSite(admin.AdminSite):
+    """
+    def get_app_list(self, request):
+        print("getting menu items")
+        menu_list = {}
+        menu_filter = [
+
+        ]
+        for app in admin.site.get_app_list(request):
+            print(app)
+
+        return admin.site.get_app_list(request)
+    """
+
+    def each_context(self, request):
+        import json
+        contexts = super().each_context(request)
+
+        # Custom contexts can be added here, and it will be applied to all
+        # admin pages
+        contexts['test'] = 'asdf1234'
+
+        return contexts
+
+site = MyAdminSite()
+#admin.site = MyAdminSite() # (replacing admin.site doesn't work)
+
+"""
+These buttons should appear on the navbar. Can be added by filtering
+available_apps and putting the filtered list as a new context
+- Home
+- Devices
+- Templates
+- VPN servers
+- Certification Authorities
+- Certificates
+- Users
+- Groups
+- Organizations
+"""

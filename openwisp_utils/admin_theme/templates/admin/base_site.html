@@ -13,6 +13,10 @@
 {% endblock %}
 
 {% block nav-global %}
+{% if has_permission %}
+
+{{ test }}
+
 <label for="menu-toggle" tabindex="-1" id="nav-activate">
     <img class="nav-icon" src="{% static "ui/openwisp/images/menu.svg" %}" />
     <div class="nav-text">MENU</div>
@@ -21,6 +25,13 @@
 
 <div id="nav-top">
     <a class="nav-button" href="/admin/">Home</a>
+    <!-- available_apps here should be changed to something else -->
+    {% for item in available_apps %}
+    {% for model in item.models %}
+    <a class="nav-button" href="{{ model.admin_url }}">{{ model.name }}</a>
+    {% endfor %}{% endfor %}
+
+   <!--
     <a class="nav-button" href="/admin/config/device">Devices</a>
     <a class="nav-button" href="/admin/config/template">Templates</a>
     <a class="nav-button" href="/admin/config/vpn">VPN servers</a>
@@ -29,5 +40,7 @@
     <a class="nav-button" href="/admin/openwisp_users/user">Users</a>
     <a class="nav-button" href="/admin/openwisp_users/group">Groups</a>
     <a class="nav-button" href="/admin/openwisp_users/organization">Organizations</a>
+    -->
 </div>
+{% endif %}
 {% endblock %}
