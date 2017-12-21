@@ -76,23 +76,25 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
 
 .result_list tbody { font-size: 13px }
 
+/* Success and failure meassages */
+ul.messagelist li { font-size: 14px }
+
 #user-tools a:focus, #user-tools a:hover{
     border-bottom-color: #ffcbc0;
     color: #ffcbc0;
 }
 
+#changelist .paginator { font-size: 14px }
 #container .object-tools a{
     padding: 5px 15px;
 }
 
 #container .object-tools a.addlink{
     padding-right: 28px;
-    font-size: 13px;
+    font-size: 14px;
  }
 
 a { font-size: 14px }
-
-.field-name {font-size: 14px}
 
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
@@ -121,6 +123,6 @@ a.button.secondaryAction{
 }
 
 /* Increasing default font sizes of html elements */
-h1 {
-    font-size: 22px;
-}
+h1 { font-size: 22px }
+
+td { font-size: 14px }
