@@ -76,7 +76,6 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
 
 .result_list tbody { font-size: 13px }
 
-/* Success and failure meassages */
 ul.messagelist li { font-size: 14px }
 
 #user-tools a:focus, #user-tools a:hover{
@@ -90,9 +89,9 @@ ul.messagelist li { font-size: 14px }
 }
 
 #container .object-tools a.addlink{
-    padding-right: 28px;
+    padding: 6px 25px 6px 14px;
     font-size: 14px;
- }
+}
 
 a { font-size: 14px }
 
@@ -107,7 +106,17 @@ a:focus, a:hover {
 }
 
 #changelist-filter li.selected a{
-    color: #df5d43 !important
+    color: #df5d43 !important;
+}
+
+#searchbar{ height: 22px !important }
+
+#changelist #toolbar form input[type="submit"]{
+    padding: 3px 10px !important;
+}
+
+#id_permissions_from option {
+    font-size: 14px;
 }
 
 #netjsonconfig-hint, #netjsonconfig-hint a,
@@ -125,4 +134,10 @@ a.button.secondaryAction{
 /* Increasing default font sizes of html elements */
 h1 { font-size: 22px }
 
-td { font-size: 14px }
+td,
+th { font-size: 14px !important;}
+
+input[type=text] {
+    width: 200px;
+    height: 22px;
+}
