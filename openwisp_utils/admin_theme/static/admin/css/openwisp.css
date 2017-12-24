@@ -72,9 +72,15 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
     background-color: #444;
 }
 
+.aligned .form-row input,
+input, textarea, select, .form-row p, form .button
+{
+    font-size: 14px;
+}
+
 .required label, label.required { font-size: 14px }
 
-.result_list tbody { font-size: 13px }
+.result_list tbody { font-size: 14px }
 
 ul.messagelist li { font-size: 14px }
 
@@ -88,9 +94,15 @@ ul.messagelist li { font-size: 14px }
     padding: 5px 15px;
 }
 
-#container .object-tools a.addlink{
+#container .object-tools a.addlink
+{
     padding: 6px 25px 6px 14px;
     font-size: 14px;
+}
+
+#container .object-tools a{
+    font-size: 14px;
+    padding: 6px 14px;
 }
 
 a { font-size: 14px }
@@ -111,16 +123,29 @@ a:focus, a:hover {
 
 #searchbar{ height: 22px !important }
 
+.help, p.help, form p.help, div.help, div.help a, form div.help, div.help li, .inline-related h3 span.delete label, .inline-group div.add-row a{
+    font-size: 13px !important;
+}
+
+div.help a{
+    font-weight: 600;
+}
+
 #changelist #toolbar form input[type="submit"]{
     padding: 3px 10px !important;
 }
 
-#id_permissions_from option {
+#id_permissions_from option, #id_permissions_to option, #content-related .actionlist li, .aligned label {
     font-size: 14px;
 }
 
 #netjsonconfig-hint, #netjsonconfig-hint a,
 #container .field-backend a{ color: #df5d43 }
+
+/* Overflow fix */
+#id_user_permissions_from, #id_groups_from, #id_user_permissions_to, #id_groups_to{
+    overflow: auto;
+}
 
 /* temporary frontend fix */
 a.button.secondaryAction{
@@ -137,7 +162,8 @@ h1 { font-size: 22px }
 td,
 th { font-size: 14px !important;}
 
-input[type=text] {
-    width: 200px;
-    height: 22px;
+#changelist .actions .button,
+#changelist .actions label
+ {
+    font-size: 14px !important;
 }
