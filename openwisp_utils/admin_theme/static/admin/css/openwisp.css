@@ -72,24 +72,30 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
     background-color: #444;
 }
 
+/*Font-size to 14px start*/
+
 .aligned .form-row input,
-input, textarea, select, .form-row p, form .button
-{
-    font-size: 14px;
+input, textarea, select, .form-row p, form .button,
+.required label, label.required,
+.result_list tbody,
+ul.messagelist li,
+#changelist .paginator {
+     font-size: 14px
 }
 
-.required label, label.required { font-size: 14px }
+td,th,
+#changelist .actions .button,
+#changelist .actions label {
+    font-size: 14px !important;
+}
 
-.result_list tbody { font-size: 14px }
-
-ul.messagelist li { font-size: 14px }
+/* Font re-sizing end */
 
 #user-tools a:focus, #user-tools a:hover{
     border-bottom-color: #ffcbc0;
     color: #ffcbc0;
 }
 
-#changelist .paginator { font-size: 14px }
 #container .object-tools a{
     padding: 5px 15px;
 }
@@ -104,8 +110,6 @@ ul.messagelist li { font-size: 14px }
     font-size: 14px;
     padding: 6px 14px;
 }
-
-a { font-size: 14px }
 
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
@@ -158,12 +162,4 @@ a.button.secondaryAction{
 
 /* Increasing default font sizes of html elements */
 h1 { font-size: 22px }
-
-td,
-th { font-size: 14px !important;}
-
-#changelist .actions .button,
-#changelist .actions label
- {
-    font-size: 14px !important;
-}
+a { font-size: 14px }
