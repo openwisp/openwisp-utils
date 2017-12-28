@@ -23,7 +23,7 @@ class BookAdmin(BaseAdmin):
     fields = ['name', 'author', 'organization', 'shelf', 'created', 'modified']
     multitenant_shared_relations = ['shelf']
 
-    def change_view(self, request, pk, form_url='', extra_context=None):
+    def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
         extra_context.update({
             'additional_buttons': [
@@ -41,7 +41,7 @@ class BookAdmin(BaseAdmin):
                 }
             ]
         })
-        return super(BookAdmin, self).change_view(request, pk, form_url, extra_context)
+        return super(BookAdmin, self).change_view(request, object_id, form_url, extra_context)
 
 
 admin.site.register(Shelf, ShelfAdmin)
