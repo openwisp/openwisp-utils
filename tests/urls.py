@@ -5,5 +5,5 @@ openwisp_admin()
 
 urlpatterns = [
     url(r'^accounts/', include('openwisp_users.accounts.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
 ]
