@@ -2,5 +2,11 @@ coverage
 coveralls
 isort
 flake8
+django_extensions
+django_allauth
+
+#Installing openwisp-users through git, because it's up-to-date(works with django 2.0)
+-e git+git://github.com/openwisp/openwisp-users#egg=openwisp_users
+
 # For testing Dependency loaders
 django_netjsonconfig
