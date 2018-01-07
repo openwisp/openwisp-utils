@@ -225,7 +225,7 @@ Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS`` in 
 Installing for development
 --------------------------
 
-To install openwisp-utils, you must have python3 installed.
+To install openwisp-utils, you must have python3 installed, since Django 2.0 is going to be used and it isn't supported by python2.7.
 
 Install sqlite:
 
