@@ -1,10 +1,13 @@
 Changelog
 =========
 
-Version 0.2.0 [unreleased]
+Version 0.2.0 [2018-02-06]
 --------------------------
 
-WIP
+- `#10 <https://github.com/openwisp/openwisp-utils/pull/10>`_:
+  [qa] add django 2.0 compatibility
+- `d742d4 <https://github.com/openwisp/openwisp-utils/commit/d742d4>`_:
+  [version] Improved get_version to follow PEP440
 
 Version 0.1.2 [2017-07-10]
 --------------------------
