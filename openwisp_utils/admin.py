@@ -22,6 +22,8 @@ class MultitenantAdminMixin(object):
         objects associated to organizations he/she is associated with
         """
         qs = super(MultitenantAdminMixin, self).get_queryset(request)
+        if not hasattr(self.model, 'organization'):
+            return qs
         if request.user.is_superuser:
             return qs
         organizations = request.user.organizations_pk
