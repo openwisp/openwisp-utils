@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from openwisp_users.mixins import OrgMixin
@@ -12,6 +13,11 @@ class Shelf(OrgMixin, TimeStampedEditableModel):
 
     class Meta:
         abstract = False
+
+    def clean(self):
+        if self.name == "Intentional_Test_Fail":
+            raise ValidationError('Intentional_Test_Fail')
+        return self
 
 
 class Book(OrgMixin, TimeStampedEditableModel):
