@@ -33,7 +33,7 @@ setup(
     packages=find_packages(exclude=['tests', 'docs']),
     include_package_data=True,
     zip_safe=False,
-    install_requires=['django-model-utils'],
+    install_requires=['django-model-utils>=3.1.2,<3.3.0'],
     extras_require={'users': ['openwisp-users<0.2']},
     classifiers=[
         'Development Status :: 3 - Alpha',
