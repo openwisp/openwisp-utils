@@ -6,6 +6,7 @@ during continuous integration
 import argparse
 import os
 import re
+import sys
 
 
 def _parse_args():
@@ -48,9 +49,11 @@ def check_migration_name(migration_path, migrations_to_ignore=0):
             migrations_set.add(migration)
 
     if bool(migrations_set):
-        raise Exception("Migration files %s in folder %s need to "
-                        "be renamed to something more descriptive!"
-                        % (str(migrations_set), migration_path))
+        migrations = list(migrations_set)
+        file_ = 'file' if len(migrations) < 2 else 'files'
+        raise Exception("Migration %s %s in directory %s must "
+                        "be renamed to something more descriptive."
+                        % (file_, ', '.join(migrations), migration_path))
 
 
 def initialize():
@@ -68,4 +71,8 @@ def initialize():
 
     # CI Tasks
     if not args.no_migration_name:
-        check_migration_name(args.migration_path, args.migrations_to_ignore)
+        try:
+            check_migration_name(args.migration_path, args.migrations_to_ignore)
+        except Exception as e:
+            print(e)
+            sys.exit(1)
