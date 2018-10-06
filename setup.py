@@ -31,6 +31,11 @@ setup(
     platforms=['Platform Independent'],
     keywords=['django', 'netjson', 'openwrt', 'networking', 'openwisp'],
     packages=find_packages(exclude=['tests', 'docs']),
+    entry_points={
+        'console_scripts': [
+            'checkmigrations = openwisp_utils.ci:initialize'
+        ],
+    },
     include_package_data=True,
     zip_safe=False,
     install_requires=['django-model-utils>=3.1.2,<3.3.0'],
