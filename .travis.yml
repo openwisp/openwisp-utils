@@ -30,7 +30,7 @@ before_install:
 install:
   - pip install https://github.com/openwisp/openwisp-users/tarball/master
   - pip install $DJANGO
-  - pip install -e .[users]
+  - pip install -e .[users] .[qa]
 
 before_script:
   - ./runflake8

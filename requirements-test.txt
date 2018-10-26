@@ -1,7 +1,5 @@
 coverage
 coveralls
-isort
-flake8
 # For testing Dependency loaders
 django_netjsonconfig
 djangorestframework>=3.8.2,<3.9
