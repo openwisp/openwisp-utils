@@ -10,6 +10,14 @@ class MultitenantAdminMixin(object):
     they are associated with.
     """
     multitenant_shared_relations = []
+    multitenant_parent = None
+
+    def __init__(self, *args, **kwargs):
+        super(MultitenantAdminMixin, self).__init__(*args, **kwargs)
+        parent = self.multitenant_parent
+        shared_relations = self.multitenant_shared_relations
+        if parent and parent not in shared_relations:
+            self.multitenant_shared_relations.append(parent)
 
     def get_repr(self, obj):
         return str(obj)
@@ -22,12 +30,16 @@ class MultitenantAdminMixin(object):
         objects associated to organizations he/she is associated with
         """
         qs = super(MultitenantAdminMixin, self).get_queryset(request)
-        if not hasattr(self.model, 'organization'):
+        user = request.user
+        if user.is_superuser:
             return qs
-        if request.user.is_superuser:
+        if hasattr(self.model, 'organization'):
+            return qs.filter(organization__in=user.organizations_pk)
+        elif not self.multitenant_parent:
             return qs
-        organizations = request.user.organizations_pk
-        return qs.filter(organization__in=organizations)
+        else:
+            qsarg = '{0}__organization__in'.format(self.multitenant_parent)
+            return qs.filter(**{qsarg: user.organizations_pk})
 
     def _edit_form(self, request, form):
         """
