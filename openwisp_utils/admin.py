@@ -35,11 +35,6 @@ class MultitenantAdminMixin(object):
             return qs
         if hasattr(self.model, 'organization'):
             return qs.filter(organization__in=user.organizations_pk)
-        elif not self.multitenant_parent:
-            return qs
-        else:
-            qsarg = '{0}__organization__in'.format(self.multitenant_parent)
-            return qs.filter(**{qsarg: user.organizations_pk})
 
     def _edit_form(self, request, form):
         """
