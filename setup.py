@@ -41,7 +41,7 @@ setup(
     install_requires=['django-model-utils>=3.1.2,<3.3.0'],
     extras_require={
         'users': ['openwisp-users<0.2'],
-        'qa': ['flake8<=3.0.4', 'isort<=4.3.4']
+        'qa': ['flake8<=3.6.0', 'isort<=4.3.4']
     },
     classifiers=[
         'Development Status :: 3 - Alpha',
