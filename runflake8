@@ -1,4 +1,5 @@
 #!/bin/bash
 set -e
 flake8 --max-line-length=110 \
-       --exclude=migrations,./tests/*settings*.py || exit 1
+       --exclude=migrations,./tests/*settings*.py \
+       --ignore=W605,W504 || exit 1
