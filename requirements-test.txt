@@ -2,7 +2,7 @@ coverage
 coveralls
 # For testing Dependency loaders
 django_netjsonconfig
-djangorestframework>=3.8.2,<3.9
+djangorestframework
 # TODO: To be removed when we drop python 2.7 support
 # Mock is a standard library from python3.3-pre onwards
 mock>=2.0.0,<2.1.0
