@@ -1,10 +1,19 @@
 Changelog
 =========
 
-Version 0.2.1 [unreleased]
+Version 0.2.1 [2018-11-04]
 --------------------------
 
-WIP
+- `dc977d2 <https://github.com/openwisp/openwisp-utils/commit/dc977d2>`_:
+  [multitenancy] Avoid failure if org field not present
+- `#13 <https://github.com/openwisp/openwisp-utils/pull/13>`_:
+  [DRF] Added ``BaseSerializer``
+- `#16 <https://github.com/openwisp/openwisp-utils/pull/16>`_:
+  [qa] Added migration filename check
+- `babbd74 <https://github.com/openwisp/openwisp-utils/commit/babbd74>`_:
+  [multitenancy] Added ``MultitenantAdminMixin.multitenant_parent``
+- `6d45df5 <https://github.com/openwisp/openwisp-utils/commit/6d45df5>`_:
+  [qa] Pin down ``flake8`` and ``isort`` in ``extra_requires['qa']``
 
 Version 0.2.0 [2018-02-06]
 --------------------------
