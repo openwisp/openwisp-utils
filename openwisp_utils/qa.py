@@ -27,7 +27,7 @@ def _parse_args():
                         help="Number of migrations after which checking of "
                         "migration file names should begin, say, if checking "
                         "needs to start after `0003_auto_20150410_3242.py` "
-                        "value will be `3`")
+                        "value should be `3`")
     return parser.parse_args()
 
 
@@ -39,15 +39,14 @@ def check_migration_name(migration_path, migrations_to_ignore=0):
       - migration_path: path to `migrations/` folder
       - migrations_to_ignore: number of migrations after
         which checking should begin, say, if checking needs to
-        start after `0003_auto_20150410_3242.py` value will be `3`
+        start after `0003_auto_20150410_3242.py` value should be `3`
     """
     migrations_set = set()
     migrations = os.listdir(migration_path)
     for migration in migrations:
-        if (re.match(r"^[0-9]{4}_auto_[0-9]{8}", migration) and
+        if (re.match(r"^[0-9]{4}_auto_[0-9]{2}", migration) and
                 int(migration[:4]) > migrations_to_ignore):
             migrations_set.add(migration)
-
     if bool(migrations_set):
         migrations = list(migrations_set)
         file_ = 'file' if len(migrations) < 2 else 'files'
@@ -56,11 +55,10 @@ def check_migration_name(migration_path, migrations_to_ignore=0):
                         % (file_, ', '.join(migrations), migration_path))
 
 
-def initialize():
+def call_check_migration_name():
     """
     Get & check if CLI arguements are passed
-    correctly and call CI Tasks
-    Intented to be called from setup.py
+    correctly and call QA check
     """
     args = _parse_args()
     if not args.migration_path and not args.no_migration_name:
@@ -68,8 +66,7 @@ def initialize():
                         "but not found")
     if args.migrations_to_ignore is None:
         args.migrations_to_ignore = 0
-
-    # CI Tasks
+    # QA check
     if not args.no_migration_name:
         try:
             check_migration_name(args.migration_path, args.migrations_to_ignore)
