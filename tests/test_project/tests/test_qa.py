@@ -6,7 +6,7 @@ from django.test import TestCase
 # Mock is a standard library from python3.3-pre onwards
 # from unittest.mock import patch
 from mock import patch
-from openwisp_utils.qa import call_check_migration_name, check_migration_name
+from openwisp_utils.qa import check_migration_name
 
 MIGRATIONS_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), 'migrations')
 
@@ -18,20 +18,13 @@ class TestQa(TestCase):
         # Create a fake migration file with default name
         open(self._test_migration_file, 'w').close()
 
-    def test_migration_name_pass(self):
-        check_migration_name(MIGRATIONS_DIR, 2)
-
-    def test_migration_name_fail(self):
-        self.assertRaises(Exception, check_migration_name,
-                          MIGRATIONS_DIR, 1)
-
     def test_qa_call_check_migration_name_pass(self):
-        options = [['checkmigrations', '--migrations-to-ignore', '2',
-                    '--migration-path', MIGRATIONS_DIR],
-                   ['checkmigrations', '--no-migration-name']]
-        for option in options:
-            with patch('argparse._sys.argv', option):
-                call_check_migration_name()
+        options = [
+            'checkmigrations', '--migrations-to-ignore', '2',
+            '--migration-path', MIGRATIONS_DIR
+        ]
+        with patch('argparse._sys.argv', options):
+            check_migration_name()
 
     def test_qa_call_check_migration_name_failure(self):
         options = [
@@ -45,7 +38,7 @@ class TestQa(TestCase):
         for option in options:
             with patch('argparse._sys.argv', option):
                 try:
-                    call_check_migration_name()
+                    check_migration_name()
                 except (SystemExit, Exception):
                     pass
                 else:

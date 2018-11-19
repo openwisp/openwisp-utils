@@ -33,7 +33,7 @@ setup(
     packages=find_packages(exclude=['tests', 'docs']),
     entry_points={
         'console_scripts': [
-            'checkmigrations = openwisp_utils.qa:call_check_migration_name'
+            'checkmigrations = openwisp_utils.qa:check_migration_name'
         ],
     },
     include_package_data=True,
