@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
 ]
 
-EXTENDED_APPS = ['django_netjsonconfig'] # Just for testing purposes
+EXTENDED_APPS = ['django_netjsonconfig']  # Just for testing purposes
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
