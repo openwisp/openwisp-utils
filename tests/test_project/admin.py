@@ -1,9 +1,23 @@
+from django import forms
 from django.contrib import admin
-from openwisp_utils.admin import (MultitenantAdminMixin, MultitenantOrgFilter,
+from django_netjsonconfig.base.admin import AbstractConfigForm
+from openwisp_users.models import Organization
+from openwisp_utils.admin import (AlwaysHasChangedMixin, MultitenantAdminMixin,
+                                  MultitenantOrgFilter,
                                   MultitenantRelatedOrgFilter,
                                   TimeReadonlyAdminMixin)
 
 from .models import Book, Shelf
+
+
+class ConfigForm(AlwaysHasChangedMixin, AbstractConfigForm):
+    class Meta(AbstractConfigForm.Meta):
+        model = Shelf
+
+    def clean_templates(self):
+        org = Organization.objects.get(pk=self.data['organization'])
+        self.cleaned_data['organization'] = org
+        return super(ConfigForm, self).clean_templates()
 
 
 class BaseAdmin(MultitenantAdminMixin, TimeReadonlyAdminMixin, admin.ModelAdmin):
@@ -42,6 +56,10 @@ class BookAdmin(BaseAdmin):
             ]
         })
         return super(BookAdmin, self).change_view(request, object_id, form_url, extra_context)
+
+
+class ConfigSettingsForm(AlwaysHasChangedMixin, forms.ModelForm):
+    pass
 
 
 admin.site.register(Shelf, ShelfAdmin)
