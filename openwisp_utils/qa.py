@@ -6,22 +6,22 @@ import os
 import re
 
 
-def _parse_args():
+def _parse_migration_check_args():
     """
     Parse and return CLI arguments
     """
-    parser = argparse.ArgumentParser(description="Ensures migration files "
-                                     "created have a descriptive name. If "
-                                     "default name pattern is found, "
-                                     "raise exception!")
-    parser.add_argument("--migration-path",
-                        help="Path to `migrations/` folder")
-    parser.add_argument("--migrations-to-ignore",
+    parser = argparse.ArgumentParser(description='Ensures migration files '
+                                     'created have a descriptive name. If '
+                                     'default name pattern is found, '
+                                     'raise exception!')
+    parser.add_argument('--migration-path',
+                        help='Path to `migrations/` folder')
+    parser.add_argument('--migrations-to-ignore',
                         type=int,
-                        help="Number of migrations after which checking of "
-                        "migration file names should begin, say, if checking "
-                        "needs to start after `0003_auto_20150410_3242.py` "
-                        "value should be `3`")
+                        help='Number of migrations after which checking of '
+                        'migration file names should begin, say, if checking '
+                        'needs to start after `0003_auto_20150410_3242.py` '
+                        'value should be `3`')
     return parser.parse_args()
 
 
@@ -30,28 +30,28 @@ def check_migration_name():
     Ensure migration files created have a descriptive
     name; if default name pattern is found, raise exception
     """
-    args = _parse_args()
+    args = _parse_migration_check_args()
     if not args.migration_path:
-        raise Exception("CLI argument `migration-path` is required "
-                        "but not found")
+        raise Exception('CLI argument `migration-path` is required '
+                        'but not found')
     if args.migrations_to_ignore is None:
         args.migrations_to_ignore = 0
     # QA Check
     migrations_set = set()
     migrations = os.listdir(args.migration_path)
     for migration in migrations:
-        if (re.match(r"^[0-9]{4}_auto_[0-9]{2}", migration) and
+        if (re.match(r'^[0-9]{4}_auto_[0-9]{2}', migration) and
                 int(migration[:4]) > args.migrations_to_ignore):
             migrations_set.add(migration)
     if bool(migrations_set):
         migrations = list(migrations_set)
         file_ = 'file' if len(migrations) < 2 else 'files'
-        raise Exception("Migration %s %s in directory %s must "
-                        "be renamed to something more descriptive."
+        raise Exception('Migration %s %s in directory %s must '
+                        'be renamed to something more descriptive.'
                         % (file_, ', '.join(migrations), args.migration_path))
 
 
-def _commit_check_args():
+def _parse_commit_check_args():
     """
     Parse and return CLI arguments
     """
@@ -64,7 +64,7 @@ def _commit_check_args():
 
 
 def check_commit_message():
-    args = _commit_check_args()
+    args = _parse_commit_check_args()
     long_desc = None
     lines = args.message.split('\n')
     short_desc = lines[0]
