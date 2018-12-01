@@ -26,7 +26,10 @@ class TestQa(TestCase):
             '--quiet'
         ]
         with patch('argparse._sys.argv', options):
-            check_migration_name()
+            try:
+                check_migration_name()
+            except (SystemExit, Exception) as e:
+                self.fail(e)
 
     def test_qa_call_check_migration_name_failure(self):
         options = [
@@ -88,13 +91,20 @@ class TestQa(TestCase):
                 '--quiet', '--message',
                 "[qa] Finished task #2\n\n"
                 "Related to #2\nRelated to #1"
+            ],
+            # noqa
+            [
+                'commitcheck',
+                '--quiet', '--message',
+                "[qa] Improved Y #20\n\n"
+                "Simulation of a special unplanned case\n\n#noqa"
             ]
         ]
         for option in options:
             with patch('argparse._sys.argv', option):
                 try:
                     check_commit_message()
-                except Exception as e:
+                except (SystemExit, Exception) as e:
                     msg = 'Check failed:\n\n{}' \
                           '\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
@@ -163,7 +173,7 @@ class TestQa(TestCase):
                 '--quiet', '--message',
                 "[qa] Improved Y #20\n\n"
                 "Related to #32 Fixes #30 Fix #40"
-            ],
+            ]
         ]
         for option in options:
             with patch('argparse._sys.argv', option):

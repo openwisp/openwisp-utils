@@ -73,6 +73,8 @@ def _parse_commit_check_args():
 
 def check_commit_message():
     args = _parse_commit_check_args()
+    if '#noqa' in args.message.lower():
+        return
     long_desc = None
     lines = args.message.split('\n')
     short_desc = lines[0]
