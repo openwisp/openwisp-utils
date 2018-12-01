@@ -84,7 +84,12 @@ class TestQa(TestCase):
         ]
         for option in options:
             with patch('argparse._sys.argv', option):
-                check_commit_message()
+                try:
+                    check_commit_message()
+                except Exception as e:
+                    msg = 'Check failed:\n\n{}' \
+                          '\n\nOutput:{}'.format(option[-1], e)
+                    self.fail(msg)
 
     def test_qa_call_check_commit_message_failure(self):
         options = [
@@ -112,26 +117,26 @@ class TestQa(TestCase):
             [
                 'commitcheck',
                 '--message',
-                "[qa] Updated more file and fix problem #20"
-                "\n\nAdded more files #20"
+                "[qa] Fixed problem #20"
+                "\n\nFixed problem X #20"
             ],
             [
                 'commitcheck',
                 '--message',
                 "[qa] Finished task #2\n\n"
+                "Resolves problem described in #2"
+            ],
+            [
+                'commitcheck',
+                '--message',
+                "[qa] Fixed problem\n\n"
                 "Failure #2\nRelated to #1"
             ],
             [
                 'commitcheck',
                 '--message',
-                "[qa] Finished task\n\n"
-                "Failure #2\nRelated to #1"
-            ],
-            [
-                'commitcheck',
-                '--message',
-                "[qa] Updated more file and fix problem\n\n"
-                "Added more files Fixes #20"
+                "[qa] Updated file and fixed problem\n\n"
+                "Added more files. Fixes #20"
             ],
             [
                 'commitcheck',

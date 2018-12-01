@@ -1,7 +1,5 @@
 """
-This file contains functions that are required by
-multiple openwisp repositories for testing
-during continuous integration
+Common Quality Assurance checks for OpenWISP modules
 """
 import argparse
 import os
@@ -57,140 +55,141 @@ def _commit_check_args():
     """
     Parse and return CLI arguments
     """
-    parser = argparse.ArgumentParser(description="Ensures the commit message "
-                                     "matches the OpenWISP commit guidelines.")
-
-    parser.add_argument("--message",
-                        help="Commit message")
+    parser = argparse.ArgumentParser(description='Ensures the commit message '
+                                     'follows the OpenWISP commit guidelines.')
+    parser.add_argument('--message',
+                        help='Commit message',
+                        required=True)
     return parser.parse_args()
 
 
 def check_commit_message():
     args = _commit_check_args()
-    if not args.message:
-        raise Exception("CLI argument `message` is required "
-                        "but not found")
-    else:
-        short_desc = args.message.split("\n")[0]
-        if len(args.message.split("\n")) > 1:
-            long_desc = args.message.split("\n")[1:]
+    long_desc = None
+    lines = args.message.split('\n')
+    short_desc = lines[0]
+    if len(lines) > 1:
+        long_desc = lines[1:]
     errors = []
-    # Check dot in end of the first line
-    if short_desc[len(short_desc.strip()) - 1].strip() == '.':
-        errors.append("Do not add a final dot at the end of the first line.")
-    # Check prefix
+    # no final dot
+    if short_desc.strip()[-1] == '.':
+        errors.append('please do not add a final dot at the '
+                      'end of commit short description')
+    # ensure prefix is present
     prefix = re.match(r'\[(.*?)\]', short_desc)
     if not prefix:
         errors.append(
-            "Add prefix in beginning of the commit. "
-            "Example: [module/file/feature]"
+            'missing prefix in the commit short description\n  '
+            'Eg: "[module/file/feature] Action performed"'
         )
     else:
-        # Check capital after prefix
-        commit_message_first = short_desc.replace(prefix.group(), '').strip()
-        if not commit_message_first[0].isupper():
-            errors.append("No capital letter after prefix")
-    # Check blank line before first line and second line
-    if 'long_desc' in locals():
-        if len(args.message.split("\n")) > 1:
-            if args.message.split("\n")[1] != '':
-                errors.append("No blank line before first "
-                              "line and second line")
-        # Mentions an issues without closing it
+        # ensure there's a capital letter after the prefix
+        suffix = short_desc.replace(prefix.group(), '').strip()
+        if not suffix[0].isupper():
+            errors.append('please add a capital letter after the prefix')
+    # ensure there's a blank line between short and long desc
+    if long_desc:
+        if len(lines) > 1 and lines[1] != '':
+            errors.append(
+                'please ensure there is a blank line between '
+                'the commit short and long description'
+            )
         message = ' '.join(long_desc)
-        # Check issues in  long desc
-        long_desc_location = re.search(r'\#(\d+)', message)
-        if long_desc_location:
-            # message_check will return array of number issues when success
-            message_check = _check_word(message)
-            # Checked is variable type is array
-            if(not _is_array(message_check)):
-                errors.append(message_check)
-            # Check hastag if mention issues
-            checked = 0
-            for check in message_check:
-                # Checked is one of issues in short messages
-                short_desc_hastag = re.search(
-                    r'\#' +
-                    check.replace("#", ""),
-                    short_desc
+        result = _find_issue_mentions(message)
+        issues = result['issues']
+        good_mentions = result['good_mentions']
+        # check issue mentions in long desc
+        issue_location = re.search(r'\#(\d+)', message)
+        if issue_location:
+            if good_mentions != len(issues):
+                errors.append(
+                    'You are mentioning an issue in the long description '
+                    'without closing it: is it intentional?\n  '
+                    'If not, please use "Closes #<issue>" or "Fixes #<issue>"\n  '
+                    'Otherwise, use "related to #<issue>'
                 )
-                if short_desc_hastag:
-                    checked = checked + 1
-            # If not mentioned issues at least 1 issues
-            if checked == 0:
-                errors.append("No mention issues in the short description")
-        # Check issues in short desc
-        short_desc_location = re.search(r'\#(\d+)', short_desc)
-        if short_desc_location:
-            # Get all issues in long description
-            long_desc_issues = _check_word(message)
-            if not _is_array(long_desc_issues):
-                errors.append("No mention issues in the long description")
-            checked = 0
-            # Foreach all issues
-            for issues in long_desc_issues:
-                # Check is issues in short description
-                long_desc_hastag = re.search(
-                    r'\#' +
-                    issues.replace("#", ""),
-                    short_desc)
-                if long_desc_hastag:
-                    checked = checked + 1
-            if checked == 0:
-                errors.append("No mention issues in the long description")
-    # Check is error
-    if len(errors) == 0:
-        body = "All check done, no errors."
-    else:
-        body = "You have errors with commit message: \n"
-        for e in errors:
-            body += "- " + e + "\n"
-    if len(errors) > 0:
+            shot_desc_mentions = 0
+            for issue in issues:
+                if re.search(r'\{}'.format(issue), short_desc):
+                    shot_desc_mentions += 1
+            if shot_desc_mentions < 1:
+                errors.append(
+                    'if you mention an issue in the long description, '
+                    'please show it in the short description too\n  '
+                    'eg: [prefix] Action performed #234\n\n      '
+                    'Long desc. Closes #234'
+                )
+        # if short description mentions an issue
+        # ensure the issue is either closed or mentioned as "related"
+        if re.search(r'\#(\d+)', short_desc):
+            mentions = 0
+            for issue in issues:
+                if re.search(r'\{}'.format(issue), short_desc):
+                    mentions += 1
+            if mentions < 1:
+                errors.append(
+                    'You are mentioning an issue in the short description '
+                    'but it is not clear whether the issue is resolved or not;\n  '
+                    'if it is resolved, please add to the commit long description:\n  '
+                    '"Closes #<issue-number>" or "Fixes #<issue-number>";\n  '
+                    'if the issue is not resolved yet, please use the following form:\n  '
+                    '"Related to #<issue-number>"'
+                )
+    # fail in case of error
+    if len(errors):
+        body = 'Your commit message does not follow our ' \
+               'commit message style guidelines:\n\n'
+        for error in errors:
+            body += '- {}\n'.format(error)
+        url = 'http://openwisp.io/docs/developer/contributing.html' \
+              '#commit-message-style-guidelines'
+        body = '{}\nPlease read our guidelines at: {}'.format(body, url)
         raise Exception(body)
-    else:
-        print(body)
 
 
-def _is_array(var):
-    return isinstance(var, (list, tuple))
-
-
-def _check_word(message):
-    parts = message.split(' ')
-    return_data = []
-    loc = []
-    i = 0
-    # Search hastag from parts
-    for part in parts:
-        hastag = re.search(r'\#(\d+)', part)
-        if hastag:
-            loc.append(i)
-        i = i + 1
-    # Check for num hastag with allowed words
-    num = 0
-    for location in loc:
-        word = parts[location - 1]
-        return_data.append(parts[location])
-        if(location > 2):
-            word2 = str(parts[location - 2] + " " + parts[location - 1])
-            allowed_words2 = [
+def _find_issue_mentions(message):
+    """
+    Looks for issue mentions in ``message``
+    returns a dict which contains:
+     - list of mentioned issues
+     - count of mentions performed correctly
+       (using one of the common github keywords)
+    """
+    words = message.split(' ')
+    issues = []
+    issue_locations = []
+    counter = 0
+    # search issue mentions
+    for word in words:
+        if re.search(r'\#(\d+)', word):
+            issue_locations.append(counter)
+        counter += 1
+    # check if issue mentions are preceded with the right word
+    good_mentions = 0
+    for issue_location in issue_locations:
+        word = words[issue_location - 1]
+        issues.append(words[issue_location])
+        # check whether issue is just being referred to
+        if issue_location > 2:
+            preceding_2words = '{} {}'.format(words[issue_location - 2],
+                                              words[issue_location - 1])
+            allowed_refs = [
                 'related to',
                 'refers to',
             ]
-            if((word2.lower() in allowed_words2)):
-                num = num + 1
+            if preceding_2words.lower() in allowed_refs:
+                good_mentions += 1
                 continue
-        allowed_words = [
+        # check whether issue is being closed
+        allowed_closure = [
             'fix',
             'fixes',
             'close',
-            'closes',
-            'ref',
-            'rel'
+            'closes'
         ]
-        if (word.lower() in allowed_words):
-            num = num + 1
-    if num != len(loc):
-        return "Mentions an issues without closing it"
-    return return_data
+        if word.lower() in allowed_closure:
+            good_mentions += 1
+    return {
+        'issues': issues,
+        'good_mentions': good_mentions
+    }
