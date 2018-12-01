@@ -20,8 +20,10 @@ class TestQa(TestCase):
 
     def test_qa_call_check_migration_name_pass(self):
         options = [
-            'checkmigrations', '--migrations-to-ignore', '2',
-            '--migration-path', MIGRATIONS_DIR
+            'checkmigrations',
+            '--migrations-to-ignore', '2',
+            '--migration-path', MIGRATIONS_DIR,
+            '--quiet'
         ]
         with patch('argparse._sys.argv', options):
             check_migration_name()
@@ -29,10 +31,16 @@ class TestQa(TestCase):
     def test_qa_call_check_migration_name_failure(self):
         options = [
             [
-                'checkmigrations', '--migrations-to-ignore', '1',
-                '--migration-path', MIGRATIONS_DIR
+                'checkmigrations',
+                '--migrations-to-ignore', '1',
+                '--migration-path', MIGRATIONS_DIR,
+                '--quiet'
             ],
-            ['checkmigrations', '--migration-path', MIGRATIONS_DIR],
+            [
+                'checkmigrations',
+                '--migration-path', MIGRATIONS_DIR,
+                '--quiet'
+            ],
             ['checkmigrations']
         ]
         for option in options:
@@ -48,36 +56,36 @@ class TestQa(TestCase):
         options = [
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Minor clean up operations"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Updated more file and fix problem #20\n\n"
                 "Added more files Fixes #20"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Improved Y #2\n\n"
                 "Related to #2"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Finished task #2\n\n"
                 "Closes #2\nRelated to #1"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Finished task #2\n\n"
                 "Related to #2\nCloses #1"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Finished task #2\n\n"
                 "Related to #2\nRelated to #1"
             ]
@@ -96,63 +104,63 @@ class TestQa(TestCase):
             ['commitcheck'],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 'Hello World',
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 '[qa] hello World',
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 '[qa] Hello World.',
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 '[qa] Hello World.\nFixes #20',
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Fixed problem #20"
                 "\n\nFixed problem X #20"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Finished task #2\n\n"
                 "Resolves problem described in #2"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Fixed problem\n\n"
                 "Failure #2\nRelated to #1"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Updated file and fixed problem\n\n"
                 "Added more files. Fixes #20"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Improved Y\n\n"
                 "Related to #2"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Improved Y #2\n\n"
                 "Updated files"
             ],
             [
                 'commitcheck',
-                '--message',
+                '--quiet', '--message',
                 "[qa] Improved Y #20\n\n"
                 "Related to #32 Fixes #30 Fix #40"
             ],

@@ -4,6 +4,7 @@ Common Quality Assurance checks for OpenWISP modules
 import argparse
 import os
 import re
+import sys
 
 
 def _parse_migration_check_args():
@@ -15,6 +16,7 @@ def _parse_migration_check_args():
                                      'default name pattern is found, '
                                      'raise exception!')
     parser.add_argument('--migration-path',
+                        required=True,
                         help='Path to `migrations/` folder')
     parser.add_argument('--migrations-to-ignore',
                         type=int,
@@ -22,6 +24,9 @@ def _parse_migration_check_args():
                         'migration file names should begin, say, if checking '
                         'needs to start after `0003_auto_20150410_3242.py` '
                         'value should be `3`')
+    parser.add_argument('--quiet',
+                        action='store_true',
+                        help='Suppress output')
     return parser.parse_args()
 
 
@@ -31,9 +36,6 @@ def check_migration_name():
     name; if default name pattern is found, raise exception
     """
     args = _parse_migration_check_args()
-    if not args.migration_path:
-        raise Exception('CLI argument `migration-path` is required '
-                        'but not found')
     if args.migrations_to_ignore is None:
         args.migrations_to_ignore = 0
     # QA Check
@@ -46,9 +48,12 @@ def check_migration_name():
     if bool(migrations_set):
         migrations = list(migrations_set)
         file_ = 'file' if len(migrations) < 2 else 'files'
-        raise Exception('Migration %s %s in directory %s must '
-                        'be renamed to something more descriptive.'
-                        % (file_, ', '.join(migrations), args.migration_path))
+        message = 'Migration %s %s in directory %s must ' \
+                  'be renamed to something more descriptive.' \
+                  % (file_, ', '.join(migrations), args.migration_path)
+        if not args.quiet:
+            print(message)
+        sys.exit(1)
 
 
 def _parse_commit_check_args():
@@ -60,6 +65,9 @@ def _parse_commit_check_args():
     parser.add_argument('--message',
                         help='Commit message',
                         required=True)
+    parser.add_argument('--quiet',
+                        action='store_true',
+                        help='Suppress output')
     return parser.parse_args()
 
 
@@ -144,7 +152,9 @@ def check_commit_message():
         url = 'http://openwisp.io/docs/developer/contributing.html' \
               '#commit-message-style-guidelines'
         body = '{}\nPlease read our guidelines at: {}'.format(body, url)
-        raise Exception(body)
+        if not args.quiet:
+            print(body)
+        sys.exit(1)
 
 
 def _find_issue_mentions(message):
