@@ -26,7 +26,6 @@ before_install:
   - pip install -U pip wheel setuptools
   - pip install --no-cache-dir -U -r requirements-test.txt
 
-# command to install requirements
 install:
   - pip install https://github.com/openwisp/openwisp-users/tarball/master
   - pip install $DJANGO
@@ -36,9 +35,14 @@ before_script:
   - ./runflake8
   - ./runisort
 
-# command to run tests, e.g. python setup.py test
 script:
   - coverage run --source=openwisp_utils runtests.py
+  - |
+  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    echo "Checking commit message:"
+    echo $TRAVIS_COMMIT_MESSAGE
+    checkcommit --message "$TRAVIS_COMMIT_MESSAGE";
+  fi
 
 after_success:
   coveralls
