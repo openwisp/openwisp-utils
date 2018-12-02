@@ -222,6 +222,40 @@ Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS`` in 
         },
     ]
 
+Quality Assurance checks
+------------------------
+
+This package contains some common QA checks that are used the
+automated builds of different OpenWISP modules.
+
+``checkmigrations``
+~~~~~~~~~~~~~~~~~~~
+
+Ensures the latest migrations created have a human readable name.
+
+We want to avoid having many migrations named like ``0003_auto_20150410_3242.py``.
+
+This way we can reconstruct the evolution of our database schemas faster, with
+less efforts and hence less costs.
+
+Usage example::
+
+    checkmigrations --migration-path ./django_freeradius/migrations/
+
+``checkcommit``
+~~~~~~~~~~~~~~~
+
+Ensures the last commit message follows our `commit message style guidelines
+<http://openwisp.io/docs/developer/contributing.html#commit-message-style-guidelines>`_.
+
+We want to keep the commit log readable, consistent and easy to scan in order
+to make it easy to analyze the history of our modules, which is also a very
+important activity when performing maintenance.
+
+Usage example::
+
+    checkcommit --message "$(git log --format=%B -n 1)"
+
 Installing for development
 --------------------------
 
