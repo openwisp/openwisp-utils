@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Version 0.2.2 [unreleased]
+Version 0.2.2 [2018-12-02]
 --------------------------
 
-WIP
+- `#20 <https://github.com/openwisp/openwisp-utils/issues/20>`_:
+  [qa] Added ``checkcommit`` QA check (thanks to `@ppabcd <https://github.com/ppabcd>`_)
 
 Version 0.2.1 [2018-11-04]
 --------------------------
