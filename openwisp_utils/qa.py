@@ -77,12 +77,12 @@ def check_commit_message():
         return
     long_desc = None
     lines = args.message.split('\n')
-    short_desc = lines[0]
+    short_desc = lines[0].strip()
     if len(lines) > 1:
         long_desc = lines[1:]
     errors = []
     # no final dot
-    if short_desc.strip()[-1] == '.':
+    if short_desc and short_desc[-1] == '.':
         errors.append('please do not add a final dot at the '
                       'end of commit short description')
     # ensure prefix is present
