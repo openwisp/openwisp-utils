@@ -223,7 +223,7 @@ Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS`` in 
     ]
 
 Quality Assurance checks
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 This package contains some common QA checks that are used the
 automated builds of different OpenWISP modules.
