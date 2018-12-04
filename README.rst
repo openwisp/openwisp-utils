@@ -49,8 +49,8 @@ Install from pypi:
 .. code-block:: shell
 
     pip install openwisp-utils
-    # install optional dependencies for openwisp-users too
-    pip install openwisp-utils[users]
+    # install optional dependencies for tests (flake8 and isort)
+    pip install openwisp-utils[qa]
 
 Install development version
 ---------------------------
@@ -78,7 +78,7 @@ If you want to contribute, install your cloned fork:
 Using the utilities in OpenWISP modules
 ---------------------------------------
 
-``INSTALLED_APPS`` in ``settings.py`` should look like the following if you want to use all the utilities
+``INSTALLED_APPS`` in ``settings.py`` should look like the following if you want to use the OpenWISP admin-theme:
 
 .. code-block:: python
 
