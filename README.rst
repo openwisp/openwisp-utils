@@ -127,50 +127,7 @@ For using the customized admin theme,
 Admin mixins
 ^^^^^^^^^^^^
 
-These are mixins which make a ModelAdmin class multitenant: users will see only the objects related to the
-organizations they are associated with.
-
-* **MultitenantAdminMixin**: adding this mixin to a ``ModelAdmin`` class will make it multitenant.
-  Set ``multitenant_shared_relations`` to the list of parameters you wish to have only organization
-  specific options.
-
-* **MultitenantOrgFilter**: admin filter that shows only organizations the current user is associated with in its available choices.
-
-* **MultitenantRelatedOrgFilter**: similar ``MultitenantOrgFilter`` but shows only objects which have a relation with
-  one of the organizations the current user is associated with.
-
 * **TimeReadonlyAdminMixin**: Admin mixin which adds two readonly fields ``created`` and ``modified``. This is an admin mixin for models inheriting ``TimeStampedEditableModel`` which adds the fields ``created`` and ``modified`` to the database.
-
-Example usage:
-
-.. code-block:: python
-
-    from django.contrib import admin
-
-    from openwisp_utils.admin import (MultitenantAdminMixin,
-                                      MultitenantObjectFilter,
-                                      MultitenantOrgFilter,
-                                      TimeReadonlyAdminMixin)
-
-    from .models import Book, Shelf
-
-
-    class BaseAdmin(MultitenantAdminMixin, TimeReadonlyAdminMixin, admin.ModelAdmin):
-        pass
-
-
-    class ShelfAdmin(BaseAdmin):
-        list_display = ['name', 'organization']
-        list_filter = [('organization', MultitenantOrgFilter)]
-        fields = ['name', 'organization', 'created', 'modified']
-
-
-    class BookAdmin(BaseAdmin):
-        list_display = ['name', 'author', 'organization', 'shelf']
-        list_filter = [('organization', MultitenantOrgFilter),
-                       ('shelf', MultitenantObjectFilter)]
-        fields = ['name', 'author', 'organization', 'shelf', 'created', 'modified']
-        multitenant_shared_relations = ['shelf']
 
 Using ``DependencyLoader`` and ``DependencyFinder``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
