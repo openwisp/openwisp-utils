@@ -30,11 +30,11 @@ Current features
 ----------------
 
 * **Customized admin theme** for OpenWISP modules
-* **Multitenant** admin interface and testing mixins
 * **TimeStamped** models and mixins which add self-updating ``created`` and ``modified`` fields.
 * **DependencyLoader**: template loader which looks in the templates dir of all django-apps
   listed in ``EXTENDED_APPS``
 * **DependencyFinder**: finds static files of django-apps listed in ``EXTENDED_APPS``
+* **QA**: logic and utilities to perform quality assurance checks across different modules
 
 Project goals
 -------------
