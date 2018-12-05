@@ -15,3 +15,15 @@ class CreateMixin(object):
         s.full_clean()
         s.save()
         return s
+
+    def _get_defaults(self, opts, model=None):
+        options = {}
+        options.update(opts)
+        return options
+
+    def _create_radius_accounting(self, **kwargs):
+        options = self._get_defaults(kwargs)
+        ra = self.accounting_model(**options)
+        ra.full_clean()
+        ra.save()
+        return ra

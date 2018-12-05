@@ -30,3 +30,16 @@ class Book(OrgMixin, TimeStampedEditableModel):
 
     class Meta:
         abstract = False
+
+
+class RadiusAccounting(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='radacctid')
+    session_id = models.CharField(verbose_name=_('session ID'),
+                                  max_length=64,
+                                  db_column='acctsessionid',
+                                  db_index=True)
+    username = models.CharField(verbose_name=_('username'),
+                                max_length=64,
+                                db_index=True,
+                                null=True,
+                                blank=True)
