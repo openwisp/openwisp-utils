@@ -35,6 +35,7 @@ setup(
         'console_scripts': [
             'checkmigrations = openwisp_utils.qa:check_migration_name',
             'checkcommit = openwisp_utils.qa:check_commit_message',
+            'checkendline = openwisp_utils.qa:check_end_line',
         ],
     },
     include_package_data=True,

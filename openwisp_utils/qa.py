@@ -4,6 +4,7 @@ Common Quality Assurance checks for OpenWISP modules
 import argparse
 import os
 import re
+import subprocess
 import sys
 
 
@@ -205,3 +206,42 @@ def _find_issue_mentions(message):
         'issues': issues,
         'good_mentions': good_mentions
     }
+
+
+def _parse_endline_check_args():
+    """
+    Parse and return CLI arguments
+    """
+    parser = argparse.ArgumentParser(description='Ensures all file have '
+                                     'a blank line at the end of the file.')
+    parser.add_argument('--skipscript',
+                        help='put path and extentions to skip like `! -path file`',
+                        required=False,
+                        type=str)
+    return parser.parse_args()
+
+
+def check_end_line():
+    """
+    Ensures all file have
+    a blank line at the end of the file
+    """
+    args = _parse_endline_check_args()
+    excludepath = '! -path "../.*" ! -path "*.pyc" ! -path "*__.py" ! -path "*.svg" ! -path "*.png" '
+    excludepath = excludepath + '! -path "*/*.egg-info/*" ! -path "../.*/*" ! -path "../*/.*" '
+    excludepath = excludepath + '! -path "*/test*/*" '
+    if args.skipscript is not None:
+        excludepath = excludepath + str(args.skipscript)
+    # QA Check
+    cwdn = os.getcwd()
+    filelist = subprocess.check_output('find .. -type f ' + excludepath, cwd=cwdn, shell=True)
+    filelist = filelist.decode('utf-8')
+    filelist = filelist.split('\n')
+    for pathvar in filelist[:-1]:
+        check = subprocess.check_output('tail -c 1 ' + pathvar, cwd=cwdn, shell=True)
+        try:
+            if(check.decode('utf-8') != '\n'):
+                print(pathvar + " doesn't have a blank line at the end")
+                sys.exit(1)
+        except UnicodeDecodeError:
+            pass

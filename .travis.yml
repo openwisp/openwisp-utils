@@ -37,6 +37,7 @@ before_script:
 
 script:
   - coverage run --source=openwisp_utils runtests.py
+  - checkendline
   - |
     if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
       # gets commit message of last commit before pull request merge

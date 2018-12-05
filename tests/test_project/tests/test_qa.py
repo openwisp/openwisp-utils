@@ -6,7 +6,8 @@ from django.test import TestCase
 # Mock is a standard library from python3.3-pre onwards
 # from unittest.mock import patch
 from mock import patch
-from openwisp_utils.qa import check_commit_message, check_migration_name
+from openwisp_utils.qa import (check_commit_message, check_end_line,
+                               check_migration_name)
 
 MIGRATIONS_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), 'migrations')
 
@@ -183,6 +184,74 @@ class TestQa(TestCase):
                     pass
                 else:
                     self.fail('SystemExit or Exception not raised')
+
+    def test_qa_call_check_end_line_pass(self):
+        options = [
+            ['checkendline'],
+            [
+                'checkendline',
+                '--skipscript',
+                "! -path 'file.jpg'"
+            ],
+            [
+                'checkendline',
+                '--skipscript',
+                "! -path '../*.exe'"
+            ],
+            [
+                'checkendline',
+                '--skipscript',
+                "! -path '../*/file.mkv'"
+            ],
+            [
+                'checkendline',
+                '--skipscript',
+                "! -path '../*/*.*'"
+            ],
+            [
+                'checkendline',
+                '--skipscript',
+                "! -path '*/*/*.*'"
+            ],
+            [
+                'checkendline',
+                '--skipscript',
+                "! -path 'file.*'"
+            ],
+            [
+                'checkendline',
+                '--skipscript',
+                "! -path '*--.gif'"
+            ]
+        ]
+        for option in options:
+            with patch('argparse._sys.argv', option):
+                try:
+                    check_end_line()
+                except (SystemExit, Exception) as e:
+                    self.fail(e)
+
+    def test_qa_call_check_end_line_failure(self):
+        f = open("somefile.txt", "w+")
+        f.write("a line no newline")
+        f.close()
+        try:
+            check_end_line()
+        except (SystemExit, Exception):
+            pass
+        else:
+            self.fail('SystemExit or Exception not raised')
+        os.remove("somefile.txt")
+        f = open("anotherfile", "wb")
+        f.write(b"0x82/sdfdg")
+        f.close()
+        try:
+            check_end_line()
+        except (SystemExit, Exception):
+            pass
+        else:
+            self.fail('SystemExit or Exception not raised')
+        os.remove("anotherfile")
 
     def tearDown(self):
         os.unlink(self._test_migration_file)
