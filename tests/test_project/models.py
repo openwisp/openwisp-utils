@@ -43,3 +43,21 @@ class RadiusAccounting(models.Model):
                                 db_index=True,
                                 null=True,
                                 blank=True)
+
+
+class Project(models.Model):
+    name = models.CharField(max_length=64,
+                            null=True,
+                            blank=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Operator(models.Model):
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, blank=True)
+
+    def __str__(self):
+        return self.first_name

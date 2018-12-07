@@ -3,13 +3,14 @@ from django.test import TestCase
 from django.urls import reverse
 
 from . import CreateMixin
-from ..models import RadiusAccounting
+from ..models import Project, RadiusAccounting
 
 User = get_user_model()
 
 
 class TestAdmin(TestCase, CreateMixin):
     accounting_model = RadiusAccounting
+    project_model = Project
 
     def setUp(self):
         user = User.objects.create_superuser(username='administrator',
@@ -30,3 +31,14 @@ class TestAdmin(TestCase, CreateMixin):
         url = reverse('admin:test_project_radiusaccounting_changelist')
         response = self.client.get(url)
         self.assertNotContains(response, 'Add accounting')
+
+    def test_alwayshaschangedmixin(self):
+        self.project_model.objects.count()
+        options = dict(name='test')
+        params = self._get_defaults(options)
+        p = self.project_model(**params)
+        p.full_clean()
+        p.save()
+        self.assertEqual(self.project_model.objects.count(), 1)
+        project = self.project_model.objects.first()
+        self.assertEqual(project.name, params['name'])
