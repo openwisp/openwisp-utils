@@ -1,0 +1,3 @@
+#!/bin/bash
+set -e
+checkmigrations --migration-path ./tests/test_project/migrations/ || exit 1
