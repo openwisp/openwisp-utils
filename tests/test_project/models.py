@@ -55,8 +55,8 @@ class Project(models.Model):
 
 
 class Operator(models.Model):
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
+    first_name = models.CharField(max_length=30, default='test')
+    last_name = models.CharField(max_length=30, default='test')
     project = models.ForeignKey(Project, on_delete=models.CASCADE, blank=True)
 
     def __str__(self):
