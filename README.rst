@@ -108,8 +108,8 @@ Using the ``admin_theme``
 
 For using the customized admin theme,
 
-* Make sure you've added ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS`` in ``settings.py``
-
+* Make sure you've added ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS``
+  in ``settings.py``
 * Add the following into your ``urls.py`` file which contains ``admin`` urls.
 
 .. code-block:: python
@@ -128,7 +128,10 @@ For using the customized admin theme,
 Admin mixins
 ^^^^^^^^^^^^
 
-* **TimeReadonlyAdminMixin**: Admin mixin which adds two readonly fields ``created`` and ``modified``. This is an admin mixin for models inheriting ``TimeStampedEditableModel`` which adds the fields ``created`` and ``modified`` to the database.
+* **TimeReadonlyAdminMixin**: Admin mixin which adds two readonly fields
+  ``created`` and ``modified``.
+  This is an admin mixin for models inheriting ``TimeStampedEditableModel``
+  which adds the fields ``created`` and ``modified`` to the database.
 
 Using ``DependencyLoader`` and ``DependencyFinder``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -143,7 +146,8 @@ If you've extended ``django_netjsonconfig`` and ``django_x509``:
 ``DependencyFinder``
 ~~~~~~~~~~~~~~~~~~~~
 
-Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``STATICFILES_FINDERS`` in ``settings.py``.
+Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``STATICFILES_FINDERS``
+in ``settings.py``.
 
 .. code-block:: python
 
@@ -156,7 +160,8 @@ Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``STATICFILES_FINDERS`` i
 ``DependencyLoader``
 ~~~~~~~~~~~~~~~~~~~~
 
-Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS`` in ``settings.py`` or as shown below.
+Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS``
+in ``settings.py`` or as shown below.
 
 .. code-block:: python
 
