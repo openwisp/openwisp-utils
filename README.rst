@@ -31,6 +31,7 @@ Current features
 
 * **Customized admin theme** for OpenWISP modules
 * **TimeStamped** models and mixins which add self-updating ``created`` and ``modified`` fields.
+* **UUIDModel**: base model with a UUID4 primary key
 * **DependencyLoader**: template loader which looks in the templates dir of all django-apps
   listed in ``EXTENDED_APPS``
 * **DependencyFinder**: finds static files of django-apps listed in ``EXTENDED_APPS``
