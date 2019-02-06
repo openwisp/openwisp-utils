@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+no_new_line=$(find . -type f -not -path '*/\.*' \
+    -not -path "*/*egg-info/*" \
+    -exec grep -Iq . {} \; -and -print0 \
+    -not -empty | xargs -0 -L1 bash -c \
+    'test "$(tail -c 1 "$0")" && echo "$0\n" || true')
+trim_new_line=$(echo "$no_new_line" | cut -f1 -d-)
+if [[ $trim_new_line != "" ]]; then
+    echo -e "No EOF line found in: \n" $no_new_line
+    exit 1
+fi

@@ -35,6 +35,7 @@ before_script:
   - ./runflake8
   - ./runisort
   - ./runcheckmigration
+  - ./runcheckendline
 
 script:
   - coverage run --source=openwisp_utils runtests.py
