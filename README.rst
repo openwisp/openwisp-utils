@@ -185,6 +185,30 @@ in ``settings.py`` or as shown below.
         },
     ]
 
+Settings
+^^^^^^^^
+
+``OPENWISP_ADMIN_SITE_TITLE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**default**: ``OpenWISP Admin``
+
+Title value used in the ``<title>`` HTML tag of the admin site.
+
+``OPENWISP_ADMIN_SITE_HEADER``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**default**: ``OpenWISP``
+
+Heading text used in the main ``<h1>`` HTML tag (the logo) of the admin site.
+
+``OPENWISP_ADMIN_INDEX_TITLE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**default**: ``Network administration``
+
+Title shown to users in the index page of the admin site.
+
 Quality Assurance checks
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
