@@ -1,7 +1,10 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from openwisp_utils.base import TimeStampedEditableModel
+from openwisp_users.mixins import OrgMixin
+from openwisp_utils.base import TimeStampedEditableModel, UUIDModel
+from openwisp_utils.utils import get_random_key
+from openwisp_utils.validators import key_validator
 
 
 class Shelf(TimeStampedEditableModel):
@@ -44,10 +47,16 @@ class RadiusAccounting(models.Model):
                                 blank=True)
 
 
-class Project(models.Model):
+class Project(UUIDModel):
     name = models.CharField(max_length=64,
                             null=True,
                             blank=True)
+    key = models.CharField(max_length=64,
+                           unique=True,
+                           db_index=True,
+                           default=get_random_key,
+                           validators=[key_validator],
+                           help_text=_('unique device key'))
 
     def __str__(self):
         return self.name

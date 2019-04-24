@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.forms import ModelForm
 from openwisp_utils.admin import (AlwaysHasChangedMixin, ReadOnlyAdmin,
-                                  TimeReadonlyAdminMixin)
+                                  TimeReadonlyAdminMixin, UUIDAdmin)
 
 from .models import Operator, Project, RadiusAccounting, Shelf
 
@@ -27,12 +27,15 @@ class OperatorInline(admin.StackedInline):
     extra = 0
 
 
-@admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
     inlines = [OperatorInline]
     list_display = ['name']
+    readonly_fields = ['uuid']
+    fields = ['name', 'key', 'uuid']
 
+    class Media:
+        js = ('openwisp-utils/js/uuid.js',)
 
-@admin.register(Shelf)
-class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
-    pass
+admin.site.register(Operator, OperatorAdmin)
+admin.site.register(RadiusAccounting, RadiusAccountingAdmin)
+admin.site.register(Project, ProjectAdmin)

@@ -9,6 +9,7 @@ User = get_user_model()
 
 
 class TestAdmin(TestCase, CreateMixin):
+    TEST_KEY = 'w1gwJxKaHcamUw62TQIPgYchwLKn3AA0'
     accounting_model = RadiusAccounting
 
     def setUp(self):
@@ -36,6 +37,7 @@ class TestAdmin(TestCase, CreateMixin):
         self.assertEqual(Operator.objects.count(), 0)
         params = {
             'name': 'test',
+            'key': self.TEST_KEY,
             'operator_set-TOTAL_FORMS': 1,
             'operator_set-INITIAL_FORMS': 0,
             'operator_set-MIN_NUM_FORMS': 0,
@@ -84,3 +86,10 @@ class TestAdmin(TestCase, CreateMixin):
         url = reverse('admin:index')
         response = self.client.get(url)
         self.assertContains(response, 'class="shelf"')
+
+    def test_uuid_field_in_change(self):
+        p = Project.objects.create(name='test-project')
+        path = reverse('admin:test_project_project_change', args=[p.pk])
+        response = self.client.get(path)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'field-uuid')
