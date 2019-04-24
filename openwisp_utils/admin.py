@@ -1,4 +1,6 @@
 from django.contrib.admin import ModelAdmin
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
 
 
 class TimeReadonlyAdminMixin(object):
@@ -60,3 +62,34 @@ class AlwaysHasChangedMixin(object):
         if self.instance._state.adding:
             return True
         return super(AlwaysHasChangedMixin, self).has_changed()
+
+
+class UUIDAdmin(object):
+    """
+    Defines a field name uuid whose value is that
+    of the id of the object
+    """
+    def uuid(self, obj):
+        return obj.pk
+
+    uuid.short_description = _('UUID')
+
+
+class GetUrlAdmin(object):
+    """
+    Return a receive_url field whose value is that of
+    a view_name concatenated with the obj id and/or
+    with the key of the obj
+    """
+    def receive_url(self, obj, view_name, key=False):
+        """
+        :param view_name: The name of the view usually an api
+        :param key: determines if the key should be added or not
+        """
+        url = reverse('{0}'.format(view_name), kwargs={'pk': obj.pk})
+        if key:
+            return '{0}?key={1}'.format(url, obj.key)
+        else:
+            return url
+
+    receive_url.short_description = _('Url')
