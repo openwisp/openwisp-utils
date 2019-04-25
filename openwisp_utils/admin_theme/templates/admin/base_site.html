@@ -1,5 +1,5 @@
 {% extends "admin/base.html" %}
-{% load static %}
+{% load static i18n %}
 
 {% block title %}{{ title }} | {{ site_title }}{% endblock %}
 
@@ -12,4 +12,44 @@
 <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
 {% endblock %}
 
-{% block nav-global %}{% endblock %}
+{% block welcome-msg %}
+    <span class="user">
+        <strong>{% firstof user.get_short_name user.get_username %}</strong>
+    </span>
+{% endblock %}
+{% block userlinks %}{% endblock %}
+
+{% block nav-global %}
+<label for="menu-toggle" tabindex="-1" id="nav-activate">
+    <img class="nav-icon" src="{% static "ui/openwisp/images/menu.svg" %}" />
+</label>
+<input type="checkbox" id="menu-toggle" tabindex="-1" />
+
+<div id="main-menu">
+    <a class="home"
+       href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    {% for item in openwisp_menu_items %}
+    <a href="{{ item.url }}"
+       class="{{ item.class }}">{{ item.label }}</a>
+    {% endfor %}
+    <div class="account">
+        {% if user.has_usable_password %}
+        <a href="{% url 'admin:password_change' %}"
+           class="change-password">{% trans 'Change password' %}</a>
+        {% endif %}
+        <a href="{% url 'admin:logout' %}"
+           class="logout">{% trans 'Log out' %}</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% comment %}
+    we need to put the JS here otherwise
+    if we put it in extrahead it will be
+    loaded before jQuery is loaded
+{% endcomment %}
+{% if openwisp_menu_items and has_permission %}
+<script src="{% static "admin/js/menu.js" %}"></script>
+{% endif %}
+{% endblock %}

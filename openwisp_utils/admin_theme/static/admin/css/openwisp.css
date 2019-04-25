@@ -1,7 +1,8 @@
 #header{
     background-color: #464646;
     color: #fff;
-    height: auto
+    height: auto;
+    padding: 17px 40px;
 }
 
 #user-tools{ margin-top: 12px }
@@ -99,4 +100,111 @@ a.button.secondaryAction{
     padding: 0;
     margin: 15px 0;
     display: block;
+}
+
+/* menu */
+
+html { overflow-x: hidden }
+
+.nav-icon {
+    height: 16px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+
+.nav-text {
+    vertical-align: middle;
+    display: inline-block;
+}
+
+#nav-activate {
+    position: absolute;
+    right: 40px;
+    cursor: pointer;
+    margin-top: 13px;
+    padding: 0 20px;
+    background-color: #222;
+    text-transform: uppercase !important;
+    color: #fff !important;
+    font-size: 14px !important;
+    line-height: 40px !important;
+}
+
+#nav-activate:hover { background-color: #000 }
+#nav-activate:focus { outline: none }
+
+#user-tools { padding-right: 80px }
+
+#main-menu {
+    opacity: 0;
+    padding: 0 37px;
+    margin-top: 104px;
+    height: 100%;
+    width: 180px;
+    overflow: hidden;
+    position: absolute;
+    right: -200px;
+    top: 0;
+    background-color: #464646;
+    z-index: 10;
+    transition: all .5s;
+}
+
+/* avoid change list filter to cover menu */
+#changelist-filter{ z-index: 9 !important }
+
+#menu-toggle {
+    position: absolute;
+    left: -20px;
+}
+
+#menu-toggle:checked ~ #main-menu, #main-menu:focus-within {
+    opacity: 1;
+    right: 0;
+}
+
+#main-menu a {
+    display: block;
+    text-align: center;
+    padding: 0 10px;
+    margin: 0 0 8px 0;
+    background-color: #222;
+    text-transform: uppercase;
+    font-variant: small-caps;
+}
+#main-menu a:hover,
+#main-menu a:focus {
+    text-decoration: none !important;
+    background-color: #000;
+}
+#main-menu a:first-child { margin-top: 0 }
+#main-menu .account { margin-top: 16px }
+#main-menu .account a { background-color: #453232 }
+#main-menu .account a:hover,
+#main-menu .account a:focus { background-color: #2f1e1e }
+
+#user-tools .user {
+  background: transparent url(../../ui/openwisp/images/user.svg) no-repeat scroll 0 50%;
+  background-size: 10px 10px;
+  padding-left: 18px;
+}
+
+@media (max-width: 1024px) {
+    #nav-activate {
+        right: 35px;
+        margin-top: 24px;
+        line-height: 45px !important;
+    }
+
+    .nav-icon { height: 20px }
+
+    #main-menu {
+      line-height: 40px;
+      padding-left: 35px;
+      padding-right: 35px;
+    }
+    #main-menu a { margin-bottom: 12px }
+    #main-menu .account { margin-top: 20px }
+    #user-tools { margin-left: 10px }
 }

@@ -160,8 +160,9 @@ in ``settings.py``.
 ``DependencyLoader``
 ~~~~~~~~~~~~~~~~~~~~
 
-Add ``openwisp_utils.staticfiles.DependencyFinder`` to ``TEMPLATES_LOADERS``
-in ``settings.py`` or as shown below.
+Add ``openwisp_utils.staticfiles.DependencyFinder`` and
+``openwisp_utils.admin_theme.context_processor.menu_items`` respectively to
+template ``loaders`` ad ``context_processors`` in ``settings.py`` as shown below.
 
 .. code-block:: python
 
@@ -180,6 +181,7 @@ in ``settings.py`` or as shown below.
                     'django.template.context_processors.request',
                     'django.contrib.auth.context_processors.auth',
                     'django.contrib.messages.context_processors.messages',
+                    'openwisp_utils.admin_theme.context_processor.menu_items'
                 ],
             },
         },
@@ -208,6 +210,32 @@ Heading text used in the main ``<h1>`` HTML tag (the logo) of the admin site.
 **default**: ``Network administration``
 
 Title shown to users in the index page of the admin site.
+
+``OPENWISP_ADMIN_MENU_ITEMS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**default**: ``[]``
+
+Allows to pass a custom list of menu items to display in the admin menu.
+
+If passed, overrides the default menu which is built by different openwisp modules.
+
+The list should not include "home", "change password" and "log out", because those
+are automatically added and cannot be removed.
+
+Example usage:
+
+.. code-block:: python
+
+    OPENWISP_ADMIN_MENU_ITEMS = [
+        {'model': 'config.Device'},
+        {'model': 'config.Template'},
+        {'model': 'openwisp_users.User'},
+        {
+            'model': 'openwisp_radius.Accounting',
+            'label': 'Radius sessions'  # custom label
+        }
+    ]
 
 Quality Assurance checks
 ^^^^^^^^^^^^^^^^^^^^^^^^
