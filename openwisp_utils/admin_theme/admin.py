@@ -1,7 +1,6 @@
+from django.conf import settings
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy
-
-from django.conf import settings
 
 
 def openwisp_admin(site_url=None):

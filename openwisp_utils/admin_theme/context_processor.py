@@ -1,7 +1,7 @@
-from django.conf import settings
-from django.urls import reverse
 from django.apps import registry
+from django.conf import settings
 from django.contrib.admin import site
+from django.urls import reverse
 
 
 def menu_items(request):

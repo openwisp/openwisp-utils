@@ -160,9 +160,37 @@ in ``settings.py``.
 ``DependencyLoader``
 ~~~~~~~~~~~~~~~~~~~~
 
-Add ``openwisp_utils.staticfiles.DependencyFinder`` and
-``openwisp_utils.admin_theme.context_processor.menu_items`` respectively to
-template ``loaders`` ad ``context_processors`` in ``settings.py`` as shown below.
+Add ``openwisp_utils.staticfiles.DependencyFinder`` to
+template ``loaders`` in ``settings.py`` as shown below.
+
+.. code-block:: python
+
+    TEMPLATES = [
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'DIRS': [],
+            'OPTIONS': {
+                'loaders': [
+                    'django.template.loaders.filesystem.Loader',
+                    'django.template.loaders.app_directories.Loader',
+                    'openwisp_utils.loaders.DependencyLoader',
+                ],
+                'context_processors': [
+                    'django.template.context_processors.debug',
+                    'django.template.context_processors.request',
+                    'django.contrib.auth.context_processors.auth',
+                    'django.contrib.messages.context_processors.messages',
+                    'openwisp_utils.admin_theme.context_processor.menu_items'
+                ],
+            },
+        },
+    ]
+
+Main navigation menu
+~~~~~~~~~~~~~~~~~~~~
+
+Add ``openwisp_utils.admin_theme.context_processor.menu_items`` to
+template ``context_processors`` in ``settings.py`` as shown below.
 
 .. code-block:: python
 
