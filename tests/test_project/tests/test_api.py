@@ -3,8 +3,8 @@ from django.test import TestCase
 from openwisp_users.tests.utils import TestOrganizationMixin
 from test_project.serializers import ShelfSerializer
 
-from ..models import Shelf
 from . import CreateMixin
+from ..models import Shelf
 
 
 class TestApi(CreateMixin, TestOrganizationMixin, TestCase):
