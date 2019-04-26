@@ -167,11 +167,12 @@ html { overflow-x: hidden }
 #main-menu a {
     display: block;
     text-align: center;
-    padding: 0 10px;
+    padding: 0 10px 1px;
     margin: 0 0 8px 0;
     background-color: #222;
     text-transform: uppercase;
-    font-variant: small-caps;
+    font-size: 12px;
+    font-weight: bold;
 }
 #main-menu a:hover,
 #main-menu a:focus {
