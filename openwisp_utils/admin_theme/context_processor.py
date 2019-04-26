@@ -6,7 +6,14 @@ from django.urls import reverse
 
 def menu_items(request):
     menu = build_menu(request)
-    return {'openwisp_menu_items': menu}
+    return {
+        'openwisp_menu_items': menu,
+        'show_userlinks_block': getattr(
+            settings,
+            'OPENWISP_ADMIN_SHOW_USERLINKS_BLOCK',
+            False
+        )
+    }
 
 
 def build_menu(request=None):
