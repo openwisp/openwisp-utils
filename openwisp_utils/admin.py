@@ -8,7 +8,7 @@ class TimeReadonlyAdminMixin(object):
     """
     def __init__(self, *args, **kwargs):
         self.readonly_fields += ('created', 'modified',)
-        super(TimeReadonlyAdminMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class ReadOnlyAdmin(ModelAdmin):
@@ -16,11 +16,11 @@ class ReadOnlyAdmin(ModelAdmin):
     Disables all editing capabilities
     """
     def __init__(self, *args, **kwargs):
-        super(ReadOnlyAdmin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.readonly_fields = [f.name for f in self.model._meta.fields]
 
     def get_actions(self, request):
-        actions = super(ReadOnlyAdmin, self).get_actions(request)
+        actions = super().get_actions(request)
         if 'delete_selected' in actions:  # pragma: no cover
             del actions['delete_selected']
         return actions
@@ -44,9 +44,7 @@ class ReadOnlyAdmin(ModelAdmin):
         extra_context = extra_context or {}
         extra_context['show_save_and_continue'] = False
         extra_context['show_save'] = False
-        return super(ReadOnlyAdmin, self).change_view(request,
-                                                      object_id,
-                                                      extra_context=extra_context)
+        return super().change_view(request, object_id, extra_context=extra_context)
 
 
 class AlwaysHasChangedMixin(object):
@@ -59,4 +57,4 @@ class AlwaysHasChangedMixin(object):
         """
         if self.instance._state.adding:
             return True
-        return super(AlwaysHasChangedMixin, self).has_changed()
+        return super().has_changed()

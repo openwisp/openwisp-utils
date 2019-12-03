@@ -2,6 +2,3 @@ coveralls
 # For testing Dependency loaders
 django_netjsonconfig
 djangorestframework
-# TODO: To be removed when we drop python 2.7 support
-# Mock is a standard library from python3.3-pre onwards
-mock>=2.0.0,<2.1.0
