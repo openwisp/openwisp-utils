@@ -67,6 +67,7 @@ runisort() {
 
 runcheckcommit() {
   echo "Running checkcommit"
+  [ -n "$TRAVIS_PULL_REQUEST" ] || TRAVIS_PULL_REQUEST="false"
   if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
     printf "Checking commit message:\n\n"
     printf "%s\n\n" "$COMMIT_MESSAGE"
