@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Version 0.3.0 [2018-12-10]
+Version 0.3.0 [2019-12-10]
 --------------------------
 
 - Added ``ReadOnlyAdmin``
