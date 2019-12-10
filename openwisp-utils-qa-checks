@@ -57,9 +57,7 @@ runcheckmigrations() {
 
 runflake8() {
   echo "Running flake8 check"
-  flake8 --max-line-length=110 \
-  --exclude=migrations,./tests/*settings*.py \
-  --ignore=W605,W504 || exit 3
+  flake8 || exit 3
 }
 
 runisort() {
