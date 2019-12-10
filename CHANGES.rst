@@ -10,7 +10,7 @@ Version 0.3.0 [2018-12-10]
 - Moved multitenancy features to
   `openwisp-users <https://github.com/openwisp/openwisp-users>`_
 - [qa] Added ``checkendline``, ``checkmigrations``, ``checkcommit``,
-  later integrated in ``openwisp-utils-qa-checks``
+  later integrated in ``openwisp-utils-qa-checks`` (corrected)
 - Added navigation menu
 - Added configurable settings for admin headings
 
