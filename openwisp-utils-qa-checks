@@ -1,0 +1,154 @@
+#!/bin/bash
+
+show_help() {
+  printf "Usage:\n"
+  printf "  openwisp-utils-qa-checks --help\n"
+  printf "  openwisp-utils-qa-checks {--migration-path <path> [--migrations-to-ignore <int>] | --skip-checkmigrations}\n"
+  printf "            {[--message <commit-message>] | --skip-checkcommit}\n"
+  printf "            [--skip-checkendline]\n"
+  printf "            [--skip-flake8]\n"
+  printf "            [--skip-isort]\n"
+  printf "\n"
+  printf "Runs all checks for quality assurance. Unneeded checks may be skipped by passing --skip-<check-name> argument.\n"
+  printf "\n"
+  printf "General options:\n"
+  printf "  --help\t\t\t: Show this help text\n"
+  printf "Migration check options:\n"
+  printf "  --migration-path <path>\t: Path to migrations/ folder\n"
+  printf "  --migrations-to-ignore <int>\t: Number of migrations after which checking of migration file names should begin,\n"
+  printf "\t\t\t\t  say, if checking needs to start after 0003_auto_20150410_3242.py value should be 3\n"
+  printf "  --skip-checkmigrations\t: Skip migration name check\n"
+  printf "Commit name check options:\n"
+  printf "  --message <commit-message>\t: Commit message (by default is equal to latest commit name)\n"
+  printf "  --skip-checkcommit\t\t: Skip commit check\n"
+  printf "Blank endlines check options:\n"
+  printf "  --skip-checkendline\t\t: Skip blank endlines check\n"
+  printf "Flake8 check options:\n"
+  printf "  --skip-flake8\t\t\t: Skip flake8 check\n"
+  printf "Isort check options:\n"
+  printf "  --skip-isort\t\t\t: Skip isort check\n"
+}
+
+runcheckendline() {
+  echo "Running blank endline check"
+  flag=0
+  for i in $(find . -type f ! -path "*/*.egg-info/*" \
+    ! -path "./.*" \
+    ! -path "*.min.*" \
+    ! -path "*.svg" -exec grep -Iq . {} \; -and -print); do
+    if [ "$(tail -c 1 $i)" != "" ]; then
+      echo "$i needs newline at the end"
+      flag=1
+    fi
+  done
+  if [ $flag -ne 0 ]; then
+    exit 1
+  fi
+}
+
+runcheckmigrations() {
+  echo "Running migration name check"
+  if [ "$MIGRATION_PATH" == "" ]; then
+    echo "No migration path specified!"
+    exit 5
+  fi
+  checkmigrations --migration-path "$MIGRATION_PATH" --migrations-to-ignore "$MIGRATIONS_TO_IGNORE" || exit 2
+}
+
+runflake8() {
+  echo "Running flake8 check"
+  flake8 --max-line-length=110 \
+  --exclude=migrations,./tests/*settings*.py \
+  --ignore=W605,W504 || exit 3
+}
+
+runisort() {
+  echo "Running isort"
+  isort --check-only --recursive --diff || exit 4
+}
+
+runcheckcommit() {
+  echo "Running checkcommit"
+  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    printf "Checking commit message:\n\n"
+    printf "%s\n\n" "$COMMIT_MESSAGE"
+    checkcommit --message "$COMMIT_MESSAGE" || exit 6
+  fi
+}
+
+## Main
+
+SKIP_CHECKENDLINE=false
+SKIP_CHECKMIGRATIONS=false
+SKIP_FLAKE8=false
+SKIP_ISORT=false
+SKIP_CHECKCOMMIT=false
+MIGRATION_PATH=""
+MIGRATIONS_TO_IGNORE="0"
+COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
+
+
+while [ "$1" != "" ]; do
+  case "$1" in
+  --skip-checkendline)
+    SKIP_CHECKENDLINE=true
+    ;;
+  --skip-checkmigrations)
+    SKIP_CHECKMIGRATIONS=true
+    ;;
+  --migration-path)
+    shift
+    MIGRATION_PATH="$1"
+    ;;
+  --migrations-to-ignore)
+    shift
+    MIGRATIONS_TO_IGNORE="$1"
+    ;;
+  --skip-flake8)
+    SKIP_FLAKE8=true
+    ;;
+  --skip-isort)
+    SKIP_ISORT=true
+    ;;
+  --skip-checkcommit)
+    SKIP_CHECKCOMMIT=true
+    ;;
+  --message)
+    shift
+    COMMIT_MESSAGE="$1"
+    ;;
+  --help)
+    show_help
+    exit
+    ;;
+  *)
+    printf "Unknown argument: %s\n" "$1"
+    printf "\n"
+    show_help
+    exit
+    ;;
+  esac
+  shift
+done
+
+set -e
+
+if ! $SKIP_CHECKENDLINE; then
+  runcheckendline
+fi
+
+if ! $SKIP_CHECKMIGRATIONS; then
+  runcheckmigrations
+fi
+
+if ! $SKIP_FLAKE8; then
+  runflake8
+fi
+
+if ! $SKIP_ISORT; then
+  runisort
+fi
+
+if ! $SKIP_CHECKCOMMIT; then
+  runcheckcommit
+fi

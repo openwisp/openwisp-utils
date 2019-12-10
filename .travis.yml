@@ -31,21 +31,10 @@ install:
   - pip install -e .[users] .[qa]
 
 before_script:
-  - ./runflake8
-  - ./runisort
-  - ./runcheckmigration
-  - ./runcheckendline
+  - openwisp-utils-qa-checks --migration-path "./tests/test_project/migrations"
 
 script:
   - coverage run --source=openwisp_utils runtests.py
-  - |
-    if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-      # gets commit message of last commit before pull request merge
-      COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
-      printf "Checking commit message:\n\n"
-      printf "$COMMIT_MESSAGE\n\n"
-      checkcommit --message "$COMMIT_MESSAGE"
-    fi
 
 after_success:
   coveralls
