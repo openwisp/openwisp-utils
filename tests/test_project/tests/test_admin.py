@@ -53,3 +53,11 @@ class TestAdmin(TestCase, CreateMixin):
         self.assertEqual(Operator.objects.count(), 1)
         project = Project.objects.first()
         self.assertEqual(project.name, params['name'])
+
+    def test_custom_admin_site(self):
+        url = reverse('admin:password_change_done')
+        response = self.client.get(url)
+        content = str(response.content)
+        # Check if CustomAdminSite worked
+        self.assertIn(
+            "Custom attribute in CustomAdminSite is working.", content)

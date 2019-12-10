@@ -77,6 +77,8 @@ DATABASES = {
     }
 }
 
+OPENWISP_ADMIN_SITE_CLASS = 'test_project.site.CustomAdminSite'
+
 SITE_ID = '1'
 EMAIL_PORT = '1025'
 LOGIN_REDIRECT_URL = 'admin:index'
