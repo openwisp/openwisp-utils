@@ -37,6 +37,7 @@ setup(
             'checkcommit = openwisp_utils.qa:check_commit_message',
         ],
     },
+    scripts=['openwisp-utils-qa-checks'],
     include_package_data=True,
     zip_safe=False,
     install_requires=['django-model-utils>=3.1.2,<3.3.0'],
