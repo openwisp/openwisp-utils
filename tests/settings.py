@@ -25,11 +25,13 @@ INSTALLED_APPS = [
     'openwisp_users',
     # test project
     'test_project',
-    # admin
-    'django.contrib.admin',
+    # admin,
+    # 'admin_view_permission',
+    'django.contrib.admin.apps.SimpleAdminConfig',
+    # 'django.contrib.admin',
 ]
 
-EXTENDED_APPS = ['django_netjsonconfig']  # Just for testing purposes
+EXTENDED_APPS = ['django_netjsonconfig','django_x509']  # Just for testing purposes
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
