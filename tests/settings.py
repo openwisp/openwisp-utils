@@ -27,8 +27,8 @@ INSTALLED_APPS = [
     'test_project',
     # admin,
     # 'admin_view_permission',
-    'django.contrib.admin.apps.SimpleAdminConfig',
-    # 'django.contrib.admin',
+    # 'django.contrib.admin.apps.SimpleAdminConfig',
+    'django.contrib.admin',
 ]
 
 EXTENDED_APPS = ['django_netjsonconfig','django_x509']  # Just for testing purposes
