@@ -1,10 +1,18 @@
 Changelog
 =========
 
-Version 0.3.0 [unreleased]
+Version 0.3.0 [2019-12-10]
 --------------------------
 
-WIP
+- Added ``ReadOnlyAdmin``
+- Added ``AlwaysHasChangedMixin``
+- Added ``UUIDModel``
+- Moved multitenancy features to
+  `openwisp-users <https://github.com/openwisp/openwisp-users>`_
+- [qa] Added ``checkendline``, ``checkmigrations``, ``checkcommit``,
+  later integrated in ``openwisp-utils-qa-checks`` (corrected)
+- Added navigation menu
+- Added configurable settings for admin headings
 
 Version 0.2.2 [2018-12-02]
 --------------------------
