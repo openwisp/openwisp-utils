@@ -29,6 +29,8 @@ show_help() {
   printf "  --skip-isort\t\t\t: Skip isort check\n"
 }
 
+echoerr() { echo "$@" 1>&2; }
+
 runcheckendline() {
   echo "Running blank endline check"
   flag=0
@@ -42,36 +44,46 @@ runcheckendline() {
     fi
   done
   if [ $flag -ne 0 ]; then
-    exit 1
+    echoerr "ERROR: Blank endline check failed!"
+    FAILURE=1
+  else
+    echo "SUCCESS: Blank endline check successful!"
   fi
 }
 
 runcheckmigrations() {
   echo "Running migration name check"
   if [ "$MIGRATION_PATH" == "" ]; then
-    echo "No migration path specified!"
-    exit 5
+    echoerr "ERROR: No migration path specified!"
+    FAILURE=1
+    return
   fi
-  checkmigrations --migration-path "$MIGRATION_PATH" --migrations-to-ignore "$MIGRATIONS_TO_IGNORE" || exit 2
+  checkmigrations --migration-path "$MIGRATION_PATH" --migrations-to-ignore "$MIGRATIONS_TO_IGNORE" \
+    && echo "SUCCESS: Migration name check successful!" \
+    || { echoerr "ERROR: Migration name check failed!"; FAILURE=1; }
 }
 
 runflake8() {
-  echo "Running flake8 check"
-  flake8 || exit 3
+  flake8 && echo "SUCCESS: Flake8 check successful!" \
+    || { echoerr "ERROR: Flake8 check failed!"; FAILURE=1; }
 }
 
 runisort() {
-  echo "Running isort"
-  isort --check-only --recursive --diff || exit 4
+  echo "Running isort check"
+  isort --check-only --recursive --diff \
+    && echo "SUCCESS: Isort check successful!" \
+    || { echoerr "ERROR: Isort check failed!"; FAILURE=1; }
 }
 
 runcheckcommit() {
-  echo "Running checkcommit"
   [ -n "$TRAVIS_PULL_REQUEST" ] || TRAVIS_PULL_REQUEST="false"
   if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    printf "Checking commit message:\n\n"
-    printf "%s\n\n" "$COMMIT_MESSAGE"
-    checkcommit --message "$COMMIT_MESSAGE" || exit 6
+    echo "Running commit message check"
+    checkcommit --message "$COMMIT_MESSAGE" \
+    && echo "SUCCESS: Commit name check successful!" \
+    || { printf "Checking commit message:\n\n"; printf "%s\n\n" "$COMMIT_MESSAGE"; echoerr "ERROR: Commit name check failed!"; FAILURE=1; }
+  else
+    echo "SUCCESS: Commit name check successful!"
   fi
 }
 
@@ -85,7 +97,7 @@ SKIP_CHECKCOMMIT=false
 MIGRATION_PATH=""
 MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
-
+FAILURE=0
 
 while [ "$1" != "" ]; do
   case "$1" in
@@ -151,3 +163,5 @@ fi
 if ! $SKIP_CHECKCOMMIT; then
   runcheckcommit
 fi
+
+exit $FAILURE
