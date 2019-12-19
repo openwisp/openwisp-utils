@@ -299,6 +299,16 @@ Usage example::
 
     checkcommit --message "$(git log --format=%B -n 1)"
 
+If, for some reason, you wish to skip this QA check for a specific commit message
+you can add ``#noqa`` to the end of your commit message.
+
+Usage example::
+
+    [qa] Improved #20
+
+    Simulation of a special unplanned case
+    #noqa
+
 Installing for development
 --------------------------
 
