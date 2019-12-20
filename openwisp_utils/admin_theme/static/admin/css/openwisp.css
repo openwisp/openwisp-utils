@@ -1,11 +1,11 @@
+body { min-width: 320px }
+html, body, #container { height: 100% }
 #header{
     background-color: #464646;
     color: #fff;
     height: auto;
     padding: 17px 40px;
 }
-
-#user-tools{ margin-top: 12px }
 
 #site-name a{
     display: block;
@@ -122,7 +122,7 @@ html { overflow-x: hidden }
     position: absolute;
     right: 40px;
     cursor: pointer;
-    margin-top: 13px;
+    margin-top: 0;
     padding: 0 20px;
     background-color: #222;
     text-transform: uppercase !important;
@@ -139,12 +139,12 @@ html { overflow-x: hidden }
 #main-menu {
     opacity: 0;
     padding: 0 37px;
-    margin-top: 104px;
-    height: 100%;
+    margin-top: 0;
+    min-height: 100%;
     width: 180px;
     overflow: hidden;
     position: absolute;
-    right: -200px;
+    left: -200px;
     top: 0;
     background-color: #464646;
     z-index: 10;
@@ -161,13 +161,13 @@ html { overflow-x: hidden }
 
 #menu-toggle:checked ~ #main-menu, #main-menu:focus-within {
     opacity: 1;
-    right: 0;
+    left: 0;
 }
 
 #main-menu a {
     display: block;
     text-align: center;
-    padding: 0 10px 1px;
+    padding: 15px 0px 15px;
     margin: 0 0 8px 0;
     background-color: #222;
     text-transform: uppercase;
@@ -179,8 +179,8 @@ html { overflow-x: hidden }
     text-decoration: none !important;
     background-color: #000;
 }
-#main-menu a:first-child { margin-top: 0 }
-#main-menu .account { margin-top: 16px }
+#main-menu > a:first-child { margin-top: 30px }
+#main-menu .account { margin-top: 0 }
 #main-menu .account a { background-color: #453232 }
 #main-menu .account a:hover,
 #main-menu .account a:focus { background-color: #2f1e1e }
@@ -193,19 +193,20 @@ html { overflow-x: hidden }
 
 @media (max-width: 1024px) {
     #nav-activate {
-        right: 35px;
         margin-top: 24px;
+        right: 35px;
         line-height: 45px !important;
     }
 
-    .nav-icon { height: 20px }
+    .nav-icon { height: 15px }
 
     #main-menu {
-      line-height: 40px;
+      line-height: 30px;
       padding-left: 35px;
       padding-right: 35px;
     }
     #main-menu a { margin-bottom: 12px }
-    #main-menu .account { margin-top: 20px }
-    #user-tools { margin-left: 10px }
+    #main-menu .account { margin-top: 0 }
+    #user-tools { margin-left: 10px !important }
+    #header { align-items: flex-start }
 }

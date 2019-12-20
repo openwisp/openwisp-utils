@@ -18,6 +18,8 @@ openwisp-utils
 
 Python and Django utilities shared between different OpenWISP modules.
 
+The admin theme requires Django >= 2.2.
+
 ------------
 
 .. contents:: **Table of Contents**:
