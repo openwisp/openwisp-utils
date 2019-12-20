@@ -2,11 +2,16 @@ import os
 from os import path
 
 from django.test import TestCase
+from openwisp_utils.qa import check_commit_message, check_migration_name
+
 # TODO: To be removed when we drop python 2.7 support
 # Mock is a standard library from python3.3-pre onwards
 # from unittest.mock import patch
-from mock import patch
-from openwisp_utils.qa import check_commit_message, check_migration_name
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
 
 MIGRATIONS_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), 'migrations')
 

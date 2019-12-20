@@ -91,14 +91,7 @@ Using the utilities in OpenWISP modules
         'django.contrib.staticfiles',
         # customized admin theme
         'openwisp_utils.admin_theme',
-        # all-auth
         'django.contrib.sites',
-        'allauth',
-        'allauth.account',
-        'allauth.socialaccount',
-        'django_extensions',
-        # openwisp2 modules
-        'openwisp_users',
         # admin
         'django.contrib.admin',
     ]

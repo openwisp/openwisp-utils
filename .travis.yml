@@ -26,9 +26,8 @@ before_install:
   - pip install --no-cache-dir -U -r requirements-test.txt
 
 install:
-  - pip install https://github.com/openwisp/openwisp-users/tarball/master
   - pip install $DJANGO
-  - pip install -e .[users] .[qa]
+  - pip install -e .[qa]
 
 before_script:
   - openwisp-utils-qa-checks --migration-path "./tests/test_project/migrations"
