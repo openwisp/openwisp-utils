@@ -15,14 +15,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'openwisp_utils.admin_theme',
-    # all-auth
     'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'django_extensions',
-    # openwisp2 modules
-    'openwisp_users',
     # test project
     'test_project',
     # admin
@@ -84,7 +77,6 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'openwisp_users.User'
 SITE_ID = '1'
 EMAIL_PORT = '1025'
 LOGIN_REDIRECT_URL = 'admin:index'
