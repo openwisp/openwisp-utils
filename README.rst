@@ -99,23 +99,17 @@ Using the utilities in OpenWISP modules
 Using the ``admin_theme``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For using the customized admin theme,
-
-* Make sure you've added ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS``
-  in ``settings.py``
-* Add the following into your ``urls.py`` file which contains ``admin`` urls.
+* Add ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS`` in ``settings.py``.
+* Import ``admin_site`` and make changes like following into your ``urls.py`` file which contains ``admin`` urls:
 
 .. code-block:: python
 
-    from django.conf.urls import include, url
-
-    from openwisp_utils.admin_theme.admin import admin, openwisp_admin
-
-    openwisp_admin()
+    from django.conf.urls import url
+    from openwisp_utils.admin_theme.site import admin_site
 
     urlpatterns = [
         # other url patterns
-        url(r'^admin/', include(admin.site.urls)),
+        url(r'^admin/', admin_site.urls),
     ]
 
 Admin mixins
@@ -210,6 +204,13 @@ template ``context_processors`` in ``settings.py`` as shown below.
 
 Settings
 ^^^^^^^^
+
+``OPENWISP_ADMIN_SITE_CLASS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**default**: ``openwisp_utils.admin_theme.admin.OpenwispAdminSite``
+
+If you need to use a customized admin site class, you can use this setting.
 
 ``OPENWISP_ADMIN_SITE_TITLE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
