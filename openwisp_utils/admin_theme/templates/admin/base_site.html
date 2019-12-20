@@ -54,7 +54,7 @@
     if we put it in extrahead it will be
     loaded before jQuery is loaded
 {% endcomment %}
-{% if openwisp_menu_items and has_permission %}
+{% if has_permission %}
 <script src="{% static "admin/js/menu.js" %}"></script>
 {% endif %}
 {% endblock %}

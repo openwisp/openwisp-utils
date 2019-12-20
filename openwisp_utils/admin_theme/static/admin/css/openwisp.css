@@ -1,5 +1,4 @@
 body { min-width: 320px }
-html, body, #container { height: 100% }
 #header{
     background-color: #464646;
     color: #fff;
@@ -140,11 +139,10 @@ html { overflow-x: hidden }
     opacity: 0;
     padding: 0 37px;
     margin-top: 0;
-    min-height: 100%;
     width: 180px;
     overflow: hidden;
     position: absolute;
-    left: -200px;
+    right: -200px;
     top: 0;
     background-color: #464646;
     z-index: 10;
@@ -161,7 +159,8 @@ html { overflow-x: hidden }
 
 #menu-toggle:checked ~ #main-menu, #main-menu:focus-within {
     opacity: 1;
-    left: 0;
+    left: auto;
+    right: 0;
 }
 
 #main-menu a {
@@ -179,7 +178,7 @@ html { overflow-x: hidden }
     text-decoration: none !important;
     background-color: #000;
 }
-#main-menu > a:first-child { margin-top: 30px }
+#main-menu > a:first-child { margin-top: 15px }
 #main-menu .account { margin-top: 0 }
 #main-menu .account a { background-color: #453232 }
 #main-menu .account a:hover,
@@ -201,7 +200,6 @@ html { overflow-x: hidden }
     .nav-icon { height: 15px }
 
     #main-menu {
-      line-height: 30px;
       padding-left: 35px;
       padding-right: 35px;
     }
