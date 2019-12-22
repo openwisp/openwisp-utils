@@ -1,9 +1,10 @@
 from django.contrib import admin
 from django.forms import ModelForm
-from openwisp_utils.admin import AlwaysHasChangedMixin, ReadOnlyAdmin
+from openwisp_utils.admin import (AlwaysHasChangedMixin, ReadOnlyAdmin,
+                                  TimeReadonlyAdminMixin)
 from openwisp_utils.admin_theme.site import admin_site
 
-from .models import Operator, Project, RadiusAccounting
+from .models import Operator, Project, RadiusAccounting, Shelf
 
 
 @admin.register(Operator, site=admin_site)
@@ -31,3 +32,8 @@ class OperatorInline(admin.StackedInline):
 class ProjectAdmin(admin.ModelAdmin):
     inlines = [OperatorInline]
     list_display = ['name']
+
+
+@admin.register(Shelf, site=admin_site)
+class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
+    pass

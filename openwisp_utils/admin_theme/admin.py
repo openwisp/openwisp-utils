@@ -20,7 +20,7 @@ class OpenwispAdminSite(admin.AdminSite):
     )
 
 
-def openwisp_admin(site_url=None):
+def openwisp_admin(site_url=None):  # pragma: no cover
     """
     openwisp_admin function is deprecated and discouraged to use,
     you should use admin_site object from openwisp_utils.admin_theme.site instead

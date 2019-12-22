@@ -1,4 +1,6 @@
+import io
 import os
+import sys
 from os import path
 
 from django.test import TestCase
@@ -55,10 +57,28 @@ class TestQa(TestCase):
             with patch('argparse._sys.argv', option):
                 try:
                     check_migration_name()
-                except (SystemExit, Exception):
+                except (SystemExit):
                     pass
                 else:
-                    self.fail('SystemExit or Exception not raised')
+                    self.fail('SystemExit not raised')
+
+    def test_migration_failure_message(self):
+        bad_migration = [
+            'checkmigrations',
+            '--migration-path', MIGRATIONS_DIR,
+        ]
+        with patch('argparse._sys.argv', bad_migration):
+            captured_output = io.StringIO()
+            sys.stdout = captured_output  # redirect stdout
+            try:
+                check_migration_name()
+            except (SystemExit):
+                message = 'must be renamed to something more descriptive'
+                self.assertIn(message, captured_output.getvalue())
+            else:
+                self.fail('SystemExit not raised')
+            finally:
+                sys.stdout = sys.__stdout__  # reset redirect
 
     def test_qa_call_check_commit_message_pass(self):
         options = [
@@ -184,10 +204,30 @@ class TestQa(TestCase):
             with patch('argparse._sys.argv', option):
                 try:
                     check_commit_message()
-                except (SystemExit, Exception):
+                except (SystemExit):
                     pass
                 else:
-                    self.fail('SystemExit or Exception not raised')
+                    self.fail('SystemExit not raised')
+
+    def test_commit_failure_message(self):
+        bad_commit = [
+            'commitcheck',
+            '--message',
+            "[qa] Updated file and fixed problem\n\n"
+            "Added more files. Fixes #20"
+        ]
+        with patch('argparse._sys.argv', bad_commit):
+            captured_output = io.StringIO()
+            sys.stdout = captured_output  # redirect stdout
+            try:
+                check_commit_message()
+            except (SystemExit):
+                message = 'Your commit message does not follow our commit message style guidelines'
+                self.assertIn(message, captured_output.getvalue())
+            else:
+                self.fail('SystemExit not raised')
+            finally:
+                sys.stdout = sys.__stdout__  # reset redirect
 
     def tearDown(self):
         os.unlink(self._test_migration_file)
