@@ -1,7 +1,11 @@
+# TODO: remove once all openwisp modules are using admin_site
+import warnings
+
 from django.apps import registry
 from django.conf import settings
 from django.contrib.admin import site
 from django.urls import reverse
+from openwisp_utils.admin_theme.site import admin_site
 
 
 def menu_items(request):
@@ -29,7 +33,12 @@ def build_menu(request=None):
         url = reverse('admin:{}_{}_changelist'.format(app_label,
                                                       model.lower()))
         label = item.get('label', model_class._meta.verbose_name_plural)
-        model_admin = site._registry[model_class]
+        try:
+            model_admin = admin_site._registry[model_class]
+        except KeyError:
+            model_admin = site._registry[model_class]
+            warnings.warn('default django admin.site is deprecated by OpenWISP \
+                           please consider moving our to new admin_site')
         if not request or model_admin.has_module_permission(request):
             menu.append({
                 'url': url,
