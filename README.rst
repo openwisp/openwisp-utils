@@ -270,9 +270,9 @@ automated builds of different OpenWISP modules.
 ``openwisp-utils-qa-checks``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can do multiple `checkmigrations` by passing the arguments with space-delimited string.
+You can do multiple ``checkmigrations`` by passing the arguments with space-delimited string.
 
-For example, this multiple `checkmigrations`::
+For example, this multiple ``checkmigrations``::
 
     checkmigrations --migrations-to-ignore 3 \
 		    --migration-path ./openwisp_users/migrations/ || exit 1
@@ -282,7 +282,8 @@ For example, this multiple `checkmigrations`::
 
 Can be changed with::
 
-    openwisp-utils-qa-checks --migrations-to-ignore "3 2" --migration-path "./openwisp_users/migrations/ ./tests/testapp/migrations/"
+    openwisp-utils-qa-checks --migrations-to-ignore "3 2" \
+            --migration-path "./openwisp_users/migrations/ ./tests/testapp/migrations/"
 
 ``checkmigrations``
 ~~~~~~~~~~~~~~~~~~~
