@@ -267,6 +267,23 @@ Quality Assurance checks
 This package contains some common QA checks that are used the
 automated builds of different OpenWISP modules.
 
+``openwisp-utils-qa-checks``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can do multiple `checkmigrations` by passing the arguments with space-delimited string.
+
+For example, this multiple `checkmigrations`::
+
+    checkmigrations --migrations-to-ignore 3 \
+		    --migration-path ./openwisp_users/migrations/ || exit 1
+
+    checkmigrations --migrations-to-ignore 2 \
+		    --migration-path ./tests/testapp/migrations/ || exit 1
+
+Can be changed with::
+
+    openwisp-utils-qa-checks --migrations-to-ignore "3 2" --migration-path "./openwisp_users/migrations/ ./tests/testapp/migrations/"
+
 ``checkmigrations``
 ~~~~~~~~~~~~~~~~~~~
 

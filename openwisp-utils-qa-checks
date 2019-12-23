@@ -18,6 +18,7 @@ show_help() {
   printf "  --migrations-to-ignore <int>\t: Number of migrations after which checking of migration file names should begin,\n"
   printf "\t\t\t\t  say, if checking needs to start after 0003_auto_20150410_3242.py value should be 3\n"
   printf "  --skip-checkmigrations\t: Skip migration name check\n"
+  printf "  You can do multiple migration check by passing the arguments with space-delimited string array.\n"
   printf "Commit name check options:\n"
   printf "  --message <commit-message>\t: Commit message (by default is equal to latest commit name)\n"
   printf "  --skip-checkcommit\t\t: Skip commit check\n"
@@ -52,15 +53,20 @@ runcheckendline() {
 }
 
 runcheckmigrations() {
-  echo "Running migration name check"
   if [ "$MIGRATION_PATH" == "" ]; then
     echoerr "ERROR: No migration path specified!"
     FAILURE=1
     return
   fi
-  checkmigrations --migration-path "$MIGRATION_PATH" --migrations-to-ignore "$MIGRATIONS_TO_IGNORE" \
-    && echo "SUCCESS: Migration name check successful!" \
-    || { echoerr "ERROR: Migration name check failed!"; FAILURE=1; }
+  for i in "${!MIGRATION_PATH[@]}"
+  do
+    path="${MIGRATION_PATH[$i]}"
+    ignore="${MIGRATIONS_TO_IGNORE[$i]}"
+    ignore="`[ $ignore ] && echo \"$ignore\" || echo 0`"
+    checkmigrations --migration-path "$path" --migrations-to-ignore "$ignore" \
+      && echo "SUCCESS: Migration name check on \"$path\" with migrations-to-ignore: $ignore successful!" \
+      || { echoerr "ERROR: Migration name check on \"$path\" with migrations-to-ignore: $ignore failed!"; FAILURE=1; }
+  done
 }
 
 runflake8() {
@@ -109,11 +115,11 @@ while [ "$1" != "" ]; do
     ;;
   --migration-path)
     shift
-    MIGRATION_PATH="$1"
+    MIGRATION_PATH=($1)
     ;;
   --migrations-to-ignore)
     shift
-    MIGRATIONS_TO_IGNORE="$1"
+    MIGRATIONS_TO_IGNORE=($1)
     ;;
   --skip-flake8)
     SKIP_FLAKE8=true
