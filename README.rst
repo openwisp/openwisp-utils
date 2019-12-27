@@ -270,6 +270,26 @@ automated builds of different OpenWISP modules.
 ``openwisp-utils-qa-checks``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Shell script to run the following quality assurance checks:
+
+* ``checkmigrations`` `Read more below <https://github.com/openwisp/openwisp-utils#checkmigrations>`_
+* ``checkcommit`` `Read more below <https://github.com/openwisp/openwisp-utils#checkcommit>`_
+* ``checkendline`` `Read more below <https://github.com/openwisp/openwisp-utils#checkendline>`_
+* ``flake8`` - Python code linter
+* ``isort`` - Sorts python imports alphabetically, and seperated into sections
+
+If a check requires a flag, it can be passed forward in the same way
+
+Usage example::
+
+    openwisp-utils-qa-checks --migration-path <path> --message <commit-message>
+
+Any unneeded checks can be skipped by passing ``--skip-<check-name>``
+
+Usage example::
+
+    openwisp-utils-qa-checks --skip-isort
+
 You can do multiple ``checkmigrations`` by passing the arguments with space-delimited string.
 
 For example, this multiple ``checkmigrations``::
@@ -322,6 +342,11 @@ Usage example::
 
     Simulation of a special unplanned case
     #noqa
+
+``checkendline``
+~~~~~~~~~~~~~~~~~
+
+Ensures that a blank line is kept at the end of each file.
 
 Installing for development
 --------------------------
