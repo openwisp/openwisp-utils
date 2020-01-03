@@ -5,6 +5,7 @@ show_help() {
   printf "  openwisp-utils-qa-checks --help\n"
   printf "  openwisp-utils-qa-checks {--migration-path <path> [--migrations-to-ignore <int>] | --skip-checkmigrations}\n"
   printf "            {[--message <commit-message>] | --skip-checkcommit}\n"
+  printf "            {[--migration-module <module>] | --skip-checkmakemigrations}\n"
   printf "            [--skip-checkendline]\n"
   printf "            [--skip-flake8]\n"
   printf "            [--skip-isort]\n"
@@ -21,6 +22,8 @@ show_help() {
   printf "  You can do multiple migration check by passing the arguments with space-delimited string array.\n"
   printf "Commit name check options:\n"
   printf "  --message <commit-message>\t: Commit message (by default is equal to latest commit name)\n"
+  printf "  --migration-module <module>\t: Name of Migration Module\n"
+  printf "  --skip-checkmakemigrations\t: Skip make migration check\n"
   printf "  --skip-checkcommit\t\t: Skip commit check\n"
   printf "Blank endlines check options:\n"
   printf "  --skip-checkendline\t\t: Skip blank endlines check\n"
@@ -93,10 +96,23 @@ runcheckcommit() {
   fi
 }
 
+runmakemigrationcheck() {
+  if [ ! -f "./tests/manage.py" ]; then
+    echo "File manage.py not found\nSkipping Make Migration Check"
+  else
+    OUTPUT=$(python tests/manage.py makemigrations --dry-run $MODULE)
+    echo $OUTPUT
+    echo $OUTPUT | grep "No changes detected" \
+      && echo "SUCCESS: Migrations check successful!" \
+      || { echoerr "ERROR: Migrations check failed! Models' changes not migrated, please run `./manage.py makemigrations` to solve the issue!"; FAILURE=1; }
+  fi
+}
+
 ## Main
 
 SKIP_CHECKENDLINE=false
 SKIP_CHECKMIGRATIONS=false
+SKIP_MAKEMIGRATIONS=false
 SKIP_FLAKE8=false
 SKIP_ISORT=false
 SKIP_CHECKCOMMIT=false
@@ -104,6 +120,7 @@ MIGRATION_PATH=""
 MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
 FAILURE=0
+MODULE=""
 
 while [ "$1" != "" ]; do
   case "$1" in
@@ -133,6 +150,13 @@ while [ "$1" != "" ]; do
   --message)
     shift
     COMMIT_MESSAGE="$1"
+    ;;
+  --skip-checkmakemigrations)
+    SKIP_MAKEMIGRATIONS=true
+    ;;
+  --migration-module)
+    shift
+    MODULE="$1"
     ;;
   --help)
     show_help
@@ -168,6 +192,10 @@ fi
 
 if ! $SKIP_CHECKCOMMIT; then
   runcheckcommit
+fi
+
+if ! $SKIP_MAKEMIGRATIONS; then
+  runmakemigrationcheck
 fi
 
 exit $FAILURE
