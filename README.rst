@@ -272,9 +272,10 @@ automated builds of different OpenWISP modules.
 
 Shell script to run the following quality assurance checks:
 
-* ``checkmigrations`` `Read more below <https://github.com/openwisp/openwisp-utils#checkmigrations>`_
-* ``checkcommit`` `Read more below <https://github.com/openwisp/openwisp-utils#checkcommit>`_
-* ``checkendline`` `Read more below <https://github.com/openwisp/openwisp-utils#checkendline>`_
+* `checkmigrations <#checkmigrations>`_
+* `checkcommit <#checkcommit>`_
+* `checkendline <#checkendline>`_
+* `checkpendingmigrations <#checkpendingmigrations>`_
 * ``flake8`` - Python code linter
 * ``isort`` - Sorts python imports alphabetically, and seperated into sections
 
@@ -347,6 +348,16 @@ Usage example::
 ~~~~~~~~~~~~~~~~~
 
 Ensures that a blank line is kept at the end of each file.
+
+``checkpendingmigrations``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ensures there django migrations are up to date and no new migrations need to
+be created.
+
+It accepts an optional ``--migration-module`` flag indicating the django app
+name that should be passed to ``./manage.py makemigrations``, eg:
+``./manage.py makemigrations $MIGRATION_MODULE``.
 
 Installing for development
 --------------------------

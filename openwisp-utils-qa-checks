@@ -96,7 +96,7 @@ runcheckcommit() {
   fi
 }
 
-runmakemigrationcheck() {
+runcheckpendingmigrations() {
   if [ ! -f "./tests/manage.py" ]; then
     echo "File manage.py not found\nSkipping Make Migration Check"
   else
@@ -195,7 +195,7 @@ if ! $SKIP_CHECKCOMMIT; then
 fi
 
 if ! $SKIP_MAKEMIGRATIONS; then
-  runmakemigrationcheck
+  runcheckpendingmigrations
 fi
 
 exit $FAILURE
