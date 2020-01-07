@@ -166,7 +166,7 @@ while [ "$1" != "" ]; do
     printf "Unknown argument: %s\n" "$1"
     printf "\n"
     show_help
-    exit
+    exit 1
     ;;
   esac
   shift
