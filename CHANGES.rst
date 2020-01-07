@@ -1,10 +1,14 @@
 Changelog
 =========
 
-Version 0.4.0 [unreleased]
+Version 0.3.1 [2020-01-07]
 --------------------------
 
-WIP
+- [feature] Added configurable ``AdminSite`` class and ``OPENWISP_ADMIN_SITE_CLASS``
+- [theme] Adapted theme to django 2.2
+- [qa] openwisp-utils-qa-checks now runs all checks before failing
+- [qa] Added support for multiple migration name check in openwisp-utils-qa-checks
+- [qa] Added pending migrations check to openwisp-utils-qa-checks
 
 Version 0.3.0 [2019-12-10]
 --------------------------
