@@ -8,7 +8,7 @@ Version 0.3.1 [2020-01-07]
 - [theme] Adapted theme to django 2.2
 - [qa] openwisp-utils-qa-checks now runs all checks before failing
 - [qa] Added support for multiple migration name check in openwisp-utils-qa-checks
-- [qa] Added pending migrations check to openwisp-utils-qa-checks
+- [qa] Added pending migrations check (``runcheckpendingmigrations``) to openwisp-utils-qa-checks
 
 Version 0.3.0 [2019-12-10]
 --------------------------
