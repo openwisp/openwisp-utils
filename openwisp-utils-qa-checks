@@ -102,7 +102,7 @@ runmakemigrationcheck() {
   else
     OUTPUT=$(python tests/manage.py makemigrations --dry-run $MODULE)
     echo $OUTPUT
-    echo $OUTPUT | grep "No changes detected" \
+    echo $OUTPUT | grep "No changes detected" &> /dev/null \
       && echo "SUCCESS: Migrations check successful!" \
       || { echoerr "ERROR: Migrations check failed! Models' changes not migrated, please run `./manage.py makemigrations` to solve the issue!"; FAILURE=1; }
   fi
