@@ -102,17 +102,7 @@ Using the ``admin_theme``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * Add ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS`` in ``settings.py``.
-* Import ``admin_site`` and make changes like following into your ``urls.py`` file which contains ``admin`` urls:
 
-.. code-block:: python
-
-    from django.conf.urls import url
-    from openwisp_utils.admin_theme.site import admin_site
-
-    urlpatterns = [
-        # other url patterns
-        url(r'^admin/', admin_site.urls),
-    ]
 
 Admin mixins
 ^^^^^^^^^^^^
@@ -279,7 +269,7 @@ Shell script to run the following quality assurance checks:
 * ``flake8`` - Python code linter
 * ``isort`` - Sorts python imports alphabetically, and seperated into sections
 
-If a check requires a flag, it can be passed forward in the same way
+If a check requires a flag, it can be passed forward in the same way.
 
 Usage example::
 

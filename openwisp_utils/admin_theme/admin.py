@@ -1,6 +1,10 @@
+import logging
+
 from django.conf import settings
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy
+
+logger = logging.getLogger(__name__)
 
 
 class OpenwispAdminSite(admin.AdminSite):
@@ -20,12 +24,13 @@ class OpenwispAdminSite(admin.AdminSite):
     )
 
 
-def openwisp_admin(site_url=None):
+def openwisp_admin(site_url=None):  # pragma: no-cover
     """
-    openwisp_admin function is deprecated and discouraged to use,
-    you should use admin_site object from openwisp_utils.admin_theme.site instead
+    openwisp_admin function is deprecated
     """
-    admin.site.site_title = OpenwispAdminSite.site_title
-    admin.site.site_url = site_url  # link to frontend
-    admin.site.site_header = OpenwispAdminSite.site_header
-    admin.site.index_title = OpenwispAdminSite.index_title
+    logger.warning(
+        'WARNING! Calling openwisp_utils.admin_theme.admin.openwisp_admin() '
+        'is not necessary anymore and is therefore deprecated.\nThis function '
+        'will be removed in future versions of openwisp-utils and therefore '
+        'it is recommended to remove any reference to it.\n'
+    )
