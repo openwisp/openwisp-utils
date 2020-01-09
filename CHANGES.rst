@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.3.2 [2020-01-09]
+--------------------------
+
+- [change] Simplified implementation and usage of ``OPENWISP_ADMIN_SITE_CLASS``
+
 Version 0.3.1 [2020-01-07]
 --------------------------
 
