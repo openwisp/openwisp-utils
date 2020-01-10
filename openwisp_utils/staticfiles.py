@@ -25,4 +25,3 @@ class DependencyFinder(FileSystemFinder):
             filesystem_storage = FileSystemStorage(location=root)
             filesystem_storage.prefix = prefix
             self.storages[root] = filesystem_storage
-        super(FileSystemFinder, self).__init__(*args, **kwargs)

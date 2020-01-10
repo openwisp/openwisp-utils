@@ -2,8 +2,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from . import CreateMixin
 from ..models import Operator, Project, RadiusAccounting
+from . import CreateMixin
 
 User = get_user_model()
 

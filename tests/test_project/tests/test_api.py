@@ -2,8 +2,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from test_project.serializers import ShelfSerializer
 
-from . import CreateMixin
 from ..models import Shelf
+from . import CreateMixin
 
 
 class TestApi(CreateMixin, TestCase):

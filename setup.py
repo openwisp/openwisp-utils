@@ -40,9 +40,9 @@ setup(
     scripts=['openwisp-utils-qa-checks'],
     include_package_data=True,
     zip_safe=False,
-    install_requires=['django-model-utils>=3.1.2,<3.3.0'],
+    install_requires=['django-model-utils>=3.1.2,<4.1.0'],
     extras_require={
-        'qa': ['flake8<=3.6.0', 'isort<=4.3.4'],
+        'qa': ['flake8<=3.7.9', 'isort<=4.3.31'],
     },
     classifiers=[
         'Development Status :: 3 - Alpha',
@@ -53,7 +53,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Framework :: Django',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3',
     ]
 )
