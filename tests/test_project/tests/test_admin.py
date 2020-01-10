@@ -54,10 +54,33 @@ class TestAdmin(TestCase, CreateMixin):
         project = Project.objects.first()
         self.assertEqual(project.name, params['name'])
 
+        change_params = {
+            'name': 'test',
+            'operator_set-TOTAL_FORMS': 1,
+            'operator_set-INITIAL_FORMS': 1,
+            'operator_set-MIN_NUM_FORMS': 0,
+            'operator_set-MAX_NUM_FORMS': 1000,
+            'operator_set-0-first_name': 'test2',
+            'operator_set-0-last_name': 'test2',
+            'operator_set-0-id': project.pk,
+        }
+        change_url = reverse('admin:test_project_project_change', args=[project.pk])
+        self.client.post(change_url, change_params)
+        self.assertContains(self.client.get(change_url), 'value="test2"')
+
     def test_custom_admin_site(self):
         url = reverse('admin:password_change_done')
         response = self.client.get(url)
-        content = str(response.content)
+        content = "Custom attribute in CustomAdminSite is working."
         # Check if CustomAdminSite worked
-        self.assertIn(
-            "Custom attribute in CustomAdminSite is working.", content)
+        self.assertContains(response, content)
+
+    def test_timereadonlyadminmixin(self):
+        url = reverse('admin:test_project_shelf_add')
+        response = self.client.get(url)
+        self.assertContains(response, 'readonly')
+
+    def test_context_processor(self):
+        url = reverse('admin:index')
+        response = self.client.get(url)
+        self.assertContains(response, 'class="shelf"')
