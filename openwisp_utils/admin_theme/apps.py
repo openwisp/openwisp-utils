@@ -16,11 +16,3 @@ class OpenWispAdminThemeConfig(AppConfig):
         # many other openwisp modules and repos
         from django.contrib import admin
         admin.apps.AdminConfig.default_site = app_settings.ADMIN_SITE_CLASS
-        # this is a hack needed to support older django versions
-        # TODO: remove this when support to python 2
-        # and to older django versions is dropped
-        if django.VERSION < (2, 1):
-            site_class = import_string(app_settings.ADMIN_SITE_CLASS)
-            admin.site = site_class()
-            admin.sites.site = admin.site
-            admin.autodiscover_modules('admin', register_to=admin.site)

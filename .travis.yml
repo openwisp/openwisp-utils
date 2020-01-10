@@ -6,8 +6,6 @@ python:
   - "3.7"
 
 env:
-  - DJANGO="django>=2.0,<2.1"
-  - DJANGO="django>=2.1,<2.2"
   - DJANGO="django>=2.2,<3.0"
   - DJANGO="django>=3.0,<3.1"
 
