@@ -40,7 +40,7 @@ setup(
     scripts=['openwisp-utils-qa-checks'],
     include_package_data=True,
     zip_safe=False,
-    install_requires=['django-model-utils>=3.1.2,<4.1.0'],
+    install_requires=['django-model-utils>=4.0.0,<4.1.0'],
     extras_require={
         'qa': ['flake8<=3.7.9', 'isort<=4.3.31'],
     },
