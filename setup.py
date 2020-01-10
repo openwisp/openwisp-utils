@@ -42,7 +42,7 @@ setup(
     zip_safe=False,
     install_requires=['django-model-utils>=4.0.0,<4.1.0'],
     extras_require={
-        'qa': ['flake8<=3.7.9', 'isort<=4.3.31'],
+        'qa': ['flake8<=3.7.9', 'isort<=4.3.21'],
     },
     classifiers=[
         'Development Status :: 3 - Alpha',

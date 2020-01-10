@@ -1,6 +1,4 @@
-import django
 from django.apps import AppConfig
-from django.utils.module_loading import import_string
 
 from . import settings as app_settings
 
