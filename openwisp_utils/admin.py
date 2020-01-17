@@ -62,32 +62,74 @@ class AlwaysHasChangedMixin(object):
         return super().has_changed()
 
 
-class UUIDAdmin(object):
+class UUIDAdmin(ModelAdmin):
     """
     Defines a field name uuid whose value is that
     of the id of the object
     """
+
     def uuid(self, obj):
         return obj.pk
+
+    def _process_fields(self, fields, request, obj):
+        fields = list(fields)
+        if obj:
+            if 'uuid' in fields:
+                fields.remove('uuid')
+                fields.insert(0, 'uuid')
+        else:
+            # remove read_only fields
+            for field in self.readonly_fields:
+                if field in fields:
+                    fields.remove(field)
+        return tuple(fields)
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        return self._process_fields(fields, request, obj)
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        return self._process_fields(fields, request, obj)
+
+    class Media:
+        js = ('admin/js/jquery.init.js', 'openwisp-utils/js/uuid.js')
 
     uuid.short_description = _('UUID')
 
 
-class GetUrlAdmin(object):
+class ReceiveUrlAdmin(ModelAdmin):
     """
     Return a receive_url field whose value is that of
     a view_name concatenated with the obj id and/or
     with the key of the obj
     """
-    def receive_url(self, obj, view_name, key=False):
+    receive_url_querystring_arg = 'key'
+    receive_url_object_arg = 'pk'
+    receive_url_name = None
+
+    def receive_url(self, obj):
         """
-        :param view_name: The name of the view usually an api
-        :param key: determines if the key should be added or not
+        :param obj: Object for which the url is generated
         """
-        url = reverse('{0}'.format(view_name), kwargs={'pk': obj.pk})
-        if key:
-            return '{0}?key={1}'.format(url, obj.key)
+        if self.receive_url_name is None:
+            raise ValueError('receive_url_name is not set up')
+        reverse_kwargs = {}
+        if self.receive_url_object_arg:
+            reverse_kwargs = {
+                self.receive_url_object_arg: getattr(obj, self.receive_url_object_arg)
+            }
+        url = reverse(self.receive_url_name, kwargs=reverse_kwargs)
+        if self.receive_url_querystring_arg:
+            return '{0}?{1}={2}'.format(
+                url,
+                self.receive_url_querystring_arg,
+                getattr(obj, self.receive_url_querystring_arg)
+            )
         else:
             return url
 
-    receive_url.short_description = _('Url')
+    class Media:
+        js = ('admin/js/jquery.init.js', 'openwisp-utils/js/receive_url.js')
+
+    receive_url.short_description = _('URL')

@@ -7,4 +7,4 @@ django.jQuery(function ($) {
      field.click(function () {
         $(this).select();
      });
-};
+});

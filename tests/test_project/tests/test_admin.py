@@ -1,7 +1,9 @@
+from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from ..admin import ProjectAdmin
 from ..models import Operator, Project, RadiusAccounting
 from . import CreateMixin
 
@@ -17,6 +19,7 @@ class TestAdmin(TestCase, CreateMixin):
                                              password='admin',
                                              email='test@test.org')
         self.client.force_login(user)
+        self.site = AdminSite()
 
     def test_radiusaccounting_change(self):
         options = dict(username='bobby', session_id='1')
@@ -54,17 +57,21 @@ class TestAdmin(TestCase, CreateMixin):
         self.assertEqual(Project.objects.count(), 1)
         self.assertEqual(Operator.objects.count(), 1)
         project = Project.objects.first()
+        operator = Operator.objects.first()
         self.assertEqual(project.name, params['name'])
+        self.assertEqual(operator.first_name, 'test')
+        self.assertEqual(operator.last_name, 'test')
 
         change_params = {
             'name': 'test',
+            'key': self.TEST_KEY,
             'operator_set-TOTAL_FORMS': 1,
             'operator_set-INITIAL_FORMS': 1,
             'operator_set-MIN_NUM_FORMS': 0,
             'operator_set-MAX_NUM_FORMS': 1000,
             'operator_set-0-first_name': 'test2',
             'operator_set-0-last_name': 'test2',
-            'operator_set-0-id': project.pk,
+            'operator_set-0-id': operator.id,
         }
         change_url = reverse('admin:test_project_project_change', args=[project.pk])
         self.client.post(change_url, change_params)
@@ -93,3 +100,28 @@ class TestAdmin(TestCase, CreateMixin):
         response = self.client.get(path)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'field-uuid')
+
+    def test_receive_url_admin(self):
+        p = Project.objects.create(name='test_receive_url_admin_project')
+        ma = ProjectAdmin(Project, self.site)
+
+        url = ma.receive_url(p)
+        self.assertIn(str(p.id), url)
+        self.assertIn(p.key, url)
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'ok')
+        self.assertContains(response, 'test_receive_url_admin_project')
+
+    def test_receive_url_field_in_change(self):
+        p = Project.objects.create(name='test')
+
+        path = reverse('admin:test_project_project_change', args=[p.pk])
+        response = self.client.get(path)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'field-receive_url')
+
+        ma = ProjectAdmin(Project, self.site)
+        url = ma.receive_url(p)
+        self.assertContains(response, url)

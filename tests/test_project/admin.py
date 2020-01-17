@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.forms import ModelForm
 from openwisp_utils.admin import (AlwaysHasChangedMixin, ReadOnlyAdmin,
-                                  TimeReadonlyAdminMixin, UUIDAdmin)
+                                  ReceiveUrlAdmin, TimeReadonlyAdminMixin,
+                                  UUIDAdmin)
 
 from .models import Operator, Project, RadiusAccounting, Shelf
 
@@ -27,15 +28,15 @@ class OperatorInline(admin.StackedInline):
     extra = 0
 
 
-class ProjectAdmin(admin.ModelAdmin):
+@admin.register(Project)
+class ProjectAdmin(UUIDAdmin, ReceiveUrlAdmin):
     inlines = [OperatorInline]
-    list_display = ['name']
-    readonly_fields = ['uuid']
-    fields = ['name', 'key', 'uuid']
+    list_display = ('name',)
+    fields = ('uuid', 'name', 'key', 'receive_url',)
+    readonly_fields = ('uuid', 'receive_url',)
+    receive_url_name = 'receive_project'
 
-    class Media:
-        js = ('openwisp-utils/js/uuid.js',)
 
-admin.site.register(Operator, OperatorAdmin)
-admin.site.register(RadiusAccounting, RadiusAccountingAdmin)
-admin.site.register(Project, ProjectAdmin)
+@admin.register(Shelf)
+class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
+    pass
