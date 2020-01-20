@@ -98,7 +98,7 @@ runcheckcommit() {
 
 runcheckpendingmigrations() {
   if [ ! -f "./tests/manage.py" ]; then
-    echo "File manage.py not found\nSkipping Make Migration Check"
+    echo "File manage.py not found, skipping Make Migration Check."
   else
     OUTPUT=$(python tests/manage.py makemigrations --dry-run $MODULE)
     echo $OUTPUT
