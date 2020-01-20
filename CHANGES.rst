@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.4.1 [2020-01-20]
+--------------------------
+
+- Added utilities commonly used in other OpenWISP modules:
+  ``UUIDAdmin``, ``KeyField``, ``ReceiveUrlAdmin``, ``get_random_key``
+- Fixed a minor issue regarding a new line ``\n`` not being formatted properly
+  in ``openwisp-utils-qa-check``
+
 Version 0.4.0 [2020-01-13]
 --------------------------
 
