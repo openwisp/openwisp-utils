@@ -36,7 +36,6 @@ show_help() {
 echoerr() { echo "$@" 1>&2; }
 
 runcheckendline() {
-  echo "Running blank endline check"
   flag=0
   for i in $(find . -type f ! -path "*/*.egg-info/*" \
     ! -path "./.*" \
@@ -78,7 +77,6 @@ runflake8() {
 }
 
 runisort() {
-  echo "Running isort check"
   isort --check-only --recursive --diff \
     && echo "SUCCESS: Isort check successful!" \
     || { echoerr "ERROR: Isort check failed!"; FAILURE=1; }
