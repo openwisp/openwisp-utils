@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 0.4.2 [2020-01-20]
+--------------------------
+
+- Removed unwanted "Running" messages before some tests
+- Added exception in checkcommit for pattern "^[A-Za-z0-9.]* release$'"
+
 Version 0.4.1 [2020-01-20]
 --------------------------
 
