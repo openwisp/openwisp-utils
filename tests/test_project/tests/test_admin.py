@@ -80,7 +80,7 @@ class TestAdmin(TestCase, CreateMixin):
     def test_custom_admin_site(self):
         url = reverse('admin:password_change_done')
         response = self.client.get(url)
-        content = "Custom attribute in CustomAdminSite is working."
+        content = 'Custom attribute in CustomAdminSite is working.'
         # Check if CustomAdminSite worked
         self.assertContains(response, content)
 
@@ -104,24 +104,23 @@ class TestAdmin(TestCase, CreateMixin):
     def test_receive_url_admin(self):
         p = Project.objects.create(name='test_receive_url_admin_project')
         ma = ProjectAdmin(Project, self.site)
+        ma.receive_url_baseurl = 'http://chanedbasedurl'
 
         url = ma.receive_url(p)
+
         self.assertIn(str(p.id), url)
         self.assertIn(p.key, url)
+        self.assertIn('http://chanedbasedurl', url)
 
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'ok')
         self.assertContains(response, 'test_receive_url_admin_project')
 
     def test_receive_url_field_in_change(self):
-        p = Project.objects.create(name='test')
-
+        p = Project.objects.create(name='test_receive_url_change')
         path = reverse('admin:test_project_project_change', args=[p.pk])
+        expected_receive_url = 'http://testserver/test_api/receive_project/'
         response = self.client.get(path)
-        self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'field-receive_url')
-
-        ma = ProjectAdmin(Project, self.site)
-        url = ma.receive_url(p)
-        self.assertContains(response, url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, expected_receive_url)
