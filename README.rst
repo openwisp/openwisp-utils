@@ -143,7 +143,7 @@ in ``settings.py``.
 ``DependencyLoader``
 ~~~~~~~~~~~~~~~~~~~~
 
-Add ``openwisp_utils.staticfiles.DependencyFinder`` to
+Add ``openwisp_utils.loaders.DependencyLoader`` to
 template ``loaders`` in ``settings.py`` as shown below.
 
 .. code-block:: python
