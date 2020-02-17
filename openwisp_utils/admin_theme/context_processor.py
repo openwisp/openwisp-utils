@@ -3,6 +3,8 @@ from django.conf import settings
 from django.contrib.admin import site
 from django.urls import reverse
 
+from . import settings as app_settings
+
 
 def menu_items(request):
     menu = build_menu(request)
@@ -37,3 +39,10 @@ def build_menu(request=None):
                 'class': model.lower()
             })
     return menu
+
+
+def admin_theme_settings(request):
+    return {
+        'OPENWISP_ADMIN_THEME_CSS': app_settings.OPENWISP_ADMIN_THEME_CSS,
+        'OPENWISP_ADMIN_THEME_JS': app_settings.OPENWISP_ADMIN_THEME_JS,
+    }

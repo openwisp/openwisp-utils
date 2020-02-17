@@ -2,6 +2,9 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from openwisp_utils.admin_theme import settings as admin_theme_settings
+from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig
+from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
 
 from ..admin import ProjectAdmin
 from ..models import Operator, Project, RadiusAccounting
@@ -124,3 +127,37 @@ class TestAdmin(TestCase, CreateMixin):
         self.assertContains(response, 'field-receive_url')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, expected_receive_url)
+
+    def test_admin_theme_css_setting(self):
+        # test for improper configuration : not a list
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_CSS', 'string instead of list')
+        self.assertIn('OPENWISP_ADMIN_THEME_CSS', str(
+            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
+
+        # test for improper configuration : list_elements != type(str)
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_CSS', [0, 1, 2])
+        self.assertIn('OPENWISP_ADMIN_THEME_CSS', str(
+            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
+
+        # test with desired configuration
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_CSS',
+                ['http://127.0.0.1:8000/static/custom-admin-theme.css'])
+        response = self.client.get(reverse('admin:index'))
+        self.assertContains(response, 'href="http://127.0.0.1:8000/static/custom-admin-theme.css"')
+
+    def test_admin_theme_js_setting(self):
+        # test for improper configuration : not a list
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS', 'string instead of list')
+        self.assertIn('OPENWISP_ADMIN_THEME_JS', str(
+            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
+
+        # test for improper configuration : list_elements != type(str)
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS', [0, 1, 2])
+        self.assertIn('OPENWISP_ADMIN_THEME_JS', str(
+            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
+
+        # test with desired configuration
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS',
+                ['http://127.0.0.1:8000/static/openwisp-utils/js/uuid.js'])
+        response = self.client.get(reverse('admin:index'))
+        self.assertContains(response, 'src="http://127.0.0.1:8000/static/openwisp-utils/js/uuid.js"')
