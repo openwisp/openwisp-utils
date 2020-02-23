@@ -8,6 +8,7 @@ class TimeReadonlyAdminMixin(object):
     mixin that automatically flags
     `created` and `modified` as readonly
     """
+
     def __init__(self, *args, **kwargs):
         self.readonly_fields += ('created', 'modified',)
         super().__init__(*args, **kwargs)
@@ -17,6 +18,7 @@ class ReadOnlyAdmin(ModelAdmin):
     """
     Disables all editing capabilities
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.readonly_fields = [f.name for f in self.model._meta.fields]
@@ -107,6 +109,16 @@ class ReceiveUrlAdmin(ModelAdmin):
     receive_url_querystring_arg = 'key'
     receive_url_object_arg = 'pk'
     receive_url_name = None
+    receive_url_urlconf = None
+    receive_url_baseurl = None
+
+    def add_view(self, request, *args, **kwargs):
+        self.request = request
+        return super().add_view(request, *args, **kwargs)
+
+    def change_view(self, request, *args, **kwargs):
+        self.request = request
+        return super().change_view(request, *args, **kwargs)
 
     def receive_url(self, obj):
         """
@@ -117,17 +129,30 @@ class ReceiveUrlAdmin(ModelAdmin):
         reverse_kwargs = {}
         if self.receive_url_object_arg:
             reverse_kwargs = {
-                self.receive_url_object_arg: getattr(obj, self.receive_url_object_arg)
+                self.receive_url_object_arg:
+                getattr(obj, self.receive_url_object_arg)
             }
-        url = reverse(self.receive_url_name, kwargs=reverse_kwargs)
+        receive_path = reverse(self.receive_url_name,
+                               urlconf=self.receive_url_urlconf,
+                               kwargs=reverse_kwargs)
+        if self.receive_url_baseurl:
+            url = '{0}{1}'.format(
+                self.receive_url_baseurl,
+                receive_path
+            )
+        else:
+            url = '{0}://{1}{2}'.format(
+                self.request.scheme,
+                self.request.get_host(),
+                receive_path
+            )
         if self.receive_url_querystring_arg:
-            return '{0}?{1}={2}'.format(
+            url = '{0}?{1}={2}'.format(
                 url,
                 self.receive_url_querystring_arg,
                 getattr(obj, self.receive_url_querystring_arg)
             )
-        else:
-            return url
+        return url
 
     class Media:
         js = ('admin/js/jquery.init.js', 'openwisp-utils/js/receive_url.js')
