@@ -135,20 +135,16 @@ class ReceiveUrlAdmin(ModelAdmin):
         receive_path = reverse(self.receive_url_name,
                                urlconf=self.receive_url_urlconf,
                                kwargs=reverse_kwargs)
-        if self.receive_url_baseurl:
-            url = '{0}{1}'.format(
-                self.receive_url_baseurl,
-                receive_path
-            )
-        else:
-            url = '{0}://{1}{2}'.format(
+        baseurl = self.receive_url_baseurl
+        if not baseurl:
+            baseurl = '{0}://{1}'.format(
                 self.request.scheme,
                 self.request.get_host(),
-                receive_path
             )
         if self.receive_url_querystring_arg:
-            url = '{0}?{1}={2}'.format(
-                url,
+            url = '{0}{1}?{2}={3}'.format(
+                baseurl,
+                receive_path,
                 self.receive_url_querystring_arg,
                 getattr(obj, self.receive_url_querystring_arg)
             )
