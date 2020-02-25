@@ -10,6 +10,7 @@ window.addEventListener('load', function(){
     if (pageHeight > windowHeight) {
       height = pageHeight;
     }
+    if (!nav) { return; }
     nav.style.height = (height - header.offsetHeight) + 'px';
     nav.style.marginTop = header.offsetHeight + 'px';
   };
