@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 0.4.3 [2020-02-26]
+--------------------------
+
+- [utils] Added optional ``receive_url_baseurl`` and ``receive_url_urlconf`` to ``ReceiveUrlAdmin``
+- [menu] Fixed JS error in popup pages (which have no header)
+- [utils] ``KeyField`` now allows overrding ``default`` and ``validators``
+
 Version 0.4.2 [2020-01-25]
 --------------------------
 
