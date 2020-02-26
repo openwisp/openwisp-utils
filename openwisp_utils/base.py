@@ -27,18 +27,21 @@ class TimeStampedEditableModel(UUIDModel):
 
 
 class KeyField(models.CharField):
+    default_callable = get_random_key
+    default_validators = [key_validator]
+
     def __init__(self,
                  max_length: int = 64,
                  unique: bool = False,
                  db_index: bool = False,
                  help_text: str = None,
+                 default: [str, callable, None] = default_callable,
+                 validators: list = default_validators,
                  *args, **kwargs):
-        kwargs.update({
-            'default': get_random_key,
-            'validators': [key_validator],
-        })
         super().__init__(max_length=max_length,
                          unique=unique,
                          db_index=db_index,
                          help_text=help_text,
+                         default=default,
+                         validators=validators,
                          *args, **kwargs)
