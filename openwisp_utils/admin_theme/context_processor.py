@@ -43,6 +43,6 @@ def build_menu(request=None):
 
 def admin_theme_settings(request):
     return {
-        'OPENWISP_ADMIN_THEME_CSS': app_settings.OPENWISP_ADMIN_THEME_CSS,
+        'OPENWISP_ADMIN_THEME_LINKS': app_settings.OPENWISP_ADMIN_THEME_LINKS,
         'OPENWISP_ADMIN_THEME_JS': app_settings.OPENWISP_ADMIN_THEME_JS,
     }

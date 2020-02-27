@@ -130,34 +130,40 @@ class TestAdmin(TestCase, CreateMixin):
 
     def test_admin_theme_css_setting(self):
         # test for improper configuration : not a list
-        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_CSS', 'string instead of list')
-        self.assertIn('OPENWISP_ADMIN_THEME_CSS', str(
-            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
-
-        # test for improper configuration : list_elements != type(str)
-        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_CSS', [0, 1, 2])
-        self.assertIn('OPENWISP_ADMIN_THEME_CSS', str(
-            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
-
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_LINKS', 'string instead of list')
+        self.assertIn('OPENWISP_ADMIN_THEME_LINKS',
+                      str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
+        # test for improper configuration : list_elements != type(dict)
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_LINKS',
+                ['/static/custom-admin-theme.css'])
+        self.assertIn('OPENWISP_ADMIN_THEME_LINKS',
+                      str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
+        # test for improper configuration: dict missing required keys
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_LINKS', [{'wrong': True}])
+        self.assertIn('OPENWISP_ADMIN_THEME_LINKS',
+                      str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
         # test with desired configuration
-        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_CSS',
-                ['http://127.0.0.1:8000/static/custom-admin-theme.css'])
+        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_LINKS',
+                [{
+                    'href': '/static/custom-admin-theme.css',
+                    'rel': 'stylesheet',
+                    'type': 'text/css',
+                    'media': 'all'
+                }])
         response = self.client.get(reverse('admin:index'))
-        self.assertContains(response, 'href="http://127.0.0.1:8000/static/custom-admin-theme.css"')
+        self.assertContains(response, '/static/custom-admin-theme.css" media="all"')
 
     def test_admin_theme_js_setting(self):
         # test for improper configuration : not a list
         setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS', 'string instead of list')
-        self.assertIn('OPENWISP_ADMIN_THEME_JS', str(
-            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
-
+        self.assertIn('OPENWISP_ADMIN_THEME_JS',
+                      str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
         # test for improper configuration : list_elements != type(str)
         setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS', [0, 1, 2])
-        self.assertIn('OPENWISP_ADMIN_THEME_JS', str(
-            admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
-
+        self.assertIn('OPENWISP_ADMIN_THEME_JS',
+                      str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]))
         # test with desired configuration
         setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS',
-                ['http://127.0.0.1:8000/static/openwisp-utils/js/uuid.js'])
+                ['/static/openwisp-utils/js/uuid.js'])
         response = self.client.get(reverse('admin:index'))
-        self.assertContains(response, 'src="http://127.0.0.1:8000/static/openwisp-utils/js/uuid.js"')
+        self.assertContains(response, 'src="/static/openwisp-utils/js/uuid.js"')

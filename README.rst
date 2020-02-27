@@ -203,7 +203,7 @@ Using Custom CSS and JS for Admin
 
 Add ``openwisp_utils.admin_theme.context_processor.admin_theme_settings`` to
 template ``context_processors`` in ``settings.py`` as shown below.
-This will allow to set ``OPENWISP_ADMIN_THEME_CSS`` and ``OPENWISP_ADMIN_THEME_JS`` settings
+This will allow to set ``OPENWISP_ADMIN_THEME_LINKS`` and ``OPENWISP_ADMIN_THEME_JS`` settings
 to provide CSS and JS files to customise admin theme.
 
 .. code-block:: python
@@ -231,9 +231,12 @@ to provide CSS and JS files to customise admin theme.
     ]
 
 .. note::
-    You will have to manually deploy these static files.
-     One way to do this is by adding the directory containing these static files to the ``STATICFILES_DIR`` setting in ``settings.py``.
-     You can learn more at `Django Documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
+    You will have to deploy these static files on your own.
+
+    In order to make django able to find and load these files
+    you may want to use the ``STATICFILES_DIR`` setting in ``settings.py``.
+
+    You can learn more in the `Django documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
 
 
 Settings
@@ -293,38 +296,44 @@ Example usage:
         }
     ]
 
-``OPENWISP_ADMIN_THEME_CSS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``OPENWISP_ADMIN_THEME_LINKS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **default**: ``[]``
 
-Allows passing a list containing strings of URLs of custom CSS files.
- Adding this setting does not override the default theme,
- rather you will have to override, CSS selectors in your CSS.
+Allows to override the default CSS and favicon, as well as add extra
+<link> HTML elements if needed.
+
+This setting overrides the default theme, you can reuse the default CSS or replace it entirely.
+
+The following example shows how to keep using the default CSS,
+supply an additional CSS and replace the favicon.
 
 Example usage:
 
 .. code-block:: python
 
-    OPENWISP_ADMIN_THEME_CSS = [
-    	'http://127.0.0.1:8000/static/custom-admin-theme.css',
-	]
-	
+    OPENWISP_ADMIN_THEME_LINKS = [
+        {'type': 'text/css', 'href': '/static/admin/css/openwisp.css', 'rel': 'stylesheet', 'media': 'all'},
+        {'type': 'text/css', 'href': '/static/admin/css/custom-theme.css', 'rel': 'stylesheet', 'media': 'all'},
+        {'type': 'image/x-icon', 'href': '/static/favicon.png', 'rel': 'icon'}
+    ]
+
 ``OPENWISP_ADMIN_THEME_JS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **default**: ``[]``
 
-Allows to pass a list contaning strings of URLs of custom JS files.
+Allows to pass a list of strings representing URLs of custom JS files to load.
 
 Example usage:
 
 .. code-block:: python
 
     OPENWISP_ADMIN_THEME_JS = [
-        'http://127.0.0.1:8000/static/custom-admin-theme.js',
-	]
-    
+        '/static/custom-admin-theme.js',
+    ]
+
 Quality Assurance checks
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
