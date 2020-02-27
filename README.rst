@@ -32,6 +32,7 @@ Current features
 ----------------
 
 * **Customized admin theme** for OpenWISP modules
+* **Configurable navigation menu**
 * **TimeStamped** models and mixins which add self-updating ``created`` and ``modified`` fields.
 * **UUIDModel**: base model with a UUID4 primary key
 * **KeyField**: base field for a unique string key
@@ -108,14 +109,6 @@ Using the ``admin_theme``
 * Add ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS`` in ``settings.py``.
 
 
-Admin mixins
-^^^^^^^^^^^^
-
-* **TimeReadonlyAdminMixin**: Admin mixin which adds two readonly fields
-  ``created`` and ``modified``.
-  This is an admin mixin for models inheriting ``TimeStampedEditableModel``
-  which adds the fields ``created`` and ``modified`` to the database.
-
 Using ``DependencyLoader`` and ``DependencyFinder``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -154,16 +147,11 @@ template ``loaders`` in ``settings.py`` as shown below.
             'DIRS': [],
             'OPTIONS': {
                 'loaders': [
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
+                    # ... other loaders ...
                     'openwisp_utils.loaders.DependencyLoader',
                 ],
                 'context_processors': [
-                    'django.template.context_processors.debug',
-                    'django.template.context_processors.request',
-                    'django.contrib.auth.context_processors.auth',
-                    'django.contrib.messages.context_processors.messages',
-                    'openwisp_utils.admin_theme.context_processor.menu_items'
+                    # ... omitted ...
                 ],
             },
         },
@@ -183,15 +171,10 @@ template ``context_processors`` in ``settings.py`` as shown below.
             'DIRS': [],
             'OPTIONS': {
                 'loaders': [
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
-                    'openwisp_utils.loaders.DependencyLoader',
+                    # ... omitted ...
                 ],
                 'context_processors': [
-                    'django.template.context_processors.debug',
-                    'django.template.context_processors.request',
-                    'django.contrib.auth.context_processors.auth',
-                    'django.contrib.messages.context_processors.messages',
+                    # ... other context processors ...
                     'openwisp_utils.admin_theme.context_processor.menu_items'
                 ],
             },
@@ -214,16 +197,10 @@ to provide CSS and JS files to customise admin theme.
             'DIRS': [],
             'OPTIONS': {
                 'loaders': [
-                    'django.template.loaders.filesystem.Loader',
-                    'django.template.loaders.app_directories.Loader',
-                    'openwisp_utils.loaders.DependencyLoader',
+                    # ... omitted ...
                 ],
                 'context_processors': [
-                    'django.template.context_processors.debug',
-                    'django.template.context_processors.request',
-                    'django.contrib.auth.context_processors.auth',
-                    'django.contrib.messages.context_processors.messages',
-                    'openwisp_utils.admin_theme.context_processor.menu_items',
+                    # ... other context processors ...
                     'openwisp_utils.admin_theme.context_processor.admin_theme_settings'
                 ],
             },
@@ -333,6 +310,14 @@ Example usage:
     OPENWISP_ADMIN_THEME_JS = [
         '/static/custom-admin-theme.js',
     ]
+
+Admin mixins
+^^^^^^^^^^^^
+
+* **TimeReadonlyAdminMixin**: Admin mixin which adds two readonly fields
+  ``created`` and ``modified``.
+  This is an admin mixin for models inheriting ``TimeStampedEditableModel``
+  which adds the fields ``created`` and ``modified`` to the database.
 
 Quality Assurance checks
 ^^^^^^^^^^^^^^^^^^^^^^^^
