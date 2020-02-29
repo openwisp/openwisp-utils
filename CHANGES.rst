@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 0.4.4 [2020-02-28]
+--------------------------
+
+- [theme] Made it easier to customize theme
+  (``OPENWISP_ADMIN_THEME_LINKS``,``OPENWISP_ADMIN_THEME_JS``, and
+  ``openwisp_utils.admin_theme.context_processor.admin_theme_settings``)
+
 Version 0.4.3 [2020-02-26]
 --------------------------
 
