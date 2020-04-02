@@ -17,7 +17,8 @@ body { min-width: 320px }
 
 .login #branding{
     float: none;
-    padding: 8px 0
+    padding: 8px 0;
+    margin: 0 auto;
 }
 .login #site-name a{ margin: 0 auto }
 
@@ -207,4 +208,8 @@ html { overflow-x: hidden }
     #main-menu .account { margin-top: 0 }
     #user-tools { margin-left: 10px !important }
     #header { align-items: flex-start }
+}
+
+@media (min-width: 700px) {
+    #login-form{ padding-bottom: 20px }
 }
