@@ -42,6 +42,7 @@ Current features
 * **DependencyLoader**: template loader which looks in the templates dir of all django-apps
   listed in ``EXTENDED_APPS``
 * **DependencyFinder**: finds static files of django-apps listed in ``EXTENDED_APPS``
+* **Test utilities**: it contains utilities used for automated testing across various modules
 * **QA**: logic and utilities to perform quality assurance checks across different modules
 
 Project goals
@@ -319,10 +320,34 @@ Admin mixins
   This is an admin mixin for models inheriting ``TimeStampedEditableModel``
   which adds the fields ``created`` and ``modified`` to the database.
 
+Test utilities
+^^^^^^^^^^^^^^
+
+This package contains some utilities that are used in the automated builds
+of different OpenWISP modules.
+
+``catch_signal``
+~~~~~~~~~~~~~~~~ 
+
+This method can be used to mock a signal call inorder to easily verify
+that the signal has been called.
+
+Usage example as a context-manager:
+
+.. code-block:: python
+
+    with catch_signal(<signal name>) as handler:
+        # Perform the action that generates the signal
+    handler.assert_called_once_with(
+        <parameter>=<argument>,
+        sender=<sender name>,
+        signal=<signal name>,
+    )
+
 Quality Assurance checks
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-This package contains some common QA checks that are used the
+This package contains some common QA checks that are used in the
 automated builds of different OpenWISP modules.
 
 ``openwisp-utils-qa-checks``
