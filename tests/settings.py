@@ -72,10 +72,7 @@ TEMPLATES = [
 ]
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'openwisp_utils.db',
-    }
+    'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'openwisp_utils.db',}
 }
 
 OPENWISP_ADMIN_SITE_CLASS = 'test_project.site.CustomAdminSite'
@@ -93,4 +90,3 @@ try:
     from local_settings import *
 except ImportError:
     pass
-

@@ -11,22 +11,24 @@ def _parse_migration_check_args():
     """
     Parse and return CLI arguments
     """
-    parser = argparse.ArgumentParser(description='Ensures migration files '
-                                     'created have a descriptive name. If '
-                                     'default name pattern is found, '
-                                     'raise exception!')
-    parser.add_argument('--migration-path',
-                        required=True,
-                        help='Path to `migrations/` folder')
-    parser.add_argument('--migrations-to-ignore',
-                        type=int,
-                        help='Number of migrations after which checking of '
-                        'migration file names should begin, say, if checking '
-                        'needs to start after `0003_auto_20150410_3242.py` '
-                        'value should be `3`')
-    parser.add_argument('--quiet',
-                        action='store_true',
-                        help='Suppress output')
+    parser = argparse.ArgumentParser(
+        description='Ensures migration files '
+        'created have a descriptive name. If '
+        'default name pattern is found, '
+        'raise exception!'
+    )
+    parser.add_argument(
+        '--migration-path', required=True, help='Path to `migrations/` folder'
+    )
+    parser.add_argument(
+        '--migrations-to-ignore',
+        type=int,
+        help='Number of migrations after which checking of '
+        'migration file names should begin, say, if checking '
+        'needs to start after `0003_auto_20150410_3242.py` '
+        'value should be `3`',
+    )
+    parser.add_argument('--quiet', action='store_true', help='Suppress output')
     return parser.parse_args()
 
 
@@ -42,15 +44,19 @@ def check_migration_name():
     migrations_set = set()
     migrations = os.listdir(args.migration_path)
     for migration in migrations:
-        if (re.match(r'^[0-9]{4}_auto_[0-9]{2}', migration) and
-                int(migration[:4]) > args.migrations_to_ignore):
+        if (
+            re.match(r'^[0-9]{4}_auto_[0-9]{2}', migration)
+            and int(migration[:4]) > args.migrations_to_ignore
+        ):
             migrations_set.add(migration)
     if bool(migrations_set):
         migrations = list(migrations_set)
         file_ = 'file' if len(migrations) < 2 else 'files'
-        message = 'Migration %s %s in directory %s must ' \
-                  'be renamed to something more descriptive.' \
-                  % (file_, ', '.join(migrations), args.migration_path)
+        message = (
+            'Migration %s %s in directory %s must '
+            'be renamed to something more descriptive.'
+            % (file_, ', '.join(migrations), args.migration_path)
+        )
         if not args.quiet:
             print(message)
         sys.exit(1)
@@ -60,14 +66,12 @@ def _parse_commit_check_args():
     """
     Parse and return CLI arguments
     """
-    parser = argparse.ArgumentParser(description='Ensures the commit message '
-                                     'follows the OpenWISP commit guidelines.')
-    parser.add_argument('--message',
-                        help='Commit message',
-                        required=True)
-    parser.add_argument('--quiet',
-                        action='store_true',
-                        help='Suppress output')
+    parser = argparse.ArgumentParser(
+        description='Ensures the commit message '
+        'follows the OpenWISP commit guidelines.'
+    )
+    parser.add_argument('--message', help='Commit message', required=True)
+    parser.add_argument('--quiet', action='store_true', help='Suppress output')
     return parser.parse_args()
 
 
@@ -93,8 +97,9 @@ def check_commit_message():
     errors = []
     # no final dot
     if short_desc and short_desc[-1] == '.':
-        errors.append('please do not add a final dot at the '
-                      'end of commit short description')
+        errors.append(
+            'please do not add a final dot at the ' 'end of commit short description'
+        )
     # ensure prefix is present
     prefix = re.match(r'\[(.*?)\]', short_desc)
     if not prefix:
@@ -157,12 +162,16 @@ def check_commit_message():
                 )
     # fail in case of error
     if len(errors):
-        body = 'Your commit message does not follow our ' \
-               'commit message style guidelines:\n\n'
+        body = (
+            'Your commit message does not follow our '
+            'commit message style guidelines:\n\n'
+        )
         for error in errors:
             body += '- {}\n'.format(error)
-        url = 'http://openwisp.io/docs/developer/contributing.html' \
-              '#commit-message-style-guidelines'
+        url = (
+            'http://openwisp.io/docs/developer/contributing.html'
+            '#commit-message-style-guidelines'
+        )
         body = '{}\nPlease read our guidelines at: {}'.format(body, url)
         if not args.quiet:
             print(body)
@@ -193,8 +202,9 @@ def _find_issue_mentions(message):
         issues.append(words[issue_location])
         # check whether issue is just being referred to
         if issue_location > 2:
-            preceding_2words = '{} {}'.format(words[issue_location - 2],
-                                              words[issue_location - 1])
+            preceding_2words = '{} {}'.format(
+                words[issue_location - 2], words[issue_location - 1]
+            )
             allowed_refs = [
                 'related to',
                 'refers to',
@@ -203,15 +213,7 @@ def _find_issue_mentions(message):
                 good_mentions += 1
                 continue
         # check whether issue is being closed
-        allowed_closure = [
-            'fix',
-            'fixes',
-            'close',
-            'closes'
-        ]
+        allowed_closure = ['fix', 'fixes', 'close', 'closes']
         if word.lower() in allowed_closure:
             good_mentions += 1
-    return {
-        'issues': issues,
-        'good_mentions': good_mentions
-    }
+    return {'issues': issues, 'good_mentions': good_mentions}

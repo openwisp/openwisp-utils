@@ -58,7 +58,7 @@ Install from pypi:
 .. code-block:: shell
 
     pip install openwisp-utils
-    # install optional dependencies for tests (flake8 and isort)
+    # install optional dependencies for tests (flake8, black and isort)
     pip install openwisp-utils[qa]
 
 Install development version
@@ -327,7 +327,7 @@ This package contains some utilities that are used in the automated builds
 of different OpenWISP modules.
 
 ``catch_signal``
-~~~~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~~~~
 
 This method can be used to mock a signal call inorder to easily verify
 that the signal has been called.
@@ -350,6 +350,11 @@ Quality Assurance checks
 This package contains some common QA checks that are used in the
 automated builds of different OpenWISP modules.
 
+``openwisp-qa-format``
+~~~~~~~~~~~~~~~~~~~~~~
+
+Shell script to automatically format Python code. It runs ``isort`` and ``black``.
+
 ``openwisp-utils-qa-checks``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -361,6 +366,7 @@ Shell script to run the following quality assurance checks:
 * `checkpendingmigrations <#checkpendingmigrations>`_
 * ``flake8`` - Python code linter
 * ``isort`` - Sorts python imports alphabetically, and seperated into sections
+* ``black`` - Formats python code using a common standard
 
 If a check requires a flag, it can be passed forward in the same way.
 

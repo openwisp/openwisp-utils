@@ -7,7 +7,9 @@ from unittest.mock import patch
 from django.test import TestCase
 from openwisp_utils.qa import check_commit_message, check_migration_name
 
-MIGRATIONS_DIR = path.join(path.dirname(path.dirname(path.abspath(__file__))), 'migrations')
+MIGRATIONS_DIR = path.join(
+    path.dirname(path.dirname(path.abspath(__file__))), 'migrations'
+)
 
 
 class TestQa(TestCase):
@@ -23,9 +25,11 @@ class TestQa(TestCase):
     def test_qa_call_check_migration_name_pass(self):
         options = [
             'checkmigrations',
-            '--migrations-to-ignore', '2',
-            '--migration-path', MIGRATIONS_DIR,
-            '--quiet'
+            '--migrations-to-ignore',
+            '2',
+            '--migration-path',
+            MIGRATIONS_DIR,
+            '--quiet',
         ]
         with patch('argparse._sys.argv', options):
             try:
@@ -37,16 +41,14 @@ class TestQa(TestCase):
         options = [
             [
                 'checkmigrations',
-                '--migrations-to-ignore', '1',
-                '--migration-path', MIGRATIONS_DIR,
-                '--quiet'
+                '--migrations-to-ignore',
+                '1',
+                '--migration-path',
+                MIGRATIONS_DIR,
+                '--quiet',
             ],
-            [
-                'checkmigrations',
-                '--migration-path', MIGRATIONS_DIR,
-                '--quiet'
-            ],
-            ['checkmigrations']
+            ['checkmigrations', '--migration-path', MIGRATIONS_DIR, '--quiet'],
+            ['checkmigrations'],
         ]
         for option in options:
             with patch('argparse._sys.argv', option):
@@ -60,7 +62,8 @@ class TestQa(TestCase):
     def test_migration_failure_message(self):
         bad_migration = [
             'checkmigrations',
-            '--migration-path', MIGRATIONS_DIR,
+            '--migration-path',
+            MIGRATIONS_DIR,
         ]
         with patch('argparse._sys.argv', bad_migration):
             captured_output = io.StringIO()
@@ -77,123 +80,104 @@ class TestQa(TestCase):
 
     def test_qa_call_check_commit_message_pass(self):
         options = [
+            ['commitcheck', '--quiet', '--message', "[qa] Minor clean up operations"],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Minor clean up operations"
-            ],
-            [
-                'commitcheck',
-                '--quiet', '--message',
+                '--quiet',
+                '--message',
                 "[qa] Updated more file and fix problem #20\n\n"
-                "Added more files Fixes #20"
+                "Added more files Fixes #20",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Improved Y #2\n\n"
-                "Related to #2"
+                '--quiet',
+                '--message',
+                "[qa] Improved Y #2\n\n" "Related to #2",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Finished task #2\n\n"
-                "Closes #2\nRelated to #1"
+                '--quiet',
+                '--message',
+                "[qa] Finished task #2\n\n" "Closes #2\nRelated to #1",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Finished task #2\n\n"
-                "Related to #2\nCloses #1"
+                '--quiet',
+                '--message',
+                "[qa] Finished task #2\n\n" "Related to #2\nCloses #1",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Finished task #2\n\n"
-                "Related to #2\nRelated to #1"
+                '--quiet',
+                '--message',
+                "[qa] Finished task #2\n\n" "Related to #2\nRelated to #1",
             ],
             # noqa
             [
                 'commitcheck',
-                '--quiet', '--message',
+                '--quiet',
+                '--message',
                 "[qa] Improved Y #20\n\n"
-                "Simulation of a special unplanned case\n\n#noqa"
-            ]
+                "Simulation of a special unplanned case\n\n#noqa",
+            ],
         ]
         for option in options:
             with patch('argparse._sys.argv', option):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
-                    msg = 'Check failed:\n\n{}' \
-                          '\n\nOutput:{}'.format(option[-1], e)
+                    msg = 'Check failed:\n\n{}' '\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
 
     def test_qa_call_check_commit_message_failure(self):
         options = [
             ['commitcheck'],
+            ['commitcheck', '--quiet', '--message', 'Hello World'],
+            ['commitcheck', '--quiet', '--message', '[qa] hello World'],
+            ['commitcheck', '--quiet', '--message', '[qa] Hello World.'],
+            ['commitcheck', '--quiet', '--message', '[qa] Hello World.\nFixes #20'],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                'Hello World',
+                '--quiet',
+                '--message',
+                "[qa] Fixed problem #20" "\n\nFixed problem X #20",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                '[qa] hello World',
+                '--quiet',
+                '--message',
+                "[qa] Finished task #2\n\n" "Resolves problem described in #2",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                '[qa] Hello World.',
+                '--quiet',
+                '--message',
+                "[qa] Fixed problem\n\n" "Failure #2\nRelated to #1",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                '[qa] Hello World.\nFixes #20',
+                '--quiet',
+                '--message',
+                "[qa] Updated file and fixed problem\n\n" "Added more files. Fixes #20",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Fixed problem #20"
-                "\n\nFixed problem X #20"
+                '--quiet',
+                '--message',
+                "[qa] Improved Y\n\n" "Related to #2",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Finished task #2\n\n"
-                "Resolves problem described in #2"
+                '--quiet',
+                '--message',
+                "[qa] Improved Y #2\n\n" "Updated files",
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "[qa] Fixed problem\n\n"
-                "Failure #2\nRelated to #1"
+                '--quiet',
+                '--message',
+                "[qa] Improved Y #20\n\n" "Related to #32 Fixes #30 Fix #40",
             ],
-            [
-                'commitcheck',
-                '--quiet', '--message',
-                "[qa] Updated file and fixed problem\n\n"
-                "Added more files. Fixes #20"
-            ],
-            [
-                'commitcheck',
-                '--quiet', '--message',
-                "[qa] Improved Y\n\n"
-                "Related to #2"
-            ],
-            [
-                'commitcheck',
-                '--quiet', '--message',
-                "[qa] Improved Y #2\n\n"
-                "Updated files"
-            ],
-            [
-                'commitcheck',
-                '--quiet', '--message',
-                "[qa] Improved Y #20\n\n"
-                "Related to #32 Fixes #30 Fix #40"
-            ]
         ]
         for option in options:
             with patch('argparse._sys.argv', option):
@@ -208,8 +192,7 @@ class TestQa(TestCase):
         bad_commit = [
             'commitcheck',
             '--message',
-            "[qa] Updated file and fixed problem\n\n"
-            "Added more files. Fixes #20"
+            "[qa] Updated file and fixed problem\n\n" "Added more files. Fixes #20",
         ]
         with patch('argparse._sys.argv', bad_commit):
             captured_output = io.StringIO()
@@ -228,14 +211,16 @@ class TestQa(TestCase):
         options = [
             [
                 'commitcheck',
-                '--quiet', '--message',
+                '--quiet',
+                '--message',
                 'Merge pull request #17 from TheOneAboveAllTitan/issues/16\n\n'
-                '[monitoring] Added migration to create ping for existing devices. #16'
+                '[monitoring] Added migration to create ping for existing devices. #16',
             ],
             [
                 'commitcheck',
-                '--quiet', '--message',
-                "Merge branch 'issue-21' into master"
+                '--quiet',
+                '--message',
+                "Merge branch 'issue-21' into master",
             ],
         ]
         for option in options:
@@ -243,6 +228,5 @@ class TestQa(TestCase):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
-                    msg = 'Check failed:\n\n{}' \
-                          '\n\nOutput:{}'.format(option[-1], e)
+                    msg = 'Check failed:\n\n{}' '\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)

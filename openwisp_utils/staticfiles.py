@@ -12,6 +12,7 @@ class DependencyFinder(FileSystemFinder):
     A static files finder that finds static files of
     django-apps listed in dependencies
     """
+
     dependencies = list(EXTENDED_APPS) + ['openwisp_utils']
 
     def __init__(self, app_names=None, *args, **kwargs):
