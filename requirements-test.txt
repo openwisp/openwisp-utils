@@ -1,4 +1,3 @@
-coveralls
 # For testing Dependency loaders
 django_netjsonconfig
 djangorestframework

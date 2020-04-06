@@ -15,11 +15,11 @@ branches:
 
 before_install:
   - pip install -U pip wheel setuptools
-  - pip install --no-cache-dir -U -r requirements-test.txt
 
 install:
   - pip install $DJANGO
   - pip install -e .[qa]
+  - pip install -U -r requirements-test.txt
 
 before_script:
   - openwisp-utils-qa-checks --migration-path "./tests/test_project/migrations"
