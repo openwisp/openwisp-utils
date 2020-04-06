@@ -10,7 +10,10 @@ class TimeReadonlyAdminMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.readonly_fields += ('created', 'modified',)
+        self.readonly_fields += (
+            'created',
+            'modified',
+        )
         super().__init__(*args, **kwargs)
 
 
@@ -106,6 +109,7 @@ class ReceiveUrlAdmin(ModelAdmin):
     a view_name concatenated with the obj id and/or
     with the key of the obj
     """
+
     receive_url_querystring_arg = 'key'
     receive_url_object_arg = 'pk'
     receive_url_name = None
@@ -129,24 +133,22 @@ class ReceiveUrlAdmin(ModelAdmin):
         reverse_kwargs = {}
         if self.receive_url_object_arg:
             reverse_kwargs = {
-                self.receive_url_object_arg:
-                getattr(obj, self.receive_url_object_arg)
+                self.receive_url_object_arg: getattr(obj, self.receive_url_object_arg)
             }
-        receive_path = reverse(self.receive_url_name,
-                               urlconf=self.receive_url_urlconf,
-                               kwargs=reverse_kwargs)
+        receive_path = reverse(
+            self.receive_url_name,
+            urlconf=self.receive_url_urlconf,
+            kwargs=reverse_kwargs,
+        )
         baseurl = self.receive_url_baseurl
         if not baseurl:
-            baseurl = '{0}://{1}'.format(
-                self.request.scheme,
-                self.request.get_host(),
-            )
+            baseurl = '{0}://{1}'.format(self.request.scheme, self.request.get_host(),)
         if self.receive_url_querystring_arg:
             url = '{0}{1}?{2}={3}'.format(
                 baseurl,
                 receive_path,
                 self.receive_url_querystring_arg,
-                getattr(obj, self.receive_url_querystring_arg)
+                getattr(obj, self.receive_url_querystring_arg),
             )
         return url
 

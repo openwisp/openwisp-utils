@@ -15,4 +15,5 @@ class OpenWispAdminThemeConfig(AppConfig):
         # this is necessary in order to avoid having to modify
         # many other openwisp modules and repos
         from django.contrib import admin
+
         admin.apps.AdminConfig.default_site = app_settings.ADMIN_SITE_CLASS

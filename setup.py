@@ -37,15 +37,16 @@ setup(
             'checkcommit = openwisp_utils.qa:check_commit_message',
         ],
     },
-    scripts=['openwisp-utils-qa-checks'],
+    scripts=['openwisp-qa-format', 'openwisp-utils-qa-checks'],
     include_package_data=True,
     zip_safe=False,
     install_requires=['django-model-utils>=4.0.0,<4.1.0'],
     extras_require={
         'qa': [
+            'black<=19.10b0',
             'flake8<=3.7.9',
             'isort<=4.3.21',
-            'coveralls'  # depends on coverage as well
+            'coveralls',  # depends on coverage as well
         ],
     },
     classifiers=[
@@ -58,5 +59,5 @@ setup(
         'Operating System :: OS Independent',
         'Framework :: Django',
         'Programming Language :: Python :: 3',
-    ]
+    ],
 )

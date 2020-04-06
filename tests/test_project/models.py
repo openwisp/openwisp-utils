@@ -33,24 +33,20 @@ class Book(TimeStampedEditableModel):
 
 class RadiusAccounting(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='radacctid')
-    session_id = models.CharField(verbose_name=_('session ID'),
-                                  max_length=64,
-                                  db_column='acctsessionid',
-                                  db_index=True)
-    username = models.CharField(verbose_name=_('username'),
-                                max_length=64,
-                                db_index=True,
-                                null=True,
-                                blank=True)
+    session_id = models.CharField(
+        verbose_name=_('session ID'),
+        max_length=64,
+        db_column='acctsessionid',
+        db_index=True,
+    )
+    username = models.CharField(
+        verbose_name=_('username'), max_length=64, db_index=True, null=True, blank=True
+    )
 
 
 class Project(UUIDModel):
-    name = models.CharField(max_length=64,
-                            null=True,
-                            blank=True)
-    key = KeyField(unique=True,
-                   db_index=True,
-                   help_text=_('unique project key'))
+    name = models.CharField(max_length=64, null=True, blank=True)
+    key = KeyField(unique=True, db_index=True, help_text=_('unique project key'))
 
     def __str__(self):
         return self.name

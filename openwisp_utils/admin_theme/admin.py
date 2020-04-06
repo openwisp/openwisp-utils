@@ -9,18 +9,12 @@ logger = logging.getLogger(__name__)
 
 class OpenwispAdminSite(admin.AdminSite):
     # <title>
-    site_title = getattr(settings,
-                         'OPENWISP_ADMIN_SITE_TITLE',
-                         'OpenWISP Admin')
+    site_title = getattr(settings, 'OPENWISP_ADMIN_SITE_TITLE', 'OpenWISP Admin')
     # h1 text
-    site_header = getattr(settings,
-                          'OPENWISP_ADMIN_SITE_HEADER',
-                          'OpenWISP')
+    site_header = getattr(settings, 'OPENWISP_ADMIN_SITE_HEADER', 'OpenWISP')
     # text at the top of the admin index page
     index_title = ugettext_lazy(
-        getattr(settings,
-                'OPENWISP_ADMIN_INDEX_TITLE',
-                'Network administration')
+        getattr(settings, 'OPENWISP_ADMIN_INDEX_TITLE', 'Network administration')
     )
 
 

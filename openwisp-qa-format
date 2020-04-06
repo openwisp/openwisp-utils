@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+isort -y . --recursive
+black -S .

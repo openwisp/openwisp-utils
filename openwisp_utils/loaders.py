@@ -10,6 +10,7 @@ class DependencyLoader(FilesystemLoader):
     A template loader that looks in templates dir of
     django-apps listed in dependencies. Default values is []
     """
+
     dependencies = EXTENDED_APPS
 
     def get_dirs(self):
