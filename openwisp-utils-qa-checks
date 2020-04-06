@@ -4,7 +4,7 @@ show_help() {
   printf "Usage:\n"
   printf "  openwisp-utils-qa-checks --help\n"
   printf "  openwisp-utils-qa-checks {--migration-path <path> [--migrations-to-ignore <int>] | --skip-checkmigrations}\n"
-  printf "            {[--message <commit-message>] | --skip-checkcommit}\n"
+  printf "            {[--message <commit-message>] | --skip-checkcommit | --force-checkcommit}\n"
   printf "            {[--migration-module <module>] | --skip-checkmakemigrations}\n"
   printf "            [--skip-checkendline]\n"
   printf "            [--skip-flake8]\n"
@@ -25,6 +25,7 @@ show_help() {
   printf "  --migration-module <module>\t: Name of Migration Module\n"
   printf "  --skip-checkmakemigrations\t: Skip make migration check\n"
   printf "  --skip-checkcommit\t\t: Skip commit check\n"
+  printf "  --force-checkcommit\t\t: Force commit check\n"
   printf "Blank endlines check options:\n"
   printf "  --skip-checkendline\t\t: Skip blank endlines check\n"
   printf "Flake8 check options:\n"
@@ -84,7 +85,7 @@ runisort() {
 
 runcheckcommit() {
   [ -n "$TRAVIS_PULL_REQUEST" ] || TRAVIS_PULL_REQUEST="false"
-  if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+  if [ "$SKIP_CHECKCOMMIT" = "false" -o "$TRAVIS_PULL_REQUEST" != "false" ]; then
     echo "Running commit message check"
     checkcommit --message "$COMMIT_MESSAGE" \
     && echo "SUCCESS: Commit name check successful!" \
@@ -144,6 +145,9 @@ while [ "$1" != "" ]; do
     ;;
   --skip-checkcommit)
     SKIP_CHECKCOMMIT=true
+    ;;
+  --force-checkcommit)
+    SKIP_CHECKCOMMIT=false
     ;;
   --message)
     shift
