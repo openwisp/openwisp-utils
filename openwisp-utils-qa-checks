@@ -201,16 +201,16 @@ if ! $SKIP_CHECKMIGRATIONS; then
   runcheckmigrations
 fi
 
-if ! $SKIP_FLAKE8; then
-  runflake8
-fi
-
 if ! $SKIP_ISORT; then
   runisort
 fi
 
 if ! $SKIP_BLACK; then
   runblack
+fi
+
+if ! $SKIP_FLAKE8; then
+  runflake8
 fi
 
 if ! $SKIP_CHECKCOMMIT; then
