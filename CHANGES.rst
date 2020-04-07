@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 0.4.5 [2020-04-07]
+--------------------------
+
+- [admin-theme] Minor CSS improvements for login-form
+- [tests] Added ``catch_signal`` test utility
+- [qa] Added ``coveralls`` (and hence coverage) to ``extra_requires['qa']``
+- [qa] Added merge cases to cases to skip in commit check
+- [qa] Added ``--force-checkcommit`` argument to force message commit check
+
 Version 0.4.4 [2020-02-28]
 --------------------------
 
