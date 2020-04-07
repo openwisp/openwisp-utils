@@ -90,6 +90,7 @@ def check_commit_message():
         r"^Merge branch '(.*?)' into",
         # releases
         r'^[A-Za-z0-9.]* release$',
+        r"^Bumped VERSION to (.*?)$",
     ]
     for case in skip_cases:
         if re.match(case, short_desc):

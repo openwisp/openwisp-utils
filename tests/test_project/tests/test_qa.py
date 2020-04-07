@@ -230,3 +230,16 @@ class TestQa(TestCase):
                 except (SystemExit, Exception) as e:
                     msg = 'Check failed:\n\n{}' '\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
+
+    def test_qa_call_check_commit_message_bump_version(self):
+        options = [
+            ['commitcheck', '--quiet', '--message', 'Bumped VERSION to 0.4.0'],
+            ['commitcheck', '--quiet', '--message', 'Bumped VERSION to 1.4.3 beta'],
+        ]
+        for option in options:
+            with patch('argparse._sys.argv', option):
+                try:
+                    check_commit_message()
+                except (SystemExit, Exception) as e:
+                    msg = 'Check failed:\n\n{}' '\n\nOutput:{}'.format(option[-1], e)
+                    self.fail(msg)
