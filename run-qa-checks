@@ -1,0 +1,2 @@
+#!/bin/bash
+openwisp-utils-qa-checks --migration-path "./tests/test_project/migrations"

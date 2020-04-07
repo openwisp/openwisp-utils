@@ -17,6 +17,9 @@ class TestQa(TestCase):
         # Create a fake migration file with default name
         open(self._test_migration_file, 'w').close()
 
+    def tearDown(self):
+        os.unlink(self._test_migration_file)
+
     def test_qa_call_check_migration_name_pass(self):
         options = [
             'checkmigrations',
@@ -221,5 +224,25 @@ class TestQa(TestCase):
             finally:
                 sys.stdout = sys.__stdout__  # reset redirect
 
-    def tearDown(self):
-        os.unlink(self._test_migration_file)
+    def test_qa_call_check_commit_message_merge(self):
+        options = [
+            [
+                'commitcheck',
+                '--quiet', '--message',
+                'Merge pull request #17 from TheOneAboveAllTitan/issues/16\n\n'
+                '[monitoring] Added migration to create ping for existing devices. #16'
+            ],
+            [
+                'commitcheck',
+                '--quiet', '--message',
+                "Merge branch 'issue-21' into master"
+            ],
+        ]
+        for option in options:
+            with patch('argparse._sys.argv', option):
+                try:
+                    check_commit_message()
+                except (SystemExit, Exception) as e:
+                    msg = 'Check failed:\n\n{}' \
+                          '\n\nOutput:{}'.format(option[-1], e)
+                    self.fail(msg)

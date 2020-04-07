@@ -80,10 +80,16 @@ def check_commit_message():
     short_desc = lines[0].strip()
     if len(lines) > 1:
         long_desc = lines[1:]
-    # check if it is a release commit
-    release = re.match(r'^[A-Za-z0-9.]* release$', short_desc)
-    if release:
-        return
+    skip_cases = [
+        # merges
+        r'^Merge pull request #[A-Za-z0-9.]* from',
+        r"^Merge branch '(.*?)' into",
+        # releases
+        r'^[A-Za-z0-9.]* release$',
+    ]
+    for case in skip_cases:
+        if re.match(case, short_desc):
+            return
     errors = []
     # no final dot
     if short_desc and short_desc[-1] == '.':
