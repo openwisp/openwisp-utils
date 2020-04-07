@@ -22,7 +22,7 @@ install:
   - pip install -U -r requirements-test.txt
 
 before_script:
-  - openwisp-utils-qa-checks --migration-path "./tests/test_project/migrations"
+  - ./run-qa-checks
 
 script:
   - coverage run --source=openwisp_utils runtests.py
