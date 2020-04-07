@@ -115,7 +115,7 @@ runcheckpendingmigrations() {
     echo $OUTPUT
     echo $OUTPUT | grep "No changes detected" &> /dev/null \
       && echo "SUCCESS: Migrations check successful!" \
-      || { echoerr "ERROR: Migrations check failed! Models' changes not migrated, please run `./manage.py makemigrations` to solve the issue!"; FAILURE=1; }
+      || { echoerr "ERROR: Migrations check failed! Models' changes not migrated, please run './manage.py makemigrations' to solve the issue!"; FAILURE=1; }
   fi
 }
 
