@@ -336,13 +336,16 @@ Usage example as a context-manager:
 
 .. code-block:: python
 
-    with catch_signal(<signal name>) as handler:
-        # Perform the action that generates the signal
-    handler.assert_called_once_with(
-        <parameter>=<argument>,
-        sender=<sender name>,
-        signal=<signal name>,
-    )
+    from openwisp_utils.tests import catch_signal
+
+    with catch_signal(openwisp_signal) as handler:
+            model_instance.trigger_signal()
+        handler.assert_called_once_with(
+            arg1='value1',
+            arg2='value2',
+            sender=ModelName,
+            signal=openwisp_signal,
+        )
 
 Quality Assurance checks
 ^^^^^^^^^^^^^^^^^^^^^^^^
