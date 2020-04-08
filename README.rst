@@ -358,8 +358,8 @@ automated builds of different OpenWISP modules.
 
 Shell script to automatically format Python code. It runs ``isort`` and ``black``.
 
-``openwisp-utils-qa-checks``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``openwisp-qa-check``
+~~~~~~~~~~~~~~~~~~~~~
 
 Shell script to run the following quality assurance checks:
 
@@ -375,13 +375,13 @@ If a check requires a flag, it can be passed forward in the same way.
 
 Usage example::
 
-    openwisp-utils-qa-checks --migration-path <path> --message <commit-message>
+    openwisp-qa-check --migration-path <path> --message <commit-message>
 
 Any unneeded checks can be skipped by passing ``--skip-<check-name>``
 
 Usage example::
 
-    openwisp-utils-qa-checks --skip-isort
+    openwisp-qa-check --skip-isort
 
 You can do multiple ``checkmigrations`` by passing the arguments with space-delimited string.
 
@@ -395,7 +395,7 @@ For example, this multiple ``checkmigrations``::
 
 Can be changed with::
 
-    openwisp-utils-qa-checks --migrations-to-ignore "3 2" \
+    openwisp-qa-check --migrations-to-ignore "3 2" \
             --migration-path "./openwisp_users/migrations/ ./tests/testapp/migrations/"
 
 ``checkmigrations``
