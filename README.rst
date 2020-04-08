@@ -339,7 +339,7 @@ Usage example as a context-manager:
     from openwisp_utils.tests import catch_signal
 
     with catch_signal(openwisp_signal) as handler:
-            model_instance.trigger_signal()
+        model_instance.trigger_signal()
         handler.assert_called_once_with(
             arg1='value1',
             arg2='value2',
