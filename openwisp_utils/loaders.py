@@ -1,3 +1,4 @@
+import importlib
 import os
 
 from django.template.loaders.filesystem import Loader as FilesystemLoader
@@ -16,6 +17,6 @@ class DependencyLoader(FilesystemLoader):
     def get_dirs(self):
         dirs = []
         for dependency in self.dependencies:
-            module = __import__(dependency)
+            module = importlib.import_module(dependency)
             dirs.append('{0}/templates'.format(os.path.dirname(module.__file__)))
         return dirs
