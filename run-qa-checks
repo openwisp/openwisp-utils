@@ -1,2 +1,3 @@
 #!/bin/bash
+set -e
 openwisp-qa-check --migration-path "./tests/test_project/migrations"
