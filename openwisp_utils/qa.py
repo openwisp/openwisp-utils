@@ -132,7 +132,7 @@ def check_commit_message():
                     'You are mentioning an issue in the long description '
                     'without closing it: is it intentional?\n  '
                     'If not, please use "Closes #<issue>" or "Fixes #<issue>"\n  '
-                    'Otherwise, use "related to #<issue>'
+                    'Otherwise, use "Related to #<issue>'
                 )
             shot_desc_mentions = 0
             for issue in issues:
