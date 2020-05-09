@@ -18,8 +18,8 @@ before_install:
 
 install:
   - pip install $DJANGO
-  - pip install -e .[qa]
   - pip install -U -r requirements-test.txt
+  - pip install -e .[qa,rest]
 
 before_script:
   - ./run-qa-checks

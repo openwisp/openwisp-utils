@@ -312,6 +312,24 @@ Example usage:
         '/static/custom-admin-theme.js',
     ]
 
+``OPENWISP_REST_SWAGGER``
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**default**: ``True``
+
+Enable or disable Swagger API documentation endpoint.
+
+When enabled, you can view the available documentation using the
+Swagger endpoint at ``/api/v1/swagger/``.
+
+You also need to add the following url to your project urls.py:
+
+.. code-block:: python
+
+    urlpatterns += [
+        url(r'^api/v1/', include('openwisp_utils.api.urls')),
+    ]
+
 Admin mixins
 ^^^^^^^^^^^^
 

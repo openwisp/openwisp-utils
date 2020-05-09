@@ -20,6 +20,9 @@ INSTALLED_APPS = [
     'test_project',
     # admin
     'django.contrib.admin',
+    # rest framework
+    'rest_framework',
+    'drf_yasg',
 ]
 
 EXTENDED_APPS = ['django_netjsonconfig']  # Just for testing purposes
