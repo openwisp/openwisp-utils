@@ -52,6 +52,7 @@ setup(
             'isort<=4.3.21',
             'coveralls',  # depends on coverage as well
         ],
+        'rest': ['djangorestframework>=3.11,<3.12', 'drf-yasg>=1.17,<1.18'],
     },
     classifiers=[
         'Development Status :: 3 - Alpha',
