@@ -1,6 +1,5 @@
 from django.apps import registry
 from django.conf import settings
-from django.contrib.admin import site
 from django.urls import reverse
 
 from . import settings as app_settings
@@ -28,8 +27,15 @@ def build_menu(request=None):
         model_class = registry.apps.get_model(app_label, model)
         url = reverse('admin:{}_{}_changelist'.format(app_label, model.lower()))
         label = item.get('label', model_class._meta.verbose_name_plural)
-        model_admin = site._registry[model_class]
-        if not request or model_admin.has_module_permission(request):
+        has_permission = False
+        for perm in request.user.get_all_permissions():
+            try:
+                obj = perm.split('.', 1)[1].split('_')[1]
+                if model.lower() == obj:
+                    has_permission = True
+            except IndexError:
+                continue
+        if not request or has_permission:
             menu.append({'url': url, 'label': label, 'class': model.lower()})
     return menu
 
