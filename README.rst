@@ -330,6 +330,26 @@ You also need to add the following url to your project urls.py:
         url(r'^api/v1/', include('openwisp_utils.api.urls')),
     ]
 
+``OPENWISP_API_INFO``
+~~~~~~~~~~~~~~~~~~~~~
+
+**default**:
+
+.. code-block:: python
+
+    {
+        'title': 'OpenWISP API',
+        'default_version': 'v1',
+        'description': 'OpenWISP REST API',
+    }
+
+Define OpenAPI general information.
+NOTE: This setting requires ``OPENWISP_REST_SWAGGER = True`` to take effect.
+
+For more information about optional parameters check the
+`drf-yasg documentation <https://drf-yasg.readthedocs.io/en/stable/readme.html#quickstart>`_
+.
+
 Admin mixins
 ^^^^^^^^^^^^
 

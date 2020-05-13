@@ -8,13 +8,7 @@ urlpatterns = []
 
 if app_settings.REST_SWAGGER:
     schema_view = get_schema_view(
-        openapi.Info(
-            title='OpenWISP API',
-            default_version='v1',
-            description='OpenWISP REST API',
-            contact=openapi.Contact(email='openwisp@googlegroups.com'),
-            license=openapi.License(name="GPLv3"),
-        ),
+        openapi.Info(**app_settings.API_INFO),
         public=True,
         permission_classes=[permissions.AllowAny],
     )
