@@ -3,7 +3,7 @@ from django.conf import settings
 EXTENDED_APPS = getattr(settings, 'EXTENDED_APPS', [])
 
 # API settings
-REST_SWAGGER = getattr(settings, 'OPENWISP_REST_SWAGGER', True)
+API_DOCS = getattr(settings, 'OPENWISP_API_DOCS', True)
 API_INFO = getattr(
     settings,
     'OPENWISP_API_INFO',

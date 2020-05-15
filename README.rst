@@ -312,15 +312,15 @@ Example usage:
         '/static/custom-admin-theme.js',
     ]
 
-``OPENWISP_REST_SWAGGER``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+``OPENWISP_API_DOCS``
+~~~~~~~~~~~~~~~~~~~~~
 
 **default**: ``True``
 
-Enable or disable Swagger API documentation endpoint.
+Whether the OpenAPI documentation is enabled.
 
 When enabled, you can view the available documentation using the
-Swagger endpoint at ``/api/v1/swagger/``.
+Swagger endpoint at ``/api/v1/docs/``.
 
 You also need to add the following url to your project urls.py:
 
@@ -329,6 +329,7 @@ You also need to add the following url to your project urls.py:
     urlpatterns += [
         url(r'^api/v1/', include('openwisp_utils.api.urls')),
     ]
+
 
 ``OPENWISP_API_INFO``
 ~~~~~~~~~~~~~~~~~~~~~
@@ -344,11 +345,10 @@ You also need to add the following url to your project urls.py:
     }
 
 Define OpenAPI general information.
-NOTE: This setting requires ``OPENWISP_REST_SWAGGER = True`` to take effect.
+NOTE: This setting requires ``OPENWISP_API_DOCS = True`` to take effect.
 
 For more information about optional parameters check the
-`drf-yasg documentation <https://drf-yasg.readthedocs.io/en/stable/readme.html#quickstart>`_
-.
+`drf-yasg documentation <https://drf-yasg.readthedocs.io/en/stable/readme.html#quickstart>`_.
 
 Admin mixins
 ^^^^^^^^^^^^
