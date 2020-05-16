@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls import url
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
@@ -10,7 +11,9 @@ if app_settings.API_DOCS:
     schema_view = get_schema_view(
         openapi.Info(**app_settings.API_INFO),
         public=True,
-        permission_classes=[permissions.AllowAny],
+        permission_classes=(
+            permissions.AllowAny if settings.DEBUG else permissions.IsAuthenticated,
+        ),
     )
 
     urlpatterns += [
