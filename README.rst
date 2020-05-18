@@ -526,7 +526,7 @@ Run tests with:
 
 .. code-block:: shell
 
-    ./runtests.py
+    ./runtests.py --parallel
 
 Contributing
 ------------
