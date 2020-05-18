@@ -60,7 +60,7 @@ runcheckendline() {
 
 runcheckmigrations() {
   if [ "$MIGRATION_PATH" == "" ]; then
-    echoerr "ERROR: No migration path specified!"
+    echoerr "SKIPPED: No migration path specified!"
     FAILURE=1
     return
   fi
