@@ -13,3 +13,5 @@ API_INFO = getattr(
         'description': 'OpenWISP REST API',
     },
 )
+
+API_RATE_ANON = getattr(settings, 'OPENWISP_API_RATE_ANON', '40/hour')
