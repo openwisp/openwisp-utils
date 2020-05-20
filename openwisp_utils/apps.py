@@ -1,10 +1,12 @@
 from django.apps import AppConfig
 from django.conf import settings
+from django.utils.translation import ugettext_lazy as _
 
 
-class TestAppConfig(AppConfig):
-    name = 'test_project'
-    label = 'test_project'
+class UtilsAppConfig(AppConfig):
+    name = 'openwisp_utils'
+    label = 'utils'
+    verbose_name = _('OpenWISP utils')
 
     DEFAULT_REST_FRAMEWORK = {
         'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
@@ -12,16 +14,7 @@ class TestAppConfig(AppConfig):
     }
 
     def ready(self, *args, **kwargs):
-        super(TestAppConfig, self).ready(*args, **kwargs)
-        self.add_default_menu_items()
         self.configure_drf_defaults()
-
-    def add_default_menu_items(self):
-        menu_setting = 'OPENWISP_DEFAULT_ADMIN_MENU_ITEMS'
-        items = [
-            {'model': 'test_project.Shelf'},
-        ]
-        setattr(settings, menu_setting, items)
 
     def configure_drf_defaults(self):
         config = getattr(settings, 'REST_FRAMEWORK', {})
