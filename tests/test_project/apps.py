@@ -1,18 +1,14 @@
 from django.apps import AppConfig
 from django.conf import settings
 
-from openwisp_utils import settings as app_settings
-
 
 class TestAppConfig(AppConfig):
     name = 'test_project'
     label = 'test_project'
 
-    _default_drf = {
+    DEFAULT_REST_FRAMEWORK = {
         'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
-        'DEFAULT_THROTTLE_RATES': {
-            'anon': app_settings.API_RATE_ANON,
-        },
+        'DEFAULT_THROTTLE_RATES': {'anon': '40/hour'},
     }
 
     def ready(self, *args, **kwargs):
@@ -29,5 +25,6 @@ class TestAppConfig(AppConfig):
 
     def configure_drf_defaults(self):
         config = getattr(settings, 'REST_FRAMEWORK', {})
-        config.update(self._default_drf)
+        for key in self.DEFAULT_REST_FRAMEWORK.keys():
+            config.setdefault(key, self.DEFAULT_REST_FRAMEWORK[key])
         setattr(settings, 'REST_FRAMEWORK', config)
