@@ -5,5 +5,5 @@ from django.urls import include
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/v1/', include('openwisp_utils.api.urls')),
-    url(r'^test_api/', include('test_project.test_api.urls')),
+    url(r'^api/v1/', include('test_project.api.urls')),
 ]

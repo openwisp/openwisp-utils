@@ -121,7 +121,7 @@ class TestAdmin(TestCase, CreateMixin):
     def test_receive_url_field_in_change(self):
         p = Project.objects.create(name='test_receive_url_change')
         path = reverse('admin:test_project_project_change', args=[p.pk])
-        expected_receive_url = 'http://testserver/test_api/receive_project/'
+        expected_receive_url = 'http://testserver/api/v1/receive_project/'
         response = self.client.get(path)
         self.assertContains(response, 'field-receive_url')
         self.assertEqual(response.status_code, 200)
