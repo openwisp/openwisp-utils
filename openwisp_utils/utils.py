@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from django.utils.crypto import get_random_string
 
 
@@ -9,11 +11,15 @@ def get_random_key():
 
 
 def deep_merge_dicts(dict1, dict2):
-    result = dict1.copy()
+    """
+    returns a new dict which is the result of the merge of the two dicts,
+    all elements are deepcopied to avoid modifying the original data structures
+    """
+    result = deepcopy(dict1)
     for key, value in dict2.items():
         if isinstance(value, dict):
             node = result.get(key, {})
             result[key] = deep_merge_dicts(node, value)
         else:
-            result[key] = value
+            result[key] = deepcopy(value)
     return result
