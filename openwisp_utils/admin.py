@@ -57,9 +57,9 @@ class ReadOnlyAdmin(ModelAdmin):
 class AlwaysHasChangedMixin(object):
     def has_changed(self):
         """
-        This django-admin trick ensures the settings
-        are saved even if default values are unchanged
-        (without this trick new setting objects won't be
+        This django-admin trick ensures the inline item
+        is saved even if default values are unchanged
+        (without this trick new objects won't be
         created unless users change the default values)
         """
         if self.instance._state.adding:
