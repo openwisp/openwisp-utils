@@ -17,9 +17,17 @@ openwisp-utils
     :target: http://badge.fury.io/py/openwisp-utils
     :alt: pypi
 
+.. image:: https://pepy.tech/badge/openwisp-utils
+   :target: https://pepy.tech/project/openwisp-utils
+   :alt: downloads
+
 .. image:: https://img.shields.io/gitter/room/nwjs/nw.js.svg?style=flat-square
    :target: https://gitter.im/openwisp/general
    :alt: support chat
+
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://pypi.org/project/black/
+   :alt: code style: black
 
 ------------
 
