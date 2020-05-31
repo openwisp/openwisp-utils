@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from test_project.serializers import ShelfSerializer
@@ -21,3 +22,16 @@ class TestApi(CreateMixin, TestCase):
     def test_validator_fail(self):
         with self.assertRaises(ValidationError):
             self._create_shelf(name='Intentional_Test_Fail')
+
+    def test_rest_framework_settings_override(self):
+        drf_conf = getattr(settings, 'REST_FRAMEWORK', {})
+        self.assertEqual(
+            drf_conf,
+            {
+                'DEFAULT_THROTTLE_CLASSES': [
+                    'test_project.test_api.throttling.CustomScopedRateThrottle'
+                ],
+                'DEFAULT_THROTTLE_RATES': {'anon': '20/hour', 'test': '10/minute'},
+                'TEST': True,
+            },
+        )

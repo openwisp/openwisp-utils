@@ -88,6 +88,14 @@ ACCOUNT_LOGOUT_REDIRECT_URL = LOGIN_REDIRECT_URL
 # during development only
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# only for automated test purposes
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'test_project.test_api.throttling.CustomScopedRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {'anon': '20/hour'},
+}
+
 # local settings must be imported before test runner otherwise they'll be ignored
 try:
     from local_settings import *
