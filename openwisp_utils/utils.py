@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+from django.conf import settings
 from django.utils.crypto import get_random_string
 
 
@@ -23,3 +24,7 @@ def deep_merge_dicts(dict1, dict2):
         else:
             result[key] = deepcopy(value)
     return result
+
+
+def default_or_test(value, test):
+    return value if not getattr(settings, 'TESTING', False) else test

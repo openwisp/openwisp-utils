@@ -316,6 +316,23 @@ Usage:
 
     mergd_dict = deep_merge_dicts(dict1, dict2)
 
+``openwisp_utils.utils.default_or_test``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the program is being executed during automated tests the value supplied in
+the ``test`` argument will be returned, otherwise the one supplied in the
+``value`` argument is returned.
+
+.. code-block:: python
+
+    from openwisp_utils.utils import default_or_test
+
+    THROTTLE_RATE = getattr(
+        settings,
+        'THROTTLE_RATE',
+        default_or_test(value='20/day', test=None),
+    )
+
 REST API utilities
 ------------------
 

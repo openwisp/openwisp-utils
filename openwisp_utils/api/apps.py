@@ -1,11 +1,11 @@
 from django.apps import AppConfig
 from django.conf import settings
 
-from ..utils import deep_merge_dicts
+from ..utils import deep_merge_dicts, default_or_test
 
 DEFAULT_REST_FRAMEWORK_SETTINGS = {
     'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.ScopedRateThrottle'],
-    'DEFAULT_THROTTLE_RATES': {'anon': '40/hour'},
+    'DEFAULT_THROTTLE_RATES': {'anon': default_or_test(value='40/hour', test=None)},
 }
 
 
