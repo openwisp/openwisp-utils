@@ -48,14 +48,14 @@ setup(
     extras_require={
         'qa': [
             'black<=19.10b0',
-            'flake8<=3.7.9',
+            'flake8<=3.9',
             'isort<=4.3.21',
             'coveralls',  # depends on coverage as well
         ],
         'rest': [
             'djangorestframework>=3.11,<3.12',
-            'drf-yasg>=1.17,<1.18',
             'django-filter>=2.2.0<2.3.0',
+            'drf-yasg>=1.17,<1.18',
         ],
     },
     classifiers=[
