@@ -1,10 +1,27 @@
 Changelog
 =========
 
-Version 0.5.0 [unreleased]
+Version 0.5.0 [2020-06-02]
 --------------------------
 
-WIP
+- [fix] Fix crash when pending migrations check fails
+- [add] default_or_test function
+- [add] Added deep_merge_dicts function
+- [add] formatter: black<=19.10b0
+- [add] OPENWISP_API_INFO setting
+- [add][api] Require authentication for API docs if DEBUG is False
+- [add][api] Implement ScopedRateThrottle by default
+- [add][api] Introduced api.ApiAppConfig
+- [add][rest] optional swagger API endpoints
+- [add][rest] django-filter
+- [docs] Re-ordered, added information and improved existing docs
+- [update] Added support for flake8 flake8<=3.9
+- [change] Renamed test_api to api for consistency
+- [change] Rename openwisp-utils-qa-checks to openwisp-qa-check
+- [change][api] Renamed /api/v1/swagger/ to /api/v1/docs/
+- [improvement] Moved to importlib for Dependency loader & staticfiles for importing files
+- [improvement] Added "Related to #<issue>" for commit-check
+- [enchancement] Added strict mode to run-qa-checks
 
 Version 0.4.5 [2020-04-07]
 --------------------------
