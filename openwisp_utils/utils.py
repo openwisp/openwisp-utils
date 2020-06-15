@@ -28,3 +28,19 @@ def deep_merge_dicts(dict1, dict2):
 
 def default_or_test(value, test):
     return value if not getattr(settings, 'TESTING', False) else test
+
+
+def print_color(string, color_name, end='\n'):
+    """
+    Prints colored output on terminal from a selected range of colors.
+    If color_name is not present then output won't be colored.
+    """
+    color_dict = {
+        'white_bold': '37;1',
+        'green_bold': '32;1',
+        'yellow_bold': '33;1',
+        'red_bold': '31;1',
+        'reset': '0',
+    }
+    color = color_dict.get(color_name, '0')
+    print(f'\033[{color}m{string}\033[0m', end=end)
