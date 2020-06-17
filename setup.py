@@ -30,7 +30,8 @@ setup(
     download_url='https://github.com/openwisp/openwisp-utils/releases',
     platforms=['Platform Independent'],
     keywords=['django', 'netjson', 'openwrt', 'networking', 'openwisp'],
-    packages=find_packages(exclude=['tests', 'docs']),
+    packages=find_packages(exclude=['tests*', 'docs']),
+    include_package_data=True,
     entry_points={
         'console_scripts': [
             'checkmigrations = openwisp_utils.qa:check_migration_name',
@@ -42,7 +43,6 @@ setup(
         'openwisp-qa-format',
         'openwisp-utils-qa-checks',  # Deprecated, use openwisp-qa-check
     ],
-    include_package_data=True,
     zip_safe=False,
     install_requires=['django-model-utils>=4.0.0,<4.1.0'],
     extras_require={
