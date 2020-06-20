@@ -336,7 +336,7 @@ the ``test`` argument will be returned, otherwise the one supplied in the
 ``openwisp_utils.utils.print_color``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default colors**: `['white_bold', 'green_bold', 'yellow_bold', 'red_bold']`
+**default colors**: ``['white_bold', 'green_bold', 'yellow_bold', 'red_bold']``
 
 If you want to print a string in ``Red Bold``, you can do it as below.
 
