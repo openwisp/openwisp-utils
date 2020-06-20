@@ -333,6 +333,21 @@ the ``test`` argument will be returned, otherwise the one supplied in the
         default_or_test(value='20/day', test=None),
     )
 
+``openwisp_utils.utils.print_color``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default colors**: ``['white_bold', 'green_bold', 'yellow_bold', 'red_bold']``
+
+If you want to print a string in ``Red Bold``, you can do it as below.
+
+.. code-block:: python
+
+    from openwisp_utils.utils import print_color
+
+    print_color('This is the printed in Red Bold', color_name='red_bold')
+
+You may also provide the ``end`` arguement similar to built-in print method.
+
 REST API utilities
 ------------------
 
@@ -395,6 +410,25 @@ Usage example as a context-manager:
             sender=ModelName,
             signal=openwisp_signal,
         )
+
+``openwisp_utils.tests.TimeLoggingTestRunner``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/master/docs/TimeLoggingTestRunner.png
+  :align: center
+
+This class extends the `default test runner provided by Django <https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-TEST_RUNNER>`_
+and logs the time spent by each test, making it easier to spot slow tests by highlighting
+time taken by it in yellow (time shall be highlighted in red if it crosses the second threshold).
+
+By default tests are considered slow if they take more than 0.3 seconds but you can control
+this with `OPENWISP_SLOW_TEST_THRESHOLD <#openwisp_slow_test_threshold>`_.
+
+In order to switch to this test runner you have set the following in your `settings.py`:
+
+.. code-block:: python
+
+    TEST_RUNNER = 'openwisp_utils.tests.TimeLoggingTestRunner'
 
 Quality Assurance Checks
 ------------------------
@@ -631,6 +665,14 @@ NOTE: This setting requires ``OPENWISP_API_DOCS = True`` to take effect.
 
 For more information about optional parameters check the
 `drf-yasg documentation <https://drf-yasg.readthedocs.io/en/stable/readme.html#quickstart>`_.
+
+``OPENWISP_SLOW_TEST_THRESHOLD``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default**: ``[0.3, 1]`` (seconds)
+
+It can be used to change the thresholds used by `TimeLoggingTestRunner <#openwisp_utilsteststimeloggingtestrunner>`_
+to detect slow tests (0.3s by default) and highlight the slowest ones (1s by default) amongst them.
 
 Installing for development
 --------------------------

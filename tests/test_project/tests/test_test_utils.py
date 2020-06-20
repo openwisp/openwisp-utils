@@ -1,7 +1,8 @@
 from django.dispatch import Signal
 from django.test import TestCase
-from openwisp_utils.tests import catch_signal
-from openwisp_utils.utils import deep_merge_dicts
+from django.test.utils import captured_stderr, captured_stdout
+from openwisp_utils.tests import TimeLoggingTestRunner, catch_signal
+from openwisp_utils.utils import deep_merge_dicts, print_color
 
 status_signal = Signal(providing_args=['status'])
 
@@ -37,3 +38,31 @@ class TestUtils(TestCase):
             'unchanged': 'unchanged',
         }
         self.assertDictEqual(deep_merge_dicts(dict1, dict2), merged)
+
+    def test_time_logging_runner(self):
+        runner = TimeLoggingTestRunner()
+        suite = runner.build_suite(
+            ['test_project.tests.test_test_utils.TestUtils.test_status_signal_emitted'],
+        )
+        with captured_stdout() as stdout, captured_stderr() as stderr:
+            runner.run_suite(suite)
+        self.assertIn('slow tests (>0.3s)', stdout.getvalue())
+        self.assertIn('Total slow tests detected: 0', stdout.getvalue())
+        self.assertIn('Ran 1 test', stderr.getvalue())
+        self.assertIn('OK', stderr.getvalue())
+
+    def test_print_color(self):
+        with captured_stdout() as stdout:
+            print_color('This is the printed in Red Bold', color_name='red_bold')
+        expected = '\033[31;1mThis is the printed in Red Bold\033[0m\n'
+        self.assertEqual(stdout.getvalue(), expected)
+        with captured_stdout() as stdout:
+            print_color(
+                'This is the printed in Red Bold', color_name='red_bold', end=''
+            )
+        expected = '\033[31;1mThis is the printed in Red Bold\033[0m'
+        self.assertEqual(stdout.getvalue(), expected)
+        with captured_stdout() as stdout:
+            print_color('This is the printed in Red Bold', color_name='invalid')
+        expected = '\033[0mThis is the printed in Red Bold\033[0m\n'
+        self.assertEqual(stdout.getvalue(), expected)
