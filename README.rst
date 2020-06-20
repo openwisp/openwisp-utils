@@ -336,7 +336,7 @@ the ``test`` argument will be returned, otherwise the one supplied in the
 ``openwisp_utils.utils.print_color``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default colors**: ['white_bold', 'green_bold', 'yellow_bold', 'red_bold']
+**default colors**: `['white_bold', 'green_bold', 'yellow_bold', 'red_bold']`
 
 If you want to print a string in ``Red Bold``, you can do it as below.
 
@@ -422,7 +422,7 @@ and logs the time spent by each test, making it easier to spot slow tests by hig
 time taken by it in yellow (time shall be highlighted in red if it crosses the second threshold).
 
 By default tests are considered slow if they take more than 0.3 seconds but you can control
-this with `OPENWISP_SLOW_TEST_THRESHOLD <#openwisp_slow_test_threshold>`_
+this with `OPENWISP_SLOW_TEST_THRESHOLD <#openwisp_slow_test_threshold>`_.
 
 In order to switch to this test runner you have set the following in your `settings.py`:
 
@@ -669,7 +669,7 @@ For more information about optional parameters check the
 ``OPENWISP_SLOW_TEST_THRESHOLD``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default**: ``[0.3, 1]`` (in seconds)
+**default**: ``[0.3, 1]`` (seconds)
 
 It can be used to change the thresholds used by `TimeLoggingTestRunner <#openwisp_utilsteststimeloggingtestrunner>`_
 to detect slow tests (0.3s by default) and highlight the slowest ones (1s by default) amongst them.
