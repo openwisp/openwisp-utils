@@ -40,7 +40,7 @@ class TimeLoggingTestResult(TextTestResult):
 
     def display_slow_tests(self):
         print_color(
-            f'\nThese are your culprit slow tests (>{self.slow_test_threshold[0]}s)\n',
+            f'\nSummary of slow tests (>{self.slow_test_threshold[0]}s)\n',
             'white_bold',
         )
         self._module = None
