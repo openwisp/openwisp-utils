@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 0.5.1 [2020-06-29]
+--------------------------
+
+- [feature] Added ``TimeLoggingTestRunner`` to detect slow tests
+- [fix] Admin-theme: ensure menu is above other CSS elements
+- [fix] Removed ``/tests`` directory from python package
+
 Version 0.5.0 [2020-06-02]
 --------------------------
 
