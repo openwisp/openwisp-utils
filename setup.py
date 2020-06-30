@@ -49,7 +49,7 @@ setup(
         'qa': [
             'black<=19.10b0',
             'flake8<=3.9',
-            'isort<=4.3.21',
+            'isort~=5.0',
             'coveralls',  # depends on coverage as well
         ],
         'rest': [

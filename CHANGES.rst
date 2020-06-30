@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.5.2 [unreleased]
+--------------------------
+
+- [add] support for isort~=5.0 and dropped isort<=4.3
+
 Version 0.5.1 [2020-06-29]
 --------------------------
 
