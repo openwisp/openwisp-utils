@@ -81,7 +81,7 @@ runflake8() {
 }
 
 runisort() {
-  isort --check-only --recursive --diff \
+  isort . --check-only --diff \
     && echo "SUCCESS: Isort check successful!" \
     || { echoerr "ERROR: Isort check failed! Hint: did you forget running openwisp-qa-format?"; FAILURE=1; }
 }
