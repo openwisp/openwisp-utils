@@ -2,6 +2,7 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from openwisp_utils.admin import ReadOnlyAdmin
 from openwisp_utils.admin_theme import settings as admin_theme_settings
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
@@ -90,6 +91,20 @@ class TestAdmin(TestCase, CreateMixin):
         url = reverse('admin:test_project_shelf_add')
         response = self.client.get(url)
         self.assertContains(response, 'readonly')
+
+    def test_readonlyadmin_exclude(self):
+        class TestReadOnlyAdmin(ReadOnlyAdmin):
+            exclude = ['id']
+
+        modeladmin = TestReadOnlyAdmin(RadiusAccounting, AdminSite)
+        self.assertEqual(modeladmin.readonly_fields, ['session_id', 'username'])
+
+    def test_readonlyadmin_fields(self):
+        class TestReadOnlyAdmin(ReadOnlyAdmin):
+            pass
+
+        modeladmin = TestReadOnlyAdmin(RadiusAccounting, AdminSite)
+        self.assertEqual(modeladmin.readonly_fields, ['id', 'session_id', 'username'])
 
     def test_context_processor(self):
         url = reverse('admin:index')

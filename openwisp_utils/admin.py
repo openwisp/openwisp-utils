@@ -22,9 +22,14 @@ class ReadOnlyAdmin(ModelAdmin):
     Disables all editing capabilities
     """
 
+    exclude = tuple()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.readonly_fields = [f.name for f in self.model._meta.fields]
+        exclude = self.exclude
+        self.readonly_fields = [
+            f.name for f in self.model._meta.fields if f.name not in exclude
+        ]
 
     def get_actions(self, request):
         actions = super().get_actions(request)

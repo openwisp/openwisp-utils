@@ -273,6 +273,16 @@ which adds the fields ``created`` and ``modified`` to the database.
 
 A read-only ``ModelAdmin`` base class.
 
+Will include the ``id`` field by default, which can be excluded by supplying
+the ``exclude`` attribute, eg:
+
+.. code-block:: python
+
+    from openwisp_utils.admin import ReadOnlyAdmin
+
+    class PostAuthReadOnlyAdmin(ReadOnlyAdmin):
+        exclude = ['id']
+
 ``openwisp_utils.admin.AlwaysHasChangedMixin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
