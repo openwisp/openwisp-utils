@@ -1,5 +1,6 @@
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.urls import reverse
 from openwisp_utils.admin import ReadOnlyAdmin
@@ -110,6 +111,40 @@ class TestAdmin(TestCase, CreateMixin):
         url = reverse('admin:index')
         response = self.client.get(url)
         self.assertContains(response, 'class="shelf"')
+
+    def test_superuser_always_sees_menu_items(self):
+        url = reverse('admin:index')
+        r = self.client.get(url)
+        self.assertContains(r, 'class="shelf"')
+
+    def test_operator_with_perm_can_see_menu_item(self):
+        user = User.objects.create(
+            username='operator',
+            password='pass',
+            email='email@email',
+            is_staff=True,
+            is_superuser=False,
+        )
+        permission = Permission.objects.filter(codename__endswith='shelf')
+        user.user_permissions.add(*permission)
+        user.refresh_from_db()
+        self.client.force_login(user)
+        url = reverse('admin:index')
+        r = self.client.get(url)
+        self.assertContains(r, 'class="shelf"')
+
+    def test_operator_without_perm_cant_see_menu_item(self):
+        user = User.objects.create(
+            username='operator',
+            password='pass',
+            email='email@email',
+            is_staff=True,
+            is_superuser=False,
+        )
+        self.client.force_login(user)
+        url = reverse('admin:index')
+        r = self.client.get(url)
+        self.assertNotContains(r, 'class="shelf"')
 
     def test_uuid_field_in_change(self):
         p = Project.objects.create(name='test-project')

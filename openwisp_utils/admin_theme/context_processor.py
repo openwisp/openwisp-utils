@@ -15,7 +15,7 @@ def menu_items(request):
     }
 
 
-def build_menu(request=None):
+def build_menu(request):
     default_items = getattr(settings, 'OPENWISP_DEFAULT_ADMIN_MENU_ITEMS', [])
     custom_items = getattr(settings, 'OPENWISP_ADMIN_MENU_ITEMS', [])
     items = custom_items or default_items
@@ -25,18 +25,18 @@ def build_menu(request=None):
     for item in items:
         app_label, model = item['model'].split('.')
         model_class = registry.apps.get_model(app_label, model)
-        url = reverse('admin:{}_{}_changelist'.format(app_label, model.lower()))
+        model_label = model.lower()
+        url = reverse('admin:{}_{}_changelist'.format(app_label, model_label))
         label = item.get('label', model_class._meta.verbose_name_plural)
-        has_permission = False
-        for perm in request.user.get_all_permissions():
-            try:
-                obj = perm.split('.', 1)[1].split('_')[1]
-                if model.lower() == obj:
-                    has_permission = True
-            except IndexError:
-                continue
-        if not request or has_permission:
-            menu.append({'url': url, 'label': label, 'class': model.lower()})
+        view_perm = f'{app_label}.view_{model_label}'
+        change_perm = f'{app_label}.change_{model_label}'
+        user = request.user
+        # use cached helper from openwisp-users if available
+        has_permission_method = (
+            user.has_permission if hasattr(user, 'has_permission') else user.has_perm
+        )
+        if has_permission_method(view_perm) or has_permission_method(change_perm):
+            menu.append({'url': url, 'label': label, 'class': model_label})
     return menu
 
 
