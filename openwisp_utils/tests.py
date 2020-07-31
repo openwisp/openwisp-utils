@@ -20,13 +20,18 @@ def catch_signal(signal):
 
 
 class TimeLoggingTestResult(TextTestResult):
-    slow_test_threshold = getattr(settings, 'OPENWISP_SLOW_TEST_THRESHOLD', [0.3, 1])
-    assert isinstance(slow_test_threshold, list)
-    assert len(slow_test_threshold) == 2
-
     def __init__(self, *args, **kwargs):
         self.test_timings = []
+        self.slow_test_threshold = self._get_slow_test_threshold()
         super().__init__(*args, **kwargs)
+
+    def _get_slow_test_threshold(self):
+        slow_test_threshold = getattr(
+            settings, 'OPENWISP_SLOW_TEST_THRESHOLD', [0.3, 1]
+        )
+        assert isinstance(slow_test_threshold, list)
+        assert len(slow_test_threshold) == 2
+        return slow_test_threshold
 
     def startTest(self, test):
         self._start_time = time()
@@ -48,6 +53,8 @@ class TimeLoggingTestResult(TextTestResult):
         for name, elapsed in self.test_timings:
             if elapsed > self.slow_test_threshold[0]:
                 slow_tests_counter += 1
+                # Remove docstring if present
+                name = name.split('\n')[0]
                 name, module = name.split()
                 if module != self._module:
                     self._module = module

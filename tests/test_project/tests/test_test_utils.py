@@ -1,5 +1,5 @@
 from django.dispatch import Signal
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import captured_stderr, captured_stdout
 from openwisp_utils.tests import TimeLoggingTestRunner, catch_signal
 from openwisp_utils.utils import deep_merge_dicts, print_color
@@ -12,6 +12,7 @@ class TestUtils(TestCase):
         status_signal.send(sender=self, status='working')
 
     def test_status_signal_emitted(self):
+        """ Tests the catch_signal test utility function """
         with catch_signal(status_signal) as handler:
             self._generate_signal()
         handler.assert_called_once_with(
@@ -39,6 +40,7 @@ class TestUtils(TestCase):
         }
         self.assertDictEqual(deep_merge_dicts(dict1, dict2), merged)
 
+    @override_settings(OPENWISP_SLOW_TEST_THRESHOLD=[0.0, 0.0])
     def test_time_logging_runner(self):
         runner = TimeLoggingTestRunner()
         suite = runner.build_suite(
@@ -46,8 +48,8 @@ class TestUtils(TestCase):
         )
         with captured_stdout() as stdout, captured_stderr() as stderr:
             runner.run_suite(suite)
-        self.assertIn('slow tests (>0.3s)', stdout.getvalue())
-        self.assertIn('Total slow tests detected: 0', stdout.getvalue())
+        self.assertIn('slow tests (>0.0s)', stdout.getvalue())
+        self.assertIn('Total slow tests detected: 1', stdout.getvalue())
         self.assertIn('Ran 1 test', stderr.getvalue())
         self.assertIn('OK', stderr.getvalue())
 
