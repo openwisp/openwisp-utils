@@ -143,7 +143,7 @@ html { overflow-x: hidden }
     width: 180px;
     overflow: hidden;
     position: absolute;
-    z-index: 9999;
+    z-index: 9999 !important;
     right: -200px;
     top: 0;
     background-color: #464646;
