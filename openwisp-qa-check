@@ -4,7 +4,7 @@ show_help() {
   printf "Usage:\n"
   printf "  openwisp-qa-check --help\n"
   printf "  openwisp-qa-check {--migration-path <path> [--migrations-to-ignore <int>] | --skip-checkmigrations}\n"
-  printf "            {[--message <commit-message>] | --skip-checkcommit | --force-checkcommit}\n"
+  printf "            {[--message <commit-message>] | --skip-checkcommit }\n"
   printf "            {[--migration-module <module>] | --skip-checkmakemigrations}\n"
   printf "            [--skip-checkendline]\n"
   printf "            [--skip-flake8]\n"
@@ -26,7 +26,6 @@ show_help() {
   printf "  --migration-module <module>\t: Name of Migration Module\n"
   printf "  --skip-checkmakemigrations\t: Skip make migration check\n"
   printf "  --skip-checkcommit\t\t: Skip commit check\n"
-  printf "  --force-checkcommit\t\t: Force commit check\n"
   printf "Blank endlines check options:\n"
   printf "  --skip-checkendline\t\t: Skip blank endlines check\n"
   printf "Flake8 check options:\n"
@@ -92,18 +91,19 @@ runblack() {
     || { echoerr "ERROR: Black check failed! Hint: did you forget running openwisp-qa-format?"; FAILURE=1; }
 }
 
-# This check is run when any of the following conditions is true:
-# 1. --force-checkcommit is specified
-# 2. This function is invoked from Travis building a Pull Request
 runcheckcommit() {
-  [ -n "$TRAVIS_PULL_REQUEST" ] || TRAVIS_PULL_REQUEST=false
-  if [[ $FORCE_CHECKCOMMIT = true ]] || [[ $TRAVIS_PULL_REQUEST = true ]]; then
-    echo "Running commit message check"
-    checkcommit --message "$COMMIT_MESSAGE" \
-    && echo "SUCCESS: Commit message check successful!" \
-    || { printf "Checking commit message:\n\n"; printf "%s\n\n" "$COMMIT_MESSAGE"; echoerr "ERROR: Commit message check failed!"; FAILURE=1; }
+  if [ -z "$COMMIT_MESSAGE" ]; then COMMIT_MESSAGE=$(git log -1 --pretty=%B); fi
+  if [ "$TRAVIS" = true ] && [ -z "$TRAVIS_PULL_REQUEST" ]; then
+    echo "SKIPPED: Commit message check skipped!"
   else
-    echo "SKIPPED: Commit message check"
+    checkcommit --message "$COMMIT_MESSAGE" &&
+      echo "SUCCESS: Commit message check successful!" ||
+      {
+        echo -e "Checked commit message:\n\n"
+        echo -e "$COMMIT_MESSAGE\n\n"
+        echoerr "ERROR: Commit message check failed!"
+        FAILURE=1
+      }
   fi
 }
 
@@ -162,9 +162,6 @@ while [ "$1" != "" ]; do
     ;;
   --skip-checkcommit)
     SKIP_CHECKCOMMIT=true
-    ;;
-  --force-checkcommit)
-    FORCE_CHECKCOMMIT=true
     ;;
   --message)
     shift
