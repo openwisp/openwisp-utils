@@ -60,13 +60,9 @@ class TestQa(TestCase):
             ['checkmigrations'],
         ]
         for option in options:
-            with patch('argparse._sys.argv', option):
-                try:
+            with patch('argparse._sys.argv', option), self.subTest(option):
+                with self.assertRaises(SystemExit):
                     check_migration_name()
-                except (SystemExit):
-                    pass
-                else:
-                    self.fail('SystemExit not raised')
 
     @capture_stdout()
     def test_migration_failure_message(self, captured_output):
@@ -124,7 +120,7 @@ class TestQa(TestCase):
             ],
         ]
         for option in options:
-            with patch('argparse._sys.argv', option):
+            with patch('argparse._sys.argv', option), self.subTest(option):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
@@ -180,13 +176,9 @@ class TestQa(TestCase):
             ['commitcheck', '--quiet', '--message', '[qa] Fixed issue #20'],
         ]
         for option in options:
-            with patch('argparse._sys.argv', option):
-                try:
+            with patch('argparse._sys.argv', option), self.subTest(option):
+                with self.assertRaises(SystemExit):
                     check_commit_message()
-                except (SystemExit):
-                    pass
-                else:
-                    self.fail('SystemExit not raised')
 
     @capture_stdout()
     def test_commit_failure_message(self, captured_output):
@@ -221,7 +213,7 @@ class TestQa(TestCase):
             ],
         ]
         for option in options:
-            with patch('argparse._sys.argv', option):
+            with patch('argparse._sys.argv', option), self.subTest(option):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
@@ -240,7 +232,7 @@ class TestQa(TestCase):
             ],
         ]
         for option in options:
-            with patch('argparse._sys.argv', option):
+            with patch('argparse._sys.argv', option), self.subTest(option):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
