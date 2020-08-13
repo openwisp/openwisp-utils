@@ -233,9 +233,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
 If you need to define custom menu items, see:
 `OPENWISP_ADMIN_MENU_ITEMS <#openwisp_admin_menu_items>`_.
 
-Superusers can see all menu items while other users can only see menu items
-for modules on which they have permissions.
-
+Users will only be able to see menu items for objects they have permission to either view or edit.
 
 Model utilities
 ---------------
