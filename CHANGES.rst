@@ -1,10 +1,29 @@
 Changelog
 =========
 
-Version 0.5.2 [unreleased]
+Version 0.6.0 [2020-08-14]
 --------------------------
 
-- [add] support for isort~=5.0 and dropped isort<=4.3
+Features
+~~~~~~~~
+
+- [admin]: ``TestReadOnlyAdmin``: added support for exclude attribute
+
+Changes
+~~~~~~~~
+
+- [change] Changed QA checks to use isort~=5.0 instead of isort<=4.3;
+  **this will cause changes to the way the code is formatted**
+- Always execute ``commitcheck`` when run locally
+  (on travis it will be run only in pull requests)
+
+Bugfixes
+~~~~~~~~
+
+- [admin] Fixed a bug which caused some menu items to be shown also if the
+  user did not have permission to view or edit them
+- [qa] Fixed a regression which caused ``commitcheck`` to not be run on travis pull requests
+- [tests] Fixed ``SITE_ID`` in test project settings
 
 Version 0.5.1 [2020-06-29]
 --------------------------
