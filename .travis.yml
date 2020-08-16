@@ -1,31 +1,32 @@
 language: python
-cache: pip
+# cache: pip
 
-python:
-  - "3.6"
-  - "3.7"
+# python:
+#   - "3.6"
+#   - "3.7"
 
-env:
-  - DJANGO="django>=2.2,<3.0"
-  - DJANGO="django>=3.0,<3.1"
+# env:
+#   - DJANGO="django>=2.2,<3.0"
+#   - DJANGO="django>=3.0,<3.1"
 
 branches:
   only:
     - master
 
-before_install:
-  - pip install -U pip wheel setuptools
+# before_install:
+#   - pip install -U pip wheel setuptools
 
-install:
-  - pip install $DJANGO
-  - pip install -U -r requirements-test.txt
-  - pip install -e .[qa,rest]
+# install:
+  # - pip install $DJANGO
+  # - pip install -U -r requirements-test.txt
+  # - pip install -e .[qa,rest]
 
-before_script:
-  - ./run-qa-checks
+# before_script:
+  # - ./run-qa-checks
 
 script:
-  - coverage run --source=openwisp_utils runtests.py
+  - ./travis-check.sh
+#   - coverage run --source=openwisp_utils runtests.py
 
-after_success:
-  coveralls
+# after_success:
+#   coveralls
