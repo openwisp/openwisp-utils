@@ -93,7 +93,7 @@ runblack() {
 
 runcheckcommit() {
   if [ -z "$COMMIT_MESSAGE" ]; then COMMIT_MESSAGE=$(git log -1 --pretty=%B); fi
-  if [ "$TRAVIS" = true ] && [ -z "$TRAVIS_PULL_REQUEST" ]; then
+  if [ "$TRAVIS" = true ] && [ "$TRAVIS_PULL_REQUEST" = false ]; then
     echo "SKIPPED: Commit message check skipped!"
   else
     checkcommit --message "$COMMIT_MESSAGE" &&
