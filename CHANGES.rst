@@ -1,13 +1,20 @@
 Changelog
 =========
 
+Version 0.6.1 [2020-08-17]
+--------------------------
+
+- [fix] Commit check run only on Pull Request & workbench
+- [deps] Added support for django 3.1
+- [ux/admin-theme] Force z-index on main menu to stay on top
+
 Version 0.6.0 [2020-08-14]
 --------------------------
 
 Features
 ~~~~~~~~
 
-- [admin]: ``TestReadOnlyAdmin``: added support for exclude attribute
+- [admin] ``TestReadOnlyAdmin``: added support for exclude attribute
 
 Changes
 ~~~~~~~~
