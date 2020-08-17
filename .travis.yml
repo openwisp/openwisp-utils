@@ -6,8 +6,9 @@ python:
   - "3.7"
 
 env:
-  - DJANGO="django>=2.2,<3.0"
-  - DJANGO="django>=3.0,<3.1"
+  - DJANGO="django~=2.2"
+  - DJANGO="django~=3.0"
+  - DJANGO="django~=3.1"
 
 branches:
   only:
@@ -17,9 +18,9 @@ before_install:
   - pip install -U pip wheel setuptools
 
 install:
-  - pip install $DJANGO
   - pip install -U -r requirements-test.txt
   - pip install -e .[qa,rest]
+  - pip install -U $DJANGO
 
 before_script:
   - ./run-qa-checks

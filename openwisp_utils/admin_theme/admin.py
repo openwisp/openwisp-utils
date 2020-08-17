@@ -16,6 +16,7 @@ class OpenwispAdminSite(admin.AdminSite):
     index_title = ugettext_lazy(
         getattr(settings, 'OPENWISP_ADMIN_INDEX_TITLE', 'Network administration')
     )
+    enable_nav_sidebar = False
 
 
 def openwisp_admin(site_url=None):  # pragma: no-cover
