@@ -161,6 +161,12 @@ def check_commit_message():
                     'if the issue is not resolved yet, please use the following form:\n  '
                     '"Related to #<issue-number>"'
                 )
+    else:
+        if re.search(r'\#(\d+)', short_desc):
+            errors.append(
+                'You are mentioning an issue in the short description '
+                'but it is not mentioned in a long description'
+            )
     # fail in case of error
     if len(errors):
         body = (
