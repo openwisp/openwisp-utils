@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 0.6.2 [2020-08-29]
+--------------------------
+
+- [fix] Fixed commit message check when close/fix keyword is missing
+- [change] Changed QA commit check prefix hint to mention conventional commit prefixes
+
 Version 0.6.1 [2020-08-17]
 --------------------------
 
