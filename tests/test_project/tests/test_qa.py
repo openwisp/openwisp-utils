@@ -178,7 +178,8 @@ class TestQa(TestCase):
                 '--message',
                 '[qa] Improved Y #20\n\nRelated to #32 Fixes #30 Fix #40',
             ],
-            ],
+            # issue 136
+            ['commitcheck', '--quiet', '--message', '[qa] Fixed issue #20'],
         ]
         for option in options:
             with patch('argparse._sys.argv', option):

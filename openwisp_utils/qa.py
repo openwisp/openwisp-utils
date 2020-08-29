@@ -113,6 +113,8 @@ def check_commit_message():
         suffix = short_desc.replace(prefix.group(), '').strip()
         if not suffix[0].isupper():
             errors.append('please add a capital letter after the prefix')
+    # default issue mentions
+    issues = []
     # ensure there's a blank line between short and long desc
     if long_desc:
         if len(lines) > 1 and lines[1] != '':
@@ -145,22 +147,22 @@ def check_commit_message():
                     'eg: [prefix] Action performed #234\n\n      '
                     'Long desc. Closes #234'
                 )
-        # if short description mentions an issue
-        # ensure the issue is either closed or mentioned as "related"
-        if re.search(r'\#(\d+)', short_desc):
-            mentions = 0
-            for issue in issues:
-                if re.search(r'\{}'.format(issue), short_desc):
-                    mentions += 1
-            if mentions < 1:
-                errors.append(
-                    'You are mentioning an issue in the short description '
-                    'but it is not clear whether the issue is resolved or not;\n  '
-                    'if it is resolved, please add to the commit long description:\n  '
-                    '"Closes #<issue-number>" or "Fixes #<issue-number>";\n  '
-                    'if the issue is not resolved yet, please use the following form:\n  '
-                    '"Related to #<issue-number>"'
-                )
+    # if short description mentions an issue
+    # ensure the issue is either closed or mentioned as "related"
+    if re.search(r'\#(\d+)', short_desc):
+        mentions = 0
+        for issue in issues:
+            if re.search(r'\{}'.format(issue), short_desc):
+                mentions += 1
+        if mentions < 1:
+            errors.append(
+                'You are mentioning an issue in the short description '
+                'but it is not clear whether the issue is resolved or not;\n  '
+                'if it is resolved, please add to the commit long description:\n  '
+                '"Closes #<issue-number>" or "Fixes #<issue-number>";\n  '
+                'if the issue is not resolved yet, please use the following form:\n  '
+                '"Related to #<issue-number>"'
+            )
     # fail in case of error
     if len(errors):
         body = (
