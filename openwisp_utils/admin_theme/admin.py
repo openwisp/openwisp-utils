@@ -19,7 +19,7 @@ class OpenwispAdminSite(admin.AdminSite):
     enable_nav_sidebar = False
 
 
-def openwisp_admin(site_url=None):  # pragma: no-cover
+def openwisp_admin(site_url=None):  # pragma: no cover
     """
     openwisp_admin function is deprecated
     """

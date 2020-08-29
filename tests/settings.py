@@ -75,7 +75,7 @@ TEMPLATES = [
 ]
 
 DATABASES = {
-    'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'openwisp_utils.db',}
+    'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'openwisp_utils.db'}
 }
 
 OPENWISP_ADMIN_SITE_CLASS = 'test_project.site.CustomAdminSite'
@@ -95,6 +95,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {'anon': '20/hour'},
 }
+
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache',}}
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:
