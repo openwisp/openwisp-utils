@@ -106,7 +106,7 @@ def check_commit_message():
     if not prefix:
         errors.append(
             'missing prefix in the commit short description\n  '
-            'Eg: "[module/file/feature] Action performed"'
+            'Eg: "[feature/fix/change] Action performed"'
         )
     else:
         # ensure there's a capital letter after the prefix
