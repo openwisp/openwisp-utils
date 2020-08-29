@@ -80,45 +80,45 @@ class TestQa(TestCase):
 
     def test_qa_call_check_commit_message_pass(self):
         options = [
-            ['commitcheck', '--quiet', '--message', "[qa] Minor clean up operations"],
+            ['commitcheck', '--quiet', '--message', '[qa] Minor clean up operations'],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Updated more file and fix problem #20\n\n"
-                "Added more files Fixes #20",
+                '[qa] Updated more file and fix problem #20\n\n'
+                'Added more files Fixes #20',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Improved Y #2\n\n" "Related to #2",
+                '[qa] Improved Y #2\n\nRelated to #2',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Finished task #2\n\n" "Closes #2\nRelated to #1",
+                '[qa] Finished task #2\n\nCloses #2\nRelated to #1',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Finished task #2\n\n" "Related to #2\nCloses #1",
+                '[qa] Finished task #2\n\nRelated to #2\nCloses #1',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Finished task #2\n\n" "Related to #2\nRelated to #1",
+                '[qa] Finished task #2\n\nRelated to #2\nRelated to #1',
             ],
             # noqa
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Improved Y #20\n\n"
-                "Simulation of a special unplanned case\n\n#noqa",
+                '[qa] Improved Y #20\n\n'
+                'Simulation of a special unplanned case\n\n#noqa',
             ],
         ]
         for option in options:
@@ -126,7 +126,7 @@ class TestQa(TestCase):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
-                    msg = 'Check failed:\n\n{}' '\n\nOutput:{}'.format(option[-1], e)
+                    msg = 'Check failed:\n\n{}\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
 
     def test_qa_call_check_commit_message_failure(self):
@@ -140,43 +140,44 @@ class TestQa(TestCase):
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Fixed problem #20" "\n\nFixed problem X #20",
+                '[qa] Fixed problem #20\n\nFixed problem X #20',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Finished task #2\n\n" "Resolves problem described in #2",
+                '[qa] Finished task #2\n\nResolves problem described in #2',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Fixed problem\n\n" "Failure #2\nRelated to #1",
+                '[qa] Fixed problem\n\nFailure #2\nRelated to #1',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Updated file and fixed problem\n\n" "Added more files. Fixes #20",
+                '[qa] Updated file and fixed problem\n\nAdded more files. Fixes #20',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Improved Y\n\n" "Related to #2",
+                '[qa] Improved Y\n\nRelated to #2',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Improved Y #2\n\n" "Updated files",
+                '[qa] Improved Y #2\n\nUpdated files',
             ],
             [
                 'commitcheck',
                 '--quiet',
                 '--message',
-                "[qa] Improved Y #20\n\n" "Related to #32 Fixes #30 Fix #40",
+                '[qa] Improved Y #20\n\nRelated to #32 Fixes #30 Fix #40',
+            ],
             ],
         ]
         for option in options:
@@ -192,7 +193,7 @@ class TestQa(TestCase):
         bad_commit = [
             'commitcheck',
             '--message',
-            "[qa] Updated file and fixed problem\n\n" "Added more files. Fixes #20",
+            '[qa] Updated file and fixed problem\n\nAdded more files. Fixes #20',
         ]
         with patch('argparse._sys.argv', bad_commit):
             captured_output = io.StringIO()
@@ -228,7 +229,7 @@ class TestQa(TestCase):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
-                    msg = 'Check failed:\n\n{}' '\n\nOutput:{}'.format(option[-1], e)
+                    msg = 'Check failed:\n\n{}\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
 
     def test_qa_call_check_commit_message_bump_version(self):
@@ -241,5 +242,5 @@ class TestQa(TestCase):
                 try:
                     check_commit_message()
                 except (SystemExit, Exception) as e:
-                    msg = 'Check failed:\n\n{}' '\n\nOutput:{}'.format(option[-1], e)
+                    msg = 'Check failed:\n\n{}\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
