@@ -5,6 +5,9 @@ python:
   - "3.6"
   - "3.7"
 
+notifications:
+  webhooks: https://www.travisbuddy.com/
+git 
 env:
   - DJANGO="django~=2.2"
   - DJANGO="django~=3.0"
@@ -22,10 +25,8 @@ install:
   - pip install -e .[qa,rest]
   - pip install -U $DJANGO
 
-before_script:
-  - ./run-qa-checks
-
 script:
+  - ./run-qa-checks
   - coverage run --source=openwisp_utils runtests.py
 
 after_success:
