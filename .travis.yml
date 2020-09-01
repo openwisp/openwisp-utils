@@ -5,6 +5,11 @@ python:
   - "3.6"
   - "3.7"
 
+notifications:
+  # will post a summary as a comment on github in case of failure
+  webhooks: https://www.travisbuddy.com/
+  on_success:never
+
 env:
   - DJANGO="django~=2.2"
   - DJANGO="django~=3.0"
@@ -22,10 +27,9 @@ install:
   - pip install -e .[qa,rest]
   - pip install -U $DJANGO
 
-before_script:
-  - ./run-qa-checks
-
 script:
+  # the check is done here to allow travisbuddy to include a detailed failure summary
+  - ./run-qa-checks
   - coverage run --source=openwisp_utils runtests.py
 
 after_success:
