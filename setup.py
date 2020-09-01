@@ -54,7 +54,7 @@ setup(
         ],
         'rest': [
             'djangorestframework>=3.11,<3.12',
-            'django-filter>=2.2.0<2.3.0',
+            'django-filter>=2.2.0<2.4.0',
             'drf-yasg>=1.17,<1.18',
         ],
     },
