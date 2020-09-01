@@ -5,6 +5,11 @@ python:
   - "3.6"
   - "3.7"
 
+notifications:
+  #To get post build fail summary in case of failure.
+  webhooks: https://www.travisbuddy.com/
+  on_success:never
+
 env:
   - DJANGO="django~=2.2"
   - DJANGO="django~=3.0"
@@ -22,10 +27,9 @@ install:
   - pip install -e .[qa,rest]
   - pip install -U $DJANGO
 
-before_script:
-  - ./run-qa-checks
-
 script:
+  # check here to allow travisbuddy to report error cause in case of failure.
+  - ./run-qa-checks
   - coverage run --source=openwisp_utils runtests.py
 
 after_success:
