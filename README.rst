@@ -1,6 +1,6 @@
 openwisp-utils
 ==============
-
+FAIL
 .. image:: https://travis-ci.org/openwisp/openwisp-utils.svg?branch=master
     :target: https://travis-ci.org/openwisp/openwisp-utils
     :alt: ci build

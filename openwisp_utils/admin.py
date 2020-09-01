@@ -1,6 +1,5 @@
 from django.contrib.admin import ModelAdmin
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
 
 
 class TimeReadonlyAdminMixin(object):
@@ -17,6 +16,7 @@ class TimeReadonlyAdminMixin(object):
         super().__init__(*args, **kwargs)
 
 
+from django.utils.translation import ugettext_lazy as _
 class ReadOnlyAdmin(ModelAdmin):
     """
     Disables all editing capabilities
