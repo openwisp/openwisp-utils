@@ -6,7 +6,7 @@ python:
   - "3.7"
 
 notifications:
-  # will post a summary as a comment on github in case of failure.
+  # will post a summary as a comment on github in case of failure
   webhooks: https://www.travisbuddy.com/
   on_success:never
 
