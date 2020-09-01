@@ -6,7 +6,7 @@ python:
   - "3.7"
 
 notifications:
-  #To get post build fail summary in case of failure.
+  # will post a summary as a comment on github in case of failure.
   webhooks: https://www.travisbuddy.com/
   on_success:never
 
@@ -28,7 +28,7 @@ install:
   - pip install -U $DJANGO
 
 script:
-  # check here to allow travisbuddy to report error cause in case of failure.
+  # the check is done here to allow travisbuddy to include a detailed failure summary
   - ./run-qa-checks
   - coverage run --source=openwisp_utils runtests.py
 
