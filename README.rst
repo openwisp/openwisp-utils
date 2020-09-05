@@ -641,6 +641,15 @@ Example usage:
         '/static/custom-admin-theme.js',
     ]
 
+``OPENWISP_ADMIN_SHOW_USERLINKS_BLOCK``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default**: ``False``
+
+When True, enables Django user links on the admin site.
+
+i.e. (USER NAME/ VIEW SITE / CHANGE PASSWORD / LOG OUT).
+
 ``OPENWISP_API_DOCS``
 ^^^^^^^^^^^^^^^^^^^^^
 
