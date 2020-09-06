@@ -27,6 +27,7 @@ openwisp-utils
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://pypi.org/project/black/
+   
    :alt: code style: black
 
 ------------
@@ -649,6 +650,8 @@ Example usage:
 When True, enables Django user links on the admin site.
 
 i.e. (USER NAME/ VIEW SITE / CHANGE PASSWORD / LOG OUT).
+
+These links are already shown in the main navigation menu and for this reason are hidden by default.
 
 ``OPENWISP_API_DOCS``
 ^^^^^^^^^^^^^^^^^^^^^
