@@ -550,7 +550,7 @@ name that should be passed to ``./manage.py makemigrations``, eg:
 ``checkrst``
 ^^^^^^^^^^^^^
 
-Ensures all ReStructuredText files are according to guidelines of pypi.
+Checks the syntax of all ReStructuredText files to ensure they can be published on pypi or using python-sphinx.
 
 Settings
 --------
