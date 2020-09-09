@@ -2,9 +2,14 @@
 Common Quality Assurance checks for OpenWISP modules
 """
 import argparse
+import io
 import os
 import re
 import sys
+from glob import iglob
+
+import docutils
+import readme_renderer.rst as readme_rst
 
 
 def _parse_migration_check_args():
@@ -179,6 +184,39 @@ def check_commit_message():
         if not args.quiet:
             print(body)
         sys.exit(1)
+
+
+def check_rst_files():
+    string_io = io.StringIO()
+    settings_overrides = {}
+    settings_overrides.update(readme_rst.SETTINGS)
+    settings_overrides['report_level'] = 2
+    settings_overrides['warning_stream'] = string_io
+    files = [_ for _ in iglob('./**/*.rst', recursive=True)]
+    for file in files:
+        data = read_rst_file(file)
+        try:
+            docutils.core.publish_string(data, settings_overrides=settings_overrides)
+            clean_body = readme_rst.clean(''.join(data))
+            if clean_body is None:
+                # Raised sometimes when rendered failed to generate html
+                string_io.write("Failed to generate output for rendering")
+                raise ValueError("Output Failed")
+        except Exception:
+            pass
+        errors = string_io.getvalue().strip()
+        if errors:
+            body = 'There are some Errors in your RST file syntax \n\n'
+            for error in errors.splitlines():
+                body += '- {}\n'.format(error)
+            print(body)
+            sys.exit(1)
+
+
+def read_rst_file(filename):
+    with open(filename, 'r') as f:
+        data = f.read()
+        return data
 
 
 def _find_issue_mentions(message):

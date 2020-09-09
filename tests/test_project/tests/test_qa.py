@@ -2,10 +2,15 @@ import io
 import os
 import sys
 from os import path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.test import TestCase
-from openwisp_utils.qa import check_commit_message, check_migration_name
+from openwisp_utils.qa import (
+    check_commit_message,
+    check_migration_name,
+    check_rst_files,
+    read_rst_file,
+)
 
 MIGRATIONS_DIR = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), 'migrations'
@@ -14,13 +19,17 @@ MIGRATIONS_DIR = path.join(
 
 class TestQa(TestCase):
     _test_migration_file = '%s/0002_auto_20181001_0421.py' % MIGRATIONS_DIR
+    _test_rst_file = 'TEST.rst'
 
     def setUp(self):
         # Create a fake migration file with default name
         open(self._test_migration_file, 'w').close()
+        # Create a fake rst file
+        open(self._test_rst_file, 'w').close()
 
     def tearDown(self):
         os.unlink(self._test_migration_file)
+        os.unlink(self._test_rst_file)
 
     def test_qa_call_check_migration_name_pass(self):
         options = [
@@ -245,3 +254,33 @@ class TestQa(TestCase):
                 except (SystemExit, Exception) as e:
                     msg = 'Check failed:\n\n{}\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
+
+    def test_qa_call_check_rst_file(self):
+        try:
+            read_rst_file(self._test_rst_file)
+        except (SystemExit, Exception) as e:
+            msg = 'Check failed:\n\nOutput:{}'.format(e)
+            self.fail(msg)
+
+    @patch('readme_renderer.rst.clean', Mock(return_value=None))
+    # Here the value is mocked because the error occurs in some versions of library only
+    def test_qa_call_check_rst_file_clean_failure(self):
+        captured_output = io.StringIO()
+        sys.stdout = captured_output  # redirect stdout
+        try:
+            check_rst_files()
+        except ValueError:
+            message = 'Output Failed'
+            self.assertIn(message, captured_output.getvalue())
+        except (SystemExit):
+            pass
+        else:
+            self.fail('SystemExit not raised')
+        finally:
+            sys.stdout = sys.__stdout__  # reset redirect
+
+    def test_qa_call_check_rst_file_syntax(self):
+        with open(self._test_rst_file, 'a+') as f:
+            f.write('Test File \n======= \n.. code:: python')
+        with self.assertRaises(SystemExit):
+            check_rst_files()

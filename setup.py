@@ -36,6 +36,7 @@ setup(
         'console_scripts': [
             'checkmigrations = openwisp_utils.qa:check_migration_name',
             'checkcommit = openwisp_utils.qa:check_commit_message',
+            'checkrst = openwisp_utils.qa:check_rst_files',
         ],
     },
     scripts=[
@@ -50,6 +51,7 @@ setup(
             'black<=19.10b0',
             'flake8<=3.9',
             'isort~=5.0',
+            'readme-renderer~=26.0',
             'coveralls',  # depends on coverage as well
         ],
         'rest': [

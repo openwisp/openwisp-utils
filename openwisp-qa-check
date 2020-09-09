@@ -79,6 +79,11 @@ runflake8() {
     || { echoerr "ERROR: Flake8 check failed!"; FAILURE=1; }
 }
 
+runrstcheck() {
+  checkrst && echo "SUCCESS: ReStructuredText check successful!" \
+    || { echoerr "ERROR: ReStructuredText check failed!"; FAILURE=1; }
+}
+
 runisort() {
   isort . --check-only --diff \
     && echo "SUCCESS: Isort check successful!" \
@@ -126,6 +131,7 @@ SKIP_CHECKMIGRATIONS=false
 SKIP_MAKEMIGRATIONS=false
 SKIP_FLAKE8=false
 SKIP_ISORT=false
+SKIP_RSTCHECK=false
 SKIP_BLACK=false
 SKIP_CHECKCOMMIT=false
 FORCE_CHECKCOMMIT=false
@@ -159,6 +165,9 @@ while [ "$1" != "" ]; do
     ;;
   --skip-black)
     SKIP_BLACK=true
+    ;;
+  --skip-checkrst)
+    SKIP_RSTCHECK=true
     ;;
   --skip-checkcommit)
     SKIP_CHECKCOMMIT=true
@@ -208,6 +217,10 @@ fi
 
 if ! $SKIP_FLAKE8; then
   runflake8
+fi
+
+if ! $SKIP_RSTCHECK; then
+  runrstcheck
 fi
 
 if ! $SKIP_CHECKCOMMIT; then

@@ -27,7 +27,6 @@ openwisp-utils
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://pypi.org/project/black/
-   
    :alt: code style: black
 
 ------------
@@ -463,6 +462,7 @@ Shell script to run the following quality assurance checks:
 * `checkcommit <#checkcommit>`_
 * `checkendline <#checkendline>`_
 * `checkpendingmigrations <#checkpendingmigrations>`_
+* `checkrst <#checkrst>`_
 * ``flake8`` - Python code linter
 * ``isort`` - Sorts python imports alphabetically, and seperated into sections
 * ``black`` - Formats python code using a common standard
@@ -546,6 +546,11 @@ be created.
 It accepts an optional ``--migration-module`` flag indicating the django app
 name that should be passed to ``./manage.py makemigrations``, eg:
 ``./manage.py makemigrations $MIGRATION_MODULE``.
+
+``checkrst``
+^^^^^^^^^^^^^
+
+Checks the syntax of all ReStructuredText files to ensure they can be published on pypi or using python-sphinx.
 
 Settings
 --------
