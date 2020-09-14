@@ -48,6 +48,7 @@ setup(
             'flake8<=3.9',
             'isort~=5.0',
             'readme-renderer~=26.0',
+            'rstcheck',
             'coveralls',  # depends on coverage as well
         ],
         'rest': [
