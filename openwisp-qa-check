@@ -10,6 +10,7 @@ show_help() {
   printf "            [--skip-flake8]\n"
   printf "            [--skip-isort]\n"
   printf "            [--skip-black]\n"
+  printf "            [--skip-checkrst]\n"
   printf "\n"
   printf "Runs all checks for quality assurance. Unneeded checks may be skipped by passing --skip-<check-name> argument.\n"
   printf "\n"
@@ -34,6 +35,8 @@ show_help() {
   printf "  --skip-isort\t\t\t: Skip isort check\n"
   printf "Black check options:\n"
   printf "  --skip-black\t\t\t: Skip black check\n"
+  printf "ReStructuredText check options:\n"
+  printf "  --skip-checkrst\t\t: Skip ReStructuredText check\n"
 }
 
 echoerr() { echo "$@" 1>&2; }
