@@ -10,10 +10,7 @@ class TimeReadonlyAdminMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.readonly_fields += (
-            'created',
-            'modified',
-        )
+        self.readonly_fields += ('created', 'modified')
         super().__init__(*args, **kwargs)
 
 
@@ -147,7 +144,7 @@ class ReceiveUrlAdmin(ModelAdmin):
         )
         baseurl = self.receive_url_baseurl
         if not baseurl:
-            baseurl = '{0}://{1}'.format(self.request.scheme, self.request.get_host(),)
+            baseurl = '{0}://{1}'.format(self.request.scheme, self.request.get_host())
         if self.receive_url_querystring_arg:
             url = '{0}{1}?{2}={3}'.format(
                 baseurl,

@@ -69,11 +69,7 @@ class TestQa(TestCase):
                     self.fail('SystemExit not raised')
 
     def test_migration_failure_message(self):
-        bad_migration = [
-            'checkmigrations',
-            '--migration-path',
-            MIGRATIONS_DIR,
-        ]
+        bad_migration = ['checkmigrations', '--migration-path', MIGRATIONS_DIR]
         with patch('argparse._sys.argv', bad_migration):
             captured_output = io.StringIO()
             sys.stdout = captured_output  # redirect stdout
@@ -169,12 +165,7 @@ class TestQa(TestCase):
                 '--message',
                 '[qa] Updated file and fixed problem\n\nAdded more files. Fixes #20',
             ],
-            [
-                'commitcheck',
-                '--quiet',
-                '--message',
-                '[qa] Improved Y\n\nRelated to #2',
-            ],
+            ['commitcheck', '--quiet', '--message', '[qa] Improved Y\n\nRelated to #2'],
             [
                 'commitcheck',
                 '--quiet',

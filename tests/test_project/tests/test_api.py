@@ -9,9 +9,7 @@ from . import CreateMixin
 
 class TestApi(CreateMixin, TestCase):
     shelf_model = Shelf
-    operator_permission_filter = [
-        {'codename__endswith': 'shelf'},
-    ]
+    operator_permission_filter = [{'codename__endswith': 'shelf'}]
 
     def test_validator_pass(self):
         s1 = self._create_shelf(name='shelf1')

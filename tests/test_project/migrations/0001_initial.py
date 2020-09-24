@@ -89,7 +89,7 @@ class Migration(migrations.Migration):
                 ),
                 ('name', models.CharField(max_length=64, verbose_name='name')),
             ],
-            options={'abstract': False,},
+            options={'abstract': False},
         ),
         migrations.CreateModel(
             name='Operator',
@@ -153,6 +153,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={'abstract': False,},
+            options={'abstract': False},
         ),
     ]
