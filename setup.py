@@ -37,9 +37,9 @@ setup(
             'checkmigrations = openwisp_utils.qa:check_migration_name',
             'checkcommit = openwisp_utils.qa:check_commit_message',
             'checkrst = openwisp_utils.qa:check_rst_files',
-        ],
+        ]
     },
-    scripts=['openwisp-qa-check', 'openwisp-qa-format',],
+    scripts=['openwisp-qa-check', 'openwisp-qa-format'],
     zip_safe=False,
     install_requires=['django-model-utils>=4.0.0,<4.1.0'],
     extras_require={
@@ -48,7 +48,6 @@ setup(
             'flake8<=3.9',
             'isort~=5.0',
             'readme-renderer~=26.0',
-            'rstcheck',
             'coveralls',  # depends on coverage as well
         ],
         'rest': [
