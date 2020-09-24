@@ -16,7 +16,7 @@ class TestUtils(TestCase):
         with catch_signal(status_signal) as handler:
             self._generate_signal()
         handler.assert_called_once_with(
-            status='working', sender=self, signal=status_signal,
+            status='working', sender=self, signal=status_signal
         )
 
     def test_deep_merge_dicts(self):
@@ -44,7 +44,7 @@ class TestUtils(TestCase):
     def test_time_logging_runner(self):
         runner = TimeLoggingTestRunner()
         suite = runner.build_suite(
-            ['test_project.tests.test_test_utils.TestUtils.test_status_signal_emitted'],
+            ['test_project.tests.test_test_utils.TestUtils.test_status_signal_emitted']
         )
         with captured_stdout() as stdout, captured_stderr() as stderr:
             runner.run_suite(suite)

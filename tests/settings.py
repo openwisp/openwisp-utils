@@ -71,7 +71,7 @@ TEMPLATES = [
                 'openwisp_utils.admin_theme.context_processor.admin_theme_settings',
             ],
         },
-    },
+    }
 ]
 
 DATABASES = {
@@ -96,7 +96,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {'anon': '20/hour'},
 }
 
-CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache',}}
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:

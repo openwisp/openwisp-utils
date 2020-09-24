@@ -18,7 +18,5 @@ class TestAppConfig(ApiAppConfig):
 
     def add_default_menu_items(self):
         menu_setting = 'OPENWISP_DEFAULT_ADMIN_MENU_ITEMS'
-        items = [
-            {'model': 'test_project.Shelf'},
-        ]
+        items = [{'model': 'test_project.Shelf'}]
         setattr(settings, menu_setting, items)

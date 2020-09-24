@@ -36,16 +36,8 @@ class OperatorInline(admin.StackedInline):
 class ProjectAdmin(UUIDAdmin, ReceiveUrlAdmin):
     inlines = [OperatorInline]
     list_display = ('name',)
-    fields = (
-        'uuid',
-        'name',
-        'key',
-        'receive_url',
-    )
-    readonly_fields = (
-        'uuid',
-        'receive_url',
-    )
+    fields = ('uuid', 'name', 'key', 'receive_url')
+    readonly_fields = ('uuid', 'receive_url')
     receive_url_name = 'receive_project'
 
 
