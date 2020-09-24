@@ -10,7 +10,6 @@ from glob import iglob
 
 import docutils
 import readme_renderer.rst as readme_rst
-from rstcheck import ignore_sphinx
 
 
 def _parse_migration_check_args():
@@ -193,9 +192,7 @@ def check_rst_files():
     settings_overrides.update(readme_rst.SETTINGS)
     settings_overrides['report_level'] = 2
     settings_overrides['warning_stream'] = string_io
-    files = [_ for _ in iglob('./**/*.rst', recursive=True)]
-    # Added to register sphinx directives with docutils
-    ignore_sphinx()
+    files = [_ for _ in iglob('*.rst', recursive=True)]
     for file in files:
         data = read_rst_file(file)
         try:
@@ -249,10 +246,7 @@ def _find_issue_mentions(message):
             preceding_2words = '{} {}'.format(
                 words[issue_location - 2], words[issue_location - 1]
             )
-            allowed_refs = [
-                'related to',
-                'refers to',
-            ]
+            allowed_refs = ['related to', 'refers to']
             if preceding_2words.lower() in allowed_refs:
                 good_mentions += 1
                 continue
