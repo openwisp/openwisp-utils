@@ -314,6 +314,27 @@ Code utilities
 
 Generates an random string of 32 characters.
 
+``openwisp_utils.utils.register_menu_items``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Takes input of a list of models name and settings_menu name and adds
+them to the side navigation bar in the admin dashboard interface.
+
+Usage:
+
+.. code-block:: python
+
+    from openwisp_utils.utils import register_menu_items
+    from openwisp_utils.api.apps import ApiAppConfig
+
+    class YourAwesomeAppConfig(ApiAppConfig):
+        def ready(self, *args, **kwargs):
+            super().ready(*args, **kwargs)
+            items = [{'model': 'your_project.your_model_name'}]
+            # register_menu_items(items[, name_menu=YOUR_SETTINGS_MENU_NAME])
+            register_menu_items(items, name_menu='OPENWISP_DEFAULT_ADMIN_MENU_ITEMS')
+
+
 ``openwisp_utils.utils.deep_merge_dicts``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
