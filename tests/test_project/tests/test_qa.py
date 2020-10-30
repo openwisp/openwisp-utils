@@ -1,6 +1,4 @@
-import io
 import os
-import sys
 from os import path
 from unittest.mock import Mock, patch
 
@@ -11,6 +9,7 @@ from openwisp_utils.qa import (
     check_rst_files,
     read_rst_file,
 )
+from openwisp_utils.tests import redirect_stderr, redirect_stdout
 
 MIGRATIONS_DIR = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), 'migrations'
@@ -46,6 +45,7 @@ class TestQa(TestCase):
             except (SystemExit, Exception) as e:
                 self.fail(e)
 
+    @redirect_stderr()
     def test_qa_call_check_migration_name_failure(self):
         options = [
             [
@@ -68,11 +68,10 @@ class TestQa(TestCase):
                 else:
                     self.fail('SystemExit not raised')
 
-    def test_migration_failure_message(self):
+    @redirect_stdout()
+    def test_migration_failure_message(self, captured_output):
         bad_migration = ['checkmigrations', '--migration-path', MIGRATIONS_DIR]
         with patch('argparse._sys.argv', bad_migration):
-            captured_output = io.StringIO()
-            sys.stdout = captured_output  # redirect stdout
             try:
                 check_migration_name()
             except (SystemExit):
@@ -80,8 +79,6 @@ class TestQa(TestCase):
                 self.assertIn(message, captured_output.getvalue())
             else:
                 self.fail('SystemExit not raised')
-            finally:
-                sys.stdout = sys.__stdout__  # reset redirect
 
     def test_qa_call_check_commit_message_pass(self):
         options = [
@@ -134,6 +131,7 @@ class TestQa(TestCase):
                     msg = 'Check failed:\n\n{}\n\nOutput:{}'.format(option[-1], e)
                     self.fail(msg)
 
+    @redirect_stderr()
     def test_qa_call_check_commit_message_failure(self):
         options = [
             ['commitcheck'],
@@ -190,15 +188,14 @@ class TestQa(TestCase):
                 else:
                     self.fail('SystemExit not raised')
 
-    def test_commit_failure_message(self):
+    @redirect_stdout()
+    def test_commit_failure_message(self, captured_output):
         bad_commit = [
             'commitcheck',
             '--message',
             '[qa] Updated file and fixed problem\n\nAdded more files. Fixes #20',
         ]
         with patch('argparse._sys.argv', bad_commit):
-            captured_output = io.StringIO()
-            sys.stdout = captured_output  # redirect stdout
             try:
                 check_commit_message()
             except (SystemExit):
@@ -206,8 +203,6 @@ class TestQa(TestCase):
                 self.assertIn(message, captured_output.getvalue())
             else:
                 self.fail('SystemExit not raised')
-            finally:
-                sys.stdout = sys.__stdout__  # reset redirect
 
     def test_qa_call_check_commit_message_merge(self):
         options = [
@@ -255,9 +250,8 @@ class TestQa(TestCase):
 
     @patch('readme_renderer.rst.clean', Mock(return_value=None))
     # Here the value is mocked because the error occurs in some versions of library only
-    def test_qa_call_check_rst_file_clean_failure(self):
-        captured_output = io.StringIO()
-        sys.stdout = captured_output  # redirect stdout
+    @redirect_stdout()
+    def test_qa_call_check_rst_file_clean_failure(self, captured_output):
         try:
             check_rst_files()
         except ValueError:
@@ -267,9 +261,8 @@ class TestQa(TestCase):
             pass
         else:
             self.fail('SystemExit not raised')
-        finally:
-            sys.stdout = sys.__stdout__  # reset redirect
 
+    @redirect_stdout()
     def test_qa_call_check_rst_file_syntax(self):
         with open(self._test_rst_file, 'a+') as f:
             f.write('Test File \n======= \n.. code:: python')

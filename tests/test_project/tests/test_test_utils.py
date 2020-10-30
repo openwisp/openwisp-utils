@@ -1,7 +1,14 @@
+import sys
+
 from django.dispatch import Signal
 from django.test import TestCase, override_settings
-from django.test.utils import captured_stderr, captured_stdout
-from openwisp_utils.tests import TimeLoggingTestRunner, catch_signal
+from openwisp_utils.tests import (
+    TimeLoggingTestRunner,
+    catch_signal,
+    redirect_any_output,
+    redirect_stderr,
+    redirect_stdout,
+)
 from openwisp_utils.utils import deep_merge_dicts, print_color
 
 status_signal = Signal(providing_args=['status'])
@@ -41,30 +48,37 @@ class TestUtils(TestCase):
         self.assertDictEqual(deep_merge_dicts(dict1, dict2), merged)
 
     @override_settings(OPENWISP_SLOW_TEST_THRESHOLD=[0.0, 0.0])
-    def test_time_logging_runner(self):
+    @redirect_any_output()
+    def test_time_logging_runner(self, stdout, stderr):
         runner = TimeLoggingTestRunner()
         suite = runner.build_suite(
             ['test_project.tests.test_test_utils.TestUtils.test_status_signal_emitted']
         )
-        with captured_stdout() as stdout, captured_stderr() as stderr:
-            runner.run_suite(suite)
+        runner.run_suite(suite)
         self.assertIn('slow tests (>0.0s)', stdout.getvalue())
         self.assertIn('Total slow tests detected: 1', stdout.getvalue())
         self.assertIn('Ran 1 test', stderr.getvalue())
         self.assertIn('OK', stderr.getvalue())
 
-    def test_print_color(self):
-        with captured_stdout() as stdout:
-            print_color('This is the printed in Red Bold', color_name='red_bold')
+    @redirect_stdout()
+    def test_print_color(self, captured_output):
+        print_color('This is the printed in Red Bold', color_name='red_bold')
         expected = '\033[31;1mThis is the printed in Red Bold\033[0m\n'
-        self.assertEqual(stdout.getvalue(), expected)
-        with captured_stdout() as stdout:
-            print_color(
-                'This is the printed in Red Bold', color_name='red_bold', end=''
-            )
+        self.assertEqual(captured_output.getvalue(), expected)
+        # cleaning captured_ouput for next assertion
+        captured_output.truncate(0)
+        captured_output.seek(0)
+        print_color('This is the printed in Red Bold', color_name='red_bold', end='')
         expected = '\033[31;1mThis is the printed in Red Bold\033[0m'
-        self.assertEqual(stdout.getvalue(), expected)
-        with captured_stdout() as stdout:
-            print_color('This is the printed in Red Bold', color_name='invalid')
+        self.assertEqual(captured_output.getvalue(), expected)
+        captured_output.truncate(0)
+        captured_output.seek(0)
+        print_color('This is the printed in Red Bold', color_name='invalid')
         expected = '\033[0mThis is the printed in Red Bold\033[0m\n'
-        self.assertEqual(stdout.getvalue(), expected)
+        self.assertEqual(captured_output.getvalue(), expected)
+        captured_output.truncate(0)
+
+    @redirect_stderr()
+    def test_redirect_stderr(self, captured_error):
+        print('Testing redirect_stderr', file=sys.stderr, end='')
+        self.assertEqual(captured_error.getvalue(), 'Testing redirect_stderr')

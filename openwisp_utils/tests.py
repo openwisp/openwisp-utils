@@ -1,3 +1,5 @@
+import io
+import sys
 from contextlib import contextmanager
 from time import time
 from unittest import TextTestResult, mock
@@ -76,3 +78,52 @@ class TimeLoggingTestResult(TextTestResult):
 class TimeLoggingTestRunner(DiscoverRunner):
     def get_resultclass(self):
         return TimeLoggingTestResult
+
+
+class RedirectOutput(object):
+    def __call__(self, function):
+        def wrapped_function(*args, **kwargs):
+
+            if hasattr(self, 'stdout'):
+                sys.stdout = self.stdout
+
+            if hasattr(self, 'stderr'):
+                sys.stderr = self.stderr
+
+            try:
+                if hasattr(self, 'stdout') and hasattr(self, 'stderr'):
+                    function(*args, self.stdout, self.stderr, **kwargs)
+                elif hasattr(self, 'stderr'):
+                    function(*args, self.stderr, **kwargs)
+                else:
+                    function(*args, self.stdout, **kwargs)
+            except TypeError:
+                function(*args, **kwargs)
+            finally:
+                if hasattr(self, 'stdout'):
+                    self.stdout.close()
+                    sys.stdout = sys.__stdout__
+                if hasattr(self, 'stderr'):
+                    self.stderr.close()
+                    sys.stderr = sys.__stderr__
+
+        return wrapped_function
+
+
+class redirect_stdout(RedirectOutput):
+    def __init__(self, stdout=None, **kwargs):
+        self.kwargs = kwargs
+        self.stdout = io.StringIO() if stdout is None else stdout
+
+
+class redirect_stderr(RedirectOutput):
+    def __init__(self, stderr=None, **kwargs):
+        self.kwargs = kwargs
+        self.stderr = io.StringIO() if stderr is None else stderr
+
+
+class redirect_any_output(RedirectOutput):
+    def __init__(self, stdout=None, stderr=None, **kwargs):
+        self.kwargs = kwargs
+        self.stdout = io.StringIO() if stdout is None else stdout
+        self.stderr = io.StringIO() if stderr is None else stderr

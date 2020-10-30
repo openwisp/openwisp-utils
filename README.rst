@@ -463,6 +463,101 @@ In order to switch to this test runner you have set the following in your `setti
 
     TEST_RUNNER = 'openwisp_utils.tests.TimeLoggingTestRunner'
 
+``openwisp_utils.tests.redirect_stdout``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This decorator can be used to redirect standard output produced by tests to somewhere else.
+
+Usage example as a decorator:
+
+.. code-block:: python
+
+
+    from openwisp_utils.tests import redirect_stdout
+
+    @redirect_stdout()
+    def test_something(self):
+        function_generating_error() #pseudo code
+        print("some output")
+
+    @redirect_stdout()
+    def test_something_again(self, captured_ouput):
+        # pseudo code
+        call_function_which_will_produce_output()
+        # now you can create assertions on captured output
+        self.assertIn('expected stdout', captured_ouput.getvalue())
+        # if there are more than one assertions, clear the captured output first
+        captured_error.truncate(0)
+        captured_error.seek(0)
+        # you can create new assertion now
+        self.assertIn('another output', captured_error.getvalue())
+
+** Captured ouput can be defined in arguments if assertion needs to be done on captured output, otherwise they can be omitted.**
+
+** Sting IO instance is used as default and if needed, custom String IO instance can be provided **
+
+``openwisp_utils.tests.redirect_stderr``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Similar to ``redirect_stdout``, this decorator can be used to redirect standard error produced by tests to somewhere else.
+
+Usage example as a decorator:
+
+.. code-block:: python
+
+    from openwisp_utils.tests import redirect_stderr
+
+    @redirect_stderr()
+    def test_error(self):
+        function_generating_error() #pseudo code
+        print("this test will print some error")
+
+    @redirect_stderr()
+    def test_error_again(self, captured_error):
+        # pseudo code
+        call_function_which_will_produce_error()
+        # now you can create assertions on captured error
+        self.assertIn('expected error', captured_error.getvalue())
+        # if there are more than one assertions, clear the captured error first
+        captured_error.truncate(0)
+        captured_error.seek(0)
+        # you can create new assertion now
+        self.assertIn('another expected error', captured_error.getvalue())
+
+** Captured error can be defined in arguments if assertion needs to be done on captured error, otherwise they can be omitted.**
+
+** Sting IO instance is used as default and if needed, custom String IO instance can be provided **
+
+
+``openwisp_utils.tests.redirect_any_output``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This decorator can be used to redirect any output (standard output and standard error) produced by tests to somewhere else.
+
+Usage example as a decorator:
+
+.. code-block:: python
+
+    from openwisp_utils.tests import redirect_any_output
+
+    @redirect_any_output()
+    def test_something_out(self):
+        function_generating_output_and_error() #pseudo code
+        print("some output")
+        print("expected error")
+
+    @redirect_stdout()
+    def test_out_again(self, captured output, captured_error):
+        # pseudo code
+        call_function_which_will_produce_any_output()
+        # now you can create assertions on captured error
+        self.assertIn('expected stdout', captured output.getvalue())
+        self.assertIn('expected stderr', captured_error.getvalue())
+
+** Captured output and Captured error can be defined in arguments if assertion needs to be done on captured error or captured output, otherwise they can be omitted.**
+
+** Sting IO instance is used as default and if needed, custom String IO instance can be provided **
+
 Quality Assurance Checks
 ------------------------
 
@@ -505,10 +600,10 @@ You can do multiple ``checkmigrations`` by passing the arguments with space-deli
 For example, this multiple ``checkmigrations``::
 
     checkmigrations --migrations-to-ignore 3 \
-		    --migration-path ./openwisp_users/migrations/ || exit 1
+            --migration-path ./openwisp_users/migrations/ || exit 1
 
     checkmigrations --migrations-to-ignore 2 \
-		    --migration-path ./tests/testapp/migrations/ || exit 1
+            --migration-path ./tests/testapp/migrations/ || exit 1
 
 Can be changed with::
 
