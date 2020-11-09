@@ -97,6 +97,7 @@ REST_FRAMEWORK = {
 }
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
+OPENWISP_TEST_ADMIN_MENU_ITEMS = [{'model': 'test_project.Project'}]
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:

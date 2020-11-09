@@ -11,6 +11,14 @@ def get_random_key():
     return get_random_string(length=32)
 
 
+def register_menu_items(items, name_menu='OPENWISP_DEFAULT_ADMIN_MENU_ITEMS'):
+    if not hasattr(settings, name_menu):
+        setattr(settings, name_menu, items)
+    else:
+        current_menu = getattr(settings, name_menu)
+        current_menu += items
+
+
 def deep_merge_dicts(dict1, dict2):
     """
     returns a new dict which is the result of the merge of the two dicts,
