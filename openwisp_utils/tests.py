@@ -80,25 +80,23 @@ class TimeLoggingTestRunner(DiscoverRunner):
         return TimeLoggingTestResult
 
 
-class RedirectOutput(object):
+class CaptureOutput(object):
     def __call__(self, function):
         def wrapped_function(*args, **kwargs):
-
             if hasattr(self, 'stdout'):
                 sys.stdout = self.stdout
-
             if hasattr(self, 'stderr'):
                 sys.stderr = self.stderr
-
+            original_args = list(args)
+            args = list(args)
             try:
-                if hasattr(self, 'stdout') and hasattr(self, 'stderr'):
-                    function(*args, self.stdout, self.stderr, **kwargs)
-                elif hasattr(self, 'stderr'):
-                    function(*args, self.stderr, **kwargs)
-                else:
-                    function(*args, self.stdout, **kwargs)
-            except TypeError:
+                if hasattr(self, 'stdout'):
+                    args.append(self.stdout)
+                if hasattr(self, 'stderr'):
+                    args.append(self.stderr)
                 function(*args, **kwargs)
+            except TypeError:
+                function(*original_args, **kwargs)
             finally:
                 if hasattr(self, 'stdout'):
                     self.stdout.close()
@@ -110,20 +108,20 @@ class RedirectOutput(object):
         return wrapped_function
 
 
-class redirect_stdout(RedirectOutput):
+class capture_stdout(CaptureOutput):
     def __init__(self, stdout=None, **kwargs):
         self.kwargs = kwargs
-        self.stdout = io.StringIO() if stdout is None else stdout
+        self.stdout = stdout or io.StringIO()
 
 
-class redirect_stderr(RedirectOutput):
+class capture_stderr(CaptureOutput):
     def __init__(self, stderr=None, **kwargs):
         self.kwargs = kwargs
-        self.stderr = io.StringIO() if stderr is None else stderr
+        self.stderr = stderr or io.StringIO()
 
 
-class redirect_any_output(RedirectOutput):
+class capture_any_output(CaptureOutput):
     def __init__(self, stdout=None, stderr=None, **kwargs):
         self.kwargs = kwargs
-        self.stdout = io.StringIO() if stdout is None else stdout
-        self.stderr = io.StringIO() if stderr is None else stderr
+        self.stdout = stdout or io.StringIO()
+        self.stderr = stderr or io.StringIO()

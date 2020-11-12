@@ -463,28 +463,27 @@ In order to switch to this test runner you have set the following in your `setti
 
     TEST_RUNNER = 'openwisp_utils.tests.TimeLoggingTestRunner'
 
-``openwisp_utils.tests.redirect_stdout``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``openwisp_utils.tests.capture_stdout``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This decorator can be used to redirect standard output produced by tests to somewhere else.
+This decorator can be used to capture standard output produced by tests,
+either to silence it or to write assertions.
 
-Usage example as a decorator:
+Example usage:
 
 .. code-block:: python
 
+    from openwisp_utils.tests import capture_stdout
 
-    from openwisp_utils.tests import redirect_stdout
-
-    @redirect_stdout()
+    @capture_stdout()
     def test_something(self):
-        function_generating_error() #pseudo code
-        print("some output")
+        function_generating_output() # pseudo code
 
-    @redirect_stdout()
+    @capture_stdout()
     def test_something_again(self, captured_ouput):
         # pseudo code
-        call_function_which_will_produce_output()
-        # now you can create assertions on captured output
+        function_generating_output()
+        # now you can create assertions on the captured output
         self.assertIn('expected stdout', captured_ouput.getvalue())
         # if there are more than one assertions, clear the captured output first
         captured_error.truncate(0)
@@ -492,30 +491,33 @@ Usage example as a decorator:
         # you can create new assertion now
         self.assertIn('another output', captured_error.getvalue())
 
-** Captured ouput can be defined in arguments if assertion needs to be done on captured output, otherwise they can be omitted.**
+**Notes**:
 
-** Sting IO instance is used as default and if needed, custom String IO instance can be provided **
+- If assertions need to be made on the captured output, an additional argument
+  (in the example above is named ``captured_output``) can be passed as an argument
+  to the decorated test method, alternatively it can be omitted.
+- A ``StingIO`` instance is used for capturing output by default but if needed
+  it's possible to pass a custom ``StringIO`` instance to the decorator function.
 
-``openwisp_utils.tests.redirect_stderr``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``openwisp_utils.tests.capture_stderr``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Similar to ``redirect_stdout``, this decorator can be used to redirect standard error produced by tests to somewhere else.
+Equivalent to ``capture_stdout``, but for standard error.
 
-Usage example as a decorator:
+Example usage:
 
 .. code-block:: python
 
-    from openwisp_utils.tests import redirect_stderr
+    from openwisp_utils.tests import capture_stderr
 
-    @redirect_stderr()
+    @capture_stderr()
     def test_error(self):
-        function_generating_error() #pseudo code
-        print("this test will print some error")
+        function_generating_error() # pseudo code
 
-    @redirect_stderr()
+    @capture_stderr()
     def test_error_again(self, captured_error):
         # pseudo code
-        call_function_which_will_produce_error()
+        function_generating_error()
         # now you can create assertions on captured error
         self.assertIn('expected error', captured_error.getvalue())
         # if there are more than one assertions, clear the captured error first
@@ -524,39 +526,29 @@ Usage example as a decorator:
         # you can create new assertion now
         self.assertIn('another expected error', captured_error.getvalue())
 
-** Captured error can be defined in arguments if assertion needs to be done on captured error, otherwise they can be omitted.**
+``openwisp_utils.tests.capture_any_output``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-** Sting IO instance is used as default and if needed, custom String IO instance can be provided **
+Equivalent to ``capture_stdout`` and ``capture_stderr``, but captures both types of
+output (standard output and standard error).
 
-
-``openwisp_utils.tests.redirect_any_output``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This decorator can be used to redirect any output (standard output and standard error) produced by tests to somewhere else.
-
-Usage example as a decorator:
+Example usage:
 
 .. code-block:: python
 
-    from openwisp_utils.tests import redirect_any_output
+    from openwisp_utils.tests import capture_any_output
 
-    @redirect_any_output()
+    @capture_any_output()
     def test_something_out(self):
-        function_generating_output_and_error() #pseudo code
-        print("some output")
-        print("expected error")
+        function_generating_output() # pseudo code
 
-    @redirect_stdout()
-    def test_out_again(self, captured output, captured_error):
+    @capture_stdout()
+    def test_out_again(self, captured_output, captured_error):
         # pseudo code
-        call_function_which_will_produce_any_output()
+        function_generating_output_and_errors()
         # now you can create assertions on captured error
-        self.assertIn('expected stdout', captured output.getvalue())
+        self.assertIn('expected stdout', captured_output.getvalue())
         self.assertIn('expected stderr', captured_error.getvalue())
-
-** Captured output and Captured error can be defined in arguments if assertion needs to be done on captured error or captured output, otherwise they can be omitted.**
-
-** Sting IO instance is used as default and if needed, custom String IO instance can be provided **
 
 Quality Assurance Checks
 ------------------------

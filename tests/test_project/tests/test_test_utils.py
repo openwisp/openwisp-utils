@@ -4,10 +4,10 @@ from django.dispatch import Signal
 from django.test import TestCase, override_settings
 from openwisp_utils.tests import (
     TimeLoggingTestRunner,
+    capture_any_output,
+    capture_stderr,
+    capture_stdout,
     catch_signal,
-    redirect_any_output,
-    redirect_stderr,
-    redirect_stdout,
 )
 from openwisp_utils.utils import deep_merge_dicts, print_color
 
@@ -48,7 +48,7 @@ class TestUtils(TestCase):
         self.assertDictEqual(deep_merge_dicts(dict1, dict2), merged)
 
     @override_settings(OPENWISP_SLOW_TEST_THRESHOLD=[0.0, 0.0])
-    @redirect_any_output()
+    @capture_any_output()
     def test_time_logging_runner(self, stdout, stderr):
         runner = TimeLoggingTestRunner()
         suite = runner.build_suite(
@@ -60,7 +60,7 @@ class TestUtils(TestCase):
         self.assertIn('Ran 1 test', stderr.getvalue())
         self.assertIn('OK', stderr.getvalue())
 
-    @redirect_stdout()
+    @capture_stdout()
     def test_print_color(self, captured_output):
         print_color('This is the printed in Red Bold', color_name='red_bold')
         expected = '\033[31;1mThis is the printed in Red Bold\033[0m\n'
@@ -78,7 +78,7 @@ class TestUtils(TestCase):
         self.assertEqual(captured_output.getvalue(), expected)
         captured_output.truncate(0)
 
-    @redirect_stderr()
-    def test_redirect_stderr(self, captured_error):
-        print('Testing redirect_stderr', file=sys.stderr, end='')
-        self.assertEqual(captured_error.getvalue(), 'Testing redirect_stderr')
+    @capture_stderr()
+    def test_capture_stderr(self, captured_error):
+        print('Testing capture_stderr', file=sys.stderr, end='')
+        self.assertEqual(captured_error.getvalue(), 'Testing capture_stderr')
