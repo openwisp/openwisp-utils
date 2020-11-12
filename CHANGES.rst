@@ -1,10 +1,25 @@
 Changelog
 =========
 
-Version 0.7.0 [unreleased]
+Version 0.7.0 [2020-11-12]
 --------------------------
 
-WIP
+Features
+~~~~~~~~
+
+- [add] New checkrst added for ensuring ReStructuredText qa
+- [add] register_menu_items to easily register new menu items
+
+Changes
+~~~~~~~
+
+- Remove deprecated openwisp-utils-qa-checks
+
+Bugfixes
+~~~~~~~~
+
+- [admin] Hide menu options for unauthenticated users
+- [admin] Fixed menu buttons being clicked on some sections of page when not visible
 
 Version 0.6.3 [2020-09-02]
 --------------------------
