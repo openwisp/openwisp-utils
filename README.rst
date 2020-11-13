@@ -489,7 +489,7 @@ Example usage:
         captured_error.truncate(0)
         captured_error.seek(0)
         # you can create new assertion now
-        self.assertIn('another output', captured_error.getvalue())
+        self.assertIn('another output', captured_ouput.getvalue())
 
 **Notes**:
 
@@ -542,7 +542,7 @@ Example usage:
     def test_something_out(self):
         function_generating_output() # pseudo code
 
-    @capture_stdout()
+    @capture_any_output()
     def test_out_again(self, captured_output, captured_error):
         # pseudo code
         function_generating_output_and_errors()
