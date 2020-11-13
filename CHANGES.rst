@@ -7,13 +7,20 @@ Version 0.7.0 [2020-11-12]
 Features
 ~~~~~~~~
 
-- [add] New checkrst added for ensuring ReStructuredText qa
-- [add] register_menu_items to easily register new menu items
+- [qa] Added a `ReStructuredText syntax check (checkrst) <https://github.com/openwisp/openwisp-utils#checkrst>`_
+  to ``openwisp-qa-check``, which allows to ensure ``README.rst`` and other top level rst files
+  do not contain syntax errors
+- [utils] Added `register_menu_items <https://github.com/openwisp/openwisp-utils#openwisp-utils-utils-register-menu-items>`_
+  to easily register menu items
+- [tests] Added test utilities to capture output (eg: to make assertions on it):
+  `capture_stdout <https://github.com/openwisp/openwisp-utils#openwisp-utils-tests-capture-stdout>`_,
+  `capture_stderr <https://github.com/openwisp/openwisp-utils#openwisp_utilstestscapture_stderr>`_,
+  `capture_any_output <https://github.com/openwisp/openwisp-utils#openwisp_utilstestscapture_any_output>`_
 
 Changes
 ~~~~~~~
 
-- Remove deprecated openwisp-utils-qa-checks
+- [utils] Removed deprecated openwisp-utils-qa-checks
 
 Bugfixes
 ~~~~~~~~
