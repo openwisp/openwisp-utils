@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 0.7.1 [2020-11-18]
+--------------------------
+
+- [fix] Fixed bug in``openwisp_utils.admin.UUIDAdmin`` which caused the removal of all
+  the ``readonly_fields`` from the admin add page, now only the ``uuid`` field is removed
+- [change] Changed commit check to allow commit messages from `Dependabot <https://dependabot.com/>`_
+
 Version 0.7.0 [2020-11-13]
 --------------------------
 
