@@ -232,6 +232,12 @@ class TestQa(TestCase):
         options = [
             ['commitcheck', '--quiet', '--message', 'Bumped VERSION to 0.4.0'],
             ['commitcheck', '--quiet', '--message', 'Bumped VERSION to 1.4.3 beta'],
+            [
+                'commitcheck',
+                '--quiet',
+                '--message',
+                'Bump style-loader from 1.3.0 to 2.0.0',
+            ],
         ]
         for option in options:
             with patch('argparse._sys.argv', option):
