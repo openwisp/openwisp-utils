@@ -1,8 +1,8 @@
 openwisp-utils
 ==============
 
-.. image:: https://travis-ci.org/openwisp/openwisp-utils.svg?branch=master
-    :target: https://travis-ci.org/openwisp/openwisp-utils
+.. image:: https://travis-ci.com/openwisp/openwisp-utils.svg?branch=master
+    :target: https://travis-ci.com/openwisp/openwisp-utils
     :alt: ci build
 
 .. image:: https://coveralls.io/repos/github/openwisp/openwisp-utils/badge.svg
