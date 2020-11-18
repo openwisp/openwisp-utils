@@ -80,15 +80,10 @@ class UUIDAdmin(ModelAdmin):
 
     def _process_fields(self, fields, request, obj):
         fields = list(fields)
+        if 'uuid' in fields:
+            fields.remove('uuid')
         if obj:
-            if 'uuid' in fields:
-                fields.remove('uuid')
-                fields.insert(0, 'uuid')
-        else:
-            # remove read_only fields
-            for field in self.readonly_fields:
-                if field in fields:
-                    fields.remove(field)
+            fields.insert(0, 'uuid')
         return tuple(fields)
 
     def get_fields(self, request, obj=None):

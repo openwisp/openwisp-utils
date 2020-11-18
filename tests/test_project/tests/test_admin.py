@@ -153,6 +153,13 @@ class TestAdmin(TestCase, CreateMixin):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'field-uuid')
 
+    def test_uuid_field_in_add(self):
+        path = reverse('admin:test_project_project_add')
+        response = self.client.get(path)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'field-uuid')
+        self.assertContains(response, 'field-receive_url')
+
     def test_receive_url_admin(self):
         p = Project.objects.create(name='test_receive_url_admin_project')
         ma = ProjectAdmin(Project, self.site)
