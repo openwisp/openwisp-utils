@@ -96,6 +96,7 @@ def check_commit_message():
         # releases
         r'^[A-Za-z0-9.]* release$',
         r"^Bumped VERSION to (.*?)$",
+        r"^Bump (.*?) from (.*?) to (.*?)$",
     ]
     for case in skip_cases:
         if re.match(case, short_desc):
