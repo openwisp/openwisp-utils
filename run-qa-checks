@@ -1,3 +1,40 @@
 #!/bin/bash
 set -e
-openwisp-qa-check --migration-path "./tests/test_project/migrations"
+
+qa-checks () {
+    openwisp-qa-check --migration-path "./tests/test_project/migrations"
+}
+
+pre-push-checks () {
+    checks=(
+        "./runtests.py --parallel"
+    )
+    for (( i = 0; i < ${#checks[@]} ; i++ )); do
+        eval "${checks[$i]}" || { echo "'${checks[$i]}' failed!"; exit 1; }
+    done
+}
+
+# If no arguments given, only run QA checks
+if [[ $1 == "" ]] 
+then
+    qa-checks
+    exit 0
+fi
+
+# Parse arguments and run relevant checks
+for i in "$@"
+do
+case $i in
+
+    # Used by openwisp-pre-push-hook
+    --pre-push)
+        qa-checks || { echo "qa-checks failed!"; exit 1; }
+        pre-push-checks
+    ;;
+
+    # Any other argument is ignored
+    *)
+        qa-checks
+    ;;
+esac
+done
