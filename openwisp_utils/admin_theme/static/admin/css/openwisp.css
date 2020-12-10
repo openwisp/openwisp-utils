@@ -93,6 +93,20 @@ a:focus, a:hover {
 #netjsonconfig-hint, #netjsonconfig-hint a,
 #container .field-backend a{ color: #df5d43 }
 
+#main .form-row label {
+    color: #1b1818;
+}
+#main .form-row .help {
+    margin-top: 3px;
+    font-size: 13px;
+    color: #797572;
+}
+
+/* hide first delete link, hide save and add anoher */
+#main .submit-row:first-child .deletelink-box,
+.submit-row input[name="_addanother"] { display: none }
+#main .submit-row .default { background: #498b26 }
+
 /* temporary frontend fix */
 a.button.secondaryAction{
     background: transparent;
