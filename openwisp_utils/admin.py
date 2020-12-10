@@ -80,9 +80,9 @@ class UUIDAdmin(ModelAdmin):
 
     def _process_fields(self, fields, request, obj):
         fields = list(fields)
-        if 'uuid' in fields:
+        if 'uuid' in fields and not obj:
             fields.remove('uuid')
-        if obj:
+        if 'uuid' not in fields and obj:
             fields.insert(0, 'uuid')
         return tuple(fields)
 
