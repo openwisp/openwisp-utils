@@ -5,7 +5,7 @@ window.addEventListener('load', function(){
       header = document.getElementById('header'),
   setHeightToMenu = function() {
     var windowHeight = window.innerHeight,
-        pageHeight = container.offsetHeight,
+        pageHeight = document.body.scrollHeight || container.offsetHeight,
         height = windowHeight;
     if (pageHeight > windowHeight) {
       height = pageHeight;
