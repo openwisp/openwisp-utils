@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Version 0.7.2 [2020-12-11]
+--------------------------
+
+- [fix] Fixed menu height on long pages
+- [change] Minor improvement to UI colors to improve readability
+
 Version 0.7.1 [2020-11-18]
 --------------------------
 
