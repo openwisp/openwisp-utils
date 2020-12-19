@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'drf_yasg',
 ]
 
-EXTENDED_APPS = ['django_netjsonconfig']  # Just for testing purposes
+EXTENDED_APPS = ('openwisp_controller', 'django_loci')  # Just for testing purposes
 
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',

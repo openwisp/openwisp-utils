@@ -105,7 +105,7 @@ def check_commit_message():
     # no final dot
     if short_desc and short_desc[-1] == '.':
         errors.append(
-            'please do not add a final dot at the ' 'end of commit short description'
+            'please do not add a final dot at the end of commit short description'
         )
     # ensure prefix is present
     prefix = re.match(r'\[(.*?)\]', short_desc)

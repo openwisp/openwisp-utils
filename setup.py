@@ -47,13 +47,13 @@ setup(
             'black<=19.10b0',
             'flake8<=3.9',
             'isort~=5.0',
-            'readme-renderer~=26.0',
+            'readme-renderer~=28.0',
             'coveralls',  # depends on coverage as well
         ],
         'rest': [
             'djangorestframework>=3.11,<3.12',
             'django-filter>=2.2.0<2.4.0',
-            'drf-yasg>=1.17,<1.18',
+            'drf-yasg~=1.20.0',
         ],
     },
     classifiers=[
