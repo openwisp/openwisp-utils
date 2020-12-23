@@ -41,6 +41,8 @@
 <div id="main-menu">
     <a href="{% url 'admin:index' %}"
        class="home">{% trans 'Home' %}</a>
+    <a href="{% url 'admin:ow_dashboard' %}"
+       class="home">{% trans 'Dashboard' %}</a>
     {% for item in openwisp_menu_items %}
     <a href="{{ item.url }}"
        class="{{ item.class }}">{{ item.label }}</a>
