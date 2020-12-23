@@ -1,7 +1,17 @@
+from collections import OrderedDict
 from copy import deepcopy
 
 from django.conf import settings
 from django.utils.crypto import get_random_string
+
+
+class SortedOrderedDict(OrderedDict):
+    def update(self, items):
+        super().update(items)
+        temp = deepcopy(self)
+        temp = sorted((temp.items()), key=lambda x: x[0])
+        self.clear()
+        super().update(temp)
 
 
 def get_random_key():

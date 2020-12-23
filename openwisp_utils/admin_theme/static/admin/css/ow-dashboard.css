@@ -1,0 +1,17 @@
+#plot-container {
+  text-align: center;
+}
+
+.js-plotly-plot {
+  display: inline-block;
+  margin-bottom: -30px;
+}
+
+.js-plotly-plot .surface{
+  cursor: pointer
+}
+
+.js-plotly-plot .legendtext,
+.js-plotly-plot .hoverlayer{
+  text-transform: capitalize;
+}

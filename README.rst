@@ -206,6 +206,113 @@ to provide CSS and JS files to customise admin theme.
 
     You can learn more in the `Django documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
 
+Configurable Dashboard
+----------------------
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/master/docs/ConfigurableDashboard.png
+  :align: center
+
+You can add or remove elements from the  dashboard by using
+``openwisp_utils.admin_theme.register_dashboard_element`` or
+``openwisp_utils.admin_theme.register_dashboard_element`` utility functions.
+
+``register_dashboard_element``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The function is used to register a new dashboard element from your code.
+
+**Syntax:**
+
+.. code-block:: python
+
+    register_dashboard_element(position, element_config)
+
++--------------------+-------------------------------------------------------------+
+| **Parameter**      | **Description**                                             |
++--------------------+-------------------------------------------------------------+
+| ``position``       | A ``int`` defining position of the dashboard element.       |
++--------------------+-------------------------------------------------------------+
+| ``element_config`` | A ``dict`` defining configuration of the dashboard element. |
++--------------------+-------------------------------------------------------------+
+
+Following properties can be configured for each dashboard element:
+
++-----------------+------------------------------------------------------------------------------------------------------+
+| **Property**    | **Description**                                                                                      |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``query_param`` | It is a required property in form of ``dict`` containing following properties                        |
+|                 |                                                                                                      |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | **Property**  | **Description**                                                                 |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``name``      | A ``str`` defining title to be used while rending the element.                  |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``app_label`` | A ``str`` defining app label of the model whose values are to be displayed.     |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``model``     | A ``str`` defining name of the model whole values are to be displayed.          |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``group_by``  | A ``str`` defining property of the model on which the values should be grouped. |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``colors``      | It is an **optional** property in form of ``dict``. You can define colors for each distinct value of |
+|                 | ``group_by`` property.                                                                               |
++-----------------+------------------------------------------------------------------------------------------------------+
+
+Here is an example to register a dashboard element:
+
+.. code-block:: python
+
+	from openwisp_utils.admin_theme import register_dashboard_element
+
+    register_dashboard_element(
+        position=1,
+        element_config={
+            'query_params': {
+                'name': 'Operator Project Distribution',
+                'app_label': 'test_project',
+                'model': 'operator',
+                'group_by': 'project__name',
+            },
+            'colors': {'Utils': 'red', 'User': 'orange'},
+        },
+    )
+
+**Note**: It will raise ``ImproperlyConfigured`` exception if a dashboard element
+is already registered at same position.
+
+It is suggested to register the dashboard function inside the ready
+function of your app. Checkout `app.py of the test_project <https://github.com/openwisp/openwisp-utils/blob/master/tests/test_project/apps.py>`_
+for reference.
+
+``unregister_dashboard_element``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This function is used to remove an element from the dashboard.
+
+**Syntax:**
+
+.. code-block:: python
+
+    unregister_dashboard_element(element_name)
+
++------------------+---------------------------------------------------+
+| **Parameter**    | **Description**                                   |
++------------------+---------------------------------------------------+
+| ``element_name`` | A ``str`` defining name of then dashboard element |
++------------------+---------------------------------------------------+
+
+An example usage is shown below.
+
+.. code-block:: python
+
+    from openwisp_utils.admin_theme import unregister_dashboard_element
+
+    # Unregister previously registered dashboard element
+    unregister_dashboard_element('Operator Project Distribution')
+
+**Note**: It will raise ``ImproperlyConfigured`` exception if the concerned
+dashboard element is not registered.
+
 Main navigation menu
 --------------------
 
@@ -380,6 +487,14 @@ If you want to print a string in ``Red Bold``, you can do it as below.
     print_color('This is the printed in Red Bold', color_name='red_bold')
 
 You may also provide the ``end`` arguement similar to built-in print method.
+
+
+``openwisp_utils.utils.SorrtedOrderedDict``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Extends ``collections.SortedDict`` and implements logic to sort inserted
+items based on ``key`` value. Sorting is done at insert operation which
+incurs memory space overhead.
 
 REST API utilities
 ------------------
@@ -690,6 +805,15 @@ Heading text used in the main ``<h1>`` HTML tag (the logo) of the admin site.
 **default**: ``Network administration``
 
 Title shown to users in the index page of the admin site.
+
+``OPENWISP_ADMIN_DASHBOARD_ENABLED``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default**: ``False``
+
+When ``True``, enables the `configurable dashboard <#configurable-dashboard>`_.
+Upon login, the user will be greeted with the dashboard instead of the default
+Django admin index page.
 
 ``OPENWISP_ADMIN_MENU_ITEMS``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

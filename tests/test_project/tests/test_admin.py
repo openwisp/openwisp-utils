@@ -1,10 +1,15 @@
+from unittest.mock import patch
+
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from openwisp_utils.admin import ReadOnlyAdmin
+from openwisp_utils.admin_theme import register_dashboard_element
 from openwisp_utils.admin_theme import settings as admin_theme_settings
+from openwisp_utils.admin_theme import unregister_dashboard_element
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
 
@@ -41,8 +46,10 @@ class TestAdmin(TestCase, CreateMixin):
         self.assertNotContains(response, 'Add accounting')
 
     def test_alwayshaschangedmixin(self):
-        self.assertEqual(Project.objects.count(), 0)
-        self.assertEqual(Operator.objects.count(), 0)
+        project_query = Project.objects.filter(name='test')
+        operator_query = Operator.objects.filter(first_name='test')
+        self.assertEqual(project_query.count(), 0)
+        self.assertEqual(operator_query.count(), 0)
         params = {
             'name': 'test',
             'key': self.TEST_KEY,
@@ -58,10 +65,10 @@ class TestAdmin(TestCase, CreateMixin):
         url = reverse('admin:test_project_project_add')
         r = self.client.post(url, params, follow=True)
         self.assertNotContains(r, 'error')
-        self.assertEqual(Project.objects.count(), 1)
-        self.assertEqual(Operator.objects.count(), 1)
-        project = Project.objects.first()
-        operator = Operator.objects.first()
+        self.assertEqual(project_query.count(), 1)
+        self.assertEqual(operator_query.count(), 1)
+        project = project_query.first()
+        operator = operator_query.first()
         self.assertEqual(project.name, params['name'])
         self.assertEqual(operator.first_name, 'test')
         self.assertEqual(operator.last_name, 'test')
@@ -248,3 +255,50 @@ class TestAdmin(TestCase, CreateMixin):
         )
         response = self.client.get(reverse('admin:index'))
         self.assertContains(response, 'src="/static/openwisp-utils/js/uuid.js"')
+
+    def test_login(self):
+        url = reverse('admin:login')
+        with self.subTest('Test with logged in user'):
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, reverse('admin:ow_dashboard'))
+
+        with self.subTest('Test with logged out user'):
+            self.client.logout()
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'login')
+
+    def test_ow_dashboard(self):
+        response = self.client.get(reverse('admin:ow_dashboard'))
+        self.assertContains(response, 'Operator Project Distribution')
+        self.assertContains(response, '\'values\': [1, 1]')
+        self.assertContains(response, '\'labels\': [\'User\', \'Utils\']')
+        self.assertContains(response, '\'colors\': [\'orange\', \'red\']')
+
+    def test_ow_dashboard_non_existent_model(self):
+        register_dashboard_element(
+            -1,
+            {
+                'name': 'Test Chart',
+                'query_params': {
+                    'app_label': 'app_label',
+                    'model': 'model_name',
+                    'group_by': 'property',
+                },
+            },
+        )
+        with self.assertRaises(ImproperlyConfigured):
+            self.client.get(reverse('admin:ow_dashboard'))
+        unregister_dashboard_element('Test Chart')
+
+    @patch('openwisp_utils.admin_theme.settings.ADMIN_DASHBOARD_ENABLED', False)
+    def test_disabling_dashboard(self):
+        with self.subTest('Test redirect from login page'):
+            response = self.client.get(reverse('admin:login'))
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, reverse('admin:index'))
+
+        with self.subTest('Test "Dashboard" is absent from menu items'):
+            response = self.client.get(reverse('admin:index'))
+            self.assertNotContains(response, 'Dashboard')

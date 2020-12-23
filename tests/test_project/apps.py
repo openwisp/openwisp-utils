@@ -1,3 +1,4 @@
+from openwisp_utils.admin_theme import register_dashboard_element
 from openwisp_utils.api.apps import ApiAppConfig
 from openwisp_utils.utils import register_menu_items
 
@@ -21,3 +22,16 @@ class TestAppConfig(ApiAppConfig):
         register_menu_items(items)
         # Required only for testing
         register_menu_items(items, name_menu='OPENWISP_TEST_ADMIN_MENU_ITEMS')
+
+    register_dashboard_element(
+        position=0,
+        element_config={
+            'name': 'Operator Project Distribution',
+            'query_params': {
+                'app_label': 'test_project',
+                'model': 'operator',
+                'group_by': 'project__name',
+            },
+            'colors': {'Utils': 'red', 'User': 'orange'},
+        },
+    )

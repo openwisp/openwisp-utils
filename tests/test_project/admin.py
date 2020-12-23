@@ -14,6 +14,7 @@ from .models import Operator, Project, RadiusAccounting, Shelf
 @admin.register(Operator)
 class OperatorAdmin(admin.ModelAdmin):
     list_display = ['first_name', 'last_name']
+    list_filter = ['project__name']
 
 
 @admin.register(RadiusAccounting)
