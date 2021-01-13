@@ -722,6 +722,10 @@ Example usage:
 
 **default**: ``[]``
 
+**Note**: this setting requires
+`the admin_theme_settings context processor <#supplying-custom-css-and-js-for-the-admin-theme>`_
+in order to work.
+
 Allows to override the default CSS and favicon, as well as add extra
 <link> HTML elements if needed.
 
