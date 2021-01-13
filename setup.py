@@ -48,7 +48,7 @@ setup(
             'flake8<=3.9',
             'isort~=5.0',
             'readme-renderer~=28.0',
-            'coveralls',  # depends on coverage as well
+            'coveralls~=3.0.0',  # depends on coverage as well
         ],
         'rest': [
             'djangorestframework>=3.11,<3.12',
