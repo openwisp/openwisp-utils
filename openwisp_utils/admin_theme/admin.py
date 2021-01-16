@@ -5,9 +5,13 @@ from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import path, reverse
 from django.utils.translation import ugettext_lazy
 from swapper import load_model
+
+from .schema import DASHBOARD_SCHEMA
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +28,6 @@ class OpenwispAdminSite(admin.AdminSite):
     enable_nav_sidebar = False
 
     def login(self, *args, **kwargs):
-        from django.http import HttpResponseRedirect
-        from django.urls import reverse
-
         response = super().login(*args, **kwargs)
         if isinstance(response, HttpResponseRedirect):
             response = HttpResponseRedirect(reverse('admin:ow_dashboard'))
@@ -37,8 +38,6 @@ class OpenwispAdminSite(admin.AdminSite):
             'is_popup': False,
             'has_permission': True,
         }
-        from .schema import DASHBOARD_SCHEMA
-
         schema = copy.deepcopy(DASHBOARD_SCHEMA)
 
         for key, value in schema.items():
@@ -77,8 +76,6 @@ class OpenwispAdminSite(admin.AdminSite):
         return render(request, template_name='admin/ow_dashboard.html', context=context)
 
     def get_urls(self):
-        from django.urls import path
-
         url_patterns = super().get_urls()
 
         url_patterns += [

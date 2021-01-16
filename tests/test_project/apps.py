@@ -1,4 +1,4 @@
-from openwisp_utils.admin_theme.schema import register_dashboard_element
+from openwisp_utils.admin_theme import register_dashboard_element
 from openwisp_utils.api.apps import ApiAppConfig
 from openwisp_utils.utils import register_menu_items
 
