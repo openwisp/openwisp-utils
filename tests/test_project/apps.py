@@ -24,12 +24,16 @@ class TestAppConfig(ApiAppConfig):
         register_menu_items(items, name_menu='OPENWISP_TEST_ADMIN_MENU_ITEMS')
 
     register_dashboard_element(
-        'Project Graph',
+        'Operator Project Distribution',
         {
             'query_params': {
                 'app_label': 'test_project',
                 'model': 'operator',
                 'group_by': 'project__name',
+            },
+            'colors': {
+                'Utils': 'red',
+                'User': 'orange',
             },
         },
     )
