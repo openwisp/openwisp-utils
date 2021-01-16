@@ -31,9 +31,6 @@ class TestAppConfig(ApiAppConfig):
                 'model': 'operator',
                 'group_by': 'project__name',
             },
-            'colors': {
-                'Utils': 'red',
-                'User': 'orange',
-            },
+            'colors': {'Utils': 'red', 'User': 'orange'},
         },
     )
