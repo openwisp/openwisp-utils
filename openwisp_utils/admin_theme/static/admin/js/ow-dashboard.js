@@ -19,19 +19,23 @@ const layout = {
 
 for (let i = 0; i < elementsParam.length; ++i) {
     let data = [{
-        values: elementsParam[i].query_params.values,
-        labels: elementsParam[i].query_params.labels,
-        type: 'pie',
-        hole: 0.65,
-        title: {
-            text: elementsName[i],
-            font: {
-                size: 20
+            values: elementsParam[i].query_params.values,
+            labels: elementsParam[i].query_params.labels,
+            marker: {
+                colors: elementsParam[i].colors
             },
-            position: 'bottom center'
-        },
-        targetLink: elementsParam[i].target_link
-    }], element = document.createElement('div');
+            type: 'pie',
+            hole: 0.65,
+            title: {
+                text: elementsName[i],
+                font: {
+                    size: 20
+                },
+                position: 'bottom center'
+            },
+            targetLink: elementsParam[i].target_link
+        }],
+        element = document.createElement('div');
 
     Plotly.newPlot(element, data, layout, options);
 

@@ -66,11 +66,16 @@ class OpenwispAdminSite(admin.AdminSite):
             # {group_by : '<label>', 'count': <value>}
             values = []
             labels = []
+            colors = []
             for obj in qs:
                 labels.append(obj[group_by])
                 values.append(obj['count'])
-            schema[key]['query_params'] = {'values': values, 'labels': labels}
-            schema[key]['target_link'] = f'/admin/{app_label}/{model_name}/?{group_by}='
+            if 'colors' in value:
+                for label in labels:
+                    colors.append(value['colors'][label])
+            value['query_params'] = {'values': values, 'labels': labels}
+            value['colors'] = colors
+            value['target_link'] = f'/admin/{app_label}/{model_name}/?{group_by}='
 
         context.update({'dashboard_schema': dict(schema)})
         return render(request, template_name='admin/ow_dashboard.html', context=context)
