@@ -206,6 +206,110 @@ to provide CSS and JS files to customise admin theme.
 
     You can learn more in the `Django documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
 
+Configurable Dashboard
+----------------------
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/master/docs/ConfigurableDashboard.png
+  :align: center
+
+You can add or remove elements from the  dashboard by using
+``openwisp_utils.admin_theme.register_dashboard_element`` or
+``openwisp_utils.admin_theme.register_dashboard_element`` utility functions.
+
+``register_dashboard_element``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The function is used to register a new dashboard element from your code.
+
+**Syntax:**
+
+.. code-block:: python
+
+	register_dashboard_element(element_name, element_config)
+
++----------------+-------------------------------------------------------------+
+| **Parameter**  | **Description**                                             |
++----------------+-------------------------------------------------------------+
+| element_name   | A ``str`` defining name of the dashboard element.           |
++----------------+-------------------------------------------------------------+
+| element_config | A ``dict`` defining configuration of the dashboard element. |
++----------------+-------------------------------------------------------------+
+
+Following properties can be configured for each dashboard element:
+
++-----------------+------------------------------------------------------------------------------------------------------+
+| **Property**    | **Description**                                                                                      |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``query_param`` | It is a required property in form of ``dict`` containing following properties                        |
+|                 |                                                                                                      |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | **Property**  | **Description**                                                                 |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``app_label`` | A ``str`` defining app label of the model whose values are to be displayed.     |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``model``     | A ``str`` defining name of the model whole values are to be displayed.          |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``group_by``  | A ``str`` defining property of the model on which the values should be grouped. |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``colors``      | It is an **optional** property in form of ``dict``. You can define colors for each distinct value of |
+|                 | ``group_by`` property.                                                                               |
++-----------------+------------------------------------------------------------------------------------------------------+
+
+Here is an example to register a dashboard element:
+
+.. code-block:: python
+
+	from openwisp_utils.admin_theme import register_dashboard_element
+
+	register_dashboard_element(
+		'Operator Project Distribution',
+		{
+			'query_params': {
+				'app_label': 'test_project',
+				'model': 'operator',
+				'group_by': 'project__name',
+			},
+			'colors': {'Utils': 'red', 'User': 'orange'},
+		},
+	)
+
+**Note**: It will raise ``ImproperlyConfigured`` exception if a dashboard element
+is already registered with same name.
+
+It is suggested to register the dashboard function inside the ready
+function of your app. Checkout `app.py of the test_project <https://github.com/openwisp/openwisp-utils/blob/master/tests/test_project/apps.py>`_
+for reference.
+
+``unregister_dashboard_element``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This function is used to remove an element from the dashboard.
+
+**Syntax:**
+
+.. code-block:: python
+
+	unregister_dashboard_element(element_name)
+
++---------------+---------------------------------------------------+
+| **Parameter** | **Description**                                   |
++---------------+---------------------------------------------------+
+| element_name  | A ``str`` defining name of then dashboard element |
++---------------+---------------------------------------------------+
+
+An example usage is shown below.
+
+.. code-block:: python
+
+    from openwisp_utils.admin_theme import unregister_dashboard_element
+
+    # Unregister previously registered dashboard element
+    unregister_dashboard_element('Operator Project Distribution')
+
+**Note**: It will raise ``ImproperlyConfigured`` exception if the concerned
+dashboard element is not registered.
+
 Main navigation menu
 --------------------
 
