@@ -7,6 +7,10 @@
   justify-content: center;
 }
 
+.js-plotly-plot .surface{
+  cursor: pointer
+}
+
 @media (min-width: 800px) {
   #plot-container {
     width: 800px;

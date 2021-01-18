@@ -33,7 +33,7 @@ class OpenwispAdminSite(admin.AdminSite):
             response = HttpResponseRedirect(reverse('admin:ow_dashboard'))
         return response
 
-    def ow_dashboard(self, request, extra_context=None):
+    def dashboard(self, request, extra_context=None):
         context = {
             'is_popup': False,
             'has_permission': True,
@@ -84,9 +84,7 @@ class OpenwispAdminSite(admin.AdminSite):
         url_patterns = super().get_urls()
 
         url_patterns += [
-            path(
-                'ow-dashboard', self.admin_view(self.ow_dashboard), name='ow_dashboard'
-            ),
+            path('dashboard/', self.admin_view(self.dashboard), name='ow_dashboard'),
         ]
 
         return url_patterns

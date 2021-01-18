@@ -225,15 +225,15 @@ The function is used to register a new dashboard element from your code.
 
 .. code-block:: python
 
-	register_dashboard_element(element_name, element_config)
+    register_dashboard_element(element_name, element_config)
 
-+----------------+-------------------------------------------------------------+
-| **Parameter**  | **Description**                                             |
-+----------------+-------------------------------------------------------------+
-| element_name   | A ``str`` defining name of the dashboard element.           |
-+----------------+-------------------------------------------------------------+
-| element_config | A ``dict`` defining configuration of the dashboard element. |
-+----------------+-------------------------------------------------------------+
++--------------------+-------------------------------------------------------------+
+| **Parameter**      | **Description**                                             |
++--------------------+-------------------------------------------------------------+
+| ``element_name``   | A ``str`` defining name of the dashboard element.           |
++--------------------+-------------------------------------------------------------+
+| ``element_config`` | A ``dict`` defining configuration of the dashboard element. |
++--------------------+-------------------------------------------------------------+
 
 Following properties can be configured for each dashboard element:
 
@@ -262,17 +262,17 @@ Here is an example to register a dashboard element:
 
 	from openwisp_utils.admin_theme import register_dashboard_element
 
-	register_dashboard_element(
-		'Operator Project Distribution',
-		{
-			'query_params': {
-				'app_label': 'test_project',
-				'model': 'operator',
-				'group_by': 'project__name',
-			},
-			'colors': {'Utils': 'red', 'User': 'orange'},
-		},
-	)
+    register_dashboard_element(
+        'Operator Project Distribution',
+        {
+            'query_params': {
+                'app_label': 'test_project',
+                'model': 'operator',
+                'group_by': 'project__name',
+            },
+            'colors': {'Utils': 'red', 'User': 'orange'},
+        },
+    )
 
 **Note**: It will raise ``ImproperlyConfigured`` exception if a dashboard element
 is already registered with same name.
@@ -290,13 +290,13 @@ This function is used to remove an element from the dashboard.
 
 .. code-block:: python
 
-	unregister_dashboard_element(element_name)
+    unregister_dashboard_element(element_name)
 
-+---------------+---------------------------------------------------+
-| **Parameter** | **Description**                                   |
-+---------------+---------------------------------------------------+
-| element_name  | A ``str`` defining name of then dashboard element |
-+---------------+---------------------------------------------------+
++------------------+---------------------------------------------------+
+| **Parameter**    | **Description**                                   |
++------------------+---------------------------------------------------+
+| ``element_name`` | A ``str`` defining name of then dashboard element |
++------------------+---------------------------------------------------+
 
 An example usage is shown below.
 

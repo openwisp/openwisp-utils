@@ -10,6 +10,20 @@ const layout = {
         margin: {
             t: 0,
             b: 0
+        },
+        legend: {
+            yanchor: 'bottom',
+            xanchor: 'center',
+            x: 0.5,
+            y: 0.1,
+            orientation: 'h'
+        },
+        title: {
+            yanchor: 'top',
+            y: 0.88,
+            font: {
+                size: 20
+            }
         }
     },
     options = {
@@ -18,6 +32,7 @@ const layout = {
     };
 
 for (let i = 0; i < elementsParam.length; ++i) {
+    layout.title.text = elementsName[i]
     let data = [{
             values: elementsParam[i].query_params.values,
             labels: elementsParam[i].query_params.labels,
@@ -26,13 +41,6 @@ for (let i = 0; i < elementsParam.length; ++i) {
             },
             type: 'pie',
             hole: 0.65,
-            title: {
-                text: elementsName[i],
-                font: {
-                    size: 20
-                },
-                position: 'bottom center'
-            },
             targetLink: elementsParam[i].target_link
         }],
         element = document.createElement('div');
