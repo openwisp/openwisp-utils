@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -290,3 +292,14 @@ class TestAdmin(TestCase, CreateMixin):
         with self.assertRaises(ImproperlyConfigured):
             self.client.get(reverse('admin:ow_dashboard'))
         unregister_dashboard_element('Test Chart')
+
+    @patch('openwisp_utils.admin_theme.settings.ADMIN_DASHBOARD_VISIBLE', False)
+    def test_disabling_dashboard(self):
+        with self.subTest('Test redirect from login page'):
+            response = self.client.get(reverse('admin:login'))
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, reverse('admin:index'))
+
+        with self.subTest('Test "Dashboard" is absent from menu items'):
+            response = self.client.get(reverse('admin:index'))
+            self.assertNotContains(response, 'Dashboard')

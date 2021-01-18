@@ -12,6 +12,7 @@ def menu_items(request):
         'show_userlinks_block': getattr(
             settings, 'OPENWISP_ADMIN_SHOW_USERLINKS_BLOCK', False
         ),
+        'admin_dashboard_visible': app_settings.ADMIN_DASHBOARD_VISIBLE,
     }
 
 

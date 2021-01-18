@@ -11,6 +11,7 @@ from django.urls import path, reverse
 from django.utils.translation import ugettext_lazy
 from swapper import load_model
 
+from . import settings as app_settings
 from .schema import DASHBOARD_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,10 @@ class OpenwispAdminSite(admin.AdminSite):
 
     def login(self, *args, **kwargs):
         response = super().login(*args, **kwargs)
-        if isinstance(response, HttpResponseRedirect):
+        if (
+            isinstance(response, HttpResponseRedirect)
+            and app_settings.ADMIN_DASHBOARD_VISIBLE
+        ):
             response = HttpResponseRedirect(reverse('admin:ow_dashboard'))
         return response
 
@@ -83,9 +87,12 @@ class OpenwispAdminSite(admin.AdminSite):
     def get_urls(self):
         url_patterns = super().get_urls()
 
-        url_patterns += [
-            path('dashboard/', self.admin_view(self.dashboard), name='ow_dashboard'),
-        ]
+        if app_settings.ADMIN_DASHBOARD_VISIBLE:
+            url_patterns += [
+                path(
+                    'dashboard/', self.admin_view(self.dashboard), name='ow_dashboard'
+                ),
+            ]
 
         return url_patterns
 

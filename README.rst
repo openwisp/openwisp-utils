@@ -795,6 +795,15 @@ Heading text used in the main ``<h1>`` HTML tag (the logo) of the admin site.
 
 Title shown to users in the index page of the admin site.
 
+``OPENWISP_ADMIN_DASHBOARD_VISIBLE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default**: ``False``
+
+When ``True``, enables the `configurable dashboard <#configurable-dashboard>`_.
+Upon login, the user will be greeted with the dashboard instead of the default
+Django admin index page.
+
 ``OPENWISP_ADMIN_MENU_ITEMS``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
