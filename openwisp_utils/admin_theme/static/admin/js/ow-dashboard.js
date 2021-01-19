@@ -41,7 +41,8 @@ for (let i = 0; i < elementsParam.length; ++i) {
             },
             type: 'pie',
             hole: 0.65,
-            targetLink: elementsParam[i].target_link
+            targetLink: elementsParam[i].target_link,
+            texttemplate: '%{percent}<br>(%{value})'
         }],
         element = document.createElement('div');
 
