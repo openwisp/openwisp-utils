@@ -72,7 +72,7 @@ class OpenwispAdminSite(admin.AdminSite):
             labels = []
             colors = []
             for obj in qs:
-                labels.append(obj[group_by])
+                labels.append(str(obj[group_by]))
                 values.append(obj['count'])
             if 'colors' in value:
                 for label in labels:

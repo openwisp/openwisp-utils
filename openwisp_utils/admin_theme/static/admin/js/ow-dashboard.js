@@ -15,7 +15,7 @@ const layout = {
             yanchor: 'bottom',
             xanchor: 'center',
             x: 0.5,
-            y: 0.1,
+            y: 0.05,
             orientation: 'h'
         },
         title: {
@@ -28,7 +28,6 @@ const layout = {
     },
     options = {
         displayModeBar: false,
-        responsive: true
     };
 
 for (let i = 0; i < elementsParam.length; ++i) {
@@ -40,7 +39,7 @@ for (let i = 0; i < elementsParam.length; ++i) {
                 colors: elementsParam[i].colors
             },
             type: 'pie',
-            hole: 0.65,
+            hole: 0.6,
             targetLink: elementsParam[i].target_link,
             texttemplate: '%{percent}<br>(%{value})'
         }],
