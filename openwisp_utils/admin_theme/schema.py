@@ -1,8 +1,8 @@
-from collections import OrderedDict
-
 from django.core.exceptions import ImproperlyConfigured
 
-DASHBOARD_SCHEMA = OrderedDict()
+from ..utils import SortedOrderedDict
+
+DASHBOARD_SCHEMA = SortedOrderedDict()
 
 
 def _validate_element_params(schema):
@@ -12,7 +12,10 @@ def _validate_element_params(schema):
     assert 'app_label' in query_params
     assert 'model' in query_params
     assert 'group_by' in query_params
-
+    try:
+        assert 'order' in schema
+    except AssertionError:
+        schema['order'] = len(DASHBOARD_SCHEMA.keys())
     return schema
 
 
