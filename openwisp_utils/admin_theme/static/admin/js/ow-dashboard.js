@@ -14,9 +14,8 @@ const layout = {
         legend: {
             yanchor: 'bottom',
             xanchor: 'center',
-            x: 0.5,
+            x: 1,
             y: 0.05,
-            orientation: 'h'
         },
         title: {
             yanchor: 'top',
