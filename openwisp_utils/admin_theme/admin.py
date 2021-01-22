@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy
 from swapper import load_model
 
 from . import settings as app_settings
-from .schema import DASHBOARD_SCHEMA
+from .dashboard import DASHBOARD_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +42,9 @@ class OpenwispAdminSite(admin.AdminSite):
             'is_popup': False,
             'has_permission': True,
         }
-        schema = copy.deepcopy(DASHBOARD_SCHEMA)
+        config = copy.deepcopy(DASHBOARD_CONFIG)
 
-        for key, value in schema.items():
+        for key, value in config.items():
             app_label, model_name, group_by = value['query_params'].values()
             try:
                 model = load_model(app_label, model_name)
@@ -81,7 +81,7 @@ class OpenwispAdminSite(admin.AdminSite):
             value['colors'] = colors
             value['target_link'] = f'/admin/{app_label}/{model_name}/?{group_by}='
 
-        context.update({'dashboard_schema': dict(schema)})
+        context.update({'dashboard_config': dict(config)})
         return render(request, template_name='admin/ow_dashboard.html', context=context)
 
     def get_urls(self):

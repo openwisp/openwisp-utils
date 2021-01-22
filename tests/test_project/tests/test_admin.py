@@ -7,13 +7,11 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from openwisp_utils.admin import ReadOnlyAdmin
+from openwisp_utils.admin_theme import register_dashboard_element
 from openwisp_utils.admin_theme import settings as admin_theme_settings
+from openwisp_utils.admin_theme import unregister_dashboard_element
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
-from openwisp_utils.admin_theme.schema import (
-    register_dashboard_element,
-    unregister_dashboard_element,
-)
 
 from ..admin import ProjectAdmin
 from ..models import Operator, Project, RadiusAccounting

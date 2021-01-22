@@ -1,7 +1,7 @@
 "use strict";
 
-let elementsName = Object.keys(dashboardSchema),
-    elementsParam = Object.values(dashboardSchema),
+let elementsName = Object.keys(dashboardConfig),
+    elementsParam = Object.values(dashboardConfig),
     container = document.getElementById('plot-container');
 
 const layout = {

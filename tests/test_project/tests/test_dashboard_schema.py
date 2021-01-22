@@ -9,10 +9,10 @@ from openwisp_utils.admin_theme import (
 )
 
 
-class TestDashboardSchema(TestCase):
-    @patch('openwisp_utils.admin_theme.schema.DASHBOARD_SCHEMA', OrderedDict())
+class TestDashboardConfig(TestCase):
+    @patch('openwisp_utils.admin_theme.dashboard.DASHBOARD_CONFIG', OrderedDict())
     def test_register_dashboard_element(self):
-        from openwisp_utils.admin_theme.schema import DASHBOARD_SCHEMA
+        from openwisp_utils.admin_theme.dashboard import DASHBOARD_CONFIG
 
         dashboard_element = {
             'query_params': {
@@ -25,7 +25,7 @@ class TestDashboardSchema(TestCase):
 
         with self.subTest('Registering new dashboard element'):
             register_dashboard_element('Test Chart', dashboard_element)
-            self.assertIn('Test Chart', DASHBOARD_SCHEMA)
+            self.assertIn('Test Chart', DASHBOARD_CONFIG)
 
         with self.subTest('Re-registering a dashboard element'):
             with self.assertRaises(ImproperlyConfigured):
@@ -37,10 +37,10 @@ class TestDashboardSchema(TestCase):
 
         with self.subTest('Unregistering "Test Chart"'):
             unregister_dashboard_element('Test Chart')
-            self.assertNotIn('Test Chart', DASHBOARD_SCHEMA)
+            self.assertNotIn('Test Chart', DASHBOARD_CONFIG)
 
-    def test_miscellaneous_dashboard_schema_validation(self):
-        with self.subTest('Registering with incomplete dashboard element schema'):
+    def test_miscellaneous_DASHBOARD_CONFIG_validation(self):
+        with self.subTest('Registering with incomplete dashboard element config'):
             with self.assertRaises(AssertionError):
                 register_dashboard_element('Test Chart', dict())
 
@@ -48,7 +48,7 @@ class TestDashboardSchema(TestCase):
             with self.assertRaises(ImproperlyConfigured):
                 register_dashboard_element(['Test Chart'], dict())
 
-        with self.subTest('Registering with improper dashboard element schema'):
+        with self.subTest('Registering with improper dashboard element config'):
             with self.assertRaises(ImproperlyConfigured):
                 register_dashboard_element('Test Chart', tuple())
 
