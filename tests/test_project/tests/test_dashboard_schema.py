@@ -15,6 +15,7 @@ class TestDashboardConfig(TestCase):
         from openwisp_utils.admin_theme.dashboard import DASHBOARD_CONFIG
 
         dashboard_element = {
+            'name': 'Test Chart',
             'query_params': {
                 'app_label': 'app_label',
                 'model': 'model_name',
@@ -24,12 +25,12 @@ class TestDashboardConfig(TestCase):
         }
 
         with self.subTest('Registering new dashboard element'):
-            register_dashboard_element('Test Chart', dashboard_element)
-            self.assertIn('Test Chart', DASHBOARD_CONFIG)
+            register_dashboard_element(-1, dashboard_element)
+            self.assertIn(-1, DASHBOARD_CONFIG)
 
         with self.subTest('Re-registering a dashboard element'):
             with self.assertRaises(ImproperlyConfigured):
-                register_dashboard_element('Test Chart', dashboard_element)
+                register_dashboard_element(-1, dashboard_element)
 
         with self.subTest('Unregistering a dashboard element which does not exists'):
             with self.assertRaises(ImproperlyConfigured):
@@ -42,7 +43,7 @@ class TestDashboardConfig(TestCase):
     def test_miscellaneous_DASHBOARD_CONFIG_validation(self):
         with self.subTest('Registering with incomplete dashboard element config'):
             with self.assertRaises(AssertionError):
-                register_dashboard_element('Test Chart', dict())
+                register_dashboard_element(-1, dict())
 
         with self.subTest('Registering with improper dashboard element name'):
             with self.assertRaises(ImproperlyConfigured):

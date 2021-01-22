@@ -24,8 +24,9 @@ class TestAppConfig(ApiAppConfig):
         register_menu_items(items, name_menu='OPENWISP_TEST_ADMIN_MENU_ITEMS')
 
     register_dashboard_element(
-        'Operator Project Distribution',
-        {
+        position=0,
+        element_config={
+            'name': 'Operator Project Distribution',
             'query_params': {
                 'app_label': 'test_project',
                 'model': 'operator',

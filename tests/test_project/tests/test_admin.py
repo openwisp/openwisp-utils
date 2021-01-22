@@ -278,8 +278,9 @@ class TestAdmin(TestCase, CreateMixin):
 
     def test_ow_dashboard_non_existent_model(self):
         register_dashboard_element(
-            'Test Chart',
+            -1,
             {
+                'name': 'Test Chart',
                 'query_params': {
                     'app_label': 'app_label',
                     'model': 'model_name',

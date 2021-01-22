@@ -6,14 +6,10 @@ from django.utils.crypto import get_random_string
 
 
 class SortedOrderedDict(OrderedDict):
-    def __init__(self, order_by='order', *args, **kwargs):
-        self.order_by = order_by
-        super().__init__(*args, **kwargs)
-
     def update(self, items):
         super().update(items)
         temp = deepcopy(self)
-        temp = sorted((temp.items()), key=lambda x: x[1][self.order_by])
+        temp = sorted((temp.items()), key=lambda x: x[0])
         self.clear()
         super().update(temp)
 

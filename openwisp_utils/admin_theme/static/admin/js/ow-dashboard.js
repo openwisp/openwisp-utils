@@ -1,7 +1,6 @@
 "use strict";
 
-let elementsName = Object.keys(dashboardConfig),
-    elementsParam = Object.values(dashboardConfig),
+let elementsParam = Object.values(dashboardConfig),
     container = document.getElementById('plot-container');
 
 const layout = {
@@ -30,7 +29,7 @@ const layout = {
     };
 
 for (let i = 0; i < elementsParam.length; ++i) {
-    layout.title.text = elementsName[i]
+    layout.title.text = elementsParam[i].name;
     let data = [{
             values: elementsParam[i].query_params.values,
             labels: elementsParam[i].query_params.labels,
