@@ -38,6 +38,10 @@ def register_dashboard_element(position, element_config):
 
 
 def unregister_dashboard_element(element_name):
+    """
+    Un-registers a dashboard element
+    unregister_dashboard_element(str)
+    """
     if not isinstance(element_name, str):
         raise ImproperlyConfigured('Dashboard element name should be type `str`')
 

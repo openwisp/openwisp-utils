@@ -28,11 +28,11 @@ class TestDashboardConfig(TestCase):
             register_dashboard_element(-1, dashboard_element)
             self.assertIn(-1, DASHBOARD_CONFIG)
 
-        with self.subTest('Re-registering a dashboard element'):
+        with self.subTest('Registering a dashboard element at existing position'):
             with self.assertRaises(ImproperlyConfigured):
                 register_dashboard_element(-1, dashboard_element)
 
-        with self.subTest('Unregistering a dashboard element which does not exists'):
+        with self.subTest('Unregistering a dashboard element that does not exists'):
             with self.assertRaises(ImproperlyConfigured):
                 unregister_dashboard_element('Chart Test')
 
@@ -45,14 +45,14 @@ class TestDashboardConfig(TestCase):
             with self.assertRaises(AssertionError):
                 register_dashboard_element(-1, dict())
 
-        with self.subTest('Registering with improper dashboard element name'):
+        with self.subTest('Registering with invalid position argument'):
             with self.assertRaises(ImproperlyConfigured):
                 register_dashboard_element(['Test Chart'], dict())
 
-        with self.subTest('Registering with improper dashboard element config'):
+        with self.subTest('Registering with invalid dashboard element config'):
             with self.assertRaises(ImproperlyConfigured):
                 register_dashboard_element('Test Chart', tuple())
 
-        with self.subTest('Unregistering with improper dashboard element name'):
+        with self.subTest('Unregistering with invalid dashboard element name'):
             with self.assertRaises(ImproperlyConfigured):
                 unregister_dashboard_element(dict())
