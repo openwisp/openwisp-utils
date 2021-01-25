@@ -225,12 +225,12 @@ The function is used to register a new dashboard element from your code.
 
 .. code-block:: python
 
-    register_dashboard_element(element_name, element_config)
+    register_dashboard_element(position, element_config)
 
 +--------------------+-------------------------------------------------------------+
 | **Parameter**      | **Description**                                             |
 +--------------------+-------------------------------------------------------------+
-| ``element_name``   | A ``str`` defining name of the dashboard element.           |
+| ``position``       | A ``int`` defining position of the dashboard element.       |
 +--------------------+-------------------------------------------------------------+
 | ``element_config`` | A ``dict`` defining configuration of the dashboard element. |
 +--------------------+-------------------------------------------------------------+
@@ -244,6 +244,8 @@ Following properties can be configured for each dashboard element:
 |                 |                                                                                                      |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
 |                 | | **Property**  | **Description**                                                                 |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``name``      | A ``str`` defining title to be used while rending the element.                  |  |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
 |                 | | ``app_label`` | A ``str`` defining app label of the model whose values are to be displayed.     |  |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
@@ -263,9 +265,10 @@ Here is an example to register a dashboard element:
 	from openwisp_utils.admin_theme import register_dashboard_element
 
     register_dashboard_element(
-        'Operator Project Distribution',
-        {
+        position=1,
+        element_config={
             'query_params': {
+                'name': 'Operator Project Distribution',
                 'app_label': 'test_project',
                 'model': 'operator',
                 'group_by': 'project__name',
@@ -275,7 +278,7 @@ Here is an example to register a dashboard element:
     )
 
 **Note**: It will raise ``ImproperlyConfigured`` exception if a dashboard element
-is already registered with same name.
+is already registered at same position.
 
 It is suggested to register the dashboard function inside the ready
 function of your app. Checkout `app.py of the test_project <https://github.com/openwisp/openwisp-utils/blob/master/tests/test_project/apps.py>`_
@@ -484,6 +487,14 @@ If you want to print a string in ``Red Bold``, you can do it as below.
     print_color('This is the printed in Red Bold', color_name='red_bold')
 
 You may also provide the ``end`` arguement similar to built-in print method.
+
+
+``openwisp_utils.utils.SorrtedOrderedDict``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Extends ``collections.SortedDict`` and implements logic to sort inserted
+items based on ``key`` value. Sorting is done at insert operation which
+incurs memory space overhead.
 
 REST API utilities
 ------------------
