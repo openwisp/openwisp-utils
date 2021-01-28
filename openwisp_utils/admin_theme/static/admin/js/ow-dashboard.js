@@ -30,24 +30,38 @@ const layout = {
 
 for (let i = 0; i < elementsParam.length; ++i) {
     layout.title.text = elementsParam[i].name;
-    let data = [{
-            values: elementsParam[i].query_params.values,
-            labels: elementsParam[i].query_params.labels,
-            marker: {
-                colors: elementsParam[i].colors
-            },
+    let data = {
             type: 'pie',
             hole: 0.6,
-            targetLink: elementsParam[i].target_link,
-            texttemplate: '%{percent}<br>(%{value})'
-        }],
+        },
         element = document.createElement('div');
 
-    Plotly.newPlot(element, data, layout, options);
+    // Show a graph depicting disabled graph when there is insufficient data
+    if (elementsParam[i].query_params.values.length == 0) {
+        data.values = [1]
+        data.labels = ['Not enough data']
+        data.marker = {
+            colors: ['#80808091']
+        }
+        data.texttemplate = ' '
+        data.showlegend = false
+        data.hovertemplate = '%{label}'
+    } else {
+        data.values = elementsParam[i].query_params.values
+        data.labels = elementsParam[i].query_params.labels
+        data.marker = {
+            colors: elementsParam[i].colors
+        }
+        data.texttemplate = '%{percent}<br>(%{value})'
+        data.targetLink = elementsParam[i].target_link
+    }
 
-    element.on('plotly_click', function (data) {
-        window.location = data.points[0].data.targetLink + data.points[0].label;
-    });
+    Plotly.newPlot(element, [data], layout, options);
 
+    if (elementsParam[i].query_params.values.length != 0) {
+        element.on('plotly_click', function (data) {
+            window.location = data.points[0].data.targetLink + data.points[0].label;
+        });
+    }
     container.appendChild(element);
 }
