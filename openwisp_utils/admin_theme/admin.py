@@ -32,7 +32,7 @@ class OpenwispAdminSite(admin.AdminSite):
         response = super().login(*args, **kwargs)
         if (
             isinstance(response, HttpResponseRedirect)
-            and app_settings.ADMIN_DASHBOARD_VISIBLE
+            and app_settings.ADMIN_DASHBOARD_ENABLED
         ):
             response = HttpResponseRedirect(reverse('admin:ow_dashboard'))
         return response
@@ -87,7 +87,7 @@ class OpenwispAdminSite(admin.AdminSite):
     def get_urls(self):
         url_patterns = super().get_urls()
 
-        if app_settings.ADMIN_DASHBOARD_VISIBLE:
+        if app_settings.ADMIN_DASHBOARD_ENABLED:
             url_patterns += [
                 path(
                     'dashboard/', self.admin_view(self.dashboard), name='ow_dashboard'

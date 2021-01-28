@@ -292,7 +292,7 @@ class TestAdmin(TestCase, CreateMixin):
             self.client.get(reverse('admin:ow_dashboard'))
         unregister_dashboard_element('Test Chart')
 
-    @patch('openwisp_utils.admin_theme.settings.ADMIN_DASHBOARD_VISIBLE', False)
+    @patch('openwisp_utils.admin_theme.settings.ADMIN_DASHBOARD_ENABLED', False)
     def test_disabling_dashboard(self):
         with self.subTest('Test redirect from login page'):
             response = self.client.get(reverse('admin:login'))

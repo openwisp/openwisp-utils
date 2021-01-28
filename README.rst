@@ -806,7 +806,7 @@ Heading text used in the main ``<h1>`` HTML tag (the logo) of the admin site.
 
 Title shown to users in the index page of the admin site.
 
-``OPENWISP_ADMIN_DASHBOARD_VISIBLE``
+``OPENWISP_ADMIN_DASHBOARD_ENABLED``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default**: ``False``
