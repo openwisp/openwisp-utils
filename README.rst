@@ -1,9 +1,9 @@
 openwisp-utils
 ==============
 
-.. image:: https://travis-ci.com/openwisp/openwisp-utils.svg?branch=master
-    :target: https://travis-ci.com/openwisp/openwisp-utils
-    :alt: ci build
+.. image:: https://github.com/openwisp/openwisp-utils/workflows/OpenWISP%20Utils%20CI%20Build/badge.svg?branch=master
+   :target: https://github.com/openwisp/openwisp-utils/actions?query=workflow%3A%22OpenWISP+Utils+CI+Build%22
+   :alt: CI build status
 
 .. image:: https://coveralls.io/repos/github/openwisp/openwisp-utils/badge.svg
     :target: https://coveralls.io/github/openwisp/openwisp-utils
