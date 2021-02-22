@@ -1,10 +1,10 @@
 #plot-container {
+  padding: 0 40px 10px 40px;
   text-align: center;
 }
 
 .js-plotly-plot {
   display: inline-block;
-  margin-bottom: -30px;
 }
 
 .js-plotly-plot .surface{
@@ -14,4 +14,41 @@
 .js-plotly-plot .legendtext,
 .js-plotly-plot .hoverlayer{
   text-transform: capitalize;
+}
+
+#quick-menu {
+  line-height: 40px;
+  padding: 20px 40px 0 40px;
+}
+#quick-menu a{
+  color: #fff;
+  padding: 7px 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-variant: small-caps;
+  font-weight: bold;
+  margin: 0 5px 0 0;
+  text-decoration: none !important;
+}
+
+.dashboard:not([class*="app-"]) #container #content {
+  margin: 0 auto;
+  width: auto;
+}
+
+.dashboard:not([class*="app-"]) #container #content-main {
+  width: 63%;
+}
+.dashboard:not([class*="app-"]) #container #content-related {
+  width: 35%;
+  margin-left: 2%;
+  margin-right: 0;
+}
+
+@media (max-width: 767px) {
+    .dashboard:not([class*="app-"]) #container #content-main,
+    .dashboard:not([class*="app-"]) #container #content-related {
+        width: 100% !important;
+        margin-left: 0;
+    }
 }

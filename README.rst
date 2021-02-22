@@ -206,67 +206,184 @@ to provide CSS and JS files to customise admin theme.
 
     You can learn more in the `Django documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
 
-Configurable Dashboard
-----------------------
+OpenWISP Dashboard
+------------------
 
-.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/master/docs/ConfigurableDashboard.png
+The ``admin_theme`` sub app of this package provides an admin dashboard
+for OpenWISP which can be manipulated with the functions described in
+the next sections.
+
+Example 1, monitoring:
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/master/docs/dashboard1.png
   :align: center
 
-You can add or remove elements from the  dashboard by using
-``openwisp_utils.admin_theme.register_dashboard_element`` or
-``openwisp_utils.admin_theme.register_dashboard_element`` utility functions.
+Example 2, controller:
 
-``register_dashboard_element``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/master/docs/dashboard2.png
+  :align: center
 
-The function is used to register a new dashboard element from your code.
+``register_dashboard_template``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Allows including a specific django template in the OpenWISP dashboard.
+
+It is designed to allow the inclusion of the geographic map
+shipped by
+`OpenWISP Monitoring <https://github.com/openwisp/openwisp-monitoring>`_
+but can be used to include any custom element in the dashboard.
+
+**Note**: templates are loaded before charts.
 
 **Syntax:**
 
 .. code-block:: python
 
-    register_dashboard_element(position, element_config)
+    register_dashboard_template(position, config)
 
 +--------------------+-------------------------------------------------------------+
 | **Parameter**      | **Description**                                             |
 +--------------------+-------------------------------------------------------------+
-| ``position``       | A ``int`` defining position of the dashboard element.       |
+| ``position``       | (``int``) The position of the template.                     |
 +--------------------+-------------------------------------------------------------+
-| ``element_config`` | A ``dict`` defining configuration of the dashboard element. |
+| ``config``         | (``dict``) The configuration of the template.               |
 +--------------------+-------------------------------------------------------------+
 
-Following properties can be configured for each dashboard element:
+Following properties can be configured for each template ``config``:
 
 +-----------------+------------------------------------------------------------------------------------------------------+
 | **Property**    | **Description**                                                                                      |
 +-----------------+------------------------------------------------------------------------------------------------------+
-| ``query_param`` | It is a required property in form of ``dict`` containing following properties                        |
+| ``template``    | (``str``) Path to pass to the template loader.                                                       |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``css``         | (``tuple``) List of CSS files to load in the HTML page.                                              |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``js``          | (``tuple``) List of Javascript files to load in the HTML page.                                       |
++-----------------+------------------------------------------------------------------------------------------------------+
+
+Code example:
+
+.. code-block:: python
+
+	from openwisp_utils.admin_theme import register_dashboard_template
+
+  register_dashboard_template(
+      position=0,
+      config={
+          'template': 'admin/dashboard/device_map.html',
+          'css': (
+              'monitoring/css/device-map.css',
+              'leaflet/leaflet.css',
+              'monitoring/css/leaflet.fullscreen.css',
+          ),
+          'js': (
+              'monitoring/js/device-map.js',
+              'leaflet/leaflet.js',
+              'leaflet/leaflet.extras.js',
+              'monitoring/js/leaflet.fullscreen.min.js'
+          )
+      }
+  )
+
+It is recommended to register dashboard templates from the ``ready``
+method of the AppConfig of the app where the templates are defined.
+
+``unregister_dashboard_template``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This function can be used to remove a template from the dashboard.
+
+**Syntax:**
+
+.. code-block:: python
+
+    unregister_dashboard_template(template_name)
+
++-------------------+---------------------------------------------------+
+| **Parameter**     | **Description**                                   |
++-------------------+---------------------------------------------------+
+| ``template_name`` | (``str``) The name of the template to remove.     |
++-------------------+---------------------------------------------------+
+
+Code example:
+
+.. code-block:: python
+
+    from openwisp_utils.admin_theme import unregister_dashboard_template
+
+    unregister_dashboard_template('admin/dashboard/device_map.html')
+
+**Note**: an ``ImproperlyConfigured`` exception is raised the
+specified dashboard template is not registered.
+
+``register_dashboard_chart``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Adds a chart to the OpenWISP dashboard.
+
+At the moment only pie charts are supported.
+
+The code works by defining the type of query which will be executed,
+and optionally, how the returned values have to be colored and labeled.
+
+**Syntax:**
+
+.. code-block:: python
+
+    register_dashboard_chart(position, config)
+
++--------------------+-------------------------------------------------------------+
+| **Parameter**      | **Description**                                             |
++--------------------+-------------------------------------------------------------+
+| ``position``       | (``int``) Position of the chart.                            |
++--------------------+-------------------------------------------------------------+
+| ``config``         | (``dict``) Configuration of chart.                          |
++--------------------+-------------------------------------------------------------+
+
+Following properties can be configured for each chart ``config``:
+
++-----------------+------------------------------------------------------------------------------------------------------+
+| **Property**    | **Description**                                                                                      |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``query_param`` | It is a required property in form of ``dict`` containing following properties:                       |
 |                 |                                                                                                      |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
 |                 | | **Property**  | **Description**                                                                 |  |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``name``      | A ``str`` defining title to be used while rending the element.                  |  |
+|                 | | ``name``      | (``str``) Chart title shown in the user interface.                              |  |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``app_label`` | A ``str`` defining app label of the model whose values are to be displayed.     |  |
+|                 | | ``app_label`` | (``str``) App label of the model that will be used to query the database.       |  |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``model``     | A ``str`` defining name of the model whole values are to be displayed.          |  |
+|                 | | ``model``     | (``str``) Name of the model that will be used to query the database.            |  |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``group_by``  | A ``str`` defining property of the model on which the values should be grouped. |  |
+|                 | | ``group_by``  | (``str``) The property which will be used to group values.                      |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``annotate``  | Alternative to ``group_by``, ``dict`` used for more complex queries.            |  |
+|                 | +---------------+---------------------------------------------------------------------------------+  |
+|                 | | ``aggregate`` | Alternative to ``group_by``, ``dict`` used for more complex queries.            |  |
 |                 | +---------------+---------------------------------------------------------------------------------+  |
 +-----------------+------------------------------------------------------------------------------------------------------+
-| ``colors``      | It is an **optional** property in form of ``dict``. You can define colors for each distinct value of |
-|                 | ``group_by`` property.                                                                               |
+| ``colors``      | An **optional** ``dict`` which can be used to define colors for each distinct                        |
+|                 | value shown in the pie charts.                                                                       |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``labels``      | An **optional** ``dict`` which can be used to define translatable strings for each distinct          |
+|                 | value shown in the pie charts. Can be used also to provide fallback human readable values for        |
+|                 | raw values stored in the database which would be otherwise hard to understand for the user.          |
++-----------------+------------------------------------------------------------------------------------------------------+
+| ``filters``     | An **optional** ``dict`` which can be used when using ``aggregate`` and ``annotate`` in              |
+|                 | ``query_params`` to define the link that will be generated to filter results (pie charts are         |
+|                 | clickable and clicking on a portion of it will show the filtered results).                           |
 +-----------------+------------------------------------------------------------------------------------------------------+
 
-Here is an example to register a dashboard element:
+Code example:
 
 .. code-block:: python
 
-	from openwisp_utils.admin_theme import register_dashboard_element
+	from openwisp_utils.admin_theme import register_dashboard_chart
 
-    register_dashboard_element(
+    register_dashboard_chart(
         position=1,
-        element_config={
+        config={
             'query_params': {
                 'name': 'Operator Project Distribution',
                 'app_label': 'test_project',
@@ -277,41 +394,46 @@ Here is an example to register a dashboard element:
         },
     )
 
-**Note**: It will raise ``ImproperlyConfigured`` exception if a dashboard element
-is already registered at same position.
+For real world examples, look at the code of
+`OpenWISP Controller <https://github.com/openwisp/openwisp-controller>`__
+and `OpenWISP Monitoring <https://github.com/openwisp/openwisp-monitoring>`_.
 
-It is suggested to register the dashboard function inside the ready
-function of your app. Checkout `app.py of the test_project <https://github.com/openwisp/openwisp-utils/blob/master/tests/test_project/apps.py>`_
+**Note**: an ``ImproperlyConfigured`` exception is raised if a
+dashboard element is already registered at same position.
+
+It is recommended to register dashboard charts from the ``ready`` method
+of the AppConfig of the app where the models are defined.
+Checkout `app.py of the test_project
+<https://github.com/openwisp/openwisp-utils/blob/master/tests/test_project/apps.py>`_
 for reference.
 
-``unregister_dashboard_element``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``unregister_dashboard_chart``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This function is used to remove an element from the dashboard.
+This function can used to remove a chart from the dashboard.
 
 **Syntax:**
 
 .. code-block:: python
 
-    unregister_dashboard_element(element_name)
+    unregister_dashboard_chart(chart_name)
 
 +------------------+---------------------------------------------------+
 | **Parameter**    | **Description**                                   |
 +------------------+---------------------------------------------------+
-| ``element_name`` | A ``str`` defining name of then dashboard element |
+| ``chart_name``   | (``str``) The name of the chart to remove.        |
 +------------------+---------------------------------------------------+
 
-An example usage is shown below.
+Code example:
 
 .. code-block:: python
 
-    from openwisp_utils.admin_theme import unregister_dashboard_element
+    from openwisp_utils.admin_theme import unregister_dashboard_chart
 
-    # Unregister previously registered dashboard element
-    unregister_dashboard_element('Operator Project Distribution')
+    unregister_dashboard_chart('Operator Project Distribution')
 
-**Note**: It will raise ``ImproperlyConfigured`` exception if the concerned
-dashboard element is not registered.
+**Note**: an ``ImproperlyConfigured`` exception is raised the
+specified dashboard chart is not registered.
 
 Main navigation menu
 --------------------
@@ -811,7 +933,7 @@ Title shown to users in the index page of the admin site.
 
 **default**: ``False``
 
-When ``True``, enables the `configurable dashboard <#configurable-dashboard>`_.
+When ``True``, enables the `OpenWISP Dashboard <#openwisp-dashboard>`_.
 Upon login, the user will be greeted with the dashboard instead of the default
 Django admin index page.
 

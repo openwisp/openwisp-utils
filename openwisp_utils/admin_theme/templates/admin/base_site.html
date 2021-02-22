@@ -34,17 +34,13 @@
 {% block nav-global %}
 {% if has_permission %}
 <label for="menu-toggle" tabindex="-1" id="nav-activate">
-    <img class="nav-icon" src="{% static "ui/openwisp/images/menu.svg" %}" />
+    <img class="nav-icon" src="{% static "ui/openwisp/images/menu.svg" %}" alt="" />
 </label>
 <input type="checkbox" id="menu-toggle" tabindex="-1" />
 
 <div id="main-menu">
     <a href="{% url 'admin:index' %}"
        class="home">{% trans 'Home' %}</a>
-    {% if admin_dashboard_enabled %}
-        <a href="{% url 'admin:ow_dashboard' %}"
-           class="home">{% trans 'Dashboard' %}</a>
-    {% endif %}
     {% for item in openwisp_menu_items %}
     <a href="{{ item.url }}"
        class="{{ item.class }}">{{ item.label }}</a>
@@ -77,7 +73,7 @@
 {% endif %}
 {% if OPENWISP_ADMIN_THEME_JS %}
     {% for js in OPENWISP_ADMIN_THEME_JS %}
-        <script type="text/javascript" src="{{ js }}"></script>
+        <script src="{{ js }}"></script>
     {% endfor %}
 {% endif %}
 {% endblock %}

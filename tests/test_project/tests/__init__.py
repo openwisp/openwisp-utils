@@ -1,3 +1,17 @@
+from django.contrib.admin.sites import AdminSite
+from django.contrib.auth import get_user_model
+
+
+class AdminTestMixin(object):
+    def setUp(self):
+        super().setUp()
+        user = get_user_model().objects.create_superuser(
+            username='administrator', password='admin', email='test@test.org'
+        )
+        self.client.force_login(user)
+        self.site = AdminSite()
+
+
 class CreateMixin(object):
     def _create_book(self, **kwargs):
         options = dict(name='test-book', author='test-author')

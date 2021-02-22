@@ -1,35 +1,23 @@
-from unittest.mock import patch
-
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from openwisp_utils.admin import ReadOnlyAdmin
-from openwisp_utils.admin_theme import register_dashboard_element
 from openwisp_utils.admin_theme import settings as admin_theme_settings
-from openwisp_utils.admin_theme import unregister_dashboard_element
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
 
 from ..admin import ProjectAdmin
 from ..models import Operator, Project, RadiusAccounting
-from . import CreateMixin
+from . import AdminTestMixin, CreateMixin
 
 User = get_user_model()
 
 
-class TestAdmin(TestCase, CreateMixin):
+class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
     TEST_KEY = 'w1gwJxKaHcamUw62TQIPgYchwLKn3AA0'
     accounting_model = RadiusAccounting
-
-    def setUp(self):
-        user = User.objects.create_superuser(
-            username='administrator', password='admin', email='test@test.org'
-        )
-        self.client.force_login(user)
-        self.site = AdminSite()
 
     def test_radiusaccounting_change(self):
         options = dict(username='bobby', session_id='1')
@@ -261,44 +249,10 @@ class TestAdmin(TestCase, CreateMixin):
         with self.subTest('Test with logged in user'):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 302)
-            self.assertEqual(response.url, reverse('admin:ow_dashboard'))
+            self.assertEqual(response.url, reverse('admin:index'))
 
         with self.subTest('Test with logged out user'):
             self.client.logout()
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, 'login')
-
-    def test_ow_dashboard(self):
-        response = self.client.get(reverse('admin:ow_dashboard'))
-        self.assertContains(response, 'Operator Project Distribution')
-        self.assertContains(response, '\'values\': [1, 1]')
-        self.assertContains(response, '\'labels\': [\'User\', \'Utils\']')
-        self.assertContains(response, '\'colors\': [\'orange\', \'red\']')
-
-    def test_ow_dashboard_non_existent_model(self):
-        register_dashboard_element(
-            -1,
-            {
-                'name': 'Test Chart',
-                'query_params': {
-                    'app_label': 'app_label',
-                    'model': 'model_name',
-                    'group_by': 'property',
-                },
-            },
-        )
-        with self.assertRaises(ImproperlyConfigured):
-            self.client.get(reverse('admin:ow_dashboard'))
-        unregister_dashboard_element('Test Chart')
-
-    @patch('openwisp_utils.admin_theme.settings.ADMIN_DASHBOARD_ENABLED', False)
-    def test_disabling_dashboard(self):
-        with self.subTest('Test redirect from login page'):
-            response = self.client.get(reverse('admin:login'))
-            self.assertEqual(response.status_code, 302)
-            self.assertEqual(response.url, reverse('admin:index'))
-
-        with self.subTest('Test "Dashboard" is absent from menu items'):
-            response = self.client.get(reverse('admin:index'))
-            self.assertNotContains(response, 'Dashboard')

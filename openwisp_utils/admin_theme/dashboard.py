@@ -1,53 +1,219 @@
+import copy
+
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Count
+from swapper import load_model
 
 from ..utils import SortedOrderedDict
 
-DASHBOARD_CONFIG = SortedOrderedDict()
+DASHBOARD_CHARTS = SortedOrderedDict()
+DASHBOARD_TEMPLATES = SortedOrderedDict()
 
 
-def _validate_element_config(config):
+def _validate_chart_config(config):
     query_params = config.get('query_params', None)
 
     assert query_params is not None
     assert 'name' in config
     assert 'app_label' in query_params
     assert 'model' in query_params
-    assert 'group_by' in query_params
+    assert 'group_by' in query_params or 'annotate' in query_params
+    assert not ('group_by' in query_params and 'annotate' in query_params)
+    if 'annotate' in query_params:
+        assert 'filters' in config, 'filters must be defined when using annotate'
     return config
 
 
-def register_dashboard_element(position, element_config):
+def register_dashboard_chart(position, config):
     """
-    Registers a dashboard element
-    register_dashboard_element(str, dict)
+    Registers a dashboard chart
+    register_dashboard_chart(int, dict)
     """
     if not isinstance(position, int):
-        raise ImproperlyConfigured('Dashboard element name should be type `int`.')
-    if not isinstance(element_config, dict):
+        raise ImproperlyConfigured('Dashboard chart position should be of type `int`.')
+    if not isinstance(config, dict):
+        raise ImproperlyConfigured('Dashboard chart config should be of type `dict`.')
+    if position in DASHBOARD_CHARTS:
         raise ImproperlyConfigured(
-            'Dashboard element parameters should be type `dict`.'
+            f'Cannot register chart {config["name"]}. '
+            f'Another chart is already registered at position n. "{position}": '
+            f'{DASHBOARD_CHARTS[position]["name"]}'
         )
-    if position in DASHBOARD_CONFIG:
-        raise ImproperlyConfigured(
-            f'Cannot register {element_config["name"]}. '
-            f'A dashboard element is already registered for "{position}" position.'
-        )
-
-    validated_element_config = _validate_element_config(element_config)
-    DASHBOARD_CONFIG.update({position: validated_element_config})
+    validated_config = _validate_chart_config(config)
+    DASHBOARD_CHARTS.update({position: validated_config})
 
 
-def unregister_dashboard_element(element_name):
+def unregister_dashboard_chart(name):
     """
-    Un-registers a dashboard element
-    unregister_dashboard_element(str)
+    Un-registers a dashboard chart
+    unregister_dashboard_chart(str)
     """
-    if not isinstance(element_name, str):
-        raise ImproperlyConfigured('Dashboard element name should be type `str`')
+    if not isinstance(name, str):
+        raise ImproperlyConfigured('Dashboard chart name should be type `str`')
 
-    for key, value in DASHBOARD_CONFIG.items():
-        if value['name'] == element_name:
-            DASHBOARD_CONFIG.pop(key)
+    for key, value in DASHBOARD_CHARTS.items():
+        if value['name'] == name:
+            key_to_remove = key
             break
     else:
-        raise ImproperlyConfigured(f'No such dashboard element, {element_name}')
+        raise ImproperlyConfigured(f'No such chart: {name}')
+
+    DASHBOARD_CHARTS.pop(key_to_remove)
+
+
+def _validate_template_config(config):
+    assert 'template' in config
+    return config
+
+
+def register_dashboard_template(position, config):
+    """
+    Registers a dashboard template
+    register_dashboard_template(int, dict)
+    """
+    if not isinstance(position, int):
+        raise ImproperlyConfigured(
+            'Dashboard template position should be of type `int`.'
+        )
+    if not isinstance(config, dict):
+        raise ImproperlyConfigured(
+            'Dashboard template config parameters should be of type `dict`.'
+        )
+    if position in DASHBOARD_TEMPLATES:
+        raise ImproperlyConfigured(
+            f'Cannot register template {config["template"]}. '
+            f'Another template is already registered at position n. "{position}": '
+            f'{DASHBOARD_TEMPLATES[position]["template"]}'
+        )
+    validated_config = _validate_template_config(config)
+    DASHBOARD_TEMPLATES.update({position: validated_config})
+
+
+def unregister_dashboard_template(path):
+    """
+    Un-registers a dashboard template
+    unregister_dashboard_template(str)
+    """
+    if not isinstance(path, str):
+        raise ImproperlyConfigured('Dashboard template path should be type `str`')
+
+    for key, value in DASHBOARD_TEMPLATES.items():
+        if value['template'] == path:
+            key_to_remove = key
+            break
+    else:
+        raise ImproperlyConfigured(f'No such template: {path}')
+
+    DASHBOARD_TEMPLATES.pop(key_to_remove)
+
+
+def get_dashboard_context(request):
+    """
+    Loads dashboard context for the admin index view
+    """
+    context = {'is_popup': False, 'has_permission': True, 'dashboard_enabled': True}
+    config = copy.deepcopy(DASHBOARD_CHARTS)
+
+    for key, value in config.items():
+        query_params = value['query_params']
+        app_label = query_params['app_label']
+        model_name = query_params['model']
+        group_by = query_params.get('group_by')
+        annotate = query_params.get('annotate')
+        aggregate = query_params.get('aggregate')
+        labels_i18n = value.get('labels')
+
+        try:
+            model = load_model(app_label, model_name)
+        except ImproperlyConfigured:
+            raise ImproperlyConfigured(
+                f'Error adding dashboard element {key}.'
+                f'REASON: {app_label}.{model_name} could not be loaded.'
+            )
+
+        qs = model.objects.all()
+
+        # Filter query according to organization of user
+        if hasattr(model, 'organization_id') and not request.user.is_superuser:
+            qs = qs.filter(organization_id__in=request.user.organizations_managed)
+
+        annotate_kwargs = {}
+        if group_by:
+            annotate_kwargs['count'] = Count(group_by)
+            qs = qs.values(group_by)
+        if annotate:
+            annotate_kwargs.update(annotate)
+
+        qs = qs.annotate(**annotate_kwargs)
+
+        if aggregate:
+            qs = qs.aggregate(**aggregate)
+
+        # Organize data for representation using Plotly.js
+        # Create a list of labels and values from the queryset
+        # where each element in the form of
+        # {group_by : '<label>', 'count': <value>}
+        values = []
+        labels = []
+        colors = []
+        filters = []
+
+        if group_by:
+            for obj in qs:
+                # avoid showing an empty "None" label
+                if obj['count'] == 0:
+                    continue
+                qs_key = str(obj[group_by])
+                label = qs_key
+                # get human readable label if predefined labels are available
+                # otherwise use the result got from the DB
+                if labels_i18n and qs_key in labels_i18n:
+                    # store original label as filter, but only
+                    # if we have more than the empty default label defined
+                    # if len(labels_i18n.keys()) > 1
+                    filters.append(label)
+                    label = labels_i18n[qs_key]
+                labels.append(label)
+                # use predefined colors if available,
+                # otherwise the JS lib will choose automatically
+                if value.get('colors') and qs_key in value['colors']:
+                    colors.append(value['colors'][qs_key])
+                values.append(obj['count'])
+            value['target_link'] = f'/admin/{app_label}/{model_name}/?{group_by}='
+
+        if aggregate:
+            for qs_key, qs_value in qs.items():
+                if not qs_value:
+                    continue
+                labels.append(labels_i18n[qs_key])
+                values.append(qs_value)
+                colors.append(value['colors'][qs_key])
+                filters.append(value['filters'][qs_key])
+            filter_key = value['filters']['key']
+            value['target_link'] = f'/admin/{app_label}/{model_name}/?{filter_key}='
+
+        value['query_params'] = {'values': values, 'labels': labels}
+        value['colors'] = colors
+        if filters:
+            value['filters'] = filters
+
+    # dashboard templates
+    templates = []
+    css = []
+    js = []
+    for position, template_config in DASHBOARD_TEMPLATES.items():
+        templates.append(template_config['template'])
+        if 'css' in template_config:
+            css += list(template_config['css'])
+        if 'js' in template_config:
+            js += list(template_config['js'])
+
+    context.update(
+        {
+            'dashboard_charts': dict(config),
+            'dashboard_templates': templates,
+            'dashboard_css': css,
+            'dashboard_js': js,
+        }
+    )
+    return context
