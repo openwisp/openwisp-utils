@@ -4,9 +4,6 @@ import tempfile
 
 from django.conf import settings
 from django.contrib.staticfiles import storage
-from django.contrib.staticfiles.management.commands.collectstatic import (
-    Command as CollectstaticCommand,
-)
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
