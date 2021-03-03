@@ -11,7 +11,7 @@ from django.test import TestCase, override_settings
 @override_settings(
     STATICFILES_STORAGE='openwisp_utils.storage.CompressStaticFilesStorage',
     STATIC_ROOT=os.path.join(settings.BASE_DIR, 'test_static_root'),
-    STATICFILES_FINDERS=['django.contrib.staticfiles.finders.FileSystemFinder',],
+    STATICFILES_FINDERS=['django.contrib.staticfiles.finders.FileSystemFinder'],
     OPENWISP_STATICFILES_VERSIONED_EXCLUDE=['*skip_this.txt'],
 )
 class TestCompressStaticFilesStorage(TestCase):
