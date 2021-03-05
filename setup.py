@@ -41,7 +41,10 @@ setup(
     },
     scripts=['openwisp-qa-check', 'openwisp-qa-format', 'openwisp-pre-push-hook'],
     zip_safe=False,
-    install_requires=['django-model-utils>=4.0.0,<4.1.0'],
+    install_requires=[
+        'django-model-utils>=4.0.0,<4.1.0',
+        'django-compress-staticfiles~=1.0.1b',
+    ],
     extras_require={
         'qa': [
             'black<=19.10b0',
