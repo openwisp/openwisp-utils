@@ -838,6 +838,12 @@ Install test requirements:
 
     pip install -r requirements-test.txt
 
+Set up the pre-push hook to run tests and QA checks automatically right before the git push action, so that if anything fails the push operation will be aborted:
+
+.. code-block:: shell
+
+    openwisp-pre-push-hook --install
+
 Create database:
 
 .. code-block:: shell

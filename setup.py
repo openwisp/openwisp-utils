@@ -39,7 +39,7 @@ setup(
             'checkrst = openwisp_utils.qa:check_rst_files',
         ]
     },
-    scripts=['openwisp-qa-check', 'openwisp-qa-format'],
+    scripts=['openwisp-qa-check', 'openwisp-qa-format', 'openwisp-pre-push-hook'],
     zip_safe=False,
     install_requires=['django-model-utils>=4.0.0,<4.1.0'],
     extras_require={
