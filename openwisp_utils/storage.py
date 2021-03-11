@@ -7,10 +7,7 @@ from django.conf import settings
 
 
 class FileHashedNameMixin:
-    default_excluded_patterns = ['*.png']
-    excluded_patterns = default_excluded_patterns + getattr(
-        settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", []
-    )
+    excluded_patterns = getattr(settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", [])
 
     def hashed_name(self, name, content=None, filename=None):
         if not any(
