@@ -1087,7 +1087,7 @@ Allows to pass a list of **Unix shell-style wildcards** for files to be excluded
 
 Use Unix shell-style wildcards.
 
-Example Usage:
+Example usage:
 
 .. code-block:: python
 
