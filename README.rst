@@ -1083,7 +1083,7 @@ to detect slow tests (0.3s by default) and highlight the slowest ones (1s by def
 
 **default**: ``[]``
 
-Allows to pass a list of file types to be excluded by `CompressStaticFilesStorage <#openwisp_utilsstorageCompressStaticFilesStorage>`_.
+Allows to pass a list of **Unix shell-style wildcards** for files to be excluded by `CompressStaticFilesStorage <#openwisp_utilsstorageCompressStaticFilesStorage>`_.
 
 Use Unix shell-style wildcards.
 
