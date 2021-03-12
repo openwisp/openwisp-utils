@@ -8,7 +8,8 @@ from django.test import TestCase, override_settings
 
 
 def create_dir(*paths: str):
-    """
+    """Returns Joined path
+
     joins two or more pathname using os.path.join and creates leaf directory
     and all the intermidiate ones according to the joined path using os.makedirs
     """

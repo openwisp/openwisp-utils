@@ -1085,14 +1085,12 @@ to detect slow tests (0.3s by default) and highlight the slowest ones (1s by def
 
 Allows to pass a list of **Unix shell-style wildcards** for files to be excluded by `CompressStaticFilesStorage <#openwisp_utilsstorageCompressStaticFilesStorage>`_.
 
-Use Unix shell-style wildcards.
-
 Example usage:
 
 .. code-block:: python
 
     OPENWISP_STATICFILES_VERSIONED_EXCLUDE = [
-    '*png',
+        '*png',
     ]
 
 Installing for development
