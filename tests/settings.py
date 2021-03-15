@@ -91,7 +91,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # only for automated test purposes
 REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_CLASSES': [
-        'test_project.test_api.throttling.CustomScopedRateThrottle'
+        'test_project.api.throttling.CustomScopedRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {'anon': '20/hour'},
 }

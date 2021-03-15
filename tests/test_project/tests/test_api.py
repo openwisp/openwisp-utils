@@ -27,7 +27,7 @@ class TestApi(CreateMixin, TestCase):
             drf_conf,
             {
                 'DEFAULT_THROTTLE_CLASSES': [
-                    'test_project.test_api.throttling.CustomScopedRateThrottle'
+                    'test_project.api.throttling.CustomScopedRateThrottle'
                 ],
                 'DEFAULT_THROTTLE_RATES': {'anon': '20/hour', 'test': '10/minute'},
                 'TEST': True,
