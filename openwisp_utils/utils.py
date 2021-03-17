@@ -29,6 +29,16 @@ def register_menu_items(items, name_menu='OPENWISP_DEFAULT_ADMIN_MENU_ITEMS'):
         current_menu += items
 
 
+def register_menu_groups(
+    menu_groups, group_menu_name='OPENWISP_DEFAULT_ADMIN_MENU_GROUPS'
+):
+    if not hasattr(settings, group_menu_name):
+        setattr(settings, group_menu_name, menu_groups)
+    else:
+        current_menu_group = getattr(settings, group_menu_name)
+        current_menu_group += menu_groups
+
+
 def deep_merge_dicts(dict1, dict2):
     """
     returns a new dict which is the result of the merge of the two dicts,

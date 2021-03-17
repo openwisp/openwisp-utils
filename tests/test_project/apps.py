@@ -5,7 +5,7 @@ from openwisp_utils.admin_theme import (
     register_dashboard_template,
 )
 from openwisp_utils.api.apps import ApiAppConfig
-from openwisp_utils.utils import register_menu_items
+from openwisp_utils.utils import register_menu_groups, register_menu_items
 
 
 class TestAppConfig(ApiAppConfig):
@@ -22,6 +22,7 @@ class TestAppConfig(ApiAppConfig):
         super().ready(*args, **kwargs)
         self.register_default_menu_items()
         self.register_dashboard_charts()
+        self.register_default_menu_groups()
 
     def register_default_menu_items(self):
         items = [{'model': 'test_project.Shelf'}]
@@ -86,3 +87,31 @@ class TestAppConfig(ApiAppConfig):
                 'js': ('dashboard-test.js',),
             },
         )
+
+    def register_default_menu_groups(self):
+        groups = [
+            {
+                'group_name': "List Group",
+                'group': [
+                    {
+                        'model': 'test_project.Shelf',
+                        'name': 'add',
+                        'label': 'Shelf Change List',
+                    },
+                    {'model': 'auth.User', 'name': 'changelist'},
+                    {'model': 'test_project.RadiusAccounting', 'name': 'changelist'},
+                ],
+            },
+            {
+                'group_name': "Add Group",
+                'group': [
+                    {
+                        'model': 'test_project.Shelf',
+                        'name': 'add',
+                        'label': 'Add Shelf',
+                    },
+                    {'model': 'auth.User', 'name': 'add'},
+                ],
+            },
+        ]
+        register_menu_groups(groups)
