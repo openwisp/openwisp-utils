@@ -95,7 +95,7 @@ class TestAppConfig(ApiAppConfig):
                 'group': [
                     {
                         'model': 'test_project.Shelf',
-                        'name': 'add',
+                        'name': 'changelist',
                         'label': 'Shelf Change List',
                     },
                     {'model': 'auth.User', 'name': 'changelist'},
