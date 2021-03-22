@@ -1081,9 +1081,11 @@ to detect slow tests (0.3s by default) and highlight the slowest ones (1s by def
 ``OPENWISP_STATICFILES_VERSIONED_EXCLUDE``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default**: ``[]``
+**default**: ``['leaflet/*/*.png']``
 
 Allows to pass a list of **Unix shell-style wildcards** for files to be excluded by `CompressStaticFilesStorage <#openwisp_utilsstorageCompressStaticFilesStorage>`_.
+
+By default Leaflet PNGs have been excluded to avoid bugs like `openwisp/ansible-openwisp2#232 <https://github.com/openwisp/ansible-openwisp2/issues/232>`_
 
 Example usage:
 
