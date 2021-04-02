@@ -11,8 +11,8 @@
               href="{{ link.href }}" {% if link.media %}media="{{ link.media }}" {% endif %}/>
     {% endfor %}
 {% else %}
-    <link rel="stylesheet" type="text/css" href="{% static "admin/css/openwisp.css" %}" />
-    <link rel="icon" type="image/x-icon" href="{% static "ui/openwisp/images/favicon.png" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/openwisp.css' %}" />
+    <link rel="icon" type="image/x-icon" href="{% static 'ui/openwisp/images/favicon.png' %}" />
 {% endif %}
 {% endblock %}
 
@@ -34,7 +34,7 @@
 {% block nav-global %}
 {% if has_permission %}
 <label for="menu-toggle" tabindex="-1" id="nav-activate">
-    <img class="nav-icon" src="{% static "ui/openwisp/images/menu.svg" %}" alt="" />
+    <img class="nav-icon" src="{% static 'ui/openwisp/images/menu.svg'  %}" alt="" />
 </label>
 <input type="checkbox" id="menu-toggle" tabindex="-1" />
 
@@ -69,7 +69,7 @@
     loaded before jQuery is loaded
 {% endcomment %}
 {% if has_permission %}
-    <script src="{% static "admin/js/menu.js" %}"></script>
+    <script src="{% static 'admin/js/menu.js' %}"></script>
 {% endif %}
 {% if OPENWISP_ADMIN_THEME_JS %}
     {% for js in OPENWISP_ADMIN_THEME_JS %}
