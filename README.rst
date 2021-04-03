@@ -46,6 +46,7 @@ Current features
 * `Configurable navigation menu <#main-navigation-menu>`_
 * `OpenAPI / Swagger documentation <#openwisp_api_docs>`_
 * `Model utilities <#model-utilities>`_
+* `Storage utilities <#storage-utilities>`_
 * `Admin utilities <#admin-utilities>`_
 * `Code utilities <#code-utilities>`_
 * `REST API utilities <#rest-api-utilities>`_
@@ -618,6 +619,22 @@ Extends ``collections.SortedDict`` and implements logic to sort inserted
 items based on ``key`` value. Sorting is done at insert operation which
 incurs memory space overhead.
 
+Storage utilities
+-----------------
+
+``openwisp_utils.storage.CompressStaticFilesStorage``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A static storage backend for compression inheriting from `django-compress-staticfiles's <https://pypi.org/project/django-compress-staticfiles/>`_ ``CompressStaticFilesStorage`` class.
+
+Adds support for excluding file types using `OPENWISP_STATICFILES_VERSIONED_EXCLUDE <#openwisp_staticfiles_versioned_exclude>`_ setting.
+
+To use point ``STATICFILES_STORAGE`` to ``openwisp_utils.storage.CompressStaticFilesStorage`` in ``settings.py``.
+
+.. code-block:: python
+
+    STATICFILES_STORAGE = 'openwisp_utils.storage.CompressStaticFilesStorage'
+
 REST API utilities
 ------------------
 
@@ -1060,6 +1077,23 @@ For more information about optional parameters check the
 
 It can be used to change the thresholds used by `TimeLoggingTestRunner <#openwisp_utilsteststimeloggingtestrunner>`_
 to detect slow tests (0.3s by default) and highlight the slowest ones (1s by default) amongst them.
+
+``OPENWISP_STATICFILES_VERSIONED_EXCLUDE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**default**: ``['leaflet/*/*.png']``
+
+Allows to pass a list of **Unix shell-style wildcards** for files to be excluded by `CompressStaticFilesStorage <#openwisp_utilsstorageCompressStaticFilesStorage>`_.
+
+By default Leaflet PNGs have been excluded to avoid bugs like `openwisp/ansible-openwisp2#232 <https://github.com/openwisp/ansible-openwisp2/issues/232>`_.
+
+Example usage:
+
+.. code-block:: python
+
+    OPENWISP_STATICFILES_VERSIONED_EXCLUDE = [
+        '*png',
+    ]
 
 Installing for development
 --------------------------
