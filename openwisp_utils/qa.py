@@ -228,7 +228,7 @@ def _find_issue_mentions(message):
      - count of mentions performed correctly
        (using one of the common github keywords)
     """
-    words = message.split(' ')
+    words = message.split()
     issues = []
     issue_locations = []
     counter = 0
@@ -243,7 +243,7 @@ def _find_issue_mentions(message):
         word = words[issue_location - 1]
         issues.append(words[issue_location])
         # check whether issue is just being referred to
-        if issue_location > 2:
+        if issue_location > 1:
             preceding_2words = '{} {}'.format(
                 words[issue_location - 2], words[issue_location - 1]
             )
