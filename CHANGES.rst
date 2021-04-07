@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.7.4 [2021-04-08]
+--------------------------
+
+- [fix] Fixed commit check for co-authored commits
+
 Version 0.7.3 [2021-01-12]
 --------------------------
 
