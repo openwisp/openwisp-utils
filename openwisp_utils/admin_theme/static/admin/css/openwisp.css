@@ -153,7 +153,7 @@ html { overflow-x: hidden }
 #nav-activate:hover { background-color: #000 }
 #nav-activate:focus { outline: none }
 
-#user-tools { padding-right: 50px }
+#user-tools { padding-right: 64px }
 
 #main-menu {
     opacity: 0;
