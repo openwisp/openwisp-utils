@@ -3,7 +3,13 @@ body { min-width: 320px }
     background-color: #464646;
     color: #fff;
     height: auto;
-    padding: 17px 40px;
+    padding: 17px 40px !important;
+}
+@media (max-width: 1024px){
+    #header {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+    }
 }
 
 #site-name a{
@@ -38,6 +44,7 @@ input[type=submit].default,
 
 #branding h1, #branding h1 a:link, #branding h1 a:visited {
     color: #fff;
+    margin: 0 !important;
 }
 
 div.breadcrumbs,
@@ -136,19 +143,17 @@ html { overflow-x: hidden }
     position: absolute;
     right: 40px;
     cursor: pointer;
-    margin-top: 0;
-    padding: 0 20px;
+    padding: 0;
     background-color: #222;
-    text-transform: uppercase !important;
-    color: #fff !important;
-    font-size: 14px !important;
     line-height: 40px !important;
+    width: 40px;
+    text-align: center;
 }
 
 #nav-activate:hover { background-color: #000 }
 #nav-activate:focus { outline: none }
 
-#user-tools { padding-right: 80px }
+#user-tools { padding-right: 64px }
 
 #main-menu {
     opacity: 0;
@@ -204,6 +209,7 @@ html { overflow-x: hidden }
   background: transparent url(../../ui/openwisp/images/user.svg) no-repeat scroll 0 50%;
   background-size: 10px 10px;
   padding-left: 18px;
+    line-height: 40px;
 }
 
 .ow-overlay {
@@ -246,12 +252,6 @@ html { overflow-x: hidden }
 }
 
 @media (max-width: 1024px) {
-    #nav-activate {
-        margin-top: 24px;
-        right: 35px;
-        line-height: 45px !important;
-    }
-
     .nav-icon { height: 15px }
 
     #main-menu {
@@ -261,7 +261,6 @@ html { overflow-x: hidden }
     #main-menu a { margin-bottom: 12px }
     #main-menu .account { margin-top: 0 }
     #user-tools { margin-left: 10px !important }
-    #header { align-items: flex-start }
 }
 
 @media (min-width: 700px) {
