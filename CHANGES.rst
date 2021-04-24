@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.7.5 [unreleased]
+--------------------------
+
+- [deps] Updated djangorestframework to 3.12.0
+
 Version 0.7.4 [2021-04-08]
 --------------------------
 
