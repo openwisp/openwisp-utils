@@ -12,6 +12,11 @@ body { min-width: 320px }
     }
 }
 
+.group-name img{
+    height: 20px;
+    vertical-align: middle;
+}
+
 #site-name a{
     display: block;
     width: 150px;

@@ -5,7 +5,11 @@ from openwisp_utils.admin_theme import (
     register_dashboard_template,
 )
 from openwisp_utils.api.apps import ApiAppConfig
-from openwisp_utils.utils import register_menu_groups, register_menu_items
+from openwisp_utils.utils import (
+    register_default_menu_group_item,
+    register_menu_groups,
+    register_menu_items,
+)
 
 
 class TestAppConfig(ApiAppConfig):
@@ -22,7 +26,8 @@ class TestAppConfig(ApiAppConfig):
         super().ready(*args, **kwargs)
         self.register_default_menu_items()
         self.register_dashboard_charts()
-        self.register_default_menu_groups()
+        self.register_menu_groups()
+        self.register_default_menu_group_item()
 
     def register_default_menu_items(self):
         items = [{'model': 'test_project.Shelf'}]
@@ -88,30 +93,41 @@ class TestAppConfig(ApiAppConfig):
             },
         )
 
-    def register_default_menu_groups(self):
+    def register_menu_groups(self):
+        list_group = [
+            {
+                'model': 'test_project.Shelf',
+                'name': 'changelist',
+                'label': 'Shelf Change List',
+            },
+            {'model': 'auth.User', 'name': 'changelist'},
+            {'model': 'test_project.RadiusAccounting', 'name': 'changelist'},
+        ]
+        add_group = [
+            {'model': 'test_project.Shelf', 'name': 'add', 'label': 'Add Shelf'},
+            {'model': 'auth.User', 'name': 'add'},
+        ]
+        external_links_group = [
+            {'link': 'https://openwisp.org/', 'label': 'OpenWISP Home'},
+            {'link': 'https://openwisp.io/docs/index.html', 'label': 'OpenWISP Docs'},
+        ]
         groups = [
             {
-                'group_name': "List Group",
-                'group': [
-                    {
-                        'model': 'test_project.Shelf',
-                        'name': 'changelist',
-                        'label': 'Shelf Change List',
-                    },
-                    {'model': 'auth.User', 'name': 'changelist'},
-                    {'model': 'test_project.RadiusAccounting', 'name': 'changelist'},
-                ],
+                'name': "List Group",
+                'config': {'items': list_group, 'icon': 'icons/test-icon.png'},
             },
             {
-                'group_name': "Add Group",
-                'group': [
-                    {
-                        'model': 'test_project.Shelf',
-                        'name': 'add',
-                        'label': 'Add Shelf',
-                    },
-                    {'model': 'auth.User', 'name': 'add'},
-                ],
+                'name': "Add Group",
+                'config': {'items': add_group, 'icon': 'icons/test-icon.png'},
             },
+            {'name': 'External Links', 'config': {'items': external_links_group}},
         ]
-        register_menu_groups(groups)
+        preference = ['Add Group', 'List Group']
+        register_menu_groups(groups, preference=preference)
+
+    def register_default_menu_group_item(self):
+        items = [
+            {'model': 'auth.User', 'name': 'changelist'},
+            {'link': 'https://openwisp.org/thecode.html', 'label': 'OpenWISP Code'},
+        ]
+        register_default_menu_group_item(items)
