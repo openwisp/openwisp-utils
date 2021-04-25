@@ -46,11 +46,17 @@
        class="{{ item.class }}">{{ item.label }}</a>
     {% endfor %}
     {% for group in openwisp_menu_groups %}
-        <div>{{group.group_name}}</div>
+        <div class="group-name">{% if group.icon %}
+            <img src={% static group.icon %} alt="icon" />
+            {% endif %}{{group.name}}
+        </div>
         <div>
             {% for item in group.items %}
                 <a href="{{ item.url }}"
-                   class="{{ item.class }}">{{ item.label }}</a>
+                    {% if item.class %}
+                      class="{{ item.class }}"
+                    {% endif %}
+                >{{ item.label }}</a>
             {% endfor %}
         </div>
     {% endfor %}

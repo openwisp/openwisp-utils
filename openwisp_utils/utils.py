@@ -29,14 +29,46 @@ def register_menu_items(items, name_menu='OPENWISP_DEFAULT_ADMIN_MENU_ITEMS'):
         current_menu += items
 
 
-def register_menu_groups(
-    menu_groups, group_menu_name='OPENWISP_DEFAULT_ADMIN_MENU_GROUPS'
-):
-    if not hasattr(settings, group_menu_name):
-        setattr(settings, group_menu_name, menu_groups)
+def register_default_menu_group_item(items):
+    menu_group_name = 'OPENWISP_DEFAULT_ADMIN_MENU_GROUPS'
+    if not hasattr(settings, menu_group_name):
+        default_group = OrderedDict()
+        default_group['Default'] = {'items': items}
+        setattr(settings, menu_group_name, default_group)
     else:
-        current_menu_group = getattr(settings, group_menu_name)
-        current_menu_group += menu_groups
+        default_group = getattr(settings, menu_group_name)
+        default_group['Default']['items'] += items
+
+
+def register_menu_groups(
+    menu_groups, menu_group_name='OPENWISP_ADMIN_MENU_GROUPS', preference=[]
+):
+    if not hasattr(settings, menu_group_name):
+        menu = OrderedDict()
+        setattr(settings, menu_group_name, menu)
+    else:
+        menu = getattr(settings, menu_group_name)
+    group_map = {}
+    for group in menu_groups:
+        if menu.get(group['name'], None) is not None:
+            # menu name already present
+            raise Exception(
+                f"Can't create menu group. '{group['name']}' already present in the menu."
+            )
+        if group_map.get(group['name'], None) is None:
+            group_map[group['name']] = group['config']
+        else:
+            # provided same group name multiple times
+            raise Exception('Two menu groups can not have same name')
+    for group in preference:
+        if group_map.get(group, None) is None:
+            # same group has given multiple preference
+            raise Exception('Same group has provided multiple preferences')
+        menu[group] = group_map[group]
+        del group_map[group]
+    # add remaining groups
+    for group in group_map.keys():
+        menu[group] = group_map[group]
 
 
 def deep_merge_dicts(dict1, dict2):

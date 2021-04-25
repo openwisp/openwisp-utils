@@ -6,6 +6,11 @@ body { min-width: 320px }
     padding: 17px 40px;
 }
 
+.group-name img{
+    height: 20px;
+    vertical-align: middle;
+}
+
 #site-name a{
     display: block;
     width: 150px;
