@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.8.0 [unreleased]
+--------------------------
+
+Changes
+~~~~~~~
+
+- Updated Django REST Framework to 3.12.x
+
 Version 0.7.4 [2021-04-08]
 --------------------------
 
