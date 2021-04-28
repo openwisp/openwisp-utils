@@ -94,40 +94,97 @@ class TestAppConfig(ApiAppConfig):
         )
 
     def register_menu_groups(self):
-        list_group = [
+
+        auth_list = [
             {
-                'model': 'test_project.Shelf',
-                'name': 'changelist',
-                'label': 'Shelf Change List',
+                'position': 2,
+                'config': {
+                    'model': 'auth.User',
+                    'name': 'changelist',
+                    'icon': 'edit',
+                    'label': 'User List',
+                },
             },
-            {'model': 'auth.User', 'name': 'changelist'},
-            {'model': 'test_project.RadiusAccounting', 'name': 'changelist'},
+            {
+                'position': 1,
+                'config': {
+                    'model': 'auth.User',
+                    'name': 'add',
+                    'icon': 'add-icon',
+                    'label': 'Add User',
+                },
+            },
         ]
-        add_group = [
-            {'model': 'test_project.Shelf', 'name': 'add', 'label': 'Add Shelf'},
-            {'model': 'auth.User', 'name': 'add'},
+
+        radius_list = [
+            {
+                'position': 1,
+                'config': {
+                    'model': 'test_project.RadiusAccounting',
+                    'name': 'changelist',
+                    'label': 'RadiusAccounting List',
+                    'icon': 'edit',
+                },
+            },
         ]
-        external_links_group = [
-            {'link': 'https://openwisp.org/', 'label': 'OpenWISP Home'},
-            {'link': 'https://openwisp.io/docs/index.html', 'label': 'OpenWISP Docs'},
+
+        test_project_list = [
+            {
+                'position': 1,
+                'config': {
+                    'model': 'test_project.Shelf',
+                    'name': 'changelist',
+                    'label': 'View Shelf',
+                    'icon': 'shelf-icon',
+                },
+            },
+            {
+                'position': 2,
+                'config': {
+                    'model': 'test_project.Shelf',
+                    'name': 'add',
+                    'label': 'Add Shelf',
+                },
+            },
+            {
+                'position': 3,
+                'config': {
+                    'link': 'https://openwisp.org/thecode.html',
+                    'label': 'OpenWISP Code',
+                    'icon': 'link-icon',
+                },
+            },
+            {
+                'position': 4,
+                'config': {'link': 'https://openwisp.org/', 'label': 'OpenWISP Home'},
+            },
         ]
         groups = [
             {
-                'name': "List Group",
-                'config': {'items': list_group, 'icon': 'icons/test-icon.png'},
+                'name': 'Authentication And Authorization',
+                'config': {'items': auth_list, 'icon': 'user-icon'},
             },
             {
-                'name': "Add Group",
-                'config': {'items': add_group, 'icon': 'icons/test-icon.png'},
+                'name': 'Radius Accounting',
+                'config': {'items': radius_list, 'icon': 'lock'},
             },
-            {'name': 'External Links', 'config': {'items': external_links_group}},
+            {'name': 'Test Project', 'config': {'items': test_project_list}},
         ]
-        preference = ['Add Group', 'List Group']
+        preference = [
+            'Authentication And Authorization',
+            'Radius Accounting',
+            'Test Project',
+        ]
         register_menu_groups(groups, preference=preference)
 
     def register_default_menu_group_item(self):
         items = [
-            {'model': 'auth.User', 'name': 'changelist'},
-            {'link': 'https://openwisp.org/thecode.html', 'label': 'OpenWISP Code'},
+            {
+                'position': 1,
+                'config': {
+                    'link': 'https://openwisp.org/thecode.html',
+                    'label': 'OpenWISP Code',
+                },
+            },
         ]
         register_default_menu_group_item(items)
