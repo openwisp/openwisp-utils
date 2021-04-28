@@ -9,9 +9,9 @@ from . import settings as app_settings
 
 def menu_items(request):
     menu = build_menu(request)
-    if len(menu):
+    if menu:
         logging.warning(
-            'Register_menu_items is outdated. Plase update to use register_menu_group'
+            'Register_menu_items is deprecated. Plase update to use register_menu_group'
         )
     menu_groups = build_menu_groups(request)
     return {
@@ -34,14 +34,16 @@ def build_menu_groups(request):
         _group = {}
         _items = []
         _group['name'] = name
-        for item in items:
+        for _, item in items.items():
             if item.get('model', None):
                 app_label, model = item['model'].split('.')
                 model_class = registry.apps.get_model(app_label, model)
                 model_label = model.lower()
                 uuid = item['name']
-                url = reverse('admin:{}_{}_{}'.format(app_label, model_label, uuid))
-                label = item.get('label', model_class._meta.verbose_name_plural)
+                url = reverse(f'admin:{app_label}_{model_label}_{uuid}')
+                label = item.get(
+                    'label', model_class._meta.verbose_name_plural + ' ' + uuid
+                )
                 view_perm = f'{app_label}.view_{model_label}'
                 change_perm = f'{app_label}.change_{model_label}'
                 user = request.user
@@ -53,11 +55,24 @@ def build_menu_groups(request):
                 if has_permission_method(view_perm) or has_permission_method(
                     change_perm
                 ):
-                    _items.append({'url': url, 'label': label, 'class': model_label})
+                    _items.append(
+                        {
+                            'url': url,
+                            'label': label,
+                            'class': model_label,
+                            'icon': item.get('icon', ''),
+                        }
+                    )
             elif item.get('link', None):
-                _items.append({'url': item['link'], 'label': item['label']})
-        if len(_items) > 0:
-            _group['icon'] = config.get('icon', None)
+                _items.append(
+                    {
+                        'url': item['link'],
+                        'label': item['label'],
+                        'icon': item.get('icon', ''),
+                    }
+                )
+        if _items:
+            _group['icon'] = config.get('icon', '')
             _group['items'] = _items
             menu_groups.append(_group)
     return menu_groups
@@ -74,7 +89,7 @@ def build_menu(request):
         app_label, model = item['model'].split('.')
         model_class = registry.apps.get_model(app_label, model)
         model_label = model.lower()
-        url = reverse('admin:{}_{}_changelist'.format(app_label, model_label))
+        url = reverse(f'admin:{app_label}_{model_label}_changelist')
         label = item.get('label', model_class._meta.verbose_name_plural)
         view_perm = f'{app_label}.view_{model_label}'
         change_perm = f'{app_label}.change_{model_label}'
