@@ -1,14 +1,23 @@
+import logging
+
 from django.apps import registry
 from django.conf import settings
 from django.urls import reverse
 
+from ..admin_theme.menu import build_menu_group
 from . import settings as app_settings
 
 
 def menu_items(request):
     menu = build_menu(request)
+    if menu:
+        logging.warning(
+            'Register_menu_items is deprecated. Plase update to use register_menu_group'
+        )
+    menu_groups = build_menu_group(request)
     return {
         'openwisp_menu_items': menu,
+        'openwisp_menu_groups': menu_groups,
         'show_userlinks_block': getattr(
             settings, 'OPENWISP_ADMIN_SHOW_USERLINKS_BLOCK', False
         ),
@@ -26,7 +35,7 @@ def build_menu(request):
         app_label, model = item['model'].split('.')
         model_class = registry.apps.get_model(app_label, model)
         model_label = model.lower()
-        url = reverse('admin:{}_{}_changelist'.format(app_label, model_label))
+        url = reverse(f'admin:{app_label}_{model_label}_changelist')
         label = item.get('label', model_class._meta.verbose_name_plural)
         view_perm = f'{app_label}.view_{model_label}'
         change_perm = f'{app_label}.change_{model_label}'
