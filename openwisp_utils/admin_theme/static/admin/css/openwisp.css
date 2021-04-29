@@ -146,14 +146,14 @@ html { overflow-x: hidden }
     padding: 0;
     background-color: #222;
     line-height: 40px !important;
-    width: 40px;
+    width: 52px;
     text-align: center;
 }
 
 #nav-activate:hover { background-color: #000 }
 #nav-activate:focus { outline: none }
 
-#user-tools { padding-right: 64px }
+#user-tools { padding-right: 76px }
 
 #main-menu {
     opacity: 0;
