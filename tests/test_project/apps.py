@@ -108,8 +108,8 @@ class TestAppConfig(ApiAppConfig):
                 config={
                     'model': 'auth.User',
                     'name': 'add',
-                    'icon': 'add-icon',
-                    'label': 'Add User',
+                    'icon': 'edit',
+                    'label': 'Edit User',
                 }
             ),
         }
@@ -123,12 +123,14 @@ class TestAppConfig(ApiAppConfig):
         )
 
         radius_list = {
-            1: MenuItem(config={
-                'model': 'test_project.RadiusAccounting',
-                'name': 'changelist',
-                'label': 'RadiusAccounting',
-                'icon': 'edit',
-            })
+            1: MenuItem(
+                config={
+                    'model': 'test_project.RadiusAccounting',
+                    'name': 'changelist',
+                    'label': 'RadiusAccounting',
+                    'icon': 'edit',
+                }
+            )
         }
         radius_group = MenuGroup(
             config={'label': 'Radius Accounting', 'items': radius_list, 'icon': 'lock'}
@@ -146,7 +148,7 @@ class TestAppConfig(ApiAppConfig):
         menu_groups = {
             1: MenuItem(
                 config={
-                    'model': 'test_projet.Shelf',
+                    'model': 'test_project.Shelf',
                     'name': 'changelist',
                     'label': 'View Shelf',
                     'icon': 'shelf-icon',
@@ -154,6 +156,6 @@ class TestAppConfig(ApiAppConfig):
             ),
             2: radius_group,
             3: auth_group,
-            4: docs_group
+            4: docs_group,
         }
         register_menu_groups(menu_groups)

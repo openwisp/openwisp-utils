@@ -4,8 +4,9 @@ from django.apps import registry
 from django.conf import settings
 from django.urls import reverse
 
-from . import settings as app_settings
 from ..admin_theme.menu import build_menu_group
+from . import settings as app_settings
+
 
 def menu_items(request):
     menu = build_menu(request)
@@ -13,11 +14,10 @@ def menu_items(request):
         logging.warning(
             'Register_menu_items is deprecated. Plase update to use register_menu_group'
         )
-    # menu_groups = build_menu_groups(request)
-    menu_groups = build_menu_group()
+    menu_groups = build_menu_group(request)
     return {
         'openwisp_menu_items': menu,
-        # 'openwisp_menu_groups': menu_groups,
+        'openwisp_menu_groups': menu_groups,
         'show_userlinks_block': getattr(
             settings, 'OPENWISP_ADMIN_SHOW_USERLINKS_BLOCK', False
         ),
