@@ -1,34 +1,5 @@
-body { min-width: 320px; }
-#header{
-  background-color: #464646;
-  color: #fff;
-  height: auto;
-  padding: 17px 40px !important;
-}
-@media (max-width: 1024px){
-  #header {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-  }
-}
-.ow-group-icon{
-  background-size: 20px 20px;
-  padding-left: 30px;
-  background-repeat: no-repeat;
-  background-position: left;
-}
-.ow-menu-link{
-  position: relative;
-  padding-left: 30px!important;
-}
-.ow-menu-link span{
-  position: absolute;
-  left: 10px;
-  height: 20px;
-  width: 20px;
-  background-size: contain;
-  filter: invert(1);
-}
+body { min-width: 320px }
+
 #site-name a{
   display: block;
   width: 150px;
@@ -56,14 +27,7 @@ input[type=submit].default,
   background-color: #000;
 }
 #branding h1, #branding h1 a:link, #branding h1 a:visited {
-  color: #fff;
-  margin: 0 !important;
-}
-div.breadcrumbs,
-.module h2, .module caption, .inline-group h2,
-#container .selector-chosen h2{
-  background-color: #df5d43;
-  color: #fff;
+    color: #fff;
 }
 div.breadcrumbs{
   color: #ffcbc0;
@@ -124,86 +88,8 @@ a.button.secondaryAction{
   display: block;
 }
 
-/* menu */
+html { overflow-x: hidden }
 
-html { overflow-x: hidden; }
-.nav-icon {
-  height: 16px;
-  vertical-align: middle;
-  position: relative;
-  top: -1px;
-}
-.nav-text {
-  vertical-align: middle;
-  display: inline-block;
-}
-#nav-activate {
-  position: absolute;
-  right: 40px;
-  cursor: pointer;
-  padding: 0;
-  background-color: #222;
-  line-height: 40px !important;
-  width: 52px;
-  text-align: center;
-}
-
-#nav-activate:hover { background-color: #000; }
-#nav-activate:focus { outline: none; }
-
-#user-tools { padding-right: 76px; }
-#main-menu {
-  opacity: 0;
-  padding: 0 37px;
-  margin-top: 0;
-  width: 180px;
-  overflow: hidden;
-  position: absolute;
-  z-index: 9999 !important;
-  right: -270px;
-  top: 0;
-  background-color: #464646;
-  z-index: 10;
-  transition: all .5s;
-}
-
-/* avoid change list filter to cover menu */
-#changelist-filter{ z-index: 9 !important; }
-#menu-toggle {
-  position: absolute;
-  left: -20px;
-}
-#menu-toggle:checked ~ #main-menu, #main-menu:focus-within {
-  opacity: 1;
-  left: auto;
-  right: 0;
-}
-#main-menu a {
-  display: block;
-  text-align: center;
-  padding: 15px 0px 15px;
-  margin: 0 0 8px 0;
-  background-color: #222;
-  text-transform: uppercase;
-  font-size: 12px;
-  font-weight: bold;
-}
-#main-menu a:hover,
-#main-menu a:focus {
-  text-decoration: none !important;
-  background-color: #000;
-}
-#main-menu > a:first-child { margin-top: 15px; }
-#main-menu .account { margin-top: 0; }
-#main-menu .account a { background-color: #453232; }
-#main-menu .account a:hover,
-#main-menu .account a:focus { background-color: #2f1e1e; }
-#user-tools .user {
-  background: transparent url(../../ui/openwisp/images/user.svg) no-repeat scroll 0 50%;
-  background-size: 10px 10px;
-  padding-left: 18px;
-  line-height: 40px;
-}
 .ow-overlay {
   display: none;
   position: fixed;
@@ -243,18 +129,246 @@ html { overflow-x: hidden; }
   }
 }
 
-@media (max-width: 1024px) {
-  .nav-icon { height: 15px; }
-
-  #main-menu {
-    padding-left: 35px;
-    padding-right: 35px;
-  }
-  #main-menu a { margin-bottom: 12px; }
-  #main-menu .account { margin-top: 0; }
-  #user-tools { margin-left: 10px !important; }
+div.breadcrumbs,
+.module h2, .module caption, .inline-group h2,
+#container .selector-chosen h2{
+    background-color: #333333;
+    color: #fff;
+    padding: 14px 16px;
+    font-size: 14px;
 }
 
-@media (min-width: 700px) {
-  #login-form{ padding-bottom: 20px; }
+/* HEADER START */
+#header{
+    background-color: #fff;
+    color: #464646;
+    border-bottom: 2px solid #eee;
+    position: sticky;
+    top: 0px;
+    z-index: 10;
+    padding: 0px 40px;
+}
+
+.login #header{
+    background-color: #464646;
+    color: rgb(146, 136, 136);
+}
+
+/* To  hide header when logout is clicked*/
+#header.hide{
+    display: none;
+}
+
+/* To show header on login page with padding */
+.login #header.hide{
+    display: block;
+    padding: 15px;
+}
+
+.login #main-content, .toggle-menu #main-content, #main-content.m-0{
+    margin-left: 0px;
+}
+
+#header .head{
+    margin: auto;
+    justify-content: space-between;
+}
+
+#header-nav .user {
+    background: transparent url(../../ui/openwisp/images/user.png) no-repeat scroll 0 50%;
+    background-size: 10px 10px;
+    padding-left: 18px;
+}
+
+/* MENU START */
+#menu{
+    position: fixed;
+    width: 250px;
+    background: #F5F5F9;
+    height: 100vh;
+    z-index: 12;
+    color: #333333;
+    top: 0;
+    overflow: hidden;
+}
+
+.head{
+    height: 108px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#menu .head{
+    background: #1A1A1A;
+}
+
+#menu #site-name{
+    margin: 0;
+}
+
+.toggle-menu #menu{ margin-left: -250px; }
+
+.backdrop{
+    z-index: 11;
+    background: #000;
+    opacity: 0.5;
+    display: none;
+    position: fixed;
+    height: 100vh;
+    width: 100%;
+    top: 0px;
+    left: 0px;
+}
+
+.menu-toggle{
+    background: url(../../ui/openwisp/images/menu.png);
+    background-size: 30px 30px;
+    height: 30px;
+    cursor: pointer;
+    width: 30px;
+    background-position: center;
+    display: inline-block;
+    background-repeat: no-repeat;
+}
+
+#menu .nav{
+    overflow: scroll;
+    height: calc(100% - 128px);
+}
+
+.menu-group ul li{
+    list-style: none;
+}
+
+.menu-group ul a, .menu-link{
+    padding: 15px 16px;
+    display: block;
+    text-decoration: none;
+}
+
+.heading {
+    cursor: pointer;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding: 15px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.active{
+    background: #DFE0E1;
+}
+
+.active .menu-arrow{
+    transform: rotate(-90deg);
+}
+
+.menu-group ul {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 0px;
+}
+
+.active ul{
+    height: auto;
+}
+
+.menu-icon,.menu-link-icon {
+    height: 20px;
+    vertical-align: middle;
+    width: 20px;
+    display: inline-block;
+    background-size: 15px 15px!important;
+    margin-right: 10px;
+    background-repeat: no-repeat!important;
+}
+
+.heading:hover,.menu-group ul a:hover,.menu-link:hover{
+    background-color: #c2c2c2;
+}
+
+/* MAIN CONTENT START */
+#main-content{
+    margin-left: 250px;
+}
+
+.heading>div, .heading>span{
+    pointer-events: none;
+}
+
+.popup #main-content{
+    margin-left: 0px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 768px) { 
+    #menu{
+        margin-left: -250px;
+    }
+
+    #dashboard #container #header{
+        padding: 0px 15px;
+    }
+
+    #main-content{
+        margin-left: 0px;
+    }
+
+    .toggle-menu #menu{ margin-left: 0px; }
+
+    .toggle-menu .backdrop{ display: block; }
+}
+
+@media (max-width: 1024px){
+    #container #header { padding: 0px 30px; }
+}
+
+
+/* ICONS */
+.menu-arrow{
+    background: url(../../ui/openwisp/images/arrow.png);
+    background-size: 10px 10px;
+    height: 15px;
+    width: 15px;
+    background-position: center;
+    display: inline-block;
+    background-repeat: no-repeat;
+}
+
+.controller{
+    background: url(../../ui/openwisp/images/controller.png);
+}
+
+.config{
+    background: url(../../ui/openwisp/images/config.png);
+}
+
+.floor{
+    background: url(../../ui/openwisp/images/floor.png);
+}
+
+.geo{
+    background: url(../../ui/openwisp/images/geo.png);
+}
+
+.home{
+    background: url(../../ui/openwisp/images/home.png);
+}
+
+.location{
+    background: url(../../ui/openwisp/images/location.png);
+    background-size: 20px 20px!important;
+}
+
+.lock{
+    background: url(../../ui/openwisp/images/lock.png);
+}
+
+.template{
+    background: url(../../ui/openwisp/images/template.png);
 }
