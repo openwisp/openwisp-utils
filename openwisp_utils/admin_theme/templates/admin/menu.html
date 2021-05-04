@@ -1,0 +1,84 @@
+{% load i18n %}
+{% if user.is_authenticated %}
+<div class="backdrop"></div>
+<div id="menu">
+    <div class="head">
+        {% block branding %}
+        <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
+        {% endblock %}
+    </div>
+    <div class="nav">
+        <a class="menu-link" href="{% url 'admin:index' %}"><span class="menu-link-icon home"></span> Home</a>
+        <div class="menu-group">
+            <div class="heading">
+                <div>
+                <span class="menu-icon controller"></span>Configuration
+                </div>
+                <span class="menu-arrow"></span>
+            </div>
+            <ul>
+                <li>
+                    <a href=""><span class="menu-link-icon template"></span> Templates</a>
+                </li>
+                <li>
+                    <a href=""><span class="menu-link-icon lock"></span>VPN Servers</a>
+                </li>
+                <li>
+                    <a href=""><span class="menu-link-icon"></span>Access Creadentials</a>
+                </li>
+            </ul>
+        </div>
+        <div class="menu-group">
+            <div class="heading">
+                <div>
+                <span class="menu-icon geo"></span>Logistic
+                </div>
+                <span class="menu-arrow"></span>
+            </div>
+            <ul>
+                <li>
+                    <a href=""><span class="menu-link-icon location"></span>Locations</a>
+                </li>
+                <li>
+                    <a href=""><span class="menu-link-icon floor"></span>Floorplans</a>
+                </li>
+            </ul>'
+            '
+        </div>
+        <div class="menu-group">
+            <div class="heading">
+                <div>
+                <span class="menu-icon pki"></span>PKI
+                </div>
+                <span class="menu-arrow"></span>
+            </div>
+            <ul>
+                <li>
+                    <a href=""><span class="menu-link-icon"></span>Certification Authorities</a>
+                </li>
+                <li>
+                    <a href=""><span class="menu-link-icon"></span>Certificates</a>
+                </li>
+            </ul>
+        </div>
+        <div class="menu-group">
+            <div class="heading">
+                <div>
+                <span class="menu-icon config"></span>IPAM
+                </div>
+                <span class="menu-arrow"></span>
+            </div>
+            <ul>
+                <li>
+                    <a href=""><span class="menu-link-icon"></span>IP Addresses</a>
+                </li>
+                <li>
+                    <a href=""><span class="menu-link-icon"></span>Subnets</a>
+                </li>
+            </ul>
+        </div>
+        <a class="menu-link" href="{% url 'admin:logout' %}">
+        <span class="menu-icon"></span>{% translate 'Log out' %}</a>
+    </div>
+</div>
+{% endif %}
