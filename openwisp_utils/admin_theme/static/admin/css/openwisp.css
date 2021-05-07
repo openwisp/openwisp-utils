@@ -1,41 +1,45 @@
-body { min-width: 320px }
+body { min-width: 320px; }
 
-#site-name a{
+#site-name a {
   display: block;
   width: 150px;
   height: 70px;
-  background: url(../../../static/ui/openwisp/images/openwisp-logo.svg) no-repeat scroll 0 50% / 100%;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo.svg) no-repeat scroll 0 50%/100%;
   text-indent: -2000px;
   overflow: hidden;
 }
-.login #branding{
+
+.login #branding {
   float: none;
   padding: 8px 0;
   margin: 0 auto;
 }
-.login #site-name a{ margin: 0 auto; }
+
+.login #site-name a { margin: 0 auto; }
+
 .button.default,
 input[type=submit].default,
 .submit-row input.default,
 .object-tools a:focus,
-.object-tools a:hover{
+.object-tools a:hover {
   background-color: #333;
 }
 .button.default:active, input[type=submit].default:active,
 .button.default:focus, input[type=submit].default:focus,
-.button.default:hover, input[type=submit].default:hover{
+.button.default:hover, input[type=submit].default:hover {
   background-color: #000;
 }
 #branding h1, #branding h1 a:link, #branding h1 a:visited {
-    color: #fff;
+  color: #fff;
 }
-div.breadcrumbs{
-  color: #ffcbc0;
-}
-div.breadcrumbs a:focus, div.breadcrumbs a:hover{
+
+div.breadcrumbs { color: #ffcbc0; }
+
+div.breadcrumbs a:focus, div.breadcrumbs a:hover {
   color: #ffe8e3;
 }
-.button, input[type=submit], input[type=button], .submit-row input, a.button{
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
   background-color: #666;
 }
 .button:active, input[type=submit]:active, input[type=button]:active,
@@ -43,15 +47,16 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
 .button:hover, input[type=submit]:hover, input[type=button]:hover {
   background-color: #444;
 }
-#user-tools a:focus, #user-tools a:hover{
+
+#user-tools a:focus, #user-tools a:hover {
   border-bottom-color: #ffcbc0;
   color: #ffcbc0;
 }
-#container .object-tools a{
-  padding: 5px 15px;
-}
 
-#container .object-tools a.addlink{ padding-right: 28px; }
+#container .object-tools a { padding: 5px 15px; }
+
+#container .object-tools a.addlink { padding-right: 28px; }
+
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
 a:link, a:visited {
@@ -60,14 +65,19 @@ a:link, a:visited {
 a:focus, a:hover {
   color: #000;
 }
-#changelist-filter li.selected a{
+
+#changelist-filter li.selected a {
   color: #df5d43 !important;
 }
 #netjsonconfig-hint, #netjsonconfig-hint a,
-#container .field-backend a{ color: #df5d43; }
+#container .field-backend a {
+  color: #df5d43;
+}
+
 #main .form-row label {
   color: #1b1818;
 }
+
 #main .form-row .help {
   margin-top: 3px;
   font-size: 13px;
@@ -76,11 +86,16 @@ a:focus, a:hover {
 
 /* hide first delete link, hide save and add anoher */
 #main .submit-row:first-child .deletelink-box,
-.submit-row input[name="_addanother"] { display: none; }
-#main .submit-row .default { background: #498b26; }
+.submit-row input[name="_addanother"] {
+  display: none;
+}
+
+#main .submit-row .default {
+  background: #498b26;
+}
 
 /* temporary frontend fix */
-a.button.secondaryAction{
+a.button.secondaryAction {
   background: transparent;
   border: 0 none;
   padding: 0;
@@ -88,7 +103,7 @@ a.button.secondaryAction{
   display: block;
 }
 
-html { overflow-x: hidden }
+html { overflow-x: hidden; }
 
 .ow-overlay {
   display: none;
@@ -100,275 +115,294 @@ html { overflow-x: hidden }
   height: 100%;
   background: rgba(255, 255, 255, 0.75);
 }
-.ow-overlay-inner{
+
+.ow-overlay-inner {
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
   width: 100%;
   height: 100%;
   position: fixed;
   overflow: auto;
   padding: 0;
-  align-items: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
 }
+
 .ow-loading-spinner {
   width: 50px;
   height: 50px;
   background-color: rgba(0, 0, 0, 0.9);
   margin: 0 auto;
   border-radius: 100%;
-  animation: sk-scaleout 1.0s infinite ease-in-out;
+  -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
+          animation: sk-scaleout 1.0s infinite ease-in-out;
+}
+
+@-webkit-keyframes sk-scaleout {
+  0% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  }
+  100% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
 @keyframes sk-scaleout {
   0% {
     -webkit-transform: scale(0);
     transform: scale(0);
-  } 100% {
-    -webkit-transform: scale(1.0);
-    transform: scale(1.0);
+  }
+  100% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
     opacity: 0;
   }
 }
 
 div.breadcrumbs,
 .module h2, .module caption, .inline-group h2,
-#container .selector-chosen h2{
-    background-color: #333333;
-    color: #fff;
-    padding: 14px 16px;
-    font-size: 14px;
+#container .selector-chosen h2 {
+  background-color: #333333;
+  color: #fff;
+  padding: 14px 16px;
+  font-size: 14px;
 }
 
 /* HEADER START */
-#header{
-    background-color: #fff;
-    color: #464646;
-    border-bottom: 2px solid #eee;
-    position: sticky;
-    top: 0px;
-    z-index: 10;
-    padding: 0px 40px;
+#header {
+  background-color: #fff;
+  color: #464646;
+  border-bottom: 2px solid #eee;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0px;
+  z-index: 10;
+  padding: 0px 40px;
 }
 
-.login #header{
-    background-color: #464646;
-    color: rgb(146, 136, 136);
+.login #header {
+  background-color: #464646;
+  color: #928888;
 }
 
 /* To  hide header when logout is clicked*/
-#header.hide{
-    display: none;
-}
+#header.hide { display: none; }
 
 /* To show header on login page with padding */
-.login #header.hide{
-    display: block;
-    padding: 15px;
+.login #header.hide {
+  display: block;
+  padding: 15px;
 }
 
-.login #main-content, .toggle-menu #main-content, #main-content.m-0{
-    margin-left: 0px;
+.login #main-content, .toggle-menu #main-content, #main-content.m-0 {
+  margin-left: 0px;
 }
 
-#header .head{
-    margin: auto;
-    justify-content: space-between;
+#header .head {
+  margin: auto;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
 }
 
 #header-nav .user {
-    background: transparent url(../../ui/openwisp/images/user.png) no-repeat scroll 0 50%;
-    background-size: 10px 10px;
-    padding-left: 18px;
+  background: transparent url(../../ui/openwisp/images/user.png) no-repeat scroll 0 50%;
+  background-size: 10px 10px;
+  padding-left: 18px;
 }
 
 /* MENU START */
-#menu{
-    position: fixed;
-    width: 250px;
-    background: #F5F5F9;
-    height: 100vh;
-    z-index: 12;
-    color: #333333;
-    top: 0;
-    overflow: hidden;
+#menu {
+  position: fixed;
+  width: 250px;
+  background: #F5F5F9;
+  height: 100vh;
+  z-index: 12;
+  color: #333333;
+  top: 0;
+  overflow: hidden;
 }
 
-.head{
-    height: 108px;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.head {
+  height: 120px;
+  width: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
 }
 
-#menu .head{
-    background: #1A1A1A;
+#header .head { height: 60px; }
+
+#menu .head { background: #1A1A1A; }
+
+#menu #site-name { margin: 0; }
+
+.toggle-menu #menu { margin-left: -250px; }
+
+.backdrop {
+  z-index: 11;
+  background: #000;
+  opacity: 0.5;
+  display: none;
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  top: 0px;
+  left: 0px;
 }
 
-#menu #site-name{
-    margin: 0;
+.menu-toggle {
+  background: url(../../ui/openwisp/images/menu.png);
+  background-size: 30px 30px;
+  height: 30px;
+  cursor: pointer;
+  width: 30px;
+  background-position: center;
+  display: inline-block;
+  background-repeat: no-repeat;
 }
 
-.toggle-menu #menu{ margin-left: -250px; }
-
-.backdrop{
-    z-index: 11;
-    background: #000;
-    opacity: 0.5;
-    display: none;
-    position: fixed;
-    height: 100vh;
-    width: 100%;
-    top: 0px;
-    left: 0px;
+#menu .nav {
+  overflow-y: auto;
+  overflow-y: overlay;
+  height: calc(100% - 128px);
 }
 
-.menu-toggle{
-    background: url(../../ui/openwisp/images/menu.png);
-    background-size: 30px 30px;
-    height: 30px;
-    cursor: pointer;
-    width: 30px;
-    background-position: center;
-    display: inline-block;
-    background-repeat: no-repeat;
-}
+.menu-group ul li { list-style: none; }
 
-#menu .nav{
-    overflow: scroll;
-    height: calc(100% - 128px);
-}
-
-.menu-group ul li{
-    list-style: none;
-}
-
-.menu-group ul a, .menu-link{
-    padding: 15px 16px;
-    display: block;
-    text-decoration: none;
+.menu-link {
+  padding: 20px 16px;
+  display: block;
+  text-decoration: none;
 }
 
 .heading {
-    cursor: pointer;
-    font-weight: 500;
-    text-transform: uppercase;
-    padding: 15px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  cursor: pointer;
+  font-weight: 500;
+  text-transform: uppercase;
+  padding: 18px 16px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
 }
 
-.active{
-    background: #DFE0E1;
-}
+.active { background: #DFE0E1; }
 
-.active .menu-arrow{
-    transform: rotate(-90deg);
+.active .menu-arrow {
+  -webkit-transform: rotate(-90deg);
+          transform: rotate(-90deg);
 }
 
 .menu-group ul {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    height: 0px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 0px;
 }
 
-.active ul{
-    height: auto;
+.active ul { height: auto; }
+
+#menu .menu-icon, #menu .menu-link span {
+  vertical-align: middle;
+  display: inline-block;
+  background-size: 15px 15px;
+  background-repeat: no-repeat;
+  background-position-y: center;
+  padding-left: 30px;
+  word-break: break-word;
 }
 
-.menu-icon,.menu-link-icon {
-    height: 20px;
-    vertical-align: middle;
-    width: 20px;
-    display: inline-block;
-    background-size: 15px 15px!important;
-    margin-right: 10px;
-    background-repeat: no-repeat!important;
-}
+.menu-link, .heading{ color: #777; }
 
-.heading:hover,.menu-group ul a:hover,.menu-link:hover{
-    background-color: #c2c2c2;
+.menu-link span { text-transform: capitalize; }
+
+.heading:hover, .menu-group ul a:hover, .menu-link:hover {
+  background-color: #c2c2c2;
+  color: #000;
 }
 
 /* MAIN CONTENT START */
-#main-content{
-    margin-left: 250px;
+#main-content { margin-left: 250px; }
+
+.heading > div, .heading > span {
+  pointer-events: none;
 }
 
-.heading>div, .heading>span{
-    pointer-events: none;
-}
-
-.popup #main-content{
-    margin-left: 0px;
-}
+.popup #main-content { margin-left: 0px; }
 
 /* RESPONSIVE */
+@media (max-width: 768px) {
+  #menu { margin-left: -250px; }
+  #dashboard #container #header { padding: 0px 15px; }
 
-@media (max-width: 768px) { 
-    #menu{
-        margin-left: -250px;
-    }
+  #main-content { margin-left: 0px; }
 
-    #dashboard #container #header{
-        padding: 0px 15px;
-    }
+  .toggle-menu #menu { margin-left: 0px; }
 
-    #main-content{
-        margin-left: 0px;
-    }
-
-    .toggle-menu #menu{ margin-left: 0px; }
-
-    .toggle-menu .backdrop{ display: block; }
+  .toggle-menu .backdrop { display: block; }
 }
 
-@media (max-width: 1024px){
-    #container #header { padding: 0px 30px; }
+@media (max-width: 1024px) {
+  #container #header { padding: 0px 30px; }
 }
-
 
 /* ICONS */
-.menu-arrow{
-    background: url(../../ui/openwisp/images/arrow.png);
-    background-size: 10px 10px;
-    height: 15px;
-    width: 15px;
-    background-position: center;
-    display: inline-block;
-    background-repeat: no-repeat;
+.menu-arrow {
+  background: url(../../ui/openwisp/images/arrow.png);
+  background-size: 10px 10px;
+  height: 15px;
+  width: 15px;
+  background-position: center;
+  display: inline-block;
+  background-repeat: no-repeat;
 }
 
-.controller{
-    background: url(../../ui/openwisp/images/controller.png);
+.controller {
+  background: url(../../ui/openwisp/images/controller.png);
 }
 
-.config{
-    background: url(../../ui/openwisp/images/config.png);
+.config {
+  background: url(../../ui/openwisp/images/config.png);
 }
 
-.floor{
-    background: url(../../ui/openwisp/images/floor.png);
+.floor {
+  background: url(../../ui/openwisp/images/floor.png);
 }
 
-.geo{
-    background: url(../../ui/openwisp/images/geo.png);
+.geo {
+  background: url(../../ui/openwisp/images/geo.png);
 }
 
-.home{
-    background: url(../../ui/openwisp/images/home.png);
+.home {
+  background: url(../../ui/openwisp/images/home.png);
 }
 
-.location{
-    background: url(../../ui/openwisp/images/location.png);
-    background-size: 20px 20px!important;
+.location {
+  background: url(../../ui/openwisp/images/location.png);
+  background-size: 20px 20px !important;
 }
 
-.lock{
-    background: url(../../ui/openwisp/images/lock.png);
+.lock {
+  background: url(../../ui/openwisp/images/lock.png);
 }
 
-.template{
-    background: url(../../ui/openwisp/images/template.png);
+.template {
+  background: url(../../ui/openwisp/images/template.png);
 }
