@@ -31,7 +31,7 @@
     });
     $('.menu-toggle').on('click', toggleMenuHandler);
     $('#header-nav .user').on('click', toggleMenuHandler);
-    $('.backdrop').on('click', function () {
+    $('.backdrop, .menu-close').on('click', function () {
         $('#container').toggleClass('toggle-menu');
     });
 })(django.jQuery);
