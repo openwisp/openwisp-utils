@@ -25,7 +25,7 @@ class BaseMenuItem:
 class MenuItem(BaseMenuItem):
     def __init__(self, config):
         super().__init__(config)
-        if config.get('name', None) is not None:
+        if config.get('name'):
             if not isinstance(config['name'], str):
                 raise ValueError(
                     f'"name" of menu item should be a type of "str". Error for config-{config}'
@@ -33,15 +33,15 @@ class MenuItem(BaseMenuItem):
             self.name = config['name']
         else:
             raise ValueError(f'"name" is missing in the config-{config}')
-        if config.get('model', None) is None:
+        if not config.get('model'):
             raise ValueError(f'"model" is missing in config-{config}')
         self.model = config['model']
         self.label = _(self.get_label(config))
-        self.icon = config.get('icon', None)
+        self.icon = config.get('icon')
 
     def get_label(self, config=None):
         if config:
-            if config.get('label', None) is not None:
+            if config.get('label'):
                 return config['label']
             app_label, model = config['model'].split('.')
             model_class = registry.apps.get_model(app_label, model)
@@ -66,14 +66,14 @@ class MenuItem(BaseMenuItem):
 class MenuGroup(BaseMenuItem):
     def __init__(self, config):
         super().__init__(config)
-        if config.get('label', None) is None:
+        if not config.get('label'):
             raise ValueError(
                 '"label" is missing in a menu group having config-{config}'
             )
         if not isinstance(config['label'], str):
             raise ValueError('"level" should be a type of "str" for config-{config}')
         self.label = _(config['label'])
-        if config.get('items', None) is None:
+        if not config.get('items'):
             raise ValueError(f'"items" are missing for "{self.label}" group')
         if not isinstance(config['items'], dict):
             raise ValueError(f'"items" of "{self.label}" group is not a type of "dict"')
@@ -86,7 +86,7 @@ class MenuGroup(BaseMenuItem):
                 raise ValueError(f'Invlid items are provided for "{self.label}" group')
         self.items = SortedOrderedDict()
         self.set_items(config['items'])
-        self.icon = config.get('icon', None)
+        self.icon = config.get('icon')
 
     def get_items(self):
         return self.items
@@ -113,15 +113,15 @@ class MenuGroup(BaseMenuItem):
 class MenuLink(BaseMenuItem):
     def __init__(self, config):
         super().__init__(config)
-        if config.get('label', None) is None:
+        if not config.get('label'):
             raise ValueError(
                 '"label" is missing for a menu link having config - {config}'
             )
         self.label = config['label']
-        if config.get('url', None) is None:
+        if not config.get('url'):
             raise ValueError('"url" is missing for menu link config- {config}')
         self.url = config['url']
-        self.icon = config.get('icon', None)
+        self.icon = config.get('icon')
 
 
 def register_menu_groups(groups):
