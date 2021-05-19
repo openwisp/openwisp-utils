@@ -462,7 +462,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
 
 ``register_menu_groups``
 ^^^^^^^^^^^^^^^^^^^^^^^^
-It allows to register different menu items or group at different positions
+It allows to register different menu items or groups at different positions
 in the ``Main navigation menu``
 
 Code example:
@@ -561,7 +561,7 @@ Following is the discription for the config
 +------------------+--------------------------------------------------------------+
 | ``label``        | (``str``) Display name for the link.  (``required``)         |
 +------------------+--------------------------------------------------------------+
-| ``url``        | | (``str``) url of the link.  (``required``)                   |
+| ``url``          | (``str``) url of the link.  (``required``)                   |
 +------------------+--------------------------------------------------------------+
 | ``icon``         | (``str``) Class name of the link icon.  (``optional``)       |
 +------------------+--------------------------------------------------------------+
@@ -574,7 +574,7 @@ It is used to create a dropdown in the menu.
 
 .. code-block:: python
 
-    my_group = MenuGroup(config={'label': 'Docs', 'items': my_group_items, 'icon':'my-icon-class'})
+    my_group = MenuGroup(config={'label': 'My Group Label', 'items': my_group_items, 'icon':'my-icon-class'})
 
 Following is the discription for the config
 
@@ -600,8 +600,8 @@ Following is the discription for the config
 
 **Note**: There are two ways to add links in the navigation menu i.e ``register_menu_groups`` and
 ``register_menu_items``. Both are independent of each other. Items registered by ``register_menu_items``
-are always shown at the top of navigation menu and if registered by ``register_menu_groups`` then they shown 
-in the order of their position after items created by ``register_menu_items``. It is recommended to 
+are always shown at the top of navigation menu and if registered by ``register_menu_groups`` then they 
+are shown in the order of their position after the items created by ``register_menu_items``. It is recommended to 
 use ``register_menu_groups`` as it provide much more functionality. 
 
 If you need to define custom menu items, see:
