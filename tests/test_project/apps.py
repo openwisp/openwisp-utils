@@ -146,7 +146,7 @@ class TestAppConfig(ApiAppConfig):
         docs_group = MenuGroup(config={'label': 'Docs', 'items': docs_list})
 
         menu_groups = {
-            1: MenuItem(
+            5: MenuItem(
                 config={
                     'model': 'test_project.Shelf',
                     'name': 'changelist',

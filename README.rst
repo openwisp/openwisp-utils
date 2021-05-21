@@ -462,6 +462,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
 
 ``register_menu_groups``
 ^^^^^^^^^^^^^^^^^^^^^^^^
+
 It allows to register different menu items or groups at different positions
 in the ``Main navigation menu``
 
@@ -512,6 +513,7 @@ It is recommended to use register_menu_groups in the ``ready`` method of the App
 
 ``MenuItem``
 ^^^^^^^^^^^^
+
 It is used to create model related links like ``add`` or ``list``.
 Users will only be able to see menu items for objects they have permission to either view or edit.
 
@@ -544,6 +546,7 @@ Following is the discription for the config
 
 ``MenuLink``
 ^^^^^^^^^^^^
+
 It is used to create a link with a custom url.
 
 **Syntax:**
@@ -568,6 +571,7 @@ Following is the discription for the config
 
 ``MenuGroup``
 ^^^^^^^^^^^^^
+
 It is used to create a dropdown in the menu.
 
 **Syntax:**

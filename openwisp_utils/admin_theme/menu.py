@@ -15,38 +15,53 @@ class BaseMenuItem:
                 f'"config" should be a type of "dict". Error for config-{config}'
             )
 
-    def get_context(self, request):
+    def get_context(self, request=None):
         return self.create_context(request)
 
-    def create_context(self, request):
+    def create_context(self, request=None):
         return {'label': self.label, 'url': self.url, 'icon': self.icon}
+
+    def set_label(self, config):
+        label = config.get('label')
+        if not label:
+            raise ValueError(
+                f'"label" is missing in a menu group having config-{config}'
+            )
+        if not isinstance(label, str):
+            raise ValueError(f'"level" should be a type of "str" for config-{config}')
+        self.label = _(label)
 
 
 class MenuItem(BaseMenuItem):
     def __init__(self, config):
         super().__init__(config)
-        if config.get('name'):
-            if not isinstance(config['name'], str):
+        name = config.get('name')
+        model = config.get('model')
+        if name:
+            if not isinstance(name, str):
                 raise ValueError(
                     f'"name" of menu item should be a type of "str". Error for config-{config}'
                 )
-            self.name = config['name']
+            self.name = name
         else:
             raise ValueError(f'"name" is missing in the config-{config}')
-        if not config.get('model'):
+        if not model:
             raise ValueError(f'"model" is missing in config-{config}')
-        self.model = config['model']
+        if not isinstance(model, str):
+            raise ValueError(
+                f'"model" of menu item should be a type of "str". Error for config-{config}'
+            )
+        self.model = model
         self.label = _(self.get_label(config))
         self.icon = config.get('icon')
 
     def get_label(self, config=None):
-        if config:
-            if config.get('label'):
-                return config['label']
-            app_label, model = config['model'].split('.')
-            model_class = registry.apps.get_model(app_label, model)
-            return f'{model_class._meta.verbose_name_plural} {self.name}'
-        return self.label
+        label = config.get('label')
+        if label:
+            return label
+        app_label, model = config['model'].split('.')
+        model_class = registry.apps.get_model(app_label, model)
+        return f'{model_class._meta.verbose_name_plural} {self.name}'
 
     def create_context(self, request):
         app_label, model = self.model.split('.')
@@ -62,30 +77,38 @@ class MenuItem(BaseMenuItem):
             return {'label': self.label, 'url': url, 'icon': self.icon}
         return None
 
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return (
+            self.label == other.label
+            and self.model == other.model
+            and self.icon == self.icon
+        )
+
 
 class MenuGroup(BaseMenuItem):
     def __init__(self, config):
         super().__init__(config)
-        if not config.get('label'):
-            raise ValueError(
-                '"label" is missing in a menu group having config-{config}'
-            )
-        if not isinstance(config['label'], str):
-            raise ValueError('"level" should be a type of "str" for config-{config}')
-        self.label = _(config['label'])
-        if not config.get('items'):
+        items = config.get('items')
+        possible_group_items = (MenuItem, MenuLink)
+        self.set_label(config)
+        if not items:
             raise ValueError(f'"items" are missing for "{self.label}" group')
-        if not isinstance(config['items'], dict):
+        if not isinstance(items, dict):
             raise ValueError(f'"items" of "{self.label}" group is not a type of "dict"')
-        for position, item in config['items'].items():
+        for position, item in items.items():
             if not isinstance(position, int):
                 raise ImproperlyConfigured(
                     f'Items position of group "{self.label}" should be type of "int"'
                 )
-            if not (isinstance(item, MenuItem) or isinstance(item, MenuLink)):
-                raise ValueError(f'Invlid items are provided for "{self.label}" group')
+            if not isinstance(item, possible_group_items):
+                raise ValueError(
+                    f'Invlid items are provided for "{self.label}" group.\
+                    Items must be a type of {possible_group_items}'
+                )
         self.items = SortedOrderedDict()
-        self.set_items(config['items'])
+        self.set_items(items)
         self.icon = config.get('icon')
 
     def get_items(self):
@@ -109,22 +132,45 @@ class MenuGroup(BaseMenuItem):
             return None
         return {'label': self.label, 'sub_items': _items, 'icon': self.icon}
 
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        if self.label != other.label or self.icon != other.icon:
+            return False
+        if len(self.items) != len(other.items):
+            return False
+        for first, second in zip(self.items.values(), other.items.values()):
+            if not first.__eq__(second):
+                return False
+        return True
+
 
 class MenuLink(BaseMenuItem):
     def __init__(self, config):
         super().__init__(config)
-        if not config.get('label'):
+        url = config.get('url')
+        self.set_label(config)
+        if not url:
+            raise ValueError(f'"url" is missing for menu link config- {config}')
+        if not isinstance(url, str):
             raise ValueError(
-                '"label" is missing for a menu link having config - {config}'
+                f'"url" must be a type of "str" in menu link config- {config}'
             )
-        self.label = config['label']
-        if not config.get('url'):
-            raise ValueError('"url" is missing for menu link config- {config}')
-        self.url = config['url']
+        self.url = url
         self.icon = config.get('icon')
+
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return (
+            self.label == other.label
+            and self.url == other.url
+            and self.icon == other.icon
+        )
 
 
 def register_menu_groups(groups):
+    possible_menu_items = (MenuGroup, MenuItem, MenuLink)
     if not isinstance(groups, dict):
         raise ImproperlyConfigured('Supplied groups should be a type of "dict"')
     for position, group in groups.items():
@@ -132,16 +178,10 @@ def register_menu_groups(groups):
             raise ImproperlyConfigured('group position should be a type of "int"')
         if position in MENU:
             raise ValueError(
-                f'Another group is already registered at position n. "{position}":'
+                f'Another group is already registered at position n. "{position}"'
             )
-        if not (
-            isinstance(group, MenuGroup)
-            or isinstance(group, MenuItem)
-            or isinstance(group, MenuLink)
-        ):
-            raise ValueError(
-                'group should be type of "MenuGroup", "MenuItem" or "MenuLink"'
-            )
+        if not isinstance(group, possible_menu_items):
+            raise ValueError(f'group should be type of {possible_menu_items}')
     MENU.update(groups)
 
 
