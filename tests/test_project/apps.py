@@ -4,12 +4,7 @@ from openwisp_utils.admin_theme import (
     register_dashboard_chart,
     register_dashboard_template,
 )
-from openwisp_utils.admin_theme.menu import (
-    MenuGroup,
-    MenuItem,
-    MenuLink,
-    register_menu_groups,
-)
+from openwisp_utils.admin_theme.menu import register_menu_groups
 from openwisp_utils.api.apps import ApiAppConfig
 from openwisp_utils.utils import register_menu_items
 
@@ -96,66 +91,57 @@ class TestAppConfig(ApiAppConfig):
 
     def register_menu_groups(self):
         auth_list = {
-            2: MenuItem(
-                config={
-                    'label': 'Add user',
-                    'model': 'auth.User',
-                    'name': 'changelist',
-                    'icon': 'add-icon',
-                }
-            ),
-            1: MenuItem(
-                config={
-                    'model': 'auth.User',
-                    'name': 'add',
-                    'icon': 'edit',
-                    'label': 'Edit User',
-                }
-            ),
+            2: {
+                'label': 'Add user',
+                'model': 'auth.User',
+                'name': 'changelist',
+                'icon': 'add-icon',
+            },
+            1: {
+                'model': 'auth.User',
+                'name': 'add',
+                'icon': 'edit',
+                'label': 'Edit User',
+            },
         }
 
-        auth_group = MenuGroup(
-            config={
-                'label': 'Authentication And Authorization',
-                'items': auth_list,
-                'icon': 'user-icon',
-            }
-        )
+        auth_group = {
+            'label': 'Authentication And Authorization',
+            'items': auth_list,
+            'icon': 'user-icon',
+        }
 
         radius_list = {
-            1: MenuItem(
-                config={
-                    'model': 'test_project.RadiusAccounting',
-                    'name': 'changelist',
-                    'label': 'RadiusAccounting',
-                    'icon': 'edit',
-                }
-            )
+            1: {
+                'model': 'test_project.RadiusAccounting',
+                'name': 'changelist',
+                'label': 'RadiusAccounting',
+                'icon': 'edit',
+            }
         }
-        radius_group = MenuGroup(
-            config={'label': 'Radius Accounting', 'items': radius_list, 'icon': 'lock'}
-        )
+        radius_group = {
+            'label': 'Radius Accounting',
+            'items': radius_list,
+            'icon': 'lock',
+        }
 
         docs_list = {
-            1: MenuLink(config={'label': 'OpenWISP', 'url': 'https://openwisp.org/'}),
-            2: MenuLink(
-                config={'label': 'Code', 'url': 'https://openwisp.org/thecode.html'}
-            ),
+            1: {'label': 'OpenWISP', 'url': 'https://openwisp.org/'},
+            2: {'label': 'Code', 'url': 'https://openwisp.org/thecode.html'},
         }
 
-        docs_group = MenuGroup(config={'label': 'Docs', 'items': docs_list})
+        docs_group = {'label': 'Docs', 'items': docs_list}
 
         menu_groups = {
-            5: MenuItem(
-                config={
-                    'model': 'test_project.Shelf',
-                    'name': 'changelist',
-                    'label': 'View Shelf',
-                    'icon': 'shelf-icon',
-                }
-            ),
+            1: {
+                'model': 'test_project.Shelf',
+                'name': 'changelist',
+                'label': 'View Shelf',
+                'icon': 'shelf-icon',
+            },
             2: radius_group,
             3: auth_group,
             4: docs_group,
+            5: {'label': 'Code', 'url': 'https://openwisp.org/thecode.html'},
         }
         register_menu_groups(menu_groups)
