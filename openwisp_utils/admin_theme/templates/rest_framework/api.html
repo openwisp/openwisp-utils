@@ -1,0 +1,7 @@
+{% extends "rest_framework/api.html" %}
+{% load static %}
+
+{% block head %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "rest_framework/css/browsable-api.css" %}" />
+{% endblock head %}

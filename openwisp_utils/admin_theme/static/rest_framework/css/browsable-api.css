@@ -1,0 +1,15 @@
+.meta.nocode {
+    display: block;
+    margin-top: -15px;
+    margin-bottom: 10px;
+    white-space: nowrap;
+}
+
+.meta.nocode span {
+    margin-left: 8px;
+}
+
+.meta.nocode b::before {
+    content: "\a";
+    white-space: pre;
+}
