@@ -2,6 +2,7 @@
     display: block;
     margin-top: -15px;
     margin-bottom: 10px;
+    white-space: nowrap;
 }
 
 .meta.nocode span {
