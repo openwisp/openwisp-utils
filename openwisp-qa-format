@@ -3,3 +3,4 @@ set -e
 
 isort .
 black -S .
+stylelint $(find . -type f -name "*.css") --fix

@@ -1,112 +1,95 @@
 body { min-width: 320px }
 #header{
-    background-color: #464646;
-    color: #fff;
-    height: auto;
-    padding: 17px 40px !important;
+  background-color: #464646;
+  color: #fff;
+  height: auto;
+  padding: 17px 40px !important;
 }
 @media (max-width: 1024px){
-    #header {
-        flex-direction: row !important;
-        justify-content: space-between !important;
-    }
+  #header {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+  }
 }
-
 #site-name a{
-    display: block;
-    width: 150px;
-    height: 70px;
-    background: url(../../../static/ui/openwisp/images/openwisp-logo.svg) no-repeat scroll 0 50% / 100%;
-    text-indent: -2000px;
-    overflow: hidden;
+  display: block;
+  width: 150px;
+  height: 70px;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo.svg) no-repeat scroll 0 50% / 100%;
+  text-indent: -2000px;
+  overflow: hidden;
 }
-
 .login #branding{
-    float: none;
-    padding: 8px 0;
-    margin: 0 auto;
+  float: none;
+  padding: 8px 0;
+  margin: 0 auto;
 }
 .login #site-name a{ margin: 0 auto }
-
 .button.default,
 input[type=submit].default,
 .submit-row input.default,
 .object-tools a:focus,
 .object-tools a:hover{
-    background-color: #333;
+  background-color: #333;
 }
-
 .button.default:active, input[type=submit].default:active,
 .button.default:focus, input[type=submit].default:focus,
 .button.default:hover, input[type=submit].default:hover{
-    background-color: #000;
+  background-color: #000;
 }
-
 #branding h1, #branding h1 a:link, #branding h1 a:visited {
-    color: #fff;
-    margin: 0 !important;
+  color: #fff;
+  margin: 0 !important;
 }
-
 div.breadcrumbs,
 .module h2, .module caption, .inline-group h2,
 #container .selector-chosen h2{
-    background-color: #df5d43;
-    color: #fff;
+  background-color: #df5d43;
+  color: #fff;
 }
-
 div.breadcrumbs{
-    color: #ffcbc0
+  color: #ffcbc0
 }
-
 div.breadcrumbs a:focus, div.breadcrumbs a:hover{
-    color: #ffe8e3
+  color: #ffe8e3
 }
-
 .button, input[type=submit], input[type=button], .submit-row input, a.button{
-    background-color: #666;
+  background-color: #666;
 }
-
 .button:active, input[type=submit]:active, input[type=button]:active,
 .button:focus, input[type=submit]:focus, input[type=button]:focus,
 .button:hover, input[type=submit]:hover, input[type=button]:hover {
-    background-color: #444;
+  background-color: #444;
 }
-
 #user-tools a:focus, #user-tools a:hover{
-    border-bottom-color: #ffcbc0;
-    color: #ffcbc0;
+  border-bottom-color: #ffcbc0;
+  color: #ffcbc0;
 }
-
 #container .object-tools a{
-    padding: 5px 15px;
+  padding: 5px 15px;
 }
 
 #container .object-tools a.addlink{ padding-right: 28px }
-
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
 a:link, a:visited {
-    color: #777;
+  color: #777;
 }
-
 a:focus, a:hover {
-    color: #000;
+  color: #000;
 }
-
 #changelist-filter li.selected a{
-    color: #df5d43 !important
+  color: #df5d43 !important
 }
-
 #netjsonconfig-hint, #netjsonconfig-hint a,
 #container .field-backend a{ color: #df5d43 }
-
 #main .form-row label {
-    color: #1b1818;
+  color: #1b1818;
 }
 #main .form-row .help {
-    margin-top: 3px;
-    font-size: 13px;
-    color: #797572;
+  margin-top: 3px;
+  font-size: 13px;
+  color: #797572;
 }
 
 /* hide first delete link, hide save and add anoher */
@@ -116,120 +99,111 @@ a:focus, a:hover {
 
 /* temporary frontend fix */
 a.button.secondaryAction{
-    background: transparent;
-    border: 0 none;
-    padding: 0;
-    margin: 15px 0;
-    display: block;
+  background: transparent;
+  border: 0 none;
+  padding: 0;
+  margin: 15px 0;
+  display: block;
 }
 
 /* menu */
 
 html { overflow-x: hidden }
-
 .nav-icon {
-    height: 16px;
-    vertical-align: middle;
-    position: relative;
-    top: -1px;
+  height: 16px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
 }
-
 .nav-text {
-    vertical-align: middle;
-    display: inline-block;
+  vertical-align: middle;
+  display: inline-block;
 }
-
 #nav-activate {
-    position: absolute;
-    right: 40px;
-    cursor: pointer;
-    padding: 0;
-    background-color: #222;
-    line-height: 40px !important;
-    width: 52px;
-    text-align: center;
+  position: absolute;
+  right: 40px;
+  cursor: pointer;
+  padding: 0;
+  background-color: #222;
+  line-height: 40px !important;
+  width: 52px;
+  text-align: center;
 }
 
 #nav-activate:hover { background-color: #000 }
 #nav-activate:focus { outline: none }
 
 #user-tools { padding-right: 76px }
-
 #main-menu {
-    opacity: 0;
-    padding: 0 37px;
-    margin-top: 0;
-    width: 180px;
-    overflow: hidden;
-    position: absolute;
-    z-index: 9999 !important;
-    right: -270px;
-    top: 0;
-    background-color: #464646;
-    z-index: 10;
-    transition: all .5s;
+  opacity: 0;
+  padding: 0 37px;
+  margin-top: 0;
+  width: 180px;
+  overflow: hidden;
+  position: absolute;
+  z-index: 9999 !important;
+  right: -270px;
+  top: 0;
+  background-color: #464646;
+  z-index: 10;
+  transition: all .5s;
 }
 
 /* avoid change list filter to cover menu */
 #changelist-filter{ z-index: 9 !important }
-
 #menu-toggle {
-    position: absolute;
-    left: -20px;
+  position: absolute;
+  left: -20px;
 }
-
 #menu-toggle:checked ~ #main-menu, #main-menu:focus-within {
-    opacity: 1;
-    left: auto;
-    right: 0;
+  opacity: 1;
+  left: auto;
+  right: 0;
 }
-
 #main-menu a {
-    display: block;
-    text-align: center;
-    padding: 15px 0px 15px;
-    margin: 0 0 8px 0;
-    background-color: #222;
-    text-transform: uppercase;
-    font-size: 12px;
-    font-weight: bold;
+  display: block;
+  text-align: center;
+  padding: 15px 0px 15px;
+  margin: 0 0 8px 0;
+  background-color: #222;
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: bold;
 }
 #main-menu a:hover,
 #main-menu a:focus {
-    text-decoration: none !important;
-    background-color: #000;
+  text-decoration: none !important;
+  background-color: #000;
 }
 #main-menu > a:first-child { margin-top: 15px }
 #main-menu .account { margin-top: 0 }
 #main-menu .account a { background-color: #453232 }
 #main-menu .account a:hover,
 #main-menu .account a:focus { background-color: #2f1e1e }
-
 #user-tools .user {
   background: transparent url(../../ui/openwisp/images/user.svg) no-repeat scroll 0 50%;
   background-size: 10px 10px;
   padding-left: 18px;
-    line-height: 40px;
+  line-height: 40px;
 }
-
 .ow-overlay {
-    display: none;
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 10000;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.75);
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10000;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.75);
 }
 .ow-overlay-inner{
-    display: flex;
-    width: 100%;
-    height: 100%;
-    position: fixed;
-    overflow: auto;
-    padding: 0;
-    align-items: center;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  overflow: auto;
+  padding: 0;
+  align-items: center;
 }
 .ow-loading-spinner {
   width: 50px;
@@ -252,17 +226,17 @@ html { overflow-x: hidden }
 }
 
 @media (max-width: 1024px) {
-    .nav-icon { height: 15px }
+  .nav-icon { height: 15px }
 
-    #main-menu {
-      padding-left: 35px;
-      padding-right: 35px;
-    }
-    #main-menu a { margin-bottom: 12px }
-    #main-menu .account { margin-top: 0 }
-    #user-tools { margin-left: 10px !important }
+  #main-menu {
+    padding-left: 35px;
+    padding-right: 35px;
+  }
+  #main-menu a { margin-bottom: 12px }
+  #main-menu .account { margin-top: 0 }
+  #user-tools { margin-left: 10px !important }
 }
 
 @media (min-width: 700px) {
-    #login-form{ padding-bottom: 20px }
+  #login-form{ padding-bottom: 20px }
 }

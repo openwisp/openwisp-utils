@@ -60,6 +60,16 @@ runcheckendline() {
   fi
 }
 
+runstylelintcheck() {
+  echo "RUNNING: Stylelint checks"
+  stylelint -f verbose $(find . -type f -name "*.css")
+}
+
+runjshintcheck() {
+  echo "RUNNING: jshint checks"
+  jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js")
+}
+
 runcheckmigrations() {
   if [ "$MIGRATION_PATH" == "" ]; then
     echoerr "SKIPPED: No migration path specified!"
@@ -151,6 +161,8 @@ SKIP_ISORT=false
 SKIP_RSTCHECK=false
 SKIP_BLACK=false
 SKIP_CHECKCOMMIT=false
+SKIP_STYLELINT=false
+SKIP_JSHINT=false
 MIGRATION_PATH=""
 MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
@@ -187,6 +199,12 @@ while [ "$1" != "" ]; do
     ;;
   --skip-checkcommit)
     SKIP_CHECKCOMMIT=true
+    ;;
+  --skip-stylelint)
+    SKIP_STYLELINT=true
+    ;;
+  --skip-jshint)
+    SKIP_JSHINT=true
     ;;
   --message)
     shift
@@ -233,6 +251,14 @@ fi
 
 if ! $SKIP_FLAKE8; then
   runflake8
+fi
+
+if ! $SKIP_STYLELINT; then
+  runstylelintcheck
+fi
+
+if ! $SKIP_JSHINT; then
+  runjshintcheck
 fi
 
 if ! $SKIP_RSTCHECK; then
