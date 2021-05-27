@@ -16,4 +16,4 @@
       }],
       "unit-whitelist": ["em", "rem", "%", "s", "px", "vh", "deg"]
     }
-  }
+}
