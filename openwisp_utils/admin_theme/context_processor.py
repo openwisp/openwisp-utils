@@ -12,7 +12,7 @@ def menu_items(request):
     menu = build_menu(request)
     if menu:
         logging.warning(
-            'register_menu_items is deprecated. Plase update to use register_menu_group'
+            'register_menu_items is deprecated. Please update to use register_menu_group'
         )
     menu_groups = build_menu_group(request)
     return {

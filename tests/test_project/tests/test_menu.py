@@ -32,9 +32,8 @@ class TestMenuSchema(TestCase):
         return {'label': label, 'url': url, 'icon': icon}
 
     def _get_menu_group_config(self, label='test label', items=None, icon='test icon'):
-        # if items is None
-        # set default items
         if items is None:
+            # set default items
             model_link = self._get_model_link_config()
             menu_link = self._get_menu_link_config()
             items = {1: menu_link, 2: model_link}
@@ -53,17 +52,17 @@ class TestMenuSchema(TestCase):
         model_link_config = self._get_model_link_config()
         menu_link_config = self._get_menu_link_config()
         menu_group_config = self._get_menu_group_config()
+        test_menu_groups = {
+            3: menu_group_config,
+            2: model_link_config,
+            1: menu_link_config,
+        }
         # save menu order to compare
         items_order = [
             MenuLink(config=menu_link_config),
             ModelLink(config=model_link_config),
             MenuGroup(config=menu_group_config),
         ]
-        test_menu_groups = {
-            3: menu_group_config,
-            2: model_link_config,
-            1: menu_link_config,
-        }
         register_menu_groups(test_menu_groups)
 
         with self.subTest('Test ordering of menu groups'):
@@ -73,14 +72,14 @@ class TestMenuSchema(TestCase):
                 current_item_index += 1
 
         with self.subTest('Registering at an occupied position'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 register_menu_groups({1: model_link_config})
 
         with self.subTest('Registering with invalid position'):
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_groups({'invalid_position': menu_link_config})
 
-        with self.subTest('Registering with invalid conig'):
+        with self.subTest('Registering with invalid config'):
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_groups({10: []})
 
@@ -95,22 +94,22 @@ class TestMenuSchema(TestCase):
                 MenuLink(config=[])
 
         with self.subTest('Menu Link without label'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_link_config(label=None)
                 MenuLink(config=_config)
 
         with self.subTest('Menu Link without url'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_link_config(url=None)
                 MenuLink(config=_config)
 
         with self.subTest('Menu Link with invalid label'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_link_config(label=123)
                 MenuLink(config=_config)
 
         with self.subTest('Menu Link with invalid url'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_link_config(url=123)
                 MenuLink(config=_config)
 
@@ -130,31 +129,31 @@ class TestMenuSchema(TestCase):
 
     def test_model_link(self):
 
-        with self.subTest('Menu Item without name'):
+        with self.subTest('Model Link without name'):
             _config = self._get_model_link_config(name=None)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 ModelLink(config=_config)
 
-        with self.subTest('Menu Item with invalid name'):
+        with self.subTest('Model Link with invalid name'):
             _config = self._get_model_link_config(name=123)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 ModelLink(config=_config)
 
-        with self.subTest('Menu Item with invalid config'):
+        with self.subTest('Model Link with invalid config'):
             with self.assertRaises(ImproperlyConfigured):
                 ModelLink(config=[])
 
-        with self.subTest('Menu Item without model'):
+        with self.subTest('Model Link without model'):
             _config = self._get_model_link_config(model=None)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 ModelLink(config=_config)
 
-        with self.subTest('Menu Item with invalid model'):
+        with self.subTest('Model Link with invalid model'):
             _config = self._get_model_link_config(model=123)
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 ModelLink(config=_config)
 
-    def test_menu_item_access(self):
+    def test_model_link_access(self):
         url = reverse('admin:index')
         request = self.factory.get(url)
         user = get_user_model().objects.create_superuser(
@@ -162,17 +161,17 @@ class TestMenuSchema(TestCase):
         )
         request.user = user
         _config = self._get_model_link_config()
-        menu_item = ModelLink(config=_config)
+        model_link = ModelLink(config=_config)
 
-        with self.subTest('Menu Item with label and icon'):
-            context = menu_item.get_context(request=request)
+        with self.subTest('Model Link with label and icon'):
+            context = model_link.get_context(request=request)
             self.assertEqual(context.get('label'), _config['label'])
             self.assertEqual(context.get('icon'), _config['icon'])
 
-        with self.subTest('Menu Item without label and icon'):
+        with self.subTest('Model Link without label and icon'):
             _config = self._get_model_link_config(label=None, icon=None)
-            menu_item = ModelLink(config=_config)
-            context = menu_item.get_context(request=request)
+            model_link = ModelLink(config=_config)
+            context = model_link.get_context(request=request)
             app_label, model = _config['model'].split('.')
             model_class = registry.apps.get_model(app_label, model)
             label = f'{model_class._meta.verbose_name_plural} {_config["name"]}'
@@ -188,8 +187,8 @@ class TestMenuSchema(TestCase):
             is_superuser=False,
         )
         request.user = user
-        with self.subTest('Menu Item context when user do not have access'):
-            context = menu_item.get_context(request)
+        with self.subTest('Model Link context when user do not have access'):
+            context = model_link.get_context(request)
             self.assertEqual(context, None)
 
     def test_menu_group(self):
@@ -199,21 +198,21 @@ class TestMenuSchema(TestCase):
                 MenuGroup(config=[])
 
         with self.subTest('Menu Group without label'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_group_config(label=None)
                 MenuGroup(config=_config)
 
         with self.subTest('Menu Group with invalid label'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_group_config(label=1234)
                 MenuGroup(config=_config)
 
         with self.subTest('Menu Group without items'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 MenuGroup(config={'label': "test label"})
 
         with self.subTest('Menu Group with invalid items type'):
-            with self.assertRaises(ValueError):
+            with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_group_config(items=[])
                 MenuGroup(config=_config)
 
@@ -262,6 +261,18 @@ class TestMenuSchema(TestCase):
             menu_group = MenuGroup(config=_config)
             context = menu_group.get_context(request=request)
             self.assertEqual(context.get('icon'), None)
+
+        with self.subTest(
+            'Test superuser access to all model links present in menu group'
+        ):
+            add_link_config = self._get_model_link_config(name='add')
+            change_link_config = self._get_model_link_config(name='changelist')
+            items = {1: add_link_config, 2: change_link_config}
+            menu_group_config = self._get_menu_group_config(items=items)
+            menu_group = MenuGroup(config=menu_group_config)
+            context = menu_group.create_context(request=request)
+            sub_items = context.get('sub_items')
+            self.assertEqual(len(sub_items), 2)
 
         # testing with user having no access
         user = get_user_model().objects.create(

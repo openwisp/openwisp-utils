@@ -51,7 +51,7 @@
             <div>
             {% for item in group.sub_items %}
             <a href="{{ item.url }}"
-               class="ow-menu-link"><span class="{{item.icon}}"></span>{{ item.label }}</a>
+               class="ow-menu-link"><i class="bi-alarm"></i><span class="{{item.icon}}"></span>{{ item.label }}</a>
             {% endfor %}
             </div>
         {% else %}

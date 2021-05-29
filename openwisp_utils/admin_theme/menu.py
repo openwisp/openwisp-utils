@@ -11,8 +11,7 @@ MENU = SortedOrderedDict()
 class BaseMenuItem:
     '''
     It is a base class for all types of menu items.
-    It is used to create context for menu items and for
-    handing some common validations.
+    It is used to handle some common functions.
     '''
 
     def __init__(self, config):
@@ -30,9 +29,9 @@ class BaseMenuItem:
     def set_label(self, config):
         label = config.get('label')
         if not label:
-            raise ValueError(f'"label" is missing in the config- {config}')
+            raise ImproperlyConfigured(f'"label" is missing in the config- {config}')
         if not isinstance(label, str):
-            raise ValueError(
+            raise ImproperlyConfigured(
                 f'"level" should be a type of "str". Error for config- {config}'
             )
         self.label = _(label)
@@ -40,8 +39,8 @@ class BaseMenuItem:
 
 class ModelLink(BaseMenuItem):
     '''
-    It is used create a link for a model like "list view" and "add view".
-    Parameters of config: name, model, label, icon
+    It is used create a link for a model, like "list view" and "add view".
+    Parameters for the config: name, model, label, icon
     '''
 
     def __init__(self, config):
@@ -50,16 +49,16 @@ class ModelLink(BaseMenuItem):
         model = config.get('model')
         if name:
             if not isinstance(name, str):
-                raise ValueError(
+                raise ImproperlyConfigured(
                     f'"name" should be a type of "str". Error for config-{config}'
                 )
             self.name = name
         else:
-            raise ValueError(f'"name" is missing in the config-{config}')
+            raise ImproperlyConfigured(f'"name" is missing in the config-{config}')
         if not model:
-            raise ValueError(f'"model" is missing in config-{config}')
+            raise ImproperlyConfigured(f'"model" is missing in config-{config}')
         if not isinstance(model, str):
-            raise ValueError(
+            raise ImproperlyConfigured(
                 f'"model" should be a type of "str". Error for config-{config}'
             )
         self.model = model
@@ -100,8 +99,8 @@ class ModelLink(BaseMenuItem):
 
 class MenuLink(BaseMenuItem):
     '''
-    It is used create any general link by supplying url.
-    Parameters of config: label, url, icon
+    It is used create any general link by supplying a custom url.
+    Parameters of config: label, url and icon.
     '''
 
     def __init__(self, config):
@@ -109,9 +108,9 @@ class MenuLink(BaseMenuItem):
         url = config.get('url')
         self.set_label(config)
         if not url:
-            raise ValueError(f'"url" is missing in the config- {config}')
+            raise ImproperlyConfigured(f'"url" is missing in the config- {config}')
         if not isinstance(url, str):
-            raise ValueError(
+            raise ImproperlyConfigured(
                 f'"url" should be a type of "str". Error for the config- {config}'
             )
         self.url = url
@@ -129,9 +128,9 @@ class MenuLink(BaseMenuItem):
 
 class MenuGroup(BaseMenuItem):
     '''
-    It is used create a dropdown in the menu.
-    Parameters of config: label, items, icon
-    items should be a type of MenuLink or MenuItem
+    It is used to create a dropdown in the menu.
+    Parameters of config: label, items and icon.
+    each item in items should repesent a config for MenuLink or ModelLink
     '''
 
     def __init__(self, config):
@@ -139,9 +138,9 @@ class MenuGroup(BaseMenuItem):
         items = config.get('items')
         self.set_label(config)
         if not items:
-            raise ValueError(f'"items" is missing in the config- {config}')
+            raise ImproperlyConfigured(f'"items" is missing in the config- {config}')
         if not isinstance(items, dict):
-            raise ValueError(
+            raise ImproperlyConfigured(
                 f'"items" should be a type of "dict". Error for the config- {config}'
             )
         self.items = SortedOrderedDict()
@@ -156,38 +155,29 @@ class MenuGroup(BaseMenuItem):
         for position, item in items.items():
             if not isinstance(position, int):
                 raise ImproperlyConfigured(
-                    f'"key" should be type of "int". Error in "items" of config- {config}'
+                    f'"key" should be type of "int". Error for "items" of config- {config}'
                 )
 
             if not isinstance(item, dict):
                 raise ImproperlyConfigured(
-                    f'Each value of "items" should be a type of "dict". Error in "items" of config- {config}'
+                    f'Each value of "items" should be a type of "dict". Error for "items" of config- {config}'
                 )
-
-        if item.get('url'):
-            # It is a menu link
-            try:
-                _items[position] = MenuLink(config=item)
-            except ValueError as e:
-                raise ValueError(
-                    f'{e}. "items" of config- {config} should have a valid json'
-                )
-            except ImproperlyConfigured as e:
-                raise ImproperlyConfigured(
-                    f'{e}. "items" of config- {config} should have a valid json'
-                )
-        else:
-            # It is a menu item
-            try:
-                _items[position] = ModelLink(config=item)
-            except ValueError as e:
-                raise ValueError(
-                    f'{e}. "items" of config- {config} should have a valid json'
-                )
-            except ImproperlyConfigured as e:
-                raise ImproperlyConfigured(
-                    f'{e}. "items" of config- {config} should have a valid json'
-                )
+            if item.get('url'):
+                # It is a menu link
+                try:
+                    _items[position] = MenuLink(config=item)
+                except ImproperlyConfigured as e:
+                    raise ImproperlyConfigured(
+                        f'{e}. "items" of config- {config} should have a valid json'
+                    )
+            else:
+                # It is a model link
+                try:
+                    _items[position] = ModelLink(config=item)
+                except ImproperlyConfigured as e:
+                    raise ImproperlyConfigured(
+                        f'{e}. "items" of config- {config} should have a valid json'
+                    )
         self.items.update(_items)
 
     def create_context(self, request):
@@ -220,13 +210,13 @@ def register_menu_groups(groups):
         if not isinstance(position, int):
             raise ImproperlyConfigured('group position should be a type of "int"')
         if position in MENU:
-            raise ValueError(
-                f'Another group is already registered at position n. "{position}"'
+            raise ImproperlyConfigured(
+                f'Another group is already registered at position "{position}"'
             )
         if not isinstance(config, dict):
             raise ImproperlyConfigured(
                 f'Config should be a type of "dict" but supplied {config} at \
-                position {position} in the register_menu_groups function'
+                position "{position}" in the "register_menu_groups" function'
             )
         if config.get('url'):
             # It is a menu link
@@ -235,7 +225,7 @@ def register_menu_groups(groups):
             # It is a menu group
             groups[position] = MenuGroup(config=config)
         else:
-            # It is a menu item
+            # It is a model link
             groups[position] = ModelLink(config=config)
     MENU.update(groups)
 

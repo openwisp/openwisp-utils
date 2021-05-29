@@ -94,12 +94,12 @@ class TestAppConfig(ApiAppConfig):
             2: {
                 'label': 'Add user',
                 'model': 'auth.User',
-                'name': 'changelist',
+                'name': 'add',
                 'icon': 'add-icon',
             },
             1: {
                 'model': 'auth.User',
-                'name': 'add',
+                'name': 'changelist',
                 'icon': 'edit',
                 'label': 'Edit User',
             },

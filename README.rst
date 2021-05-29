@@ -467,7 +467,7 @@ It allow us to register different menu items or groups at different positions
 in the ``Main Navigation Menu``.
 
 ``register_menu_groups`` takes a parameter of type (``dict``) in which key respresents the
-position of menu item and its value needs to be a type of "dict".
+position of the menu item and its value needs to be a type of "dict".
 
 Code example:
 
@@ -500,6 +500,10 @@ Code example:
 
 It is recommended to use register_menu_groups in the ``ready`` method of the AppConfig.
 
+Note: ``register_menu_items`` is deprecated by ``register_menu_groups`` and will be removed in the
+future versions. ``register_menu_items`` will be shown at the top of navigation menu and above 
+any register_menu_groups items.
+
 ``Create a general link``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -512,7 +516,7 @@ json format.
 
     my_link_json = {'label': 'Link Label', 'url': 'link_url', 'icon':'my-icon'}
 
-Following is the discription of the json:
+Following is the description of the json:
 
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |
@@ -528,8 +532,8 @@ Following is the discription of the json:
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 If you want to create a link that contains a url of ``add`` or ``list`` page of a model
-then you can use following json format. Users will only be able to see items for 
-objects they have permission to either view or edit.
+then you can use following json format. Users will only be able to see links for 
+models they have permission to either view or edit.
 
 **Syntax:**
 
@@ -551,7 +555,7 @@ objects they have permission to either view or edit.
         'icon': 'my-model-add-class',
     }
 
-Following is the discription of the json:
+Following is the description of the json:
 
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |
@@ -588,7 +592,7 @@ It creates a dropdown in the menu.
     my_group = {'label': 'My Label', 'items': my_group_items, 'icon':'my-icon-class'}
 
 
-Following is the discription of the json:
+Following is the description of the json:
 
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |
@@ -596,7 +600,8 @@ Following is the discription of the json:
 | ``label``        | (``str``) Display name for the link.  (``required``)         |
 +------------------+--------------------------------------------------------------+
 | ``items``        | (``dict``) Items to be displayed in the dropdown.            |
-|                  | For its syntax take reference from above code example.       |
+|                  | It can be a dict of ``general link`` or ``model link``       |
+|           .      | with key as their position.                                  |
 |                  | (``required``)                                               |
 +------------------+--------------------------------------------------------------+
 | ``icon``         | (``str``) CSS class name of the group icon.  (``optional``)  |
@@ -609,13 +614,6 @@ Following is the discription of the json:
     .icon-class-name:{
         background: url(imageurl);
     }
-
-**Note**: There are two ways to add links in the navigation menu i.e ``register_menu_groups`` and
-``register_menu_items``. Both are independent of each other. Items registered by ``register_menu_items``
-are always shown at the top of navigation menu and if registered by ``register_menu_groups`` then they use
-are shown in the order of their position after the items created by ``register_menu_items``. It is recommended to 
-``register_menu_groups`` as it provide much more functionality and we will be deprecating ``register_menu_items``
-in future.
 
 If you need to define custom menu items, see:
 `OPENWISP_ADMIN_MENU_ITEMS <#openwisp_admin_menu_items>`_.
@@ -700,27 +698,6 @@ Code utilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generates an random string of 32 characters.
-
-``openwisp_utils.utils.register_menu_items``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Takes input of a list of models name and settings_menu name and adds
-them to the side navigation bar in the admin dashboard interface.
-
-Usage:
-
-.. code-block:: python
-
-    from openwisp_utils.utils import register_menu_items
-    from openwisp_utils.api.apps import ApiAppConfig
-
-    class YourAwesomeAppConfig(ApiAppConfig):
-        def ready(self, *args, **kwargs):
-            super().ready(*args, **kwargs)
-            items = [{'model': 'your_project.your_model_name'}]
-            # register_menu_items(items[, name_menu=YOUR_SETTINGS_MENU_NAME])
-            register_menu_items(items, name_menu='OPENWISP_DEFAULT_ADMIN_MENU_ITEMS')
-
 
 ``openwisp_utils.utils.deep_merge_dicts``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
