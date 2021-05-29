@@ -39,7 +39,7 @@ class BaseMenuItem:
 
 class ModelLink(BaseMenuItem):
     '''
-    It is used create a link for a model, like "list view" and "add view".
+    It is to used create a link for a model, like "list view" and "add view".
     Parameters for the config: name, model, label, icon
     '''
 
@@ -99,7 +99,7 @@ class ModelLink(BaseMenuItem):
 
 class MenuLink(BaseMenuItem):
     '''
-    It is used create any general link by supplying a custom url.
+    It is used to create any general link by supplying a custom url.
     Parameters of config: label, url and icon.
     '''
 
