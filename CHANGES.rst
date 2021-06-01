@@ -1,6 +1,14 @@
 Changelog
 =========
 
+Version 0.7.5 [2021-06-01]
+--------------------------
+
+- [fix] Added workaround for minification of browsable API view.
+  Django-pipeline strips spaces from pre-formatted text on minifying HTML
+  which destroys the representation of data on browsable API views.
+  Added a workaround to restore presentation to original form using CSS.
+
 Version 0.7.4 [2021-04-08]
 --------------------------
 
