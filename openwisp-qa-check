@@ -15,7 +15,7 @@ show_help() {
   printf "            [--js]\n"
   printf "\n"
   printf "Runs all checks for quality assurance. Unneeded checks may be skipped by passing --skip-<check-name> argument.\n"
-  printf "CSS and Js checks are skipped by default for backward compatibility. To run then pass --css or --js as argument.\n"
+  printf "CSS and Js checks are skipped by default for backward compatibility. To run them pass --css or --js as argument.\n"
   printf "\n"
   printf "General options:\n"
   printf "  --help\t\t\t: Show this help text\n"
