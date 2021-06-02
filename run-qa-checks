@@ -2,11 +2,10 @@
 set -e
 
 qa-checks () {
-    echo "RUNNING: Stylelint checks"
-    stylelint -f verbose $(find . -type f -name "*.css")
-    echo "RUNNING: jshint checks"
-    jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js")
-    openwisp-qa-check --migration-path "./tests/test_project/migrations"
+    openwisp-qa-check \
+        --css\
+        --js\
+        --migration-path "./tests/test_project/migrations"
 }
 
 pre-push-checks () {

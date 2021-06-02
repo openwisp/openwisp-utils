@@ -11,8 +11,11 @@ show_help() {
   printf "            [--skip-isort]\n"
   printf "            [--skip-black]\n"
   printf "            [--skip-checkrst]\n"
+  printf "            [--css]\n"
+  printf "            [--js]\n"
   printf "\n"
   printf "Runs all checks for quality assurance. Unneeded checks may be skipped by passing --skip-<check-name> argument.\n"
+  printf "CSS and Js checks are skipped by default for backward compatibility. To run then pass --css or --js as argument.\n"
   printf "\n"
   printf "General options:\n"
   printf "  --help\t\t\t: Show this help text\n"
@@ -37,6 +40,11 @@ show_help() {
   printf "  --skip-black\t\t\t: Skip black check\n"
   printf "ReStructuredText check options:\n"
   printf "  --skip-checkrst\t\t: Skip ReStructuredText check\n"
+  printf "CSS check options:\n"
+  printf "  --css\t\t\t\t: Runs stylelint for css test\n"
+  printf "Js check options:\n"
+  printf "  --js\t\t\t\t: Runs jshint for js test\n"
+
 }
 
 echoerr() { echo "$@" 1>&2; }
@@ -61,13 +69,23 @@ runcheckendline() {
 }
 
 runstylelintcheck() {
-  echo "RUNNING: Stylelint checks"
-  stylelint -f verbose $(find . -type f -name "*.css")
+  stylelint $(find . -type f -name "*.css") &&
+    echo "SUCCESS: Stylelint check successful!" ||
+    {
+      echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format?"
+      FAILURE=1
+    }
+
 }
 
 runjshintcheck() {
-  echo "RUNNING: jshint checks"
-  jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js")
+  jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
+    echo "SUCCESS: Jshint check successful!" ||
+    {
+      echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions.\
+      visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
+      FAILURE=1
+    }
 }
 
 runcheckmigrations() {
@@ -161,8 +179,8 @@ SKIP_ISORT=false
 SKIP_RSTCHECK=false
 SKIP_BLACK=false
 SKIP_CHECKCOMMIT=false
-SKIP_STYLELINT=false
-SKIP_JSHINT=false
+SKIP_STYLELINT=true
+SKIP_JSHINT=true
 MIGRATION_PATH=""
 MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
@@ -200,11 +218,11 @@ while [ "$1" != "" ]; do
   --skip-checkcommit)
     SKIP_CHECKCOMMIT=true
     ;;
-  --skip-stylelint)
-    SKIP_STYLELINT=true
+  --css)
+    SKIP_STYLELINT=false
     ;;
-  --skip-jshint)
-    SKIP_JSHINT=true
+  --js)
+    SKIP_JSHINT=false
     ;;
   --message)
     shift
