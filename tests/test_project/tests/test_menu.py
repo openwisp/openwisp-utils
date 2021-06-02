@@ -87,6 +87,10 @@ class TestMenuSchema(TestCase):
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_groups([])
 
+        with self.subTest('Registering with unknow menu group'):
+            with self.assertRaises(ImproperlyConfigured):
+                register_menu_groups({10: {}})
+
     def test_menu_link(self):
 
         with self.subTest('Menu Link with invalid config'):
@@ -214,6 +218,11 @@ class TestMenuSchema(TestCase):
         with self.subTest('Menu Group with invalid items type'):
             with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_group_config(items=[])
+                MenuGroup(config=_config)
+
+        with self.subTest('Menu Group with unknown item'):
+            with self.assertRaises(ImproperlyConfigured):
+                _config = self._get_menu_group_config(items={1: {}})
                 MenuGroup(config=_config)
 
         with self.subTest('Menu Group with invalid items position'):

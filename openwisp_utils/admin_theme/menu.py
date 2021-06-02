@@ -170,7 +170,7 @@ class MenuGroup(BaseMenuItem):
                     raise ImproperlyConfigured(
                         f'{e}. "items" of config- {config} should have a valid json'
                     )
-            else:
+            elif item.get('model'):
                 # It is a model link
                 try:
                     _items[position] = ModelLink(config=item)
@@ -178,6 +178,10 @@ class MenuGroup(BaseMenuItem):
                     raise ImproperlyConfigured(
                         f'{e}. "items" of config- {config} should have a valid json'
                     )
+            else:
+                raise ImproperlyConfigured(
+                    f'"items" should have a valid config. Error for config- {config}'
+                )
         self.items.update(_items)
 
     def create_context(self, request):
@@ -224,9 +228,14 @@ def register_menu_groups(groups):
         elif config.get('items'):
             # It is a menu group
             groups[position] = MenuGroup(config=config)
-        else:
+        elif config.get('model'):
             # It is a model link
             groups[position] = ModelLink(config=config)
+        else:
+            # Unknown
+            raise ImproperlyConfigured(
+                f'Invalid config provided. Error for config- {config}'
+            )
     MENU.update(groups)
 
 
