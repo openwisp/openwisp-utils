@@ -11,11 +11,11 @@ show_help() {
   printf "            [--skip-isort]\n"
   printf "            [--skip-black]\n"
   printf "            [--skip-checkrst]\n"
-  printf "            [--css]\n"
-  printf "            [--js]\n"
+  printf "            [--csslinter]\n"
+  printf "            [--jslinter]\n"
   printf "\n"
   printf "Runs all checks for quality assurance. Unneeded checks may be skipped by passing --skip-<check-name> argument.\n"
-  printf "CSS and Js checks are skipped by default for backward compatibility. To run them pass --css or --js as argument.\n"
+  printf "csslinter and jslinter checks are skipped by default for backward compatibility. To run them pass --csslinter or --jslinter as an argument.\n"
   printf "\n"
   printf "General options:\n"
   printf "  --help\t\t\t: Show this help text\n"
@@ -40,11 +40,10 @@ show_help() {
   printf "  --skip-black\t\t\t: Skip black check\n"
   printf "ReStructuredText check options:\n"
   printf "  --skip-checkrst\t\t: Skip ReStructuredText check\n"
-  printf "CSS check options:\n"
-  printf "  --css\t\t\t\t: Runs stylelint for css test\n"
-  printf "Js check options:\n"
-  printf "  --js\t\t\t\t: Runs jshint for js test\n"
-
+  printf "CSSlinter check options:\n"
+  printf "  --csslinter\t\t\t: Runs stylelint check\n"
+  printf "Jslinter check options:\n"
+  printf "  --jslinter\t\t\t: Runs jshint check\n"
 }
 
 echoerr() { echo "$@" 1>&2; }
@@ -69,23 +68,42 @@ runcheckendline() {
 }
 
 runstylelintcheck() {
-  stylelint $(find . -type f -name "*.css") &&
-    echo "SUCCESS: Stylelint check successful!" ||
-    {
-      echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format?"
-      FAILURE=1
-    }
-
+  package='stylelint'
+  if which node > /dev/null
+    then
+      if [ `npm list -g | grep -c $package` -eq 0 ]; then
+        echo "MODULE NOT FOUND: please install ${package}"
+      else
+        stylelint $(find . -type f -name "*.css") &&
+        echo "SUCCESS: Stylelint check successful!" ||
+        {
+          echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format?"
+          FAILURE=1
+        }
+      fi
+  else
+    echo "MODULE NOT FOUND: please install node and ${package}"
+  fi
 }
 
 runjshintcheck() {
-  jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
-    echo "SUCCESS: Jshint check successful!" ||
-    {
-      echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions.\
-      visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
-      FAILURE=1
-    }
+  package='jshint'
+  if which node > /dev/null
+    then
+      if [ `npm list -g | grep -c $package` -eq 0 ]; then
+        echo "MODULE NOT FOUND: please install ${package}"
+      else
+        jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
+        echo "SUCCESS: Jshint check successful!" ||
+        {
+          echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions.\
+          visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
+          FAILURE=1
+        }
+      fi
+  else
+    echo "MODULE NOT FOUND: please install node and ${package}"
+  fi
 }
 
 runcheckmigrations() {
@@ -179,8 +197,8 @@ SKIP_ISORT=false
 SKIP_RSTCHECK=false
 SKIP_BLACK=false
 SKIP_CHECKCOMMIT=false
-SKIP_STYLELINT=true
-SKIP_JSHINT=true
+SKIP_CSS_LINTER=true
+SKIP_JS_LINTER=true
 MIGRATION_PATH=""
 MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
@@ -218,11 +236,11 @@ while [ "$1" != "" ]; do
   --skip-checkcommit)
     SKIP_CHECKCOMMIT=true
     ;;
-  --css)
-    SKIP_STYLELINT=false
+  --csslinter)
+    SKIP_CSS_LINTER=false
     ;;
-  --js)
-    SKIP_JSHINT=false
+  --jslinter)
+    SKIP_JS_LINTER=false
     ;;
   --message)
     shift
@@ -271,11 +289,11 @@ if ! $SKIP_FLAKE8; then
   runflake8
 fi
 
-if ! $SKIP_STYLELINT; then
+if ! $SKIP_CSS_LINTER; then
   runstylelintcheck
 fi
 
-if ! $SKIP_JSHINT; then
+if ! $SKIP_JS_LINTER; then
   runjshintcheck
 fi
 

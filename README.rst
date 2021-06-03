@@ -814,6 +814,7 @@ automated builds of different OpenWISP modules.
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Shell script to automatically format Python code. It runs ``isort`` and ``black``.
+It also runs ``stylelint`` to format CSS code.
 
 ``openwisp-qa-check``
 ^^^^^^^^^^^^^^^^^^^^^
@@ -828,6 +829,8 @@ Shell script to run the following quality assurance checks:
 * ``flake8`` - Python code linter
 * ``isort`` - Sorts python imports alphabetically, and seperated into sections
 * ``black`` - Formats python code using a common standard
+* ``csslinter`` - Formats and checks CSS code using stylelint common standard
+* ``jslinter`` - Checks Javascript code using jshint common standard
 
 If a check requires a flag, it can be passed forward in the same way.
 
@@ -840,6 +843,17 @@ Any unneeded checks can be skipped by passing ``--skip-<check-name>``
 Usage example::
 
     openwisp-qa-check --skip-isort
+
+For backward compatibility ``csslinter`` and ``jslinter`` are skipped by default.
+To run them in checks pass arguements in this way.
+
+Usage example::
+
+    # To active csslinter
+    openwisp-qa-check --csslinter
+
+    # To activate jslinter
+    openwisp-qa-check --jslinter
 
 You can do multiple ``checkmigrations`` by passing the arguments with space-delimited string.
 
@@ -1117,6 +1131,12 @@ Install test requirements:
 .. code-block:: shell
 
     pip install -r requirements-test.txt
+
+Install node dependencies used for testing:
+
+.. code-block:: shell
+
+    npm install -g stylelint jshint
 
 Set up the pre-push hook to run tests and QA checks automatically right before the git push action, so that if anything fails the push operation will be aborted:
 

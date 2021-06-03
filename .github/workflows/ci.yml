@@ -43,8 +43,8 @@ jobs:
         pip install -U pip wheel setuptools
         pip install -U -r requirements-test.txt
       
-    - name: Install npm dependencies
-      run: sudo npm install -g jshint stylelint
+    # - name: Install npm dependencies
+    #   run: sudo npm install -g jshint stylelint
 
     - name: Install openwisp-utils
       run: |

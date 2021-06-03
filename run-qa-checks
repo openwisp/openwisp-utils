@@ -3,8 +3,8 @@ set -e
 
 qa-checks () {
     openwisp-qa-check \
-        --css\
-        --js\
+        --csslinter\
+        --jslinter\
         --migration-path "./tests/test_project/migrations"
 }
 
