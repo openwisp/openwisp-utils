@@ -4,7 +4,7 @@ from django.apps import registry
 from django.conf import settings
 from django.urls import reverse
 
-from ..admin_theme.menu import build_menu_group
+from ..admin_theme.menu import build_menu_groups
 from . import settings as app_settings
 
 
@@ -14,7 +14,7 @@ def menu_items(request):
         logging.warning(
             'register_menu_items is deprecated. Please update to use register_menu_group'
         )
-    menu_groups = build_menu_group(request)
+    menu_groups = build_menu_groups(request)
     return {
         'openwisp_menu_items': menu,
         'openwisp_menu_groups': menu_groups,

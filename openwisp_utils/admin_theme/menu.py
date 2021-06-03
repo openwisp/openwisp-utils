@@ -207,39 +207,31 @@ class MenuGroup(BaseMenuItem):
         return True
 
 
-def register_menu_groups(groups):
-    if not isinstance(groups, dict):
-        raise ImproperlyConfigured('Supplied groups should be a type of "dict"')
-    for position, config in groups.items():
-        if not isinstance(position, int):
-            raise ImproperlyConfigured('group position should be a type of "int"')
-        if position in MENU:
-            raise ImproperlyConfigured(
-                f'Another group is already registered at position "{position}"'
-            )
-        if not isinstance(config, dict):
-            raise ImproperlyConfigured(
-                f'Config should be a type of "dict" but supplied {config} at \
-                position "{position}" in the "register_menu_groups" function'
-            )
-        if config.get('url'):
-            # It is a menu link
-            groups[position] = MenuLink(config=config)
-        elif config.get('items'):
-            # It is a menu group
-            groups[position] = MenuGroup(config=config)
-        elif config.get('model'):
-            # It is a model link
-            groups[position] = ModelLink(config=config)
-        else:
-            # Unknown
-            raise ImproperlyConfigured(
-                f'Invalid config provided. Error for config- {config}'
-            )
-    MENU.update(groups)
+def register_menu_group(position, config):
+    if not isinstance(position, int):
+        raise ImproperlyConfigured('group position should be a type of "int"')
+    if not isinstance(config, dict):
+        raise ImproperlyConfigured('config should be a type of "dict"')
+    if position in MENU:
+        raise ImproperlyConfigured(
+            f'Another group is already registered at position "{position}"'
+        )
+    if config.get('url'):
+        # It is a menu link
+        group_class = MenuLink(config=config)
+    elif config.get('items'):
+        # It is a menu group
+        group_class = MenuGroup(config=config)
+    elif config.get('model'):
+        # It is a model link
+        group_class = ModelLink(config=config)
+    else:
+        # Unknown
+        raise ImproperlyConfigured(f'Invalid config provided at position {position}')
+    MENU.update({position: group_class})
 
 
-def build_menu_group(request):
+def build_menu_groups(request):
     menu = []
     for item in MENU.values():
         item_context = item.get_context(request)

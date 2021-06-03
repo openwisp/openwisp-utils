@@ -4,7 +4,7 @@ from openwisp_utils.admin_theme import (
     register_dashboard_chart,
     register_dashboard_template,
 )
-from openwisp_utils.admin_theme.menu import register_menu_groups
+from openwisp_utils.admin_theme.menu import register_menu_group
 from openwisp_utils.api.apps import ApiAppConfig
 from openwisp_utils.utils import register_menu_items
 
@@ -105,24 +105,10 @@ class TestAppConfig(ApiAppConfig):
             },
         }
 
-        auth_group = {
+        auth_config = {
             'label': 'Authentication And Authorization',
             'items': auth_list,
             'icon': 'user-icon',
-        }
-
-        radius_list = {
-            1: {
-                'model': 'test_project.RadiusAccounting',
-                'name': 'changelist',
-                'label': 'RadiusAccounting',
-                'icon': 'edit',
-            }
-        }
-        radius_group = {
-            'label': 'Radius Accounting',
-            'items': radius_list,
-            'icon': 'lock',
         }
 
         docs_list = {
@@ -130,18 +116,18 @@ class TestAppConfig(ApiAppConfig):
             2: {'label': 'Code', 'url': 'https://openwisp.org/thecode.html'},
         }
 
-        docs_group = {'label': 'Docs', 'items': docs_list}
+        docs_config = {'label': 'Docs', 'items': docs_list}
 
-        menu_groups = {
-            1: {
+        register_menu_group(
+            position=1,
+            config={
                 'model': 'test_project.Shelf',
                 'name': 'changelist',
                 'label': 'View Shelf',
                 'icon': 'shelf-icon',
             },
-            2: radius_group,
-            3: auth_group,
-            4: docs_group,
-            5: {'label': 'Code', 'url': 'https://openwisp.org/thecode.html'},
-        }
-        register_menu_groups(menu_groups)
+        )
+
+        register_menu_group(position=2, config=auth_config)
+
+        register_menu_group(position=3, config=docs_config)

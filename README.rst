@@ -460,20 +460,30 @@ template ``context_processors`` in ``settings.py`` as shown below.
         },
     ]
 
-``register_menu_groups``
+``register_menu_group``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-It allow us to register different menu items or groups at different positions
-in the ``Main Navigation Menu``.
+It allow us to register different menu item or group at different position in the ``Main Navigation Menu``.
 
-``register_menu_groups`` takes a parameter of type (``dict``) in which key respresents the
-position of the menu item and its value needs to be a type of "dict".
+**Syntax:**
+
+.. code-block:: python
+
+    register_menu_group(position, config)
+
++--------------------+-------------------------------------------------------------+
+| **Parameter**      | **Description**                                             |
++--------------------+-------------------------------------------------------------+
+| ``position``       | (``int``) Position of the group or item.                    |
++--------------------+-------------------------------------------------------------+
+| ``config``         | (``dict``) Configuration of goup or item.                   |
++--------------------+-------------------------------------------------------------+
 
 Code example:
 
 .. code-block:: python
 
-    from openwisp_utils.admin_theme.menu import register_menu_groups
+    from openwisp_utils.admin_theme.menu import register_menu_group
 
     my_group_items = {
         1: {
@@ -482,41 +492,48 @@ Code example:
             'name': 'changelist',
             'icon': 'add-icon',
         },
-        2: {'label': 'Code', 'url': 'https://openwisp.org/thecode.html'},
-    }
-
-    my_menu = {
-        1: {'label': 'My Group', 'items': my_group_items},
         2: {
+            'label': 'Add user',
+            'model': 'auth.User',
+            'name': 'add',
+            'icon': 'add-icon',
+        },
+    }
+    register_menu_group(position=1, config={'label': 'My Group', 'items': my_group_items})
+    register_menu_group(
+        position=2,
+        config={
             'model': 'test_project.Shelf',
             'name': 'changelist',
             'label': 'View Shelf',
             'icon': 'shelf-icon',
         },
-        3: {'label': 'Link Name', 'url': 'https://link.com'},
-    }
+    )
 
-    register_menu_groups(my_menu)
+    register_menu_group(
+        position=3, config={'label': 'Link Name', 'url': 'https://link.com'}
+    )
 
-It is recommended to use register_menu_groups in the ``ready`` method of the AppConfig.
 
-Note: ``register_menu_items`` is deprecated by ``register_menu_groups`` and will be removed in the
+It is recommended to use ``register_menu_group`` in the ``ready`` method of the AppConfig.
+
+Note: ``register_menu_items`` is deprecated by ``register_menu_group`` and will be removed in the
 future versions. ``register_menu_items`` will be shown at the top of navigation menu and above 
-any register_menu_groups items.
+any register_menu_group items.
 
 ``Create a general link``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to create a link which contains a custom url then you can use following
-json format.
+If you want to create a link which contains a custom url then you can use following syntax for config.
 
 **Syntax:**
 
 .. code-block:: python
 
-    my_link_json = {'label': 'Link Label', 'url': 'link_url', 'icon':'my-icon'}
+    my_link_config = {'label': 'Link Label', 'url': 'link_url', 'icon':'my-icon'}
+    register_menu_group(position=1, config=my_link_config)
 
-Following is the description of the json:
+Following is the description of the configuration:
 
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |
@@ -532,7 +549,7 @@ Following is the description of the json:
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 If you want to create a link that contains a url of ``add`` or ``list`` page of a model
-then you can use following json format. Users will only be able to see links for 
+then you can use following syntax. Users will only be able to see links for 
 models they have permission to either view or edit.
 
 **Syntax:**
@@ -540,7 +557,7 @@ models they have permission to either view or edit.
 .. code-block:: python
 
     # use to create a link of list page
-    my_model_list_json = {
+    my_model_list_config = {
         'model': 'my_project.MyModel',
         'name': 'changelist',
         'label': 'MyModel Change List',
@@ -548,14 +565,16 @@ models they have permission to either view or edit.
     }
 
     #use to create a link of add page
-    my_model_add_json = {
+    my_model_add_config = {
         'model': 'my_project.MyModel',
         'name': 'add',
         'label': 'MyModel Add Item',
         'icon': 'my-model-add-class',
     }
+    register_menu_group(position=1, config=my_model_list_config)
+    register_menu_group(position=2, config=my_model_add_config)
 
-Following is the description of the json:
+Following is the description of the configuration:
 
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |
@@ -572,7 +591,7 @@ Following is the description of the json:
 ``Create a menu group``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-If you want to create a nested menu group then you can use following json format.
+If you want to create a nested menu group then you can use following syntax.
 It creates a dropdown in the menu.
 
 **Syntax:**
@@ -580,19 +599,22 @@ It creates a dropdown in the menu.
 .. code-block:: python
     
     my_group_items = {
-    1: {'label': 'Link Label', 'url': 'link_url', 'icon': 'my-icon'},
-    2: {
-        'model': 'my_project.MyModel',
-        'name': 'changelist',
-        'label': 'MyModel Change List',
-        'icon': 'my-model-list-class',
-        },
+        1: {'label': 'Link Label', 'url': 'link_url', 'icon': 'my-icon'},
+        2: {
+            'model': 'my_project.MyModel',
+            'name': 'changelist',
+            'label': 'MyModel Change List',
+            'icon': 'my-model-list-class',
+            }
     }
+    register_menu_group(
+        position=1,
+        config={'label': 'My Label', 'items': my_group_items, 'icon': 'my-icon-class'},
+    )
 
-    my_group = {'label': 'My Label', 'items': my_group_items, 'icon':'my-icon-class'}
 
 
-Following is the description of the json:
+Following is the description of the configuration:
 
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |

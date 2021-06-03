@@ -9,7 +9,7 @@ from openwisp_utils.admin_theme.menu import (
     MenuGroup,
     MenuLink,
     ModelLink,
-    register_menu_groups,
+    register_menu_group,
 )
 from openwisp_utils.utils import SortedOrderedDict
 
@@ -63,7 +63,8 @@ class TestMenuSchema(TestCase):
             ModelLink(config=model_link_config),
             MenuGroup(config=menu_group_config),
         ]
-        register_menu_groups(test_menu_groups)
+        for position, config in test_menu_groups.items():
+            register_menu_group(position=position, config=config)
 
         with self.subTest('Test ordering of menu groups'):
             current_item_index = 0
@@ -73,23 +74,21 @@ class TestMenuSchema(TestCase):
 
         with self.subTest('Registering at an occupied position'):
             with self.assertRaises(ImproperlyConfigured):
-                register_menu_groups({1: model_link_config})
+                register_menu_group(position=1, config=model_link_config)
 
         with self.subTest('Registering with invalid position'):
             with self.assertRaises(ImproperlyConfigured):
-                register_menu_groups({'invalid_position': menu_link_config})
+                register_menu_group(
+                    position='invalid_position', config=menu_link_config
+                )
 
         with self.subTest('Registering with invalid config'):
             with self.assertRaises(ImproperlyConfigured):
-                register_menu_groups({10: []})
-
-        with self.subTest('Registering with invalid menu groups'):
-            with self.assertRaises(ImproperlyConfigured):
-                register_menu_groups([])
+                register_menu_group(position=10, config=[])
 
         with self.subTest('Registering with unknow menu group'):
             with self.assertRaises(ImproperlyConfigured):
-                register_menu_groups({10: {}})
+                register_menu_group(position=10, config={})
 
     def test_menu_link(self):
 
