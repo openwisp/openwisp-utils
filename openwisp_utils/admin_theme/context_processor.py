@@ -8,7 +8,7 @@ from ..admin_theme.menu import build_menu_groups
 from . import settings as app_settings
 
 
-def menu_items(request):
+def menu_groups(request):
     menu = build_menu(request)
     if menu:
         logging.warning(

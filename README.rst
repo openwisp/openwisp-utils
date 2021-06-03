@@ -439,7 +439,7 @@ specified dashboard chart is not registered.
 Main navigation menu
 --------------------
 
-Add ``openwisp_utils.admin_theme.context_processor.menu_items`` to
+Add ``openwisp_utils.admin_theme.context_processor.menu_groups`` to
 template ``context_processors`` in ``settings.py`` as shown below.
 
 .. code-block:: python
@@ -454,7 +454,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
                 ],
                 'context_processors': [
                     # ... other context processors ...
-                    'openwisp_utils.admin_theme.context_processor.menu_items'    # <----- add this
+                    'openwisp_utils.admin_theme.context_processor.menu_groups'    # <----- add this
                 ],
             },
         },
@@ -509,11 +509,9 @@ Code example:
             'icon': 'shelf-icon',
         },
     )
-
     register_menu_group(
         position=3, config={'label': 'Link Name', 'url': 'https://link.com'}
     )
-
 
 It is recommended to use ``register_menu_group`` in the ``ready`` method of the AppConfig.
 
@@ -612,8 +610,6 @@ It creates a dropdown in the menu.
         config={'label': 'My Label', 'items': my_group_items, 'icon': 'my-icon-class'},
     )
 
-
-
 Following is the description of the configuration:
 
 +------------------+--------------------------------------------------------------+
@@ -636,11 +632,6 @@ Following is the description of the configuration:
     .icon-class-name:{
         background: url(imageurl);
     }
-
-If you need to define custom menu items, see:
-`OPENWISP_ADMIN_MENU_ITEMS <#openwisp_admin_menu_items>`_.
-
-Users will only be able to see menu items for objects they have permission to either view or edit.
 
 Model utilities
 ---------------
@@ -1109,32 +1100,6 @@ Title shown to users in the index page of the admin site.
 When ``True``, enables the `OpenWISP Dashboard <#openwisp-dashboard>`_.
 Upon login, the user will be greeted with the dashboard instead of the default
 Django admin index page.
-
-``OPENWISP_ADMIN_MENU_ITEMS``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**default**: ``[]``
-
-Allows to pass a custom list of menu items to display in the admin menu.
-
-If passed, overrides the default menu which is built by different openwisp modules.
-
-The list should not include "home", "change password" and "log out", because those
-are automatically added and cannot be removed.
-
-Example usage:
-
-.. code-block:: python
-
-    OPENWISP_ADMIN_MENU_ITEMS = [
-        {'model': 'config.Device'},
-        {'model': 'config.Template'},
-        {'model': 'openwisp_users.User'},
-        {
-            'model': 'openwisp_radius.Accounting',
-            'label': 'Radius sessions'  # custom label
-        }
-    ]
 
 ``OPENWISP_ADMIN_THEME_LINKS``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
