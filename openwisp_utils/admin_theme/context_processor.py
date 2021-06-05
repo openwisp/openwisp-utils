@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from django.apps import registry
 from django.conf import settings
@@ -10,7 +11,7 @@ from . import settings as app_settings
 
 def menu_groups(request):
     menu = build_menu(request)
-    if menu:
+    if menu and sys.argv[1:2] != ['test']:
         logging.warning(
             'register_menu_items is deprecated. Please update to use register_menu_group'
         )
