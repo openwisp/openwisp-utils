@@ -6,7 +6,7 @@
   display: inline-block;
 }
 .js-plotly-plot .surface{
-  cursor: pointer
+  cursor: pointer;
 }
 .js-plotly-plot .legendtext,
 .js-plotly-plot .hoverlayer{

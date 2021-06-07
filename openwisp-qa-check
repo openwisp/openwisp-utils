@@ -69,40 +69,33 @@ runcheckendline() {
 
 runstylelintcheck() {
   package='stylelint'
-  if which node > /dev/null
+  if which stylelint > /dev/null
     then
-      if [ `npm list -g | grep -c $package` -eq 0 ]; then
-        echo "MODULE NOT FOUND: please install ${package}"
-      else
-        stylelint $(find . -type f -name "*.css") &&
+      stylelint verbose $(find . -type f -name "*.css") &&
         echo "SUCCESS: Stylelint check successful!" ||
         {
-          echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format?"
+          echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format? You may need some manual fixing."
           FAILURE=1
         }
-      fi
   else
-    echo "MODULE NOT FOUND: please install node and ${package}"
+    echo "MODULE NOT FOUND: Please install ${package}"
+    FAILURE=1
   fi
 }
 
 runjshintcheck() {
   package='jshint'
-  if which node > /dev/null
+  if which jshint > /dev/null
     then
-      if [ `npm list -g | grep -c $package` -eq 0 ]; then
-        echo "MODULE NOT FOUND: please install ${package}"
-      else
-        jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
+      jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
         echo "SUCCESS: Jshint check successful!" ||
         {
-          echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions.\
-          visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
+          echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
           FAILURE=1
         }
-      fi
   else
-    echo "MODULE NOT FOUND: please install node and ${package}"
+    echo "MODULE NOT FOUND: Please install ${package}"
+    FAILURE=1
   fi
 }
 

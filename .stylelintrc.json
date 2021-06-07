@@ -14,6 +14,8 @@
         "except": ["first-nested"],
         "ignore": ["after-comment", "inside-block"]
       }],
-      "unit-allowed-list": ["em", "rem", "%", "s", "px", "vh", "deg"]
+      "unit-allowed-list": ["em", "rem", "%", "s", "px", "vh", "deg"],
+      "declaration-block-trailing-semicolon": "always",
+      "property-no-unknown": true
     }
 }

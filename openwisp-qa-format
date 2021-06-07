@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+if which stylelint > /dev/null
+  then
+    stylelint $(find . -type f -name "*.css") --fix
+  else
+    echo "MODULE NOT FOUND: Please install stylelint"
+    exit 1
+fi
 isort .
 black -S .
-stylelint $(find . -type f -name "*.css") --fix

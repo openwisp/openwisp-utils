@@ -1,4 +1,4 @@
-body { min-width: 320px }
+body { min-width: 320px; }
 #header{
   background-color: #464646;
   color: #fff;
@@ -24,7 +24,7 @@ body { min-width: 320px }
   padding: 8px 0;
   margin: 0 auto;
 }
-.login #site-name a{ margin: 0 auto }
+.login #site-name a{ margin: 0 auto; }
 .button.default,
 input[type=submit].default,
 .submit-row input.default,
@@ -48,10 +48,10 @@ div.breadcrumbs,
   color: #fff;
 }
 div.breadcrumbs{
-  color: #ffcbc0
+  color: #ffcbc0;
 }
 div.breadcrumbs a:focus, div.breadcrumbs a:hover{
-  color: #ffe8e3
+  color: #ffe8e3;
 }
 .button, input[type=submit], input[type=button], .submit-row input, a.button{
   background-color: #666;
@@ -69,7 +69,7 @@ div.breadcrumbs a:focus, div.breadcrumbs a:hover{
   padding: 5px 15px;
 }
 
-#container .object-tools a.addlink{ padding-right: 28px }
+#container .object-tools a.addlink{ padding-right: 28px; }
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
 a:link, a:visited {
@@ -79,10 +79,10 @@ a:focus, a:hover {
   color: #000;
 }
 #changelist-filter li.selected a{
-  color: #df5d43 !important
+  color: #df5d43 !important;
 }
 #netjsonconfig-hint, #netjsonconfig-hint a,
-#container .field-backend a{ color: #df5d43 }
+#container .field-backend a{ color: #df5d43; }
 #main .form-row label {
   color: #1b1818;
 }
@@ -94,8 +94,8 @@ a:focus, a:hover {
 
 /* hide first delete link, hide save and add anoher */
 #main .submit-row:first-child .deletelink-box,
-.submit-row input[name="_addanother"] { display: none }
-#main .submit-row .default { background: #498b26 }
+.submit-row input[name="_addanother"] { display: none; }
+#main .submit-row .default { background: #498b26; }
 
 /* temporary frontend fix */
 a.button.secondaryAction{
@@ -108,7 +108,7 @@ a.button.secondaryAction{
 
 /* menu */
 
-html { overflow-x: hidden }
+html { overflow-x: hidden; }
 .nav-icon {
   height: 16px;
   vertical-align: middle;
@@ -130,10 +130,10 @@ html { overflow-x: hidden }
   text-align: center;
 }
 
-#nav-activate:hover { background-color: #000 }
-#nav-activate:focus { outline: none }
+#nav-activate:hover { background-color: #000; }
+#nav-activate:focus { outline: none; }
 
-#user-tools { padding-right: 76px }
+#user-tools { padding-right: 76px; }
 #main-menu {
   opacity: 0;
   padding: 0 37px;
@@ -150,7 +150,7 @@ html { overflow-x: hidden }
 }
 
 /* avoid change list filter to cover menu */
-#changelist-filter{ z-index: 9 !important }
+#changelist-filter{ z-index: 9 !important; }
 #menu-toggle {
   position: absolute;
   left: -20px;
@@ -175,11 +175,11 @@ html { overflow-x: hidden }
   text-decoration: none !important;
   background-color: #000;
 }
-#main-menu > a:first-child { margin-top: 15px }
-#main-menu .account { margin-top: 0 }
-#main-menu .account a { background-color: #453232 }
+#main-menu > a:first-child { margin-top: 15px; }
+#main-menu .account { margin-top: 0; }
+#main-menu .account a { background-color: #453232; }
 #main-menu .account a:hover,
-#main-menu .account a:focus { background-color: #2f1e1e }
+#main-menu .account a:focus { background-color: #2f1e1e; }
 #user-tools .user {
   background: transparent url(../../ui/openwisp/images/user.svg) no-repeat scroll 0 50%;
   background-size: 10px 10px;
@@ -226,17 +226,17 @@ html { overflow-x: hidden }
 }
 
 @media (max-width: 1024px) {
-  .nav-icon { height: 15px }
+  .nav-icon { height: 15px; }
 
   #main-menu {
     padding-left: 35px;
     padding-right: 35px;
   }
-  #main-menu a { margin-bottom: 12px }
-  #main-menu .account { margin-top: 0 }
-  #user-tools { margin-left: 10px !important }
+  #main-menu a { margin-bottom: 12px; }
+  #main-menu .account { margin-top: 0; }
+  #user-tools { margin-left: 10px !important; }
 }
 
 @media (min-width: 700px) {
-  #login-form{ padding-bottom: 20px }
+  #login-form{ padding-bottom: 20px; }
 }
