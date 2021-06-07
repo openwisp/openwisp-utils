@@ -619,7 +619,7 @@ Following is the description of the configuration:
 +------------------+--------------------------------------------------------------+
 | ``items``        | (``dict``) Items to be displayed in the dropdown.            |
 |                  | It can be a dict of ``general link`` or ``model link``       |
-|           .      | with key as their position.                                  |
+|                  | with key as their position.                                  |
 |                  | (``required``)                                               |
 +------------------+--------------------------------------------------------------+
 | ``icon``         | (``str``) CSS class name of the group icon.  (``optional``)  |
