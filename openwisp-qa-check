@@ -79,6 +79,7 @@ runstylelintcheck() {
         }
   else
     echo "MODULE NOT FOUND: Please install ${package}"
+    FAILURE=1
   fi
 }
 
@@ -94,6 +95,7 @@ runjshintcheck() {
         }
   else
     echo "MODULE NOT FOUND: Please install ${package}"
+    FAILURE=1
   fi
 }
 
