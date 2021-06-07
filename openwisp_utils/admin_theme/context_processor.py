@@ -55,3 +55,8 @@ def admin_theme_settings(request):
         'OPENWISP_ADMIN_THEME_LINKS': app_settings.OPENWISP_ADMIN_THEME_LINKS,
         'OPENWISP_ADMIN_THEME_JS': app_settings.OPENWISP_ADMIN_THEME_JS,
     }
+
+
+# Kept for backward compatibility
+# Todo: remove in version 0.9.0
+menu_items = menu_groups

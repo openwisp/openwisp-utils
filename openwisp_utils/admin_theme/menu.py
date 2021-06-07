@@ -9,10 +9,10 @@ MENU = SortedOrderedDict()
 
 
 class BaseMenuItem:
-    '''
+    """
     It is a base class for all types of menu items.
     It is used to handle some common functions.
-    '''
+    """
 
     def __init__(self, config):
         if not isinstance(config, dict):
@@ -38,10 +38,10 @@ class BaseMenuItem:
 
 
 class ModelLink(BaseMenuItem):
-    '''
+    """
     It is to used create a link for a model, like "list view" and "add view".
     Parameters for the config: name, model, label, icon
-    '''
+    """
 
     def __init__(self, config):
         super().__init__(config)
@@ -87,21 +87,12 @@ class ModelLink(BaseMenuItem):
             return {'label': self.label, 'url': url, 'icon': self.icon}
         return None
 
-    def __eq__(self, other):
-        if self.__class__ != other.__class__:
-            return False
-        return (
-            self.label == other.label
-            and self.model == other.model
-            and self.icon == self.icon
-        )
-
 
 class MenuLink(BaseMenuItem):
-    '''
+    """
     It is used to create any general link by supplying a custom url.
     Parameters of config: label, url and icon.
-    '''
+    """
 
     def __init__(self, config):
         super().__init__(config)
@@ -116,22 +107,13 @@ class MenuLink(BaseMenuItem):
         self.url = url
         self.icon = config.get('icon')
 
-    def __eq__(self, other):
-        if self.__class__ != other.__class__:
-            return False
-        return (
-            self.label == other.label
-            and self.url == other.url
-            and self.icon == other.icon
-        )
-
 
 class MenuGroup(BaseMenuItem):
-    '''
+    """
     It is used to create a dropdown in the menu.
     Parameters of config: label, items and icon.
     each item in items should repesent a config for MenuLink or ModelLink
-    '''
+    """
 
     def __init__(self, config):
         super().__init__(config)
@@ -193,18 +175,6 @@ class MenuGroup(BaseMenuItem):
         if not _items:
             return None
         return {'label': self.label, 'sub_items': _items, 'icon': self.icon}
-
-    def __eq__(self, other):
-        if self.__class__ != other.__class__:
-            return False
-        if self.label != other.label or self.icon != other.icon:
-            return False
-        if len(self.items) != len(other.items):
-            return False
-        for first, second in zip(self.items.values(), other.items.values()):
-            if not first.__eq__(second):
-                return False
-        return True
 
 
 def register_menu_group(position, config):

@@ -101,7 +101,7 @@ class TestAppConfig(ApiAppConfig):
                 'model': 'auth.User',
                 'name': 'changelist',
                 'icon': 'edit',
-                'label': 'Edit User',
+                'label': 'Users',
             },
         }
 
@@ -112,8 +112,12 @@ class TestAppConfig(ApiAppConfig):
         }
 
         docs_list = {
-            1: {'label': 'OpenWISP', 'url': 'https://openwisp.org/'},
-            2: {'label': 'Code', 'url': 'https://openwisp.org/thecode.html'},
+            1: {'label': 'OpenWISP', 'url': 'https://openwisp.org/', 'icon': 'link'},
+            2: {
+                'label': 'Code',
+                'url': 'https://openwisp.org/thecode.html',
+                'icon': 'link',
+            },
         }
 
         docs_config = {'label': 'Docs', 'items': docs_list}

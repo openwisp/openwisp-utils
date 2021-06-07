@@ -463,7 +463,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
 ``register_menu_group``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-It allow us to register different menu item or group at different position in the ``Main Navigation Menu``.
+It allows us to register different menu item or group at different position in the ``Main Navigation Menu``.
 
 **Syntax:**
 
@@ -517,10 +517,10 @@ It is recommended to use ``register_menu_group`` in the ``ready`` method of the 
 
 Note: ``register_menu_items`` is deprecated by ``register_menu_group`` and will be removed in the
 future versions. ``register_menu_items`` will be shown at the top of navigation menu and above 
-any register_menu_group items.
+any ``register_menu_group`` items.
 
-``Create a general link``
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Create a general link
+^^^^^^^^^^^^^^^^^^^^^
 
 If you want to create a link which contains a custom url then you can use following syntax for config.
 
@@ -543,8 +543,8 @@ Following is the description of the configuration:
 | ``icon``         | (``str``) CSS class name of the link icon.  (``optional``)   |
 +------------------+--------------------------------------------------------------+
 
-``Create a model link``
-^^^^^^^^^^^^^^^^^^^^^^^
+Create a model link
+^^^^^^^^^^^^^^^^^^^
 
 If you want to create a link that contains a url of ``add`` or ``list`` page of a model
 then you can use following syntax. Users will only be able to see links for 
@@ -579,15 +579,15 @@ Following is the description of the configuration:
 +------------------+--------------------------------------------------------------+
 | ``model``        | (``str``) Model of a app.  (``required``)                    |
 +------------------+--------------------------------------------------------------+
-| ``name``         | (``str``) url name. eg. changelist or add.  (``required``)   +
+| ``name``         | (``str``) url name. eg. changelist or add.  (``required``)   |
 +------------------+--------------------------------------------------------------+
 | ``label``        | (``str``) Display name for the link.  (``optional``)         |
 +------------------+--------------------------------------------------------------+
 | ``icon``         | (``str``) CSS class name of the link icon.  (``optional``)   |
 +------------------+--------------------------------------------------------------+
 
-``Create a menu group``
-^^^^^^^^^^^^^^^^^^^^^^^
+Create a menu group
+^^^^^^^^^^^^^^^^^^^
 
 If you want to create a nested menu group then you can use following syntax.
 It creates a dropdown in the menu.

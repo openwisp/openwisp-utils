@@ -67,9 +67,19 @@ class TestMenuSchema(TestCase):
             register_menu_group(position=position, config=config)
 
         with self.subTest('Test ordering of menu groups'):
+            url = reverse('admin:index')
+            request = self.factory.get(url)
+            user = get_user_model().objects.create_superuser(
+                username='administrator', password='admin', email='test@test.org'
+            )
+            request.user = user
             current_item_index = 0
             for item in MENU.values():
-                self.assertEqual(item, items_order[current_item_index])
+                item_context = item.get_context(request)
+                ordered_item_context = items_order[current_item_index].get_context(
+                    request
+                )
+                self.assertEqual(item_context, ordered_item_context)
                 current_item_index += 1
 
         with self.subTest('Registering at an occupied position'):
@@ -84,11 +94,11 @@ class TestMenuSchema(TestCase):
 
         with self.subTest('Registering with invalid config'):
             with self.assertRaises(ImproperlyConfigured):
-                register_menu_group(position=10, config=[])
+                register_menu_group(position=-1, config=[])
 
         with self.subTest('Registering with unknow menu group'):
             with self.assertRaises(ImproperlyConfigured):
-                register_menu_group(position=10, config={})
+                register_menu_group(position=-1, config={})
 
     def test_menu_link(self):
 
@@ -236,6 +246,12 @@ class TestMenuSchema(TestCase):
                 _config = self._get_menu_group_config(items={1: []})
                 MenuGroup(config=_config)
 
+        url = reverse('admin:index')
+        request = self.factory.get(url)
+        user = get_user_model().objects.create_superuser(
+            username='administrator', password='admin', email='test@test.org'
+        )
+        request.user = user
         with self.subTest('Menu Group items ordering test'):
             link_config = self._get_menu_link_config()
             model_link_config = self._get_model_link_config()
@@ -249,15 +265,13 @@ class TestMenuSchema(TestCase):
             menu_group = MenuGroup(config=_config)
             current_item_index = 0
             for item in menu_group.items.values():
-                self.assertEqual(item, menu_group_items_order[current_item_index])
+                item_context = item.get_context(request)
+                ordered_item_context = menu_group_items_order[
+                    current_item_index
+                ].get_context(request)
+                self.assertEqual(item_context, ordered_item_context)
                 current_item_index += 1
 
-        url = reverse('admin:index')
-        request = self.factory.get(url)
-        user = get_user_model().objects.create_superuser(
-            username='administrator', password='admin', email='test@test.org'
-        )
-        request.user = user
         with self.subTest('Menu Group with icon'):
             _config = self._get_menu_group_config()
             menu_group = MenuGroup(config=_config)
