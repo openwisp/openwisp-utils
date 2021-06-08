@@ -69,14 +69,13 @@ runcheckendline() {
 
 runstylelintcheck() {
   package='stylelint'
-  if which stylelint > /dev/null
-    then
-      stylelint verbose $(find . -type f -name "*.css") &&
-        echo "SUCCESS: Stylelint check successful!" ||
-        {
-          echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format? You may need some manual fixing."
-          FAILURE=1
-        }
+  if which stylelint > /dev/null; then
+    stylelint verbose $(find . -type f -name "*.css") &&
+      echo "SUCCESS: Stylelint check successful!" ||
+      {
+        echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format? You may need some manual fixing."
+        FAILURE=1
+      }
   else
     echo "MODULE NOT FOUND: Please install ${package}"
     FAILURE=1
@@ -85,14 +84,13 @@ runstylelintcheck() {
 
 runjshintcheck() {
   package='jshint'
-  if which jshint > /dev/null
-    then
-      jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
-        echo "SUCCESS: Jshint check successful!" ||
-        {
-          echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
-          FAILURE=1
-        }
+  if which jshint > /dev/null; then
+    jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
+      echo "SUCCESS: Jshint check successful!" ||
+      {
+        echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
+        FAILURE=1
+      }
   else
     echo "MODULE NOT FOUND: Please install ${package}"
     FAILURE=1
