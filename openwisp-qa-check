@@ -73,7 +73,7 @@ runstylelintcheck() {
     stylelint verbose $(find . -type f -name "*.css") &&
       echo "SUCCESS: Stylelint check successful!" ||
       {
-        echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format?"
+        echoerr "ERROR: Stylelint check failed! Hint: did you forget to run openwisp-qa-format?"
         FAILURE=1
       }
   else
@@ -133,7 +133,7 @@ runisort() {
   isort --check-only --diff --quiet . &&
     echo "SUCCESS: Isort check successful!" ||
     {
-      echoerr "ERROR: Isort check failed! Hint: did you forget running openwisp-qa-format?"
+      echoerr "ERROR: Isort check failed! Hint: did you forget to run openwisp-qa-format?"
       FAILURE=1
     }
 }
@@ -142,7 +142,7 @@ runblack() {
   black -S --check --diff --quiet . &&
     echo "SUCCESS: Black check successful!" ||
     {
-      echoerr "ERROR: Black check failed! Hint: did you forget running openwisp-qa-format?"
+      echoerr "ERROR: Black check failed! Hint: did you forget to run openwisp-qa-format?"
       FAILURE=1
     }
 }
