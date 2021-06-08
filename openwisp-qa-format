@@ -5,8 +5,7 @@ if which stylelint > /dev/null
   then
     stylelint $(find . -type f -name "*.css") --fix
   else
-    echo "MODULE NOT FOUND: Please install stylelint"
-    exit 1
+    echo "SKIPPED CSS FILES: Please install stylelint"
 fi
 isort .
 black -S .

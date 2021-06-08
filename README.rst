@@ -813,8 +813,8 @@ automated builds of different OpenWISP modules.
 ``openwisp-qa-format``
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Shell script to automatically format Python code. It runs ``isort`` and ``black``.
-It also runs ``stylelint`` to format CSS code.
+Shell script to automatically format Python and CSS code. It runs ``isort``. ``black`` and ``stylelint``.
+Formatting of CSS code is skipped if ``stylelint`` is not installed so it never fails the command.
 
 ``openwisp-qa-check``
 ^^^^^^^^^^^^^^^^^^^^^
