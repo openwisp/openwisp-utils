@@ -1,8 +1,10 @@
 import sys
+import unittest
 
 from django.dispatch import Signal
 from django.test import TestCase, override_settings
 from openwisp_utils.tests import (
+    AssertNumQueriesSubTestMixin,
     TimeLoggingTestRunner,
     capture_any_output,
     capture_stderr,
@@ -10,6 +12,8 @@ from openwisp_utils.tests import (
     catch_signal,
 )
 from openwisp_utils.utils import deep_merge_dicts, print_color
+
+from ..models import Shelf
 
 status_signal = Signal(providing_args=['status'])
 
@@ -82,3 +86,13 @@ class TestUtils(TestCase):
     def test_capture_stderr(self, captured_error):
         print('Testing capture_stderr', file=sys.stderr, end='')
         self.assertEqual(captured_error.getvalue(), 'Testing capture_stderr')
+
+
+class TestAssertNumQueriesSubTest(AssertNumQueriesSubTestMixin, TestCase):
+    def test_assert_num_queries(self):
+        with unittest.mock.patch.object(
+            self, 'subTest', wraps=self.subTest
+        ) as patched_subtest:
+            with self.assertNumQueries(1):
+                Shelf.objects.count()
+            patched_subtest.assert_called_once()

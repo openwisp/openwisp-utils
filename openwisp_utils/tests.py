@@ -5,7 +5,9 @@ from time import time
 from unittest import TextTestResult, mock
 
 from django.conf import settings
+from django.db import DEFAULT_DB_ALIAS, connections
 from django.test.runner import DiscoverRunner
+from django.test.utils import CaptureQueriesContext
 
 from .utils import print_color
 
@@ -125,3 +127,46 @@ class capture_any_output(CaptureOutput):
         self.kwargs = kwargs
         self.stdout = stdout or io.StringIO()
         self.stderr = stderr or io.StringIO()
+
+
+class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
+    """
+    Needed to execute assertNumQueries in a subTest
+    """
+
+    def __init__(self, test_case, num, connection):
+        self.test_case = test_case
+        self.num = num
+        super().__init__(connection)
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        super().__exit__(exc_type, exc_value, traceback)
+        if exc_type is not None:
+            return
+        executed = len(self)
+        with self.test_case.subTest(f'Expecting {self.num} SQL queries'):
+            self.test_case.assertEqual(
+                executed,
+                self.num,
+                "%d queries executed, %d expected\nCaptured queries were:\n%s"
+                % (
+                    executed,
+                    self.num,
+                    '\n'.join(
+                        '%d. %s' % (i, query['sql'])
+                        for i, query in enumerate(self.captured_queries, start=1)
+                    ),
+                ),
+            )
+
+
+class AssertNumQueriesSubTestMixin:
+    def assertNumQueries(self, num, func=None, *args, using=DEFAULT_DB_ALIAS, **kwargs):
+        conn = connections[using]
+
+        context = _AssertNumQueriesContextSubTest(self, num, conn)
+        if func is None:
+            return context
+
+        with context:
+            func(*args, **kwargs)

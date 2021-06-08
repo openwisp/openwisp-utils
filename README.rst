@@ -804,6 +804,30 @@ Example usage:
         self.assertIn('expected stdout', captured_output.getvalue())
         self.assertIn('expected stderr', captured_error.getvalue())
 
+``openwisp_utils.tests.AssertNumQueriesSubTestMixin``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This mixin overrides the
+`assertNumQueries <https://docs.djangoproject.com/en/dev/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries>`_
+assertion from the django test case to run in a ``subTest`` so that the
+query check does not block the whole test if it fails.
+
+Example usage:
+
+.. code-block:: python
+
+    from django.test import TestCase
+    from openwisp_utils.tests import AssertNumQueriesSubTestMixin
+
+
+    class MyTest(AssertNumQueriesSubTestMixin, TestCase):
+        def my_test(self):
+            with self.assertNumQueries(2):
+                MyModel.objects.count()
+
+            # the assertion above will fail but this line will be executed
+            print('This will be printed anyway.')
+
 Quality Assurance Checks
 ------------------------
 
