@@ -73,7 +73,7 @@ runstylelintcheck() {
     stylelint verbose $(find . -type f -name "*.css") &&
       echo "SUCCESS: Stylelint check successful!" ||
       {
-        echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format? You may need some manual fixing."
+        echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format?"
         FAILURE=1
       }
   else
