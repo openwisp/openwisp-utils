@@ -11,8 +11,11 @@ show_help() {
   printf "            [--skip-isort]\n"
   printf "            [--skip-black]\n"
   printf "            [--skip-checkrst]\n"
+  printf "            [--csslinter]\n"
+  printf "            [--jslinter]\n"
   printf "\n"
   printf "Runs all checks for quality assurance. Unneeded checks may be skipped by passing --skip-<check-name> argument.\n"
+  printf "csslinter and jslinter checks are skipped by default for backward compatibility. To run them pass --csslinter or --jslinter as an argument.\n"
   printf "\n"
   printf "General options:\n"
   printf "  --help\t\t\t: Show this help text\n"
@@ -37,6 +40,10 @@ show_help() {
   printf "  --skip-black\t\t\t: Skip black check\n"
   printf "ReStructuredText check options:\n"
   printf "  --skip-checkrst\t\t: Skip ReStructuredText check\n"
+  printf "CSSlinter check options:\n"
+  printf "  --csslinter\t\t\t: Runs stylelint check\n"
+  printf "Jslinter check options:\n"
+  printf "  --jslinter\t\t\t: Runs jshint check\n"
 }
 
 echoerr() { echo "$@" 1>&2; }
@@ -57,6 +64,36 @@ runcheckendline() {
     FAILURE=1
   else
     echo "SUCCESS: Blank endline check successful!"
+  fi
+}
+
+runstylelintcheck() {
+  package='stylelint'
+  if which stylelint > /dev/null; then
+    stylelint verbose $(find . -type f -name "*.css") &&
+      echo "SUCCESS: Stylelint check successful!" ||
+      {
+        echoerr "ERROR: Stylelint check failed! Hint: did you forget running openwisp-qa-format?"
+        FAILURE=1
+      }
+  else
+    echo "MODULE NOT FOUND: Please install ${package}"
+    FAILURE=1
+  fi
+}
+
+runjshintcheck() {
+  package='jshint'
+  if which jshint > /dev/null; then
+    jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
+      echo "SUCCESS: Jshint check successful!" ||
+      {
+        echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
+        FAILURE=1
+      }
+  else
+    echo "MODULE NOT FOUND: Please install ${package}"
+    FAILURE=1
   fi
 }
 
@@ -151,6 +188,8 @@ SKIP_ISORT=false
 SKIP_RSTCHECK=false
 SKIP_BLACK=false
 SKIP_CHECKCOMMIT=false
+SKIP_CSS_LINTER=true
+SKIP_JS_LINTER=true
 MIGRATION_PATH=""
 MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
@@ -187,6 +226,12 @@ while [ "$1" != "" ]; do
     ;;
   --skip-checkcommit)
     SKIP_CHECKCOMMIT=true
+    ;;
+  --csslinter)
+    SKIP_CSS_LINTER=false
+    ;;
+  --jslinter)
+    SKIP_JS_LINTER=false
     ;;
   --message)
     shift
@@ -233,6 +278,14 @@ fi
 
 if ! $SKIP_FLAKE8; then
   runflake8
+fi
+
+if ! $SKIP_CSS_LINTER; then
+  runstylelintcheck
+fi
+
+if ! $SKIP_JS_LINTER; then
+  runjshintcheck
 fi
 
 if ! $SKIP_RSTCHECK; then

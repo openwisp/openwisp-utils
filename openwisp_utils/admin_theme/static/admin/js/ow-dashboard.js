@@ -1,4 +1,4 @@
-(function($) {
+(function() {
   'use strict';
 
   let elementsParam = Object.values(owDashboardCharts),
@@ -103,4 +103,4 @@
     container.appendChild(element);
   }
 
-})(django.jQuery);
+})();

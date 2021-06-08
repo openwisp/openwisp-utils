@@ -2,7 +2,10 @@
 set -e
 
 qa-checks () {
-    openwisp-qa-check --migration-path "./tests/test_project/migrations"
+    openwisp-qa-check \
+        --csslinter\
+        --jslinter\
+        --migration-path "./tests/test_project/migrations"
 }
 
 pre-push-checks () {
