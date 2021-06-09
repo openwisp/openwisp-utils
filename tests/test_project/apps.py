@@ -90,44 +90,47 @@ class TestAppConfig(ApiAppConfig):
         )
 
     def register_menu_groups(self):
-        auth_list = {
-            2: {
-                'label': 'Add user',
-                'model': 'auth.User',
-                'name': 'add',
-                'icon': 'add-icon',
-            },
-            1: {
-                'model': 'auth.User',
-                'name': 'changelist',
-                'icon': 'edit',
-                'label': 'Users',
-            },
-        }
-
         auth_config = {
-            'label': 'Authentication And Authorization',
-            'items': auth_list,
+            'label': _('Authentication And Authorization'),
+            'items': {
+                2: {
+                    'label': 'Add user',
+                    'model': 'auth.User',
+                    'name': 'add',
+                    'icon': 'add-icon',
+                },
+                1: {
+                    'model': 'auth.User',
+                    'name': 'changelist',
+                    'icon': 'edit',
+                    'label': _('Users'),
+                },
+            },
             'icon': 'user-icon',
         }
 
-        docs_list = {
-            1: {'label': 'OpenWISP', 'url': 'https://openwisp.org/', 'icon': 'link'},
-            2: {
-                'label': 'Code',
-                'url': 'https://openwisp.org/thecode.html',
-                'icon': 'link',
+        docs_config = {
+            'label': _('Docs'),
+            'items': {
+                1: {
+                    'label': _('OpenWISP'),
+                    'url': 'https://openwisp.org/',
+                    'icon': 'link',
+                },
+                2: {
+                    'label': _('Code'),
+                    'url': 'https://openwisp.org/thecode.html',
+                    'icon': 'link',
+                },
             },
         }
-
-        docs_config = {'label': 'Docs', 'items': docs_list}
 
         register_menu_group(
             position=1,
             config={
                 'model': 'test_project.Shelf',
                 'name': 'changelist',
-                'label': 'View Shelf',
+                'label': _('Shelfs'),
                 'icon': 'shelf-icon',
             },
         )

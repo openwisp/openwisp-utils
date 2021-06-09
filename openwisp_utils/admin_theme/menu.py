@@ -1,7 +1,6 @@
 from django.apps import registry
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
-from django.utils.translation import gettext as _
 
 from ..utils import SortedOrderedDict
 
@@ -30,11 +29,7 @@ class BaseMenuItem:
         label = config.get('label')
         if not label:
             raise ImproperlyConfigured(f'"label" is missing in the config- {config}')
-        if not isinstance(label, str):
-            raise ImproperlyConfigured(
-                f'"level" should be a type of "str". Error for config- {config}'
-            )
-        self.label = _(label)
+        self.label = label
 
 
 class ModelLink(BaseMenuItem):
@@ -62,16 +57,15 @@ class ModelLink(BaseMenuItem):
                 f'"model" should be a type of "str". Error for config-{config}'
             )
         self.model = model
-        self.label = _(self.get_label(config))
+        self.set_label(config)
         self.icon = config.get('icon')
 
-    def get_label(self, config=None):
-        label = config.get('label')
-        if label:
-            return label
+    def set_label(self, config=None):
+        if config.get('label'):
+            return super().set_label(config)
         app_label, model = config['model'].split('.')
         model_class = registry.apps.get_model(app_label, model)
-        return f'{model_class._meta.verbose_name_plural} {self.name}'
+        self.label = f'{model_class._meta.verbose_name_plural} {self.name}'
 
     def create_context(self, request):
         app_label, model = self.model.split('.')

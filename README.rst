@@ -439,6 +439,9 @@ specified dashboard chart is not registered.
 Main navigation menu
 --------------------
 
+The ``admin_theme`` sub app of this package provides a navigation menu which can be
+manipulated with the functions described in the next sections.
+
 Add ``openwisp_utils.admin_theme.context_processor.menu_groups`` to
 template ``context_processors`` in ``settings.py`` as shown below.
 
@@ -461,9 +464,9 @@ template ``context_processors`` in ``settings.py`` as shown below.
     ]
 
 ``register_menu_group``
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
-It allows us to register different menu item or group at different position in the ``Main Navigation Menu``.
+It allows us to register different menu item or group at different position in the Main Navigation Menu.
 
 **Syntax:**
 
@@ -476,77 +479,94 @@ It allows us to register different menu item or group at different position in t
 +--------------------+-------------------------------------------------------------+
 | ``position``       | (``int``) Position of the group or item.                    |
 +--------------------+-------------------------------------------------------------+
-| ``config``         | (``dict``) Configuration of goup or item.                   |
+| ``config``         | (``dict``) Configuration of the goup or item.               |
 +--------------------+-------------------------------------------------------------+
 
 Code example:
 
 .. code-block:: python
 
+    from django.utils.translation import ugettext_lazy as _
     from openwisp_utils.admin_theme.menu import register_menu_group
 
-    my_group_items = {
-        1: {
-            'label': 'Add user',
-            'model': 'auth.User',
-            'name': 'changelist',
-            'icon': 'add-icon',
+    register_menu_group(
+        position=1,
+        config={
+            'label': _('My Group'),
+            'items': {
+                1: {
+                    'label': _('Users List'),
+                    'model': 'auth.User',
+                    'name': 'changelist',
+                    'icon': 'list-icon',
+                },
+                2: {
+                    'label': _('Add User'),
+                    'model': 'auth.User',
+                    'name': 'add',
+                    'icon': 'add-icon',
+                },
+            },
+            'icon': 'user-group-icon',
         },
-        2: {
-            'label': 'Add user',
-            'model': 'auth.User',
-            'name': 'add',
-            'icon': 'add-icon',
-        },
-    }
-    register_menu_group(position=1, config={'label': 'My Group', 'items': my_group_items})
+    )
     register_menu_group(
         position=2,
         config={
             'model': 'test_project.Shelf',
             'name': 'changelist',
-            'label': 'View Shelf',
+            'label': _('View Shelf'),
             'icon': 'shelf-icon',
         },
     )
     register_menu_group(
-        position=3, config={'label': 'Link Name', 'url': 'https://link.com'}
+        position=3, config={'label': _('My Link'), 'url': 'https://link.com'}
     )
 
-It is recommended to use ``register_menu_group`` in the ``ready`` method of the AppConfig.
+.. note::
+    ImproperlyConfigured exception is raised if a menu element is already registered at same position.
 
-Note: ``register_menu_items`` is deprecated by ``register_menu_group`` and will be removed in the
-future versions. ``register_menu_items`` will be shown at the top of navigation menu and above 
-any ``register_menu_group`` items.
+    ImproperlyConfigured exception is raised if proper configuration is not provided based on the different types of
+    menu elements that you can register. Different types of configurations will be discussed in the next sections.
 
-Create a general link
-^^^^^^^^^^^^^^^^^^^^^
+    It is recommended to use ``register_menu_group`` in the ``ready`` method of the AppConfig.
+    
+    ``register_menu_items`` is deprecated by ``register_menu_group`` and will be removed in the
+    future versions. ``register_menu_items`` will be shown at the top of navigation menu and above 
+    any ``register_menu_group`` items.
 
-If you want to create a link which contains a custom url then you can use following syntax for config.
+Adding a generic link
+~~~~~~~~~~~~~~~~~~~~~
+
+If you want to add a link which contains a custom url then you can use following syntax for config.
 
 **Syntax:**
 
 .. code-block:: python
 
-    my_link_config = {'label': 'Link Label', 'url': 'link_url', 'icon':'my-icon'}
-    register_menu_group(position=1, config=my_link_config)
+    register_menu_group(position=1, config={
+        "label": "Link Label",
+        "url": "link_url",
+        "icon": "my-icon"
+    })
 
 Following is the description of the configuration:
 
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |
 +------------------+--------------------------------------------------------------+
-| ``label``        | (``str``) Display name for the link.  (``required``)         |
+| ``label``        | (``str``) Display text for the link.                         |
 +------------------+--------------------------------------------------------------+
-| ``url``          | (``str``) url of the link.  (``required``)                   |
+| ``url``          | (``str``) url for the link.                                  |
 +------------------+--------------------------------------------------------------+
-| ``icon``         | (``str``) CSS class name of the link icon.  (``optional``)   |
+| ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
+|                  | is displayed if not provided.                                |
 +------------------+--------------------------------------------------------------+
 
-Create a model link
-^^^^^^^^^^^^^^^^^^^
+Adding a model link
+~~~~~~~~~~~~~~~~~~~
 
-If you want to create a link that contains a url of ``add`` or ``list`` page of a model
+If you want to add a link that contains url of ``add`` or ``list`` page of a model
 then you can use following syntax. Users will only be able to see links for 
 models they have permission to either view or edit.
 
@@ -554,60 +574,26 @@ models they have permission to either view or edit.
 
 .. code-block:: python
 
-    # use to create a link of list page
-    my_model_list_config = {
-        'model': 'my_project.MyModel',
-        'name': 'changelist',
-        'label': 'MyModel Change List',
-        'icon': 'my-model-list-class',
-    }
-
-    #use to create a link of add page
-    my_model_add_config = {
-        'model': 'my_project.MyModel',
-        'name': 'add',
-        'label': 'MyModel Add Item',
-        'icon': 'my-model-add-class',
-    }
-    register_menu_group(position=1, config=my_model_list_config)
-    register_menu_group(position=2, config=my_model_add_config)
-
-Following is the description of the configuration:
-
-+------------------+--------------------------------------------------------------+
-| **Parameter**    | **Description**                                              |
-+------------------+--------------------------------------------------------------+
-| ``model``        | (``str``) Model of a app.  (``required``)                    |
-+------------------+--------------------------------------------------------------+
-| ``name``         | (``str``) url name. eg. changelist or add.  (``required``)   |
-+------------------+--------------------------------------------------------------+
-| ``label``        | (``str``) Display name for the link.  (``optional``)         |
-+------------------+--------------------------------------------------------------+
-| ``icon``         | (``str``) CSS class name of the link icon.  (``optional``)   |
-+------------------+--------------------------------------------------------------+
-
-Create a menu group
-^^^^^^^^^^^^^^^^^^^
-
-If you want to create a nested menu group then you can use following syntax.
-It creates a dropdown in the menu.
-
-**Syntax:**
-
-.. code-block:: python
-    
-    my_group_items = {
-        1: {'label': 'Link Label', 'url': 'link_url', 'icon': 'my-icon'},
-        2: {
-            'model': 'my_project.MyModel',
-            'name': 'changelist',
-            'label': 'MyModel Change List',
-            'icon': 'my-model-list-class',
-            }
-    }
+    # adding a link of list page
     register_menu_group(
         position=1,
-        config={'label': 'My Label', 'items': my_group_items, 'icon': 'my-icon-class'},
+        config={
+            'model': 'my_project.MyModel',
+            'name': 'changelist',
+            'label': 'MyModel List',
+            'icon': 'my-model-list-class',
+        },
+    )
+
+    # adding a link of add page
+    register_menu_group(
+        position=2,
+        config={
+            'model': 'my_project.MyModel',
+            'name': 'add',
+            'label': 'MyModel Add Item',
+            'icon': 'my-model-add-class',
+        },
     )
 
 Following is the description of the configuration:
@@ -615,23 +601,75 @@ Following is the description of the configuration:
 +------------------+--------------------------------------------------------------+
 | **Parameter**    | **Description**                                              |
 +------------------+--------------------------------------------------------------+
-| ``label``        | (``str``) Display name for the link.  (``required``)         |
+| ``model``        | (``str``) Model of the app for which you to add link.        |
 +------------------+--------------------------------------------------------------+
-| ``items``        | (``dict``) Items to be displayed in the dropdown.            |
-|                  | It can be a dict of ``general link`` or ``model link``       |
-|                  | with key as their position.                                  |
-|                  | (``required``)                                               |
+| ``name``         | (``str``) url name. eg. changelist or add.                   |
 +------------------+--------------------------------------------------------------+
-| ``icon``         | (``str``) CSS class name of the group icon.  (``optional``)  |
+| ``label``        | An **optional** ``str`` display text for the link. It is     |
+|                  | automatically generated if not provided.                     |
++------------------+--------------------------------------------------------------+
+| ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
+|                  | is displayed if not provided.                                |
 +------------------+--------------------------------------------------------------+
 
-**Syntax to add icon using class name:**
+Adding a menu group
+~~~~~~~~~~~~~~~~~~~
+
+If you want to add a nested menu group then you can use following syntax.
+It creates a dropdown in the menu.
+
+**Syntax:**
+
+.. code-block:: python
+    
+    register_menu_group(
+        position=1,
+        config={
+            'label': 'My Group Label',
+            'items': {
+                1: {'label': 'Link Label', 'url': 'link_url', 'icon': 'my-icon'},
+                2: {
+                    'model': 'my_project.MyModel',
+                    'name': 'changelist',
+                    'label': 'MyModel List',
+                    'icon': 'my-model-list-class',
+                },
+            },
+            'icon': 'my-group-icon-class',
+        },
+    )
+
+Following is the description of the configuration:
+
++------------------+--------------------------------------------------------------+
+| **Parameter**    | **Description**                                              |
++------------------+--------------------------------------------------------------+
+| ``label``        | (``str``) Display name for the link.                         |
++------------------+--------------------------------------------------------------+
+| ``items``        | (``dict``) Items to be displayed in the dropdown.            |
+|                  | It can be a dict of generic links or model links             |
+|                  | with key as their position in the group.                     |
++------------------+--------------------------------------------------------------+
+| ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
+|                  | is displayed if not provided.                                |
++------------------+--------------------------------------------------------------+
+
+How to use custom icons in the menu
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Create a CSS file and use following syntax to provide the image for each
+icon used in the menu. Class name should be same as the ``icon`` parameter 
+used in configuration of a menu item or group.
+
+Code Example
 
 .. code-block:: css
 
     .icon-class-name:{
         background: url(imageurl);
     }
+
+To supply your this CSS file for menu icons, see: `SUPPLYING_CUSTOM_CSS_AND_JS_FOR_THE_ADMIN_THEME <#Supplying custom CSS and JS for the admin theme>`_ 
 
 Model utilities
 ---------------

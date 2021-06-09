@@ -116,11 +116,6 @@ class TestMenuSchema(TestCase):
                 _config = self._get_menu_link_config(url=None)
                 MenuLink(config=_config)
 
-        with self.subTest('Menu Link with invalid label'):
-            with self.assertRaises(ImproperlyConfigured):
-                _config = self._get_menu_link_config(label=123)
-                MenuLink(config=_config)
-
         with self.subTest('Menu Link with invalid url'):
             with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_link_config(url=123)
@@ -213,11 +208,6 @@ class TestMenuSchema(TestCase):
         with self.subTest('Menu Group without label'):
             with self.assertRaises(ImproperlyConfigured):
                 _config = self._get_menu_group_config(label=None)
-                MenuGroup(config=_config)
-
-        with self.subTest('Menu Group with invalid label'):
-            with self.assertRaises(ImproperlyConfigured):
-                _config = self._get_menu_group_config(label=1234)
                 MenuGroup(config=_config)
 
         with self.subTest('Menu Group without items'):
