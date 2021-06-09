@@ -524,16 +524,16 @@ Code example:
     )
 
 .. note::
-    ImproperlyConfigured exception is raised if a menu element is already registered at same position.
+    An ``ImproperlyConfigured`` exception is raised if a menu element is already registered at the same position.
 
-    ImproperlyConfigured exception is raised if proper configuration is not provided based on the different types of
+    An ``ImproperlyConfigured`` exception is raised also if proper configuration is not provided based on the different types of
     menu elements that you can register. Different types of configurations will be discussed in the next sections.
 
-    It is recommended to use ``register_menu_group`` in the ``ready`` method of the AppConfig.
+    It is recommended to use ``register_menu_group`` in the ``ready`` method of the ``AppConfig``.
     
-    ``register_menu_items`` is deprecated by ``register_menu_group`` and will be removed in the
-    future versions. ``register_menu_items`` will be shown at the top of navigation menu and above 
-    any ``register_menu_group`` items.
+    ``register_menu_items`` is obsoleted by ``register_menu_group`` and will be removed in
+    future versions. Links added using ``register_menu_items`` will be shown at the top
+    of navigation menu and above any ``register_menu_group`` items.
 
 Adding a generic link
 ~~~~~~~~~~~~~~~~~~~~~
@@ -658,10 +658,10 @@ How to use custom icons in the menu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a CSS file and use following syntax to provide the image for each
-icon used in the menu. Class name should be same as the ``icon`` parameter 
-used in configuration of a menu item or group.
+icon used in the menu. The CSS class name should be same as the ``icon``
+parameter  used in configuration of a menu item or group.
 
-Code Example
+Example:
 
 .. code-block:: css
 
@@ -669,7 +669,9 @@ Code Example
         background: url(imageurl);
     }
 
-To supply your this CSS file for menu icons, see: `SUPPLYING_CUSTOM_CSS_AND_JS_FOR_THE_ADMIN_THEME <#Supplying custom CSS and JS for the admin theme>`_ 
+Follow the instructions in
+`Supplying custom CSS and JS for the admin theme <#SUPPLYING_CUSTOM_CSS_AND_JS_FOR_THE_ADMIN_THEME>`_
+to know how to configure your OpenWISP instance to load custom CSS files.
 
 Model utilities
 ---------------
