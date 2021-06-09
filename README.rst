@@ -670,7 +670,7 @@ Example:
     }
 
 Follow the instructions in
-`Supplying custom CSS and JS for the admin theme <#SUPPLYING_CUSTOM_CSS_AND_JS_FOR_THE_ADMIN_THEME>`_
+`Supplying custom CSS and JS for the admin theme <#supplying-custom-css-and-js-for-the-admin-theme>`_
 to know how to configure your OpenWISP instance to load custom CSS files.
 
 Model utilities
