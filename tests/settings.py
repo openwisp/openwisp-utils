@@ -67,7 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'openwisp_utils.admin_theme.context_processor.menu_items',
+                'openwisp_utils.admin_theme.context_processor.menu_groups',
                 'openwisp_utils.admin_theme.context_processor.admin_theme_settings',
             ],
         },
@@ -98,6 +98,26 @@ REST_FRAMEWORK = {
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}
 OPENWISP_TEST_ADMIN_MENU_ITEMS = [{'model': 'test_project.Project'}]
+
+OPENWISP_ADMIN_THEME_LINKS = [
+    {
+        'type': 'text/css',
+        'href': '/static/admin/css/openwisp.css',
+        'rel': 'stylesheet',
+        'media': 'all',
+    },
+    {
+        'type': 'text/css',
+        'href': '/static/menu-test.css',
+        'rel': 'stylesheet',
+        'media': 'all',
+    },  # custom css for testing menu icons
+    {
+        'type': 'image/x-icon',
+        'href': '/static/ui/openwisp/images/favicon.png',
+        'rel': 'icon',
+    },
+]
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:

@@ -4,6 +4,7 @@ from openwisp_utils.admin_theme import (
     register_dashboard_chart,
     register_dashboard_template,
 )
+from openwisp_utils.admin_theme.menu import register_menu_group
 from openwisp_utils.api.apps import ApiAppConfig
 from openwisp_utils.utils import register_menu_items
 
@@ -22,6 +23,7 @@ class TestAppConfig(ApiAppConfig):
         super().ready(*args, **kwargs)
         self.register_default_menu_items()
         self.register_dashboard_charts()
+        self.register_menu_groups()
 
     def register_default_menu_items(self):
         items = [{'model': 'test_project.Shelf'}]
@@ -87,3 +89,53 @@ class TestAppConfig(ApiAppConfig):
             },
             extra_config={'test_extra_config': 'dashboard-test.config'},
         )
+
+    def register_menu_groups(self):
+        auth_config = {
+            'label': _('Authentication And Authorization'),
+            'items': {
+                2: {
+                    'label': 'Add user',
+                    'model': 'auth.User',
+                    'name': 'add',
+                    'icon': 'add-icon',
+                },
+                1: {
+                    'model': 'auth.User',
+                    'name': 'changelist',
+                    'icon': 'edit',
+                    'label': _('Users'),
+                },
+            },
+            'icon': 'user-icon',
+        }
+
+        docs_config = {
+            'label': _('Docs'),
+            'items': {
+                1: {
+                    'label': _('OpenWISP'),
+                    'url': 'https://openwisp.org/',
+                    'icon': 'link',
+                },
+                2: {
+                    'label': _('Code'),
+                    'url': 'https://openwisp.org/thecode.html',
+                    'icon': 'link',
+                },
+            },
+        }
+
+        register_menu_group(
+            position=1,
+            config={
+                'model': 'test_project.Shelf',
+                'name': 'changelist',
+                'label': _('Shelfs'),
+                'icon': 'shelf-icon',
+            },
+        )
+
+        register_menu_group(position=2, config=auth_config)
+
+        register_menu_group(position=3, config=docs_config)

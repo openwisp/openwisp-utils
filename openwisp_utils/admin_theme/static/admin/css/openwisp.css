@@ -11,6 +11,24 @@ body { min-width: 320px; }
     justify-content: space-between !important;
   }
 }
+.ow-group-icon{
+  background-size: 20px 20px;
+  padding-left: 30px;
+  background-repeat: no-repeat;
+  background-position: left;
+}
+.ow-menu-link{
+  position: relative;
+  padding-left: 30px!important;
+}
+.ow-menu-link span{
+  position: absolute;
+  left: 10px;
+  height: 20px;
+  width: 20px;
+  background-size: contain;
+  filter: invert(1);
+}
 #site-name a{
   display: block;
   width: 150px;

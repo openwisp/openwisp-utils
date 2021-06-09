@@ -45,6 +45,20 @@
     <a href="{{ item.url }}"
        class="{{ item.class }}">{{ item.label }}</a>
     {% endfor %}
+    {% for group in openwisp_menu_groups %}
+        {% if  group.sub_items %}
+            <div class="ow-group-icon {{ group.icon }}">{{group.label}}</div>
+            <div>
+            {% for item in group.sub_items %}
+            <a href="{{ item.url }}"
+               class="ow-menu-link"><span class="{{ item.icon }}"></span>{{ item.label }}</a>
+            {% endfor %}
+            </div>
+        {% else %}
+        <a href="{{ group.url }}"
+           class="group-menu-link"><span class="{{ group.icon }}"></span>{{ group.label }}</a>
+        {% endif %}
+    {% endfor %} 
     <div class="account">
         {% if user.has_usable_password %}
         <a href="{% url 'admin:password_change' %}"

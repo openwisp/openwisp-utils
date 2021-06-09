@@ -1,0 +1,21 @@
+.user-icon{
+  background-image: url('./icons/user.png');
+}
+.add-icon{
+  background-image: url('./icons/add.png');
+}
+.edit{
+  background-image: url('./icons/edit.png');
+}
+.lock{
+  background-image: url('./icons/lock.png');
+}
+.key{
+  background-image: url('./icons/key.png');
+}
+.shelf-icon{
+  background-image: url('./icons/shelf.png');
+}
+.link{
+  background-image: url('./icons/link.png');
+}

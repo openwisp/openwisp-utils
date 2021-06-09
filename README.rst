@@ -444,7 +444,10 @@ specified dashboard chart is not registered.
 Main navigation menu
 --------------------
 
-Add ``openwisp_utils.admin_theme.context_processor.menu_items`` to
+The ``admin_theme`` sub app of this package provides a navigation menu which can be
+manipulated with the functions described in the next sections.
+
+Add ``openwisp_utils.admin_theme.context_processor.menu_groups`` to
 template ``context_processors`` in ``settings.py`` as shown below.
 
 .. code-block:: python
@@ -459,16 +462,221 @@ template ``context_processors`` in ``settings.py`` as shown below.
                 ],
                 'context_processors': [
                     # ... other context processors ...
-                    'openwisp_utils.admin_theme.context_processor.menu_items'    # <----- add this
+                    'openwisp_utils.admin_theme.context_processor.menu_groups'    # <----- add this
                 ],
             },
         },
     ]
 
-If you need to define custom menu items, see:
-`OPENWISP_ADMIN_MENU_ITEMS <#openwisp_admin_menu_items>`_.
+``register_menu_group``
+^^^^^^^^^^^^^^^^^^^^^^^
 
-Users will only be able to see menu items for objects they have permission to either view or edit.
+It allows us to register different menu item or group at different position in the Main Navigation Menu.
+
+**Syntax:**
+
+.. code-block:: python
+
+    register_menu_group(position, config)
+
++--------------------+-------------------------------------------------------------+
+| **Parameter**      | **Description**                                             |
++--------------------+-------------------------------------------------------------+
+| ``position``       | (``int``) Position of the group or item.                    |
++--------------------+-------------------------------------------------------------+
+| ``config``         | (``dict``) Configuration of the goup or item.               |
++--------------------+-------------------------------------------------------------+
+
+Code example:
+
+.. code-block:: python
+
+    from django.utils.translation import ugettext_lazy as _
+    from openwisp_utils.admin_theme.menu import register_menu_group
+
+    register_menu_group(
+        position=1,
+        config={
+            'label': _('My Group'),
+            'items': {
+                1: {
+                    'label': _('Users List'),
+                    'model': 'auth.User',
+                    'name': 'changelist',
+                    'icon': 'list-icon',
+                },
+                2: {
+                    'label': _('Add User'),
+                    'model': 'auth.User',
+                    'name': 'add',
+                    'icon': 'add-icon',
+                },
+            },
+            'icon': 'user-group-icon',
+        },
+    )
+    register_menu_group(
+        position=2,
+        config={
+            'model': 'test_project.Shelf',
+            'name': 'changelist',
+            'label': _('View Shelf'),
+            'icon': 'shelf-icon',
+        },
+    )
+    register_menu_group(
+        position=3, config={'label': _('My Link'), 'url': 'https://link.com'}
+    )
+
+.. note::
+    An ``ImproperlyConfigured`` exception is raised if a menu element is already registered at the same position.
+
+    An ``ImproperlyConfigured`` exception is raised also if proper configuration is not provided based on the different types of
+    menu elements that you can register. Different types of configurations will be discussed in the next sections.
+
+    It is recommended to use ``register_menu_group`` in the ``ready`` method of the ``AppConfig``.
+    
+    ``register_menu_items`` is obsoleted by ``register_menu_group`` and will be removed in
+    future versions. Links added using ``register_menu_items`` will be shown at the top
+    of navigation menu and above any ``register_menu_group`` items.
+
+Adding a generic link
+~~~~~~~~~~~~~~~~~~~~~
+
+If you want to add a link which contains a custom url then you can use following syntax for config.
+
+**Syntax:**
+
+.. code-block:: python
+
+    register_menu_group(position=1, config={
+        "label": "Link Label",
+        "url": "link_url",
+        "icon": "my-icon"
+    })
+
+Following is the description of the configuration:
+
++------------------+--------------------------------------------------------------+
+| **Parameter**    | **Description**                                              |
++------------------+--------------------------------------------------------------+
+| ``label``        | (``str``) Display text for the link.                         |
++------------------+--------------------------------------------------------------+
+| ``url``          | (``str``) url for the link.                                  |
++------------------+--------------------------------------------------------------+
+| ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
+|                  | is displayed if not provided.                                |
++------------------+--------------------------------------------------------------+
+
+Adding a model link
+~~~~~~~~~~~~~~~~~~~
+
+If you want to add a link that contains url of ``add`` or ``list`` page of a model
+then you can use following syntax. Users will only be able to see links for 
+models they have permission to either view or edit.
+
+**Syntax:**
+
+.. code-block:: python
+
+    # adding a link of list page
+    register_menu_group(
+        position=1,
+        config={
+            'model': 'my_project.MyModel',
+            'name': 'changelist',
+            'label': 'MyModel List',
+            'icon': 'my-model-list-class',
+        },
+    )
+
+    # adding a link of add page
+    register_menu_group(
+        position=2,
+        config={
+            'model': 'my_project.MyModel',
+            'name': 'add',
+            'label': 'MyModel Add Item',
+            'icon': 'my-model-add-class',
+        },
+    )
+
+Following is the description of the configuration:
+
++------------------+--------------------------------------------------------------+
+| **Parameter**    | **Description**                                              |
++------------------+--------------------------------------------------------------+
+| ``model``        | (``str``) Model of the app for which you to add link.        |
++------------------+--------------------------------------------------------------+
+| ``name``         | (``str``) url name. eg. changelist or add.                   |
++------------------+--------------------------------------------------------------+
+| ``label``        | An **optional** ``str`` display text for the link. It is     |
+|                  | automatically generated if not provided.                     |
++------------------+--------------------------------------------------------------+
+| ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
+|                  | is displayed if not provided.                                |
++------------------+--------------------------------------------------------------+
+
+Adding a menu group
+~~~~~~~~~~~~~~~~~~~
+
+If you want to add a nested menu group then you can use following syntax.
+It creates a dropdown in the menu.
+
+**Syntax:**
+
+.. code-block:: python
+    
+    register_menu_group(
+        position=1,
+        config={
+            'label': 'My Group Label',
+            'items': {
+                1: {'label': 'Link Label', 'url': 'link_url', 'icon': 'my-icon'},
+                2: {
+                    'model': 'my_project.MyModel',
+                    'name': 'changelist',
+                    'label': 'MyModel List',
+                    'icon': 'my-model-list-class',
+                },
+            },
+            'icon': 'my-group-icon-class',
+        },
+    )
+
+Following is the description of the configuration:
+
++------------------+--------------------------------------------------------------+
+| **Parameter**    | **Description**                                              |
++------------------+--------------------------------------------------------------+
+| ``label``        | (``str``) Display name for the link.                         |
++------------------+--------------------------------------------------------------+
+| ``items``        | (``dict``) Items to be displayed in the dropdown.            |
+|                  | It can be a dict of generic links or model links             |
+|                  | with key as their position in the group.                     |
++------------------+--------------------------------------------------------------+
+| ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
+|                  | is displayed if not provided.                                |
++------------------+--------------------------------------------------------------+
+
+How to use custom icons in the menu
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Create a CSS file and use following syntax to provide the image for each
+icon used in the menu. The CSS class name should be same as the ``icon``
+parameter  used in configuration of a menu item or group.
+
+Example:
+
+.. code-block:: css
+
+    .icon-class-name:{
+        background: url(imageurl);
+    }
+
+Follow the instructions in
+`Supplying custom CSS and JS for the admin theme <#supplying-custom-css-and-js-for-the-admin-theme>`_
+to know how to configure your OpenWISP instance to load custom CSS files.
 
 Model utilities
 ---------------
@@ -548,27 +756,6 @@ Code utilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generates an random string of 32 characters.
-
-``openwisp_utils.utils.register_menu_items``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Takes input of a list of models name and settings_menu name and adds
-them to the side navigation bar in the admin dashboard interface.
-
-Usage:
-
-.. code-block:: python
-
-    from openwisp_utils.utils import register_menu_items
-    from openwisp_utils.api.apps import ApiAppConfig
-
-    class YourAwesomeAppConfig(ApiAppConfig):
-        def ready(self, *args, **kwargs):
-            super().ready(*args, **kwargs)
-            items = [{'model': 'your_project.your_model_name'}]
-            # register_menu_items(items[, name_menu=YOUR_SETTINGS_MENU_NAME])
-            register_menu_items(items, name_menu='OPENWISP_DEFAULT_ADMIN_MENU_ITEMS')
-
 
 ``openwisp_utils.utils.deep_merge_dicts``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1003,32 +1190,6 @@ Title shown to users in the index page of the admin site.
 When ``True``, enables the `OpenWISP Dashboard <#openwisp-dashboard>`_.
 Upon login, the user will be greeted with the dashboard instead of the default
 Django admin index page.
-
-``OPENWISP_ADMIN_MENU_ITEMS``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**default**: ``[]``
-
-Allows to pass a custom list of menu items to display in the admin menu.
-
-If passed, overrides the default menu which is built by different openwisp modules.
-
-The list should not include "home", "change password" and "log out", because those
-are automatically added and cannot be removed.
-
-Example usage:
-
-.. code-block:: python
-
-    OPENWISP_ADMIN_MENU_ITEMS = [
-        {'model': 'config.Device'},
-        {'model': 'config.Template'},
-        {'model': 'openwisp_users.User'},
-        {
-            'model': 'openwisp_radius.Accounting',
-            'label': 'Radius sessions'  # custom label
-        }
-    ]
 
 ``OPENWISP_ADMIN_THEME_LINKS``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
