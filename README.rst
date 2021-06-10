@@ -880,7 +880,7 @@ To run them in checks pass arguements in this way.
 
 Usage example::
 
-    # To active csslinter
+    # To activate csslinter
     openwisp-qa-check --csslinter
 
     # To activate jslinter
