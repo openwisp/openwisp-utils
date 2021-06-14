@@ -24,19 +24,23 @@
 
 <!-- Container -->
 <div id="container">
-    {% if not is_popup %}
-    {% block menu %}{% endblock %}
-    {% endif %}
-    <div id="main-content" {% if not user.is_authenticated %}class="m-0"{% endif %}>
+  {% if not is_popup and user.is_authenticated %}
+    <div id="menu">
+      <div class="menu-bar">
+        {% block menu-bar %}{% endblock %}
+        {% block user-tools %}{% endblock %}
+      </div>
+      {% block menu %}{% endblock %}
+    </div>
+  {% endif %}
+  <div id="main-content" {% if not user.is_authenticated %}class="m-0"{% endif %}>
     {% if not is_popup %}
     <!-- Header -->
     {% block header %}
-    <div id="header" {% if not user.is_authenticated %}class="hide"{% endif %}>
-        <div id="branding">
-          {% block branding %}{% endblock branding %}
-        </div>
+      <div id="header" {% if not user.is_authenticated %}class="hide"{% endif %}>
+        {% block branding %}{% endblock %}
         {% block nav-global %}{% endblock %}
-    </div>
+      </div>
     {% endblock %}
     <!-- END Header -->
     {% block breadcrumbs %}
@@ -46,7 +50,6 @@
     </div>
     {% endblock %}
     {% endif %}
-
     <div class="main" id="main">
       {% if not is_popup and is_nav_sidebar_enabled %}
         {% block nav-sidebar %}
@@ -57,7 +60,7 @@
         {% block messages %}
           {% if messages %}
             <ul class="messagelist">{% for message in messages %}
-              <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+              <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
             {% endfor %}</ul>
           {% endif %}
         {% endblock messages %}

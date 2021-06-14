@@ -1,75 +1,85 @@
-body { min-width: 320px; }
-
-#site-name a {
-  display: block;
-  width: 150px;
-  height: 86px;
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg) no-repeat scroll 0 50%/100%;
-  text-indent: -2000px;
-  overflow: hidden;
+body {
+  min-width: 320px;
+  background: #f4f7f6;
 }
-
-.login #branding {
-  float: none;
-  padding: 16px 0;
-  margin: 0 auto;
-}
-
-.login #site-name a { margin: 0 auto; }
 
 .button.default,
-input[type=submit].default,
+input[type="submit"].default,
 .submit-row input.default,
 .object-tools a:focus,
 .object-tools a:hover {
   background-color: #333;
 }
-.button.default:active, input[type=submit].default:active,
-.button.default:focus, input[type=submit].default:focus,
-.button.default:hover, input[type=submit].default:hover {
+
+.button.default:active,
+input[type="submit"].default:active,
+.button.default:focus,
+input[type="submit"].default:focus,
+.button.default:hover,
+input[type="submit"].default:hover {
   background-color: #000;
 }
-#branding h1, #branding h1 a:link, #branding h1 a:visited {
-  color: #fff;
+
+div.breadcrumbs {
+  color: #ffcbc0;
 }
-
-div.breadcrumbs { color: #ffcbc0; }
-
-div.breadcrumbs a:focus, div.breadcrumbs a:hover {
+div.breadcrumbs a:focus,
+div.breadcrumbs a:hover {
   color: #ffe8e3;
 }
 
-.button, input[type=submit], input[type=button], .submit-row input, a.button {
+.button,
+input[type="submit"],
+input[type="button"],
+.submit-row input,
+a.button {
   background-color: #666;
 }
-.button:active, input[type=submit]:active, input[type=button]:active,
-.button:focus, input[type=submit]:focus, input[type=button]:focus,
-.button:hover, input[type=submit]:hover, input[type=button]:hover {
+
+.button:active,
+input[type="submit"]:active,
+input[type="button"]:active,
+.button:focus,
+input[type="submit"]:focus,
+input[type="button"]:focus,
+.button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover {
   background-color: #444;
 }
 
-#user-tools a:focus, #user-tools a:hover {
+#user-tools a:focus,
+#user-tools a:hover {
   border-bottom-color: #ffcbc0;
   color: #ffcbc0;
 }
 
-#container .object-tools a { padding: 5px 15px; }
+#container .object-tools a {
+  padding: 5px 15px;
+}
 
-#container .object-tools a.addlink { padding-right: 28px; }
+#container .object-tools a.addlink {
+  padding-right: 28px;
+}
 
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
-a:link, a:visited {
+a:link,
+a:visited {
   color: #777;
 }
-a:focus, a:hover {
+
+a:focus,
+a:hover {
   color: #000;
 }
 
 #changelist-filter li.selected a {
   color: #df5d43 !important;
 }
-#netjsonconfig-hint, #netjsonconfig-hint a,
+
+#netjsonconfig-hint,
+#netjsonconfig-hint a,
 #container .field-backend a {
   color: #df5d43;
 }
@@ -82,6 +92,11 @@ a:focus, a:hover {
   margin-top: 3px;
   font-size: 13px;
   color: #797572;
+}
+#branding h1,
+#branding h1 a:link,
+#branding h1 a:visited {
+  color: #fff;
 }
 
 /* hide first delete link, hide save and add anoher */
@@ -103,7 +118,9 @@ a.button.secondaryAction {
   display: block;
 }
 
-html { overflow-x: hidden; }
+html {
+  overflow-x: hidden;
+}
 
 .ow-overlay {
   display: none;
@@ -126,8 +143,8 @@ html { overflow-x: hidden; }
   overflow: auto;
   padding: 0;
   -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
 }
 
 .ow-loading-spinner {
@@ -136,8 +153,8 @@ html { overflow-x: hidden; }
   background-color: rgba(0, 0, 0, 0.9);
   margin: 0 auto;
   border-radius: 100%;
-  -webkit-animation: sk-scaleout 1.0s infinite ease-in-out;
-          animation: sk-scaleout 1.0s infinite ease-in-out;
+  -webkit-animation: sk-scaleout 1s infinite ease-in-out;
+  animation: sk-scaleout 1s infinite ease-in-out;
 }
 
 @-webkit-keyframes sk-scaleout {
@@ -165,7 +182,9 @@ html { overflow-x: hidden; }
 }
 
 div.breadcrumbs,
-.module h2, .module caption, .inline-group h2,
+.module h2,
+.module caption,
+.inline-group h2,
 #container .selector-chosen h2 {
   background-color: #333333;
   color: #fff;
@@ -173,164 +192,197 @@ div.breadcrumbs,
   font-size: 14px;
 }
 
-/* HEADER START */
-#header {
-  background-color: #fff;
-  color: #464646;
-  border-bottom: 2px solid #eee;
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0px;
-  z-index: 10;
-  padding: 0px 40px;
+body.login {
+  background: #f4f7f6;
 }
 
-.login #header {
-  background: #F5F5F9;
-  color: #333;
+.login #container {
+  box-shadow: 0px 0px 6px #3333330d;
 }
 
-body.login{
-    background: #fff;
+/* MAIN CONTENT START */
+#main-content {
+  margin-left: 300px;
 }
 
-.login #container{
-    box-shadow: 0px 0px 6px #3333330d;
-}
-
-/* To  hide header when logout is clicked*/
-#header.hide { display: none; }
-
-/* To show header on login page with padding */
-.login #header.hide {
-  display: block;
-  padding: 15px;
-}
-
-.login #main-content, .toggle-menu #main-content, #main-content.m-0 {
+.popup #main-content {
   margin-left: 0px;
 }
 
-#header .head {
-  margin: auto;
-  -webkit-box-pack: justify;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
+.login #main-content {
+  padding-bottom: 20px;
 }
 
-#header-nav .user {
-  background: transparent url(../../ui/openwisp/images/user.png) no-repeat scroll 0 50%;
-  background-size: 10px 10px;
-  padding-left: 18px;
-  cursor: pointer;
+#main-content.m-0 {
+  margin: 0px;
 }
 
-/* MENU START */
-#menu {
-  position: fixed;
-  width: 250px;
-  background: #F5F5F9;
-  height: 100vh;
-  z-index: 12;
-  color: #333333;
-  top: 0;
-  overflow: hidden;
-}
+/* HEADER START */
 
-.head {
-  height: 120px;
-  width: 100%;
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
-  -webkit-box-pack: center;
-      -ms-flex-pack: center;
-          justify-content: center;
-}
-
-#header .head { height: 60px; }
-
-#menu .head { position: relative; }
-
-.menu-close{
-    background: url(../../ui/openwisp/images/close.png);
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    background-size: 16px 16px;
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-    height: 20px;
-    width: 20px;
-    display: none;
-}
-
-#menu #site-name { margin: 0; }
-
-.toggle-menu #menu { margin-left: -250px; }
-
-.backdrop {
-  z-index: 11;
-  background: #000;
-  opacity: 0.5;
-  display: none;
-  position: fixed;
-  height: 100vh;
-  width: 100%;
+#header {
+  background: #fff;
+  box-shadow: 2px 1px 4px -1px #00000026;
+  position: -webkit-sticky;
+  position: sticky;
   top: 0px;
-  left: 0px;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .menu-toggle {
   background: url(../../ui/openwisp/images/menu.png);
   background-size: 30px 30px;
   height: 30px;
-  cursor: pointer;
   width: 30px;
+  cursor: pointer;
   background-position: center;
   display: inline-block;
   background-repeat: no-repeat;
+  margin-left: -5px;
+}
+
+#branding,
+.login .menu-toggle,
+#header.hide {
+  display: none;
+}
+
+.login #branding {
+  display: block;
+}
+
+.login #main-content #header {
+  display: flex;
+  box-shadow: 0px 1px 4px -1px #00000026;
+  justify-content: center;
+}
+
+/* Menu START */
+
+#menu {
+  position: fixed;
+  width: 300px;
+  background: #fff;
+  height: 100vh;
+  z-index: 100;
+  box-shadow: 0 1px 4px -1px #00000026;
+  top: 0px;
+  left: 0px;
+  overflow: hidden;
 }
 
 #menu .nav {
+  height: calc(100% - 156px);
   overflow-y: auto;
   overflow-y: overlay;
-  height: calc(100% - 128px);
 }
 
-.menu-group ul li { list-style: none; }
-
-.menu-link {
-  padding: 20px 16px;
+.head h1 {
+  margin: auto;
+  padding: 15px 0px;
+}
+.head h1 a,
+#branding h1 a {
   display: block;
-  text-decoration: none;
+  width: 150px;
+  height: 86px;
+  margin: auto;
+  background-repeat: no-repeat;
+  background-position: center;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
+    no-repeat scroll 0 50%/100%;
+  text-indent: -2000px;
 }
 
-.heading {
-  cursor: pointer;
-  font-weight: 500;
-  text-transform: uppercase;
-  padding: 18px 16px;
-  display: -webkit-box;
-  display: -ms-flexbox;
+.user-tools {
   display: flex;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
-  -webkit-box-pack: justify;
-      -ms-flex-pack: justify;
-          justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #00000026;
+  border-top: 1px solid #00000026;
+  padding: 8px 0;
+  width: 80%;
+  margin: auto;
+  margin-top: 8px;
 }
 
-.active { background: #DFE0E1; }
+.user-tools .user {
+  background: transparent url(../../ui/openwisp/images/user.png) no-repeat
+    scroll 0 50%;
+  background-size: 10px 10px;
+  padding-left: 18px;
+  cursor: pointer;
+}
+
+.toggle-menu #menu {
+  margin-left: -300px;
+}
+
+.toggle-menu #main-content {
+  margin-left: 0px;
+}
+
+.menu-link i,
+.menu-group-toggle i {
+  background-repeat: no-repeat;
+  background-position-y: center;
+  background-size: 15px 15px;
+  width: 17px;
+  height: 17px;
+  margin-right: 30px;
+  flex-shrink: 0;
+}
+.menu-group-toggle {
+  display: flex;
+  align-items: center;
+}
+.menu-group-toggle,
+.menu-link i,
+.menu-arrow {
+  pointer-events: none;
+}
+a.menu-link,
+.menu-group-title {
+  display: flex;
+  padding: 22px 10%;
+  word-break: break-word;
+  color: #333;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 600;
+  align-items: center;
+}
+.menu-group-title {
+  justify-content: space-between;
+  align-items: center;
+}
+.menu-group-title:hover,
+.menu-link:hover {
+  background-color: #f1f2f2;
+}
 
 .active .menu-arrow {
-  -webkit-transform: rotate(-90deg);
-          transform: rotate(-90deg);
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+}
+.menu-arrow {
+  flex-shrink: 0;
+  background: url(../../ui/openwisp/images/arrow.png);
+  background-size: 10px 10px;
+  height: 15px;
+  width: 15px;
+  margin-left: 20px;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.menu-group ul li {
+  list-style: none;
 }
 
 .menu-group ul {
@@ -339,66 +391,90 @@ body.login{
   overflow: hidden;
   height: 0px;
 }
-
-.active ul { height: auto; }
-
-#menu .menu-icon, #menu .menu-link span {
-  vertical-align: middle;
-  display: inline-block;
-  background-size: 15px 15px;
-  background-repeat: no-repeat;
-  background-position-y: center;
-  padding-left: 30px;
-  word-break: break-word;
+.active ul {
+  height: 100%;
 }
-
-.menu-link, .heading{ color: #777; }
-
-.menu-link span { text-transform: capitalize; }
-
-.heading:hover, .menu-group ul a:hover, .menu-link:hover {
-  background-color: #c2c2c2;
-  color: #000;
+.menu-group .menu-link {
+  text-transform: capitalize;
+  font-weight: 400;
 }
-
-/* MAIN CONTENT START */
-#main-content { margin-left: 250px; }
-
-.heading > div, .heading > span {
-  pointer-events: none;
-}
-
-.popup #main-content { margin-left: 0px; }
-
-.login #main-content { padding-bottom: 20px; }
 
 /* RESPONSIVE */
-@media (max-width: 768px) {
-  #menu { margin-left: -250px; }
-  #dashboard #container #header { padding: 0px 15px; }
-
-  #main-content { margin-left: 0px; }
-
-  .toggle-menu #menu { margin-left: 0px; }
-
-  .toggle-menu .backdrop, .menu-close { display: block; }
-}
 
 @media (max-width: 1024px) {
-  #container #header { padding: 0px 30px; }
+  #main-content #header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #menu {
+    margin-left: -300px;
+  }
+  .toggle-menu #menu {
+    margin-left: 0px;
+  }
+  #main-content {
+    margin-left: 0px;
+  }
+
+  .toggle-menu #main-content {
+    margin-left: 300px;
+  }
+}
+@media (max-width: 768px) {
+  #container::-webkit-scrollbar {
+    display: none !important;
+  }
+  #container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    overflow-y: scroll;
+  }
+  #branding {
+    display: block;
+  }
+  .menu-bar {
+    display: none;
+  }
+  #branding #site-name a {
+    width: 32px;
+    height: 32px;
+    background-repeat: no-repeat !important;
+    background: url(../../../static/ui/openwisp/images/openwisp-logo-small.svg);
+  }
+  .login #branding #site-name a {
+    width: 150px;
+    height: 86px;
+    margin: auto;
+    background-repeat: no-repeat;
+    background-position: center;
+    background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
+      no-repeat scroll 0 50%/100%;
+  }
+  #menu {
+    margin-left: 0px;
+    width: 100%;
+    height: 0px;
+    top: 72px;
+  }
+  .toggle-menu #menu {
+    margin: 0px;
+    height: 100vh;
+  }
+  #main-content,
+  .toggle-menu #main-content {
+    margin: 0px;
+  }
+  a.menu-link,
+  .menu-group-title {
+    padding: 15px;
+  }
+  #menu .nav {
+    height: calc(100% - 72px);
+  }
 }
 
 /* ICONS */
-.menu-arrow {
-  background: url(../../ui/openwisp/images/arrow.png);
-  background-size: 10px 10px;
-  height: 15px;
-  width: 15px;
-  background-position: center;
-  display: inline-block;
-  background-repeat: no-repeat;
-}
-
 .controller {
   background: url(../../ui/openwisp/images/controller.png);
 }
@@ -430,4 +506,7 @@ body.login{
 
 .template {
   background: url(../../ui/openwisp/images/template.png);
+}
+.logout {
+  background: url(../../ui/openwisp/images/logout.png);
 }

@@ -1,136 +1,343 @@
 {% load i18n %}
-{% if user.is_authenticated %}
-<div class="backdrop"></div>
-<div id="menu">
-    <div class="head">
-        <span class="menu-close"></span>
-        {% block branding %}
-        <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
-        {% endblock %}
+<div class="nav">
+  {% comment %} <a class="menu-link" href="{% url 'admin:index' %}">
+    <i class="home"></i>
+    Very very very very very very long name
+  </a>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle">
+        <i class="controller"></i>Very very very very very very long name
+      </div>
+      <i class="menu-arrow"></i>
     </div>
-    <div class="nav">
+    <ul>
+      <li>
         <a class="menu-link" href="{% url 'admin:index' %}">
-        <span class="home">Home</span></a>
-        <div class="menu-group">
-            <div class="heading">
-                <div>
-                <span class="menu-icon controller">Configuration</span>
-                </div>
-                <span class="menu-arrow"></span>
-            </div>
-            <ul>
-                <li>
-                    <a class="menu-link" href=""><span class="template">Templates</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" href=""><span class="lock">VPN Servers</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" href=""><span ></span>Access Creadentials</a>
-                </li>
-            </ul>
-        </div>
-        <div class="menu-group">
-            <div class="heading">
-                <div>
-                <span class="menu-icon geo">Logistic</span>
-                </div>
-                <span class="menu-arrow"></span>
-            </div>
-            <ul>
-                <li>
-                    <a class="menu-link" href=""><span class="location">Locations</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" href=""><span class="floor">Floorplans</span></a>
-                </li>
-            </ul>
-        </div>
-        <div class="menu-group">
-            <div class="heading">
-                <div>
-                <span class="menu-icon pki">PKI</span>
-                </div>
-                <span class="menu-arrow"></span>
-            </div>
-            <ul>
-                <li>
-                    <a class="menu-link" class="menu-link" href=""><span >Certification Authorities</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" class="menu-link" href=""><span >Certificates</span></a>
-                </li>
-            </ul>
-        </div>
-        <div class="menu-group">
-            <div class="heading">
-                <div>
-                <span class="menu-icon config">IPAM</span>
-                </div>
-                <span class="menu-arrow"></span>
-            </div>
-            <ul>
-                <li>
-                    <a class="menu-link" href=""><span >IP Addresses</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" href=""><span >Subnets</span></a>
-                </li>
-            </ul>
-        </div>
-        <div class="menu-group">
-            <div class="heading">
-                <div>
-                <span class="menu-icon controller">Configuration</span>
-                </div>
-                <span class="menu-arrow"></span>
-            </div>
-            <ul>
-                <li>
-                    <a class="menu-link" href=""><span class="template">Templates</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" href=""><span class="lock">VPN Servers</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" href=""><span ></span>Access Creadentials</a>
-                </li>
-            </ul>
-        </div>
-        <div class="menu-group">
-            <div class="heading">
-                <div>
-                <span class="menu-icon geo">Logistic</span>
-                </div>
-                <span class="menu-arrow"></span>
-            </div>
-            <ul>
-                <li>
-                    <a class="menu-link" href=""><span class="location">Locations</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" href=""><span class="floor">Floorplans</span></a>
-                </li>
-            </ul>
-        </div>
-        <div class="menu-group">
-            <div class="heading">
-                <div>
-                <span class="menu-icon pki">Very very very long group name</span>
-                </div>
-                <span class="menu-arrow"></span>
-            </div>
-            <ul>
-                <li>
-                    <a class="menu-link" class="menu-link" href=""><span >Certification Authorities</span></a>
-                </li>
-                <li>
-                    <a class="menu-link" class="menu-link" href=""><span >Very very very very long link name</span></a>
-                </li>
-            </ul>
-        </div>
-        <a class="menu-link" href="{% url 'admin:logout' %}">
-        <span class="menu-icon"></span>{% translate 'Log out' %}</a>
+          <i class="template"></i>
+          Very very very very very very very very long name
+        </a>
+      </li>
+      <li>
+        <a class="menu-link" href="{% url 'admin:index' %}">
+          <i class=""></i>
+          VPN Servers
+        </a>
+      </li>
+      <li>
+        <a class="menu-link" href="{% url 'admin:index' %}">
+          <i class=""></i>
+          Access Creadentials
+        </a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="geo"></i>Logistic</div>
+      <i class="menu-arrow"></i>
     </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="location"></i>Locations</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="floor"></i>Floorplans</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="pki"></i>PKI</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>Certification Authorities</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Certificates</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="config"></i>IPAM</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>IP Addresses</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Subnets</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle">
+        <i class="controller"></i>Configuration
+      </div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="template"></i>Templates</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="lock"></i>VPN Servers</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Access Creadentials</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="geo"></i>Logistic</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="location"></i>Locations</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="floor"></i>Floorplans</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="pki"></i>PKI</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>Certification Authorities</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Certificates</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="config"></i>IPAM</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>IP Addresses</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Subnets</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle">
+        <i class="controller"></i>Configuration
+      </div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="template"></i>Templates</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="lock"></i>VPN Servers</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Access Creadentials</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="geo"></i>Logistic</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="location"></i>Locations</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="floor"></i>Floorplans</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="pki"></i>PKI</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>Certification Authorities</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Certificates</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="config"></i>IPAM</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>IP Addresses</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Subnets</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle">
+        <i class="controller"></i>Configuration
+      </div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="template"></i>Templates</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="lock"></i>VPN Servers</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Access Creadentials</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="geo"></i>Logistic</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="location"></i>Locations</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="floor"></i>Floorplans</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="pki"></i>PKI</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>Certification Authorities</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Certificates</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="config"></i>IPAM</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>IP Addresses</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Subnets</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle">
+        <i class="controller"></i>Configuration
+      </div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="template"></i>Templates</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="lock"></i>VPN Servers</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Access Creadentials</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="geo"></i>Logistic</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="location"></i>Locations</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="floor"></i>Floorplans</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="pki"></i>PKI</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>Certification Authorities</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Certificates</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle"><i class="config"></i>IPAM</div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i></i>IP Addresses</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Subnets</a>
+      </li>
+    </ul>
+  </div>
+  <div class="menu-group">
+    <div class="menu-group-title">
+      <div class="menu-group-toggle">
+        <i class="controller"></i>Configuration
+      </div>
+      <i class="menu-arrow"></i>
+    </div>
+    <ul>
+      <li>
+        <a class="menu-link" href=""><i class="template"></i>Templates</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i class="lock"></i>VPN Servers</a>
+      </li>
+      <li>
+        <a class="menu-link" href=""><i></i>Access Creadentials</a>
+      </li>
+    </ul>
+  </div> {% endcomment %}
+  <a class="menu-link" href="{% url 'admin:logout' %}">
+    <i class="logout" ></i>{% translate 'Log out' %}</a
+  >
 </div>
-{% endif %}

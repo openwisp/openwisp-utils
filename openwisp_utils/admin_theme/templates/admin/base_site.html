@@ -16,38 +16,32 @@
 {% endif %}
 {% endblock %}
 
-
-{% block menu %}
-{% include "./menu.html" %}
+{% block menu-bar %}
+  <div class="head">
+    <h1><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
+  </div>
 {% endblock %}
-
-{% block nav-global %}
-    {% if user.is_authenticated %}
-    <div class="head">
-         <span class="menu-toggle"></span>
-         <div id="header-nav">
-            {% block header-menu %}
-                <span class="user">
-                <strong>{% firstof user.get_short_name user.get_username %}</strong>
-                </span>
-            {% endblock  %}
-         </div>
-    </div>
-    {% endif %}
-{% endblock nav-global %}
-
+{% block user-tools %}
+  <div class="user-tools">
+    <span class="user">
+      <strong>{% firstof user.get_short_name user.get_username %}</strong>
+    </span>
+  </div>
+{% endblock %}
+{% block menu %}{% include "./menu.html" %}{% endblock %}
 {% block branding %}
-{% if not user.is_authenticated %}
-<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
-{% endif %}
-{% endblock %}
-
+  <i class="menu-toggle"></i>
+  <div id="branding">
+    <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
+  </div>
+{% endblock  %}
 {% block footer %}
 <div id="ow-loading" class="ow-overlay">
   <div class="ow-overlay-inner">
     <div class="ow-loading-spinner"></div>
   </div>
 </div>
+
 {% comment %}
     we need to put the JS here otherwise
     if we put it in extrahead it will be
