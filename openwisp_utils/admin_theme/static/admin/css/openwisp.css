@@ -2,7 +2,6 @@ body {
   min-width: 320px;
   background: #f4f7f6;
 }
-
 .button.default,
 input[type="submit"].default,
 .submit-row input.default,
@@ -10,7 +9,6 @@ input[type="submit"].default,
 .object-tools a:hover {
   background-color: #333;
 }
-
 .button.default:active,
 input[type="submit"].default:active,
 .button.default:focus,
@@ -19,7 +17,6 @@ input[type="submit"].default:focus,
 input[type="submit"].default:hover {
   background-color: #000;
 }
-
 div.breadcrumbs {
   color: #ffcbc0;
 }
@@ -27,7 +24,6 @@ div.breadcrumbs a:focus,
 div.breadcrumbs a:hover {
   color: #ffe8e3;
 }
-
 .button,
 input[type="submit"],
 input[type="button"],
@@ -35,7 +31,6 @@ input[type="button"],
 a.button {
   background-color: #666;
 }
-
 .button:active,
 input[type="submit"]:active,
 input[type="button"]:active,
@@ -47,47 +42,38 @@ input[type="submit"]:hover,
 input[type="button"]:hover {
   background-color: #444;
 }
-
 #user-tools a:focus,
 #user-tools a:hover {
   border-bottom-color: #ffcbc0;
   color: #ffcbc0;
 }
-
 #container .object-tools a {
   padding: 5px 15px;
 }
-
 #container .object-tools a.addlink {
   padding-right: 28px;
 }
-
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
 a:link,
 a:visited {
   color: #777;
 }
-
 a:focus,
 a:hover {
   color: #000;
 }
-
 #changelist-filter li.selected a {
   color: #df5d43 !important;
 }
-
 #netjsonconfig-hint,
 #netjsonconfig-hint a,
 #container .field-backend a {
   color: #df5d43;
 }
-
 #main .form-row label {
   color: #1b1818;
 }
-
 #main .form-row .help {
   margin-top: 3px;
   font-size: 13px;
@@ -104,7 +90,6 @@ a:hover {
 .submit-row input[name="_addanother"] {
   display: none;
 }
-
 #main .submit-row .default {
   background: #498b26;
 }
@@ -117,11 +102,9 @@ a.button.secondaryAction {
   margin: 15px 0;
   display: block;
 }
-
 html {
   overflow-x: hidden;
 }
-
 .ow-overlay {
   display: none;
   position: fixed;
@@ -132,7 +115,6 @@ html {
   height: 100%;
   background: rgba(255, 255, 255, 0.75);
 }
-
 .ow-overlay-inner {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -146,7 +128,6 @@ html {
   -ms-flex-align: center;
   align-items: center;
 }
-
 .ow-loading-spinner {
   width: 50px;
   height: 50px;
@@ -180,7 +161,6 @@ html {
     opacity: 0;
   }
 }
-
 div.breadcrumbs,
 .module h2,
 .module caption,
@@ -189,30 +169,33 @@ div.breadcrumbs,
   background-color: #333333;
   color: #fff;
   padding: 14px 16px;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 16px;
 }
-
 body.login {
   background: #f4f7f6;
 }
-
 .login #container {
-  box-shadow: 0px 0px 6px #3333330d;
+  box-shadow: 0px 0px 6px #f4f7f6;
+}
+
+td,th{
+  padding: 14px 16px;
+}
+#changelist-form .paginator, #main-content #changelist-form .actions{
+  width: auto;
 }
 
 /* MAIN CONTENT START */
 #main-content {
   margin-left: 300px;
 }
-
 .popup #main-content {
   margin-left: 0px;
 }
-
 .login #main-content {
   padding-bottom: 20px;
 }
-
 #main-content.m-0 {
   margin: 0px;
 }
@@ -229,7 +212,6 @@ body.login {
   justify-content: space-between;
   align-items: center;
 }
-
 .menu-toggle {
   background: url(../../ui/openwisp/images/menu.png);
   background-size: 30px 30px;
@@ -241,23 +223,19 @@ body.login {
   background-repeat: no-repeat;
   margin-left: -5px;
 }
-
 #branding,
 .login .menu-toggle,
 #header.hide {
   display: none;
 }
-
 .login #branding {
   display: block;
 }
-
 .login #main-content #header {
   display: flex;
   border-bottom: 1px solid #00000026;
   justify-content: center;
 }
-
 /* Menu START */
 
 #menu {
@@ -271,13 +249,11 @@ body.login {
   left: 0px;
   overflow: hidden;
 }
-
 #menu .nav {
   height: calc(100% - 156px);
   overflow-y: auto;
   overflow-y: overlay;
 }
-
 .head h1 {
   margin: auto;
   padding: 15px 0px;
@@ -291,10 +267,9 @@ body.login {
   background-repeat: no-repeat;
   background-position: center;
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  no-repeat scroll 0 50%/100%;
   text-indent: -2000px;
 }
-
 .user-tools {
   display: flex;
   align-items: center;
@@ -306,23 +281,19 @@ body.login {
   margin: auto;
   margin-top: 8px;
 }
-
 .user-tools .user {
   background: transparent url(../../ui/openwisp/images/user.png) no-repeat
-    scroll 0 50%;
+  scroll 0 50%;
   background-size: 10px 10px;
   padding-left: 18px;
   cursor: pointer;
 }
-
 .toggle-menu #menu {
   margin-left: -300px;
 }
-
 .toggle-menu #main-content {
   margin-left: 0px;
 }
-
 .menu-link i,
 .menu-group-toggle i {
   background-repeat: no-repeat;
@@ -362,7 +333,6 @@ a.menu-link,
 .menu-link:hover {
   background-color: #f1f2f2;
 }
-
 .active .menu-arrow {
   -webkit-transform: rotate(0deg);
   transform: rotate(0deg);
@@ -379,11 +349,9 @@ a.menu-link,
   -webkit-transform: rotate(90deg);
   transform: rotate(90deg);
 }
-
 .menu-group ul li {
   list-style: none;
 }
-
 .menu-group ul {
   margin: 0;
   padding: 0;
@@ -452,7 +420,7 @@ a.menu-link,
     background-repeat: no-repeat;
     background-position: center;
     background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-      no-repeat scroll 0 50%/100%;
+    no-repeat scroll 0 50%/100%;
   }
   #menu {
     margin-left: 0px;
@@ -481,32 +449,25 @@ a.menu-link,
 .controller {
   background: url(../../ui/openwisp/images/controller.png);
 }
-
 .config {
   background: url(../../ui/openwisp/images/config.png);
 }
-
 .floor {
   background: url(../../ui/openwisp/images/floor.png);
 }
-
 .geo {
   background: url(../../ui/openwisp/images/geo.png);
 }
-
 .home {
   background: url(../../ui/openwisp/images/home.png);
 }
-
 .location {
   background: url(../../ui/openwisp/images/location.png);
   background-size: 20px 20px !important;
 }
-
 .lock {
   background: url(../../ui/openwisp/images/lock.png);
 }
-
 .template {
   background: url(../../ui/openwisp/images/template.png);
 }
