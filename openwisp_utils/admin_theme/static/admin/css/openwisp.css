@@ -220,8 +220,7 @@ body.login {
 /* HEADER START */
 
 #header {
-  background: #fff;
-  box-shadow: 2px 1px 4px -1px #00000026;
+  background: transparent;
   position: -webkit-sticky;
   position: sticky;
   top: 0px;
@@ -255,7 +254,7 @@ body.login {
 
 .login #main-content #header {
   display: flex;
-  box-shadow: 0px 1px 4px -1px #00000026;
+  border-bottom: 1px solid #00000026;
   justify-content: center;
 }
 
@@ -429,6 +428,10 @@ a.menu-link,
     -ms-overflow-style: none;
     scrollbar-width: none;
     overflow-y: scroll;
+    overflow-x: hidden;
+  }
+  #header{
+    background: #fff;
   }
   #branding {
     display: block;

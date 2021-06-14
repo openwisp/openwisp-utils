@@ -21,12 +21,6 @@
 {{ block.super }}
 
 {% if not app_label and dashboard_enabled %}
-<div id="quick-menu">
-  {% for item in openwisp_menu_items %}
-  <a href="{{ item.url }}"
-     class="button {{ item.class }}">{{ item.label }}</a>
-  {% endfor %}
-</div>
 
 {% for template in dashboard_templates %}
 {% include template %}

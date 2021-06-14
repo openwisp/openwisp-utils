@@ -1,5 +1,5 @@
 #plot-container {
-  padding: 0 40px 10px 40px;
+  padding: 10px 40px;
   text-align: center;
 }
 .js-plotly-plot {
@@ -11,20 +11,6 @@
 .js-plotly-plot .legendtext,
 .js-plotly-plot .hoverlayer{
   text-transform: capitalize;
-}
-#quick-menu {
-  line-height: 40px;
-  padding: 20px 40px 0 40px;
-}
-#quick-menu a{
-  color: #fff;
-  padding: 7px 12px;
-  font-size: 12px;
-  text-transform: uppercase;
-  font-variant: small-caps;
-  font-weight: bold;
-  margin: 0 5px 0 0;
-  text-decoration: none !important;
 }
 .dashboard:not([class*="app-"]) #container #content {
   margin: 0 auto;
