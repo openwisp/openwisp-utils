@@ -1,5 +1,7 @@
 {% load i18n %}
 <div class="nav">
+  <a class="menu-link" href="{% url 'admin:index' %}">
+    <i class="home"></i>{% trans 'Home' %}</a>
   {% for item in openwisp_menu_groups %}
     {% if item.sub_items %}
       <div class="menu-group">
@@ -191,6 +193,6 @@
     </ul>
   </div>
   <a class="menu-link" href="{% url 'admin:logout' %}">
-    <i class="logout" ></i>{% translate 'Log out' %}</a
+    <i class="logout" ></i>{% trans 'Log out' %}</a
   >
 </div>
