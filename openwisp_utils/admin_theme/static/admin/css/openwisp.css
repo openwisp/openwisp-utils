@@ -178,7 +178,6 @@ body.login {
 .login #container {
   box-shadow: 0px 0px 6px #f4f7f6;
 }
-
 td,th{
   padding: 14px 16px;
 }
@@ -236,6 +235,7 @@ td,th{
   border-bottom: 1px solid #00000026;
   justify-content: center;
 }
+
 /* Menu START */
 
 #menu {
