@@ -192,6 +192,11 @@
       </li>
     </ul>
   </div>
+  {% if user.has_usable_password %}
+  <a class="menu-link" href="{% url 'admin:password_change' %}">
+    <i class="lock" ></i>{% trans 'Change password' %}</a
+  >
+  {% endif %}
   <a class="menu-link" href="{% url 'admin:logout' %}">
     <i class="logout" ></i>{% trans 'Log out' %}</a
   >
