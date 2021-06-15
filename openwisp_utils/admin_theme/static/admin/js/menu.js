@@ -1,37 +1,44 @@
 'use strict';
-(function($) {
-  setMenu($);
-  initMenuGroupClickListner($);
-  initToggleMenuHandlers($);
-})(django.jQuery);
+const owContainer = document.getElementById('container');
+const owMenu = document.getElementById("menu");
+const owMainContent = document.getElementById("main-content");
+const owMenuToggle = document.querySelector('.menu-toggle');
 
-function initMenuGroupClickListner($) {
-  $('.menu-group-title').on('click', function (e) {
-    e.stopPropagation();
-    var groupTitle = e.target;
-    ($(groupTitle).parent()).toggleClass('active');
+(function() {
+  setMenu();
+  initMenuGroupClickListener();
+  initToggleMenuHandlers();
+})();
+
+function initMenuGroupClickListener() {
+  let menuGroupTitles = document.querySelectorAll('.menu-group-title');
+  menuGroupTitles.forEach(function(menuGroupTitle) {
+    menuGroupTitle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      e.target.parentElement.classList.toggle('active');
+    });
   });
 }
 
-function setMenu($) {
-  var openMenu = localStorage.getItem('ow-menu');
+function setMenu() {
+  let openMenu = localStorage.getItem('ow-menu');
   if (window.innerWidth > 1024) {
     if(openMenu === null){
       localStorage.setItem('ow-menu', true);
     } else if (openMenu === 'false') {
-      $('#container').toggleClass('toggle-menu');
+      owContainer.classList.toggle('toggle-menu');
     }
   }
   setTimeout(function () {
-    $('#menu').css('transition-duration', '0.3s');
-    $('#main-content').css('transition-duration', '0.3s');
+    owMenu.style.transitionDuration = "0.3s";
+    owMainContent.style.transitionDuration = "0.3s";
   }, 1000);
 }
 
-function initToggleMenuHandlers($) {
+function initToggleMenuHandlers() {
   function toggleMenuHandler(){
-    $('#container').toggleClass('toggle-menu');
-    var isMenuOpen = localStorage.getItem('ow-menu');
+    owContainer.classList.toggle('toggle-menu');
+    let isMenuOpen = localStorage.getItem('ow-menu');
     if (window.innerWidth > 1024) {
       if (isMenuOpen === 'false') {
         isMenuOpen = true;
@@ -41,5 +48,5 @@ function initToggleMenuHandlers($) {
       localStorage.setItem('ow-menu', isMenuOpen);
     }
   }
-  $('.menu-toggle').on('click', toggleMenuHandler);
+  owMenuToggle.addEventListener('click', toggleMenuHandler);
 }
