@@ -1,27 +1,35 @@
 {% load i18n %}
 <div class="nav">
   <a class="menu-link" href="{% url 'admin:index' %}">
-    <i class="home"></i>{% trans 'Home' %}</a>
+    <i class="home"></i>
+    {% trans 'Home' %}
+  </a>
   {% for item in openwisp_menu_groups %}
     {% if item.sub_items %}
       <div class="menu-group">
         <div class="menu-group-title">
-        <div class="menu-group-toggle"><i class="{{ item.icon }}"></i>{{ item.label }}</div>
-        <i class="menu-arrow"></i>
+          <div class="menu-group-toggle">
+            <i class="{{ item.icon }}"></i>
+            {{ item.label }}
+          </div>
+          <i class="menu-arrow"></i>
+        </div>
+        <ul>
+          {% for sub_item in item.sub_items %}
+            <li>
+              <a class="menu-link" href="{{ sub_item.url }}">
+                <i class="{{ sub_item.icon }}"></i>
+                {{ sub_item.label }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
       </div>
-      <ul>
-        {% for sub_item in item.sub_items %}
-          <li>
-            <a class="menu-link" href="{{ sub_item.url }}">
-            <i class="{{ sub_item.icon }}"></i>{{ sub_item.label }}</a></li
-          >
-        {% endfor %}
-      </ul>
-    </div>
     {% else %}
       <a class="menu-link" href="{{ item.url }}">
-        <i class="{{ item.icon }}"></i>{{ item.label }}</a
-      >
+        <i class="{{ item.icon }}"></i>
+        {{ item.label }}
+      </a>
     {% endif %}
   {% endfor %}
   <div class="menu-group">
@@ -68,34 +76,6 @@
   </div>
   <div class="menu-group">
     <div class="menu-group-title">
-      <div class="menu-group-toggle">
-        <i class="controller"></i>Very very very very very very long name
-      </div>
-      <i class="menu-arrow"></i>
-    </div>
-    <ul>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class="template"></i>
-          Very very very very very very very very long name
-        </a>
-      </li>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class=""></i>
-          VPN Servers
-        </a>
-      </li>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class=""></i>
-          Access Creadentials
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div class="menu-group">
-    <div class="menu-group-title">
       <div class="menu-group-toggle"><i class="geo"></i>Logistic</div>
       <i class="menu-arrow"></i>
     </div>
@@ -110,34 +90,6 @@
   </div>
   <div class="menu-group">
     <div class="menu-group-title">
-      <div class="menu-group-toggle">
-        <i class="controller"></i>Very very very very very very long name
-      </div>
-      <i class="menu-arrow"></i>
-    </div>
-    <ul>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class="template"></i>
-          Very very very very very very very very long name
-        </a>
-      </li>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class=""></i>
-          VPN Servers
-        </a>
-      </li>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class=""></i>
-          Access Creadentials
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div class="menu-group">
-    <div class="menu-group-title">
       <div class="menu-group-toggle"><i class="geo"></i>Logistic</div>
       <i class="menu-arrow"></i>
     </div>
@@ -147,34 +99,6 @@
       </li>
       <li>
         <a class="menu-link" href=""><i class="floor"></i>Floorplans</a>
-      </li>
-    </ul>
-  </div>
-  <div class="menu-group">
-    <div class="menu-group-title">
-      <div class="menu-group-toggle">
-        <i class="controller"></i>Very very very very very very long name
-      </div>
-      <i class="menu-arrow"></i>
-    </div>
-    <ul>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class="template"></i>
-          Very very very very very very very very long name
-        </a>
-      </li>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class=""></i>
-          VPN Servers
-        </a>
-      </li>
-      <li>
-        <a class="menu-link" href="{% url 'admin:index' %}">
-          <i class=""></i>
-          Access Creadentials
-        </a>
       </li>
     </ul>
   </div>
@@ -194,10 +118,12 @@
   </div>
   {% if user.has_usable_password %}
   <a class="menu-link" href="{% url 'admin:password_change' %}">
-    <i class="lock" ></i>{% trans 'Change password' %}</a
-  >
+    <i class="lock"></i>
+    {% trans 'Change password' %}
+  </a>
   {% endif %}
   <a class="menu-link" href="{% url 'admin:logout' %}">
-    <i class="logout" ></i>{% trans 'Log out' %}</a
-  >
+    <i class="logout"></i>
+    {% trans 'Log out' %}
+  </a>
 </div>
