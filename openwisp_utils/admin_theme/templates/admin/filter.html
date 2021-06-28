@@ -1,0 +1,23 @@
+{% load i18n %}
+<div class="ow-filter">
+  <div class="filter-title">
+    <h3>{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</h3>
+    {% for choice in choices %}
+      {% if choice.selected %}
+        <div class="selected-option">
+          {{ choice.display }}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="filter-options">
+    {% for choice in choices %}
+      <label for="{{ title }}{{choice.display}}" {% if choice.selected %} class="selected"{% endif %} >{{ choice.display }}</label>
+      <input type="radio" name="{{ title }}" id="{{ title }}{{choice.display}}"
+      {% if choice.selected %}
+      checked
+      {% endif %}
+      value="{{ choice.query_string|iriencode }}">
+    {% endfor %}
+  </div>
+</div>
