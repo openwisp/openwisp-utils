@@ -1,2 +1,4 @@
 <div style="display:none">Testing dashboard</div>
-<div style="display:none">{{ test_extra_config }}</div>
+{% if test_extra_config %}
+    <div style="display:none">{{ test_extra_config }}</div>
+{% endif %}
