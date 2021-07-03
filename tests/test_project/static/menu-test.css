@@ -1,4 +1,4 @@
-.user-icon{
+/* .user-icon{
   background-image: url('./icons/user.png');
 }
 .add-icon{
@@ -13,9 +13,35 @@
 .key{
   background-image: url('./icons/key.png');
 }
-.shelf-icon{
-  background-image: url('./icons/shelf.png');
-}
+
 .link{
   background-image: url('./icons/link.png');
+} */
+.auth {
+  mask-image: url("./icons/auth.svg");
+  -webkit-mask-image: url("./icons/auth.svg");
+}
+.shelf {
+  mask-image: url("./icons/shelf.svg");
+  -webkit-mask-image: url("./icons/shelf.svg");
+}
+.docs {
+  mask-image: url("./icons/docs.svg");
+  -webkit-mask-image: url("./icons/docs.svg");
+}
+.code {
+  mask-image: url("./icons/code.svg");
+  -webkit-mask-image: url("./icons/code.svg");
+}
+.link {
+  mask-image: url("./icons/link.svg");
+  -webkit-mask-image: url("./icons/link.svg");
+}
+.user {
+  mask-image: url("./icons/user.svg");
+  -webkit-mask-image: url("./icons/user.svg");
+}
+.add-user {
+  mask-image: url("./icons/add-user.svg");
+  -webkit-mask-image: url("./icons/add-user.svg");
 }

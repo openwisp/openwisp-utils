@@ -1,45 +1,44 @@
 body {
   min-width: 320px;
-  background: #f4f7f6;
 }
 .button.default,
-input[type="submit"].default,
+input[type='submit'].default,
 .submit-row input.default,
 .object-tools a:focus,
 .object-tools a:hover {
   background-color: #333;
 }
 .button.default:active,
-input[type="submit"].default:active,
+input[type='submit'].default:active,
 .button.default:focus,
-input[type="submit"].default:focus,
+input[type='submit'].default:focus,
 .button.default:hover,
-input[type="submit"].default:hover {
+input[type='submit'].default:hover {
   background-color: #000;
 }
-div.breadcrumbs {
-  color: #ffcbc0;
+#main-content .breadcrumbs {
+  background-color: #fff;
+  border-bottom: 2px solid #eaeaea;
 }
-div.breadcrumbs a:focus,
-div.breadcrumbs a:hover {
-  color: #ffe8e3;
+#main-content .breadcrumbs a {
+  color: #747272;
 }
 .button,
-input[type="submit"],
-input[type="button"],
+input[type='submit'],
+input[type='button'],
 .submit-row input,
 a.button {
   background-color: #666;
 }
 .button:active,
-input[type="submit"]:active,
-input[type="button"]:active,
+input[type='submit']:active,
+input[type='button']:active,
 .button:focus,
-input[type="submit"]:focus,
-input[type="button"]:focus,
+input[type='submit']:focus,
+input[type='button']:focus,
 .button:hover,
-input[type="submit"]:hover,
-input[type="button"]:hover {
+input[type='submit']:hover,
+input[type='button']:hover {
   background-color: #444;
 }
 #user-tools a:focus,
@@ -87,7 +86,7 @@ a:hover {
 
 /* hide first delete link, hide save and add anoher */
 #main .submit-row:first-child .deletelink-box,
-.submit-row input[name="_addanother"] {
+.submit-row input[name='_addanother'] {
   display: none;
 }
 #main .submit-row .default {
@@ -178,11 +177,21 @@ body.login {
 .login #container {
   box-shadow: 0px 0px 6px #f4f7f6;
 }
-td,th{
-  padding: 14px 16px;
-}
-#changelist-form .paginator, #main-content #changelist-form .actions{
-  width: auto;
+
+/*
+  Common button style for all
+  buttons having a toggle effect
+*/
+.toggle-button {
+  display: flex;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0px 1px 2px #00000040;
+  border-radius: 4px;
+  background: #ffff;
+  cursor: pointer;
+  border: 0px;
 }
 
 /* MAIN CONTENT START */
@@ -201,65 +210,72 @@ td,th{
 
 /* HEADER START */
 
-#header {
-  background: transparent;
-  position: -webkit-sticky;
-  position: sticky;
+#main-content #header {
   top: 0px;
+  position: sticky;
+  width: 100%;
+  padding: 0px;
+  overflow: visible;
   z-index: 100;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
-.menu-toggle {
-  background: url(../../ui/openwisp/images/menu.png);
-  background-size: 30px 30px;
-  height: 30px;
-  width: 30px;
+
+/* 
+  NOTE:
+  "menu-toggle" is a class of a button which is use to close menu.
+  "toggle-menu" is a class toggled on "#contianer" when menu changes it state.
+*/
+
+/* MENU TOGGLE BUTTONS */
+
+.hamburger {
+  padding: 13px 12px;
   cursor: pointer;
-  background-position: center;
-  display: inline-block;
-  background-repeat: no-repeat;
-  margin-left: -5px;
-}
-#branding,
-.login .menu-toggle,
-#header.hide {
+  justify-content: center;
+  align-items: center;
   display: none;
 }
-.login #branding {
-  display: block;
+.hamburger:hover {
+  background: #efefef;
 }
-.login #main-content #header {
+.hamburger i {
+  background: url(../../ui/openwisp/images/hamburger.svg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  height: 22px;
+  width: 22px;
+  display: inline-block;
+}
+.menu-toggle {
+  position: absolute;
+  right: -20px;
+  bottom: 50px;
+  width: 40px;
+  z-index: 1;
+}
+.menu-toggle i {
+  mask-image: url(../../ui/openwisp/images/left-arrow.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/left-arrow.svg);
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  background: #747272;
+  height: 22px;
+  width: 22px;
+}
+.toggle-menu .menu-toggle {
+  display: none;
+}
+.toggle-menu .hamburger {
   display: flex;
-  border-bottom: 1px solid #00000026;
-  justify-content: center;
 }
 
-/* Menu START */
+/* MENU START */
 
-#menu {
-  position: fixed;
-  width: 300px;
-  background: #fff;
-  height: 100vh;
-  z-index: 100;
-  box-shadow: 0 1px 4px -1px #00000026;
-  top: 0px;
-  left: 0px;
-  overflow: hidden;
+h1#site-name {
+  margin: 0px;
+  padding: 8px 0px;
 }
-#menu .nav {
-  height: calc(100% - 156px);
-  overflow-y: auto;
-  overflow-y: overlay;
-}
-.head h1 {
-  margin: auto;
-  padding: 15px 0px;
-}
-.head h1 a,
-#branding h1 a {
+#site-name a {
   display: block;
   width: 150px;
   height: 86px;
@@ -270,120 +286,431 @@ td,th{
   no-repeat scroll 0 50%/100%;
   text-indent: -2000px;
 }
-.user-tools {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid #00000026;
-  border-top: 1px solid #00000026;
-  padding: 8px 0;
-  width: 80%;
-  margin: auto;
-  margin-top: 8px;
+#menu {
+  position: fixed;
+  width: 300px;
+  background: #fcfcfc;
+  height: 100vh;
+  z-index: 100;
+  box-shadow: 0 1px 4px -1px #00000026;
+  top: 0px;
+  left: 0px;
+  overflow: visible;
 }
-.user-tools .user {
-  background: transparent url(../../ui/openwisp/images/user.png) no-repeat
-  scroll 0 50%;
-  background-size: 10px 10px;
-  padding-left: 18px;
+.login #menu {
+  box-shadow: none;
+}
+.menu-bar {
+  border-bottom: 2px solid #f6f6f6;
+}
+#menu .nav {
+  height: calc(100% - 118px);
+  overflow-y: hidden;
+  color: #747272;
+  padding: 10px 10px 0px 10px;
+}
+#menu .nav:hover {
+  overflow-y: scroll;
+  overflow-y: overlay;
+}
+a.menu-item,
+.mg-list a,
+.mg-head {
+  display: flex;
+  padding: 16px 12px;
+  word-break: break-word;
   cursor: pointer;
-}
-.toggle-menu #menu {
-  margin-left: -300px;
-}
-.toggle-menu #main-content {
-  margin-left: 0px;
-}
-.menu-link i,
-.menu-group-toggle i {
-  background-repeat: no-repeat;
-  background-position-y: center;
-  background-size: 15px 15px;
-  width: 17px;
-  height: 17px;
-  margin-right: 30px;
-  flex-shrink: 0;
-}
-.menu-group-toggle {
-  display: flex;
+  border-radius: 8px;
+  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   align-items: center;
+  width: 248px;
+  margin: auto;
+  margin-top: 2px;
 }
-.menu-group-toggle,
-.menu-link i,
+.menu-item i,
+.mg-heading i,
+.mg-list a i {
+  background: #747272;
+  width: 22px;
+  height: 22px;
+  margin-right: 22px;
+  flex-shrink: 0;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 22px;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 22px;
+}
+.menu-item:hover,
+.mg-head:hover,
+.mg-list a:hover {
+  color: #f85359;
+  background: #eee;
+}
+.menu-item:hover i,
+.mg-head:hover i,
+.mg-list a:hover i,
+.menu-group.active .mg-head i {
+  background: #f85359;
+}
+.mg-head {
+  justify-content: space-between;
+}
+.mg-dropdown-label {
+  text-transform: uppercase;
+}
+.special-label {
+  position: fixed;
+  left: 70px;
+  background: #747272;
+  color: white;
+  max-width: 280px;
+  padding: 10px 12px;
+  display: none;
+  border-radius: 3px;
+}
+.show-sp-label {
+  display: block;
+}
+.menu-group {
+  border-radius: 8px;
+}
+.mg-list a {
+  font-weight: 300;
+  font-size: 14px;
+  padding: 4px 12px;
+  text-transform: capitalize;
+}
+.menu-arrow {
+  flex-shrink: 0;
+  mask-image: url(../../ui/openwisp/images/down-arrow.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/down-arrow.svg);
+  background-size: 20px;
+  height: 20px;
+  width: 20px;
+  margin-left: 20px;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background: #747272;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.mg-list {
+  padding: 0px;
+  overflow: hidden;
+  margin: 0px;
+  transition: height 0.05s;
+  margin-top: -10px;
+}
+.mg-list li {
+  list-style: none;
+}
+.mg-heading,
+.mg-list i,
 .menu-arrow {
   pointer-events: none;
 }
-a.menu-link,
-.menu-group-title {
+.menu-group.active .mg-dropdown {
+  display: block;
+}
+.mg-heading {
   display: flex;
-  padding: 22px 10%;
-  word-break: break-word;
-  color: #333;
-  cursor: pointer;
-  text-transform: uppercase;
-  font-size: 14px;
-  font-weight: 600;
   align-items: center;
 }
-.menu-group-title {
-  justify-content: space-between;
-  align-items: center;
+.menu-group.active .mg-head {
+  color: #f85359;
 }
-.menu-group-title:hover,
-.menu-link:hover {
-  background-color: #f1f2f2;
+.toggle-menu #menu {
+  width: 60px;
 }
-.active .menu-arrow {
-  -webkit-transform: rotate(0deg);
-  transform: rotate(0deg);
+.toggle-menu #menu .nav {
+  height: calc(100% - 48px);
 }
-.menu-arrow {
-  flex-shrink: 0;
-  background: url(../../ui/openwisp/images/arrow.png);
-  background-size: 10px 10px;
-  height: 15px;
-  width: 15px;
-  margin-left: 20px;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  -webkit-transform: rotate(90deg);
-  transform: rotate(90deg);
+.toggle-menu #main-content {
+  margin-left: 60px;
 }
-.menu-group ul li {
+.toggle-menu .menu-item i,
+.toggle-menu .mg-heading i {
+  margin: 0px;
+}
+.toggle-menu .menu-item,
+.toggle-menu .mg-head {
+  justify-content: center;
+  border-radius: 0px;
+  width: auto;
+}
+.toggle-menu #menu .nav {
+  padding: 0px;
+}
+.toggle-menu .menu-label,
+.toggle-menu .menu-arrow,
+.toggle-menu #site-name,
+.mg-dropdown,
+.toggle-menu .menu-group.active .menu-label,
+.mg-dropdown-label {
+  display: none;
+}
+.toggle-menu .mg-dropdown {
+  position: absolute;
+  display: block;
+  left: 64px;
+  visibility: hidden;
+}
+.toggle-menu .mg-dropdown-label {
+  display: block;
+  color: #fff;
+  background: #747272;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+.toggle-menu .mg-list {
+  background: #eee;
+  border-radius: 8px;
+  padding: 10px 0px;
+  margin-top: 2px;
+}
+.toggle-menu .mg-head i {
+  background: #747272;
+}
+.toggle-menu .menu-group {
+  border-radius: 0px;
+}
+.menu-group.active .menu-arrow {
+  transform: rotate(-90deg);
+}
+.menu-group.active {
+  background: #eee;
+}
+.toggle-menu .menu-group.active .mg-dropdown {
+  position: fixed;
+  visibility: visible;
+}
+.toggle-menu .menu-item:hover i,
+.toggle-menu .menu-group-head:hover i {
+  background: #747272;
+}
+
+/* USER TOOLS */
+
+#ow-user-tools {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  color: #747272;
+  display: flex;
+  z-index: 10;
+}
+.account-menu {
+  position: absolute;
+  width: 200px;
+  top: 40px;
+  right: 0px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0px 1px 3px #00000040;
+  z-index: 10;
+  padding: 10px;
+}
+#ow-user-tools i {
+  height: 22px;
+  width: 22px;
+  display: inline-block;
+  background: #797572;
+  margin-right: 10px;
+}
+.account-button {
+  height: auto;
+  padding: 5px 8px;
+  position: relative;
+}
+.account-menu li {
   list-style: none;
+  margin-bottom: 5px;
+  border-bottom: 2px solid #f6f6f6;
+  padding: 6px 0px;
 }
-.menu-group ul {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  height: 0px;
+.account-menu-username {
+  justify-content: center;
+  align-items: center;
+  display: none;
 }
-.active ul {
-  height: 100%;
+#header .account-menu a {
+  color: #747272;
+  display: flex;
 }
-.menu-group .menu-link {
-  text-transform: capitalize;
-  font-weight: 400;
+#header .account-menu li:last-child {
+  border-bottom: 0px;
+}
+.account {
+  position: relative;
+}
+.nav-show-mg {
+  overflow: visible !important;
 }
 
 /* RESPONSIVE */
 
 @media (max-width: 1024px) {
+  #main-content {
+    margin-left: 60px;
+  }
+  #main-content .breadcrumbs {
+    padding: 16px 20px;
+  }
   #main-content #header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    padding: 0px;
   }
   #menu {
-    margin-left: -300px;
+    width: 60px;
   }
-  .toggle-menu #menu {
-    margin-left: 0px;
-  }
-  #main-content {
-    margin-left: 0px;
+  .hamburger {
+    display: flex;
   }
 
+  .menu-item i,
+  .mg-heading i {
+    margin: 0px;
+  }
+  .menu-item:hover i,
+  .mg-head:hover i {
+    background: #747272;
+  }
+  a.menu-item,
+  .mg-head {
+    justify-content: center;
+    word-break: keep-all;
+    border-radius: 0px;
+    width: auto;
+  }
+
+  .menu-group {
+    border-radius: 0px;
+  }
+
+  #menu .nav {
+    padding: 0px;
+    height: calc(100% - 48px);
+  }
+
+  .mg-list {
+    left: 70px;
+    width: 280px;
+    background: #eee;
+    border-radius: 8px;
+    display: none;
+    padding: 10px 0px;
+    margin-top: 0px;
+  }
+
+  .menu-group.active .mg-list {
+    display: block;
+    height: auto;
+  }
+  .menu-group.active .menu-label {
+    display: none;
+  }
+  .mg-dropdown {
+    position: absolute;
+    left: 70px;
+    width: 280px;
+    display: none;
+  }
+  .menu-group.active .mg-dropdown-label {
+    display: block;
+    margin-bottom: 2px;
+    background: #747272;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .toggle-menu .hamburger,
+  .menu-label,
+  .menu-arrow,
+  .menu-toggle,
+  #site-name {
+    display: none;
+  }
+  .toggle-menu #menu {
+    width: 300px;
+  }
+  .toggle-menu #site-name {
+    display: block;
+  }
+  .toggle-menu .menu-toggle {
+    display: flex;
+  }
+  .toggle-menu .menu-item i,
+  .toggle-menu .mg-heading i {
+    margin-right: 22px;
+  }
+  .toggle-menu .menu-group {
+    border-radius: 8px;
+  }
+  .toggle-menu .menu-label {
+    display: block;
+  }
+  .toggle-menu .menu-arrow {
+    display: flex;
+  }
+  .toggle-menu #menu .nav {
+    padding: 0px 10px;
+    padding-top: 10px;
+    width: auto;
+    height: calc(100% - 118px);
+  }
+
+  .toggle-menu .menu-item:hover i,
+  .toggle-menu .mg-head:hover i {
+    background: #f85359;
+  }
+  .toggle-menu .menu-group.active .menu-label {
+    display: block !important;
+  }
+
+  .toggle-menu .menu-group .mg-dropdown .mg-dropdown-label {
+    display: none;
+  }
+  .toggle-menu .menu-group.active .mg-dropdown {
+    position: relative;
+    left: 0;
+    margin-top: 0px;
+  }
+  .toggle-menu .menu-group.active .menu-label {
+    display: block;
+  }
+
+  .toggle-menu .menu-group.active .menu-arrow {
+    transform: rotate(-90deg);
+  }
+  .toggle-menu .menu-item,
+  .toggle-menu .mg-heading a {
+    justify-content: flex-start;
+    border-radius: 8px;
+  }
+  .toggle-menu .mg-head {
+    justify-content: space-between;
+    border-radius: 8px;
+    word-break: break-word;
+    width: 248px;
+  }
+
+  .toggle-menu .mg-list {
+    position: relative;
+    display: block;
+    left: 0;
+    padding: 0px;
+    height: 0px;
+  }
+  .toggle-menu .menu-group.active .mg-list {
+    position: relative;
+    width: auto;
+    padding: 0px;
+    left: 0px;
+    margin-top: -10px;
+  }
   .toggle-menu #main-content {
     margin-left: 300px;
   }
@@ -398,79 +725,156 @@ a.menu-link,
     overflow-y: scroll;
     overflow-x: hidden;
   }
-  #header{
+  .toggle-menu .hamburger {
+    display: flex;
+  }
+  h1#site-name {
+    margin-left: 10px;
+  }
+  #menu {
+    height: 56px;
+  }
+  #header {
+    margin-bottom: 56px;
+  }
+  #header.m-0 {
+    margin: 0px;
+  }
+  #menu .nav {
+    height: 0px;
+  }
+  .toggle-menu #menu .nav {
+    height: calc(100% - 68px);
+    overflow-y: auto;
+    overflow-y: overlay;
+  }
+  #header {
     background: #fff;
   }
-  #branding {
+  #ow-user-tools {
+    top: 12px;
+  }
+  .head {
+    display: flex;
+
+    /* width: 100%; */
+  }
+  #site-name {
     display: block;
   }
-  .menu-bar {
-    display: none;
-  }
-  #branding #site-name a {
-    width: 32px;
-    height: 32px;
+  #site-name a {
+    width: 40px;
+    height: 40px;
     background-repeat: no-repeat !important;
     background: url(../../../static/ui/openwisp/images/openwisp-logo-small.svg);
   }
-  .login #branding #site-name a {
-    width: 150px;
-    height: 86px;
-    margin: auto;
-    background-repeat: no-repeat;
-    background-position: center;
-    background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  a.menu-item,
+  .mg-list a {
+    justify-content: flex-start;
+  }
+  .menu-item i,
+  .mg-heading i {
+    margin-right: 22px;
+  }
+  .mg-head {
+    justify-content: space-between;
+  }
+  .menu-item .menu-label,
+  .mg-head.menu-label {
+    display: block;
+    position: relative;
+    left: 0px;
+    background: inherit;
+    color: inherit;
+  }
+  .menu-arrow {
+    display: flex;
+  }
+
+  .menu-item:hover i,
+  .menu-group-head:hover i {
+    background: #f85359;
+  }
+  .menu-group.active .mg-list {
+    position: relative;
+    width: auto;
+    left: 0;
   }
   #menu {
     margin-left: 0px;
     width: 100%;
-    height: 0px;
-    top: 72px;
   }
   .toggle-menu #menu {
     margin: 0px;
     height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    min-width: 306px;
   }
   #main-content,
   .toggle-menu #main-content {
     margin: 0px;
   }
-  a.menu-link,
-  .menu-group-title {
-    padding: 15px;
+
+  .toggle-menu .mg-head {
+    width: auto;
   }
-  #menu .nav {
-    height: calc(100% - 72px);
+  .menu-toggle {
+    display: none !important;
+  }
+  .account-button {
+    padding: 5px 8px;
+  }
+  .account-button strong {
+    display: none;
+  }
+  #ow-user-tools .account-button .user {
+    margin: 0px;
+  }
+  .account-menu-username {
+    display: flex;
   }
 }
 
+/* LOGIN PAGE */
+.hide {
+  display: none;
+}
+.login #menu {
+  position: relative;
+  height: auto;
+  width: 100%;
+}
+.login .head {
+  display: block;
+}
+.login #site-name {
+  display: block;
+}
+.login #site-name a {
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
+  no-repeat scroll 0 50%/100%;
+  text-indent: -2000px;
+  width: 150px;
+  height: 86px;
+  margin: auto;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.login .hamburger {
+  display: none;
+}
+
 /* ICONS */
-.controller {
-  background: url(../../ui/openwisp/images/controller.png);
-}
-.config {
-  background: url(../../ui/openwisp/images/config.png);
-}
-.floor {
-  background: url(../../ui/openwisp/images/floor.png);
-}
-.geo {
-  background: url(../../ui/openwisp/images/geo.png);
-}
 .home {
-  background: url(../../ui/openwisp/images/home.png);
+  mask-image: url(../../ui/openwisp/images/dashboard.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/dashboard.svg);
 }
-.location {
-  background: url(../../ui/openwisp/images/location.png);
-  background-size: 20px 20px !important;
-}
-.lock {
-  background: url(../../ui/openwisp/images/lock.png);
-}
-.template {
-  background: url(../../ui/openwisp/images/template.png);
+.password {
+  mask-image: url(../../ui/openwisp/images/password.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/password.svg);
 }
 .logout {
-  background: url(../../ui/openwisp/images/logout.png);
+  mask-image: url(../../ui/openwisp/images/logout.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/logout.svg);
 }

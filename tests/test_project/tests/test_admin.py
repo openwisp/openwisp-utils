@@ -105,12 +105,12 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
     def test_context_processor(self):
         url = reverse('admin:index')
         response = self.client.get(url)
-        self.assertContains(response, 'class="shelf-icon"')
+        self.assertContains(response, '<i class="shelf">')
 
     def test_superuser_always_sees_menu_items(self):
         url = reverse('admin:index')
         r = self.client.get(url)
-        self.assertContains(r, 'class="shelf-icon"')
+        self.assertContains(r, '<i class="shelf">')
 
     def test_operator_with_perm_can_see_menu_item(self):
         user = User.objects.create(
@@ -126,7 +126,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.client.force_login(user)
         url = reverse('admin:index')
         r = self.client.get(url)
-        self.assertContains(r, 'class="shelf-icon"')
+        self.assertContains(r, '<i class="shelf">')
 
     def test_operator_without_perm_cant_see_menu_item(self):
         user = User.objects.create(
@@ -139,18 +139,18 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.client.force_login(user)
         url = reverse('admin:index')
         r = self.client.get(url)
-        self.assertNotContains(r, 'class="shelf-icon"')
+        self.assertNotContains(r, '<i class="shelf">')
 
-    def test_menu_visibility(self):
-        with self.subTest("Test menu is visible when user is logged in"):
+    def test_menu_items_visibility(self):
+        with self.subTest("Test menu items are visible when user is logged in"):
             url = reverse('admin:index')
             response = self.client.get(url)
-            self.assertContains(response, 'id="menu"')
+            self.assertContains(response, 'class="nav"')
 
-        with self.subTest("Test menu is not visible when user is not logged in"):
+        with self.subTest("Test menu items are not visible when user is not logged in"):
             self.client.logout()
             response = self.client.get('/admin/login/')
-            self.assertNotContains(response, 'id="menu"')
+            self.assertNotContains(response, 'id="nav"')
 
     def test_uuid_field_in_change(self):
         p = Project.objects.create(name='test-project')

@@ -98,18 +98,17 @@ class TestAppConfig(ApiAppConfig):
                     'label': 'Add user',
                     'model': 'auth.User',
                     'name': 'add',
-                    'icon': 'add-icon',
+                    'icon': 'add-user',
                 },
                 1: {
                     'model': 'auth.User',
                     'name': 'changelist',
-                    'icon': 'edit',
+                    'icon': 'user',
                     'label': _('Users'),
                 },
             },
-            'icon': 'user-icon',
+            'icon': 'auth',
         }
-
         docs_config = {
             'label': _('Docs'),
             'items': {
@@ -121,21 +120,36 @@ class TestAppConfig(ApiAppConfig):
                 2: {
                     'label': _('Code'),
                     'url': 'https://openwisp.org/thecode.html',
-                    'icon': 'link',
+                    'icon': 'code',
                 },
             },
+            'icon': 'docs',
         }
-
         register_menu_group(
             position=1,
             config={
                 'model': 'test_project.Shelf',
                 'name': 'changelist',
                 'label': _('Shelfs'),
-                'icon': 'shelf-icon',
+                'icon': 'shelf',
             },
         )
-
         register_menu_group(position=2, config=auth_config)
-
         register_menu_group(position=3, config=docs_config)
+
+        # TODO: remove everything below it before merging
+        register_menu_group(position=4, config=auth_config)
+        register_menu_group(position=5, config=docs_config)
+        register_menu_group(position=6, config=auth_config)
+        register_menu_group(position=7, config=docs_config)
+        register_menu_group(position=8, config=auth_config)
+        register_menu_group(position=9, config=docs_config)
+        register_menu_group(position=10, config=auth_config)
+        register_menu_group(position=12, config=docs_config)
+        register_menu_group(position=13, config=docs_config)
+        register_menu_group(position=14, config=auth_config)
+        register_menu_group(position=15, config=docs_config)
+        register_menu_group(position=16, config=docs_config)
+        register_menu_group(position=17, config=docs_config)
+        register_menu_group(position=18, config=auth_config)
+        register_menu_group(position=19, config=docs_config)

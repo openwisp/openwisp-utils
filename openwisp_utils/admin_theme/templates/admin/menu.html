@@ -1,45 +1,45 @@
 {% load i18n %}
+<button title="close Menu" class="toggle-button menu-toggle">
+  <i></i>
+</button>
+<span class="special-label"></span>
 <div class="nav">
-  <a class="menu-link" href="{% url 'admin:index' %}">
+  <a class="menu-item" href="{% url 'admin:index' %}">
     <i class="home"></i>
-    {% trans 'Home' %}
+    <span class="menu-label">{% trans 'Home' %}</span>
   </a>
-  {% for item in openwisp_menu_groups %}
-    {% if item.sub_items %}
-      <div class="menu-group">
-        <div class="menu-group-title">
-          <div class="menu-group-toggle">
-            <i class="{{ item.icon }}"></i>
-            {{ item.label }}
-          </div>
-          <i class="menu-arrow"></i>
-        </div>
-        <ul>
-          {% for sub_item in item.sub_items %}
-            <li>
-              <a class="menu-link" href="{{ sub_item.url }}">
-                <i class="{{ sub_item.icon }}"></i>
-                {{ sub_item.label }}
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% else %}
-      <a class="menu-link" href="{{ item.url }}">
+  {% for item in openwisp_menu_groups %} {% if item.sub_items %}
+  <div class="menu-group">
+    <div class="mg-head">
+      <div class="mg-heading">
         <i class="{{ item.icon }}"></i>
-        {{ item.label }}
-      </a>
-    {% endif %}
-  {% endfor %}
-  {% if user.has_usable_password %}
-  <a class="menu-link" href="{% url 'admin:password_change' %}">
-    <i class="lock"></i>
-    {% trans 'Change password' %}
+        <span class="menu-label">{{ item.label }}</span>
+      </div>
+      <i class="menu-arrow"></i>
+    </div>
+    <div class="mg-dropdown">
+      <div class="mg-dropdown-label">{{ item.label }}</div>
+      <ul class="mg-list">
+        {% for sub_item in item.sub_items %}
+        <li>
+          <a href="{{ sub_item.url }}">
+            <i class="{{ sub_item.icon }}"></i>
+            <span>{{ sub_item.label }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% else %}
+  <a id="i" class="menu-item" href="{{ item.url }}">
+    <i class="{{ item.icon }}"></i>
+    <span class="menu-label">{{ item.label }}</span>
   </a>
-  {% endif %}
-  <a class="menu-link" href="{% url 'admin:logout' %}">
-    <i class="logout"></i>
-    {% trans 'Log out' %}
+  {% endif %} {% endfor %}
+   {% comment %} TODO: Remove below link before merge {%endcomment %}
+  <a class="menu-item" href="{% url 'admin:index' %}">
+    <i class="home"></i>
+    <span class="menu-label">{% trans 'Home' %}</span>
   </a>
 </div>

@@ -18,23 +18,41 @@
 
 {% block menu-bar %}
   <div class="head">
-    <h1><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
-  </div>
-{% endblock %}
-{% block user-tools %}
-  <div class="user-tools">
-    <span class="user">
-      <strong>{% firstof user.get_short_name user.get_username %}</strong>
-    </span>
-  </div>
-{% endblock %}
-{% block menu %}{% include "./menu.html" %}{% endblock %}
-{% block branding %}
-  <i class="menu-toggle"></i>
-  <div id="branding">
+    <span class="hamburger"><i></i></span>
     <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
   </div>
+{% endblock %}
+
+{% block user-tools %}
+  <div  class="account">
+    <button title="account" type="button" class="account-button toggle-button tooltip-sm">
+      <i class="user"></i>
+      <strong>{% firstof user.get_short_name user.get_username %}</strong>
+    </button>
+    <ul class="account-menu hide">
+      <li class="account-menu-username">
+        <i class="user"></i>
+        <strong>{% firstof user.get_short_name user.get_username %}</strong>
+      </li>
+      {% if user.has_usable_password %}
+      <li>
+        <a href="{% url 'admin:password_change' %}">
+          <i class="password"></i>
+          {% trans 'Change password' %}
+        </a>
+      </li>
+      {% endif %}
+      <li>
+        <a class="menu-link" href="{% url 'admin:logout' %}">
+          <i class="logout"></i>
+          {% trans 'Log out' %}
+        </a>
+      </li>
+    </ul>
+  </div>
 {% endblock  %}
+{% block menu %}{% include "./menu.html" %}{% endblock %}
+
 {% block footer %}
 <div id="ow-loading" class="ow-overlay">
   <div class="ow-overlay-inner">
