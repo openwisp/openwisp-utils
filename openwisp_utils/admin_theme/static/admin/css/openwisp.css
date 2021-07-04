@@ -883,6 +883,10 @@ a.menu-item,
 }
 
 /* UTILS ICONS */
+.user{
+  mask-image: url(../../ui/openwisp/images/user.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/user.svg);
+}
 .home {
   mask-image: url(../../ui/openwisp/images/dashboard.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/dashboard.svg);

@@ -1,22 +1,3 @@
-/* .user-icon{
-  background-image: url('./icons/user.png');
-}
-.add-icon{
-  background-image: url('./icons/add.png');
-}
-.edit{
-  background-image: url('./icons/edit.png');
-}
-.lock{
-  background-image: url('./icons/lock.png');
-}
-.key{
-  background-image: url('./icons/key.png');
-}
-
-.link{
-  background-image: url('./icons/link.png');
-} */
 .auth {
   mask-image: url("./icons/auth.svg");
   -webkit-mask-image: url("./icons/auth.svg");
@@ -36,10 +17,6 @@
 .link {
   mask-image: url("./icons/link.svg");
   -webkit-mask-image: url("./icons/link.svg");
-}
-.user {
-  mask-image: url("./icons/user.svg");
-  -webkit-mask-image: url("./icons/user.svg");
 }
 .add-user {
   mask-image: url("./icons/add-user.svg");
