@@ -882,7 +882,7 @@ a.menu-item,
   display: none;
 }
 
-/* ICONS */
+/* UTILS ICONS */
 .home {
   mask-image: url(../../ui/openwisp/images/dashboard.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/dashboard.svg);
@@ -894,4 +894,46 @@ a.menu-item,
 .logout {
   mask-image: url(../../ui/openwisp/images/logout.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/logout.svg);
+}
+
+/* USERS ICONS */
+
+.ow-users {
+  mask-image: url(../../ui/openwisp/images/users.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/users.svg);
+}
+.ow-org {
+  mask-image: url(../../ui/openwisp/images/org.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/org.svg);
+}
+.ow-org-user {
+  mask-image: url(../../ui/openwisp/images/org-user.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/org-user.svg);
+}
+.ow-org-owner {
+  mask-image: url(../../ui/openwisp/images/org-owner.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/org-owner.svg);
+}
+.ow-user-and-org {
+  mask-image: url(../../ui/openwisp/images/user-and-org.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/user-and-org.svg);
+}
+
+/* CONTROLLER ICONS */
+
+.ow-config {
+  mask-image: url(../../ui/openwisp/images/config.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/config.svg);
+}
+.ow-device{
+  mask-image: url(../../ui/openwisp/images/device.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/device.svg);
+}
+.ow-template {
+  mask-image: url(../../ui/openwisp/images/template.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/template.svg);
+}
+.ow-vpn {
+  mask-image: url(../../ui/openwisp/images/vpn.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/vpn.svg);
 }
