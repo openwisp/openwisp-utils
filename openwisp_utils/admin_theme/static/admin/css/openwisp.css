@@ -310,7 +310,7 @@ h1#site-name {
   padding: 10px 10px 0px 10px;
 }
 #menu .nav:hover {
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-y: overlay;
 }
 a.menu-item,
@@ -656,8 +656,7 @@ a.menu-item,
     display: flex;
   }
   .toggle-menu #menu .nav {
-    padding: 0px 10px;
-    padding-top: 10px;
+    padding: 10px 10px 0px 10px;
     width: auto;
     height: calc(100% - 118px);
   }

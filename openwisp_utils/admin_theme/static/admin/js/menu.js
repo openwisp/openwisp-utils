@@ -131,8 +131,10 @@ function initMenuHelpers() {
   // Hide dropdown when window is resized
   window.addEventListener('resize', function () {
     var currentActiveGroup = document.querySelector('.menu-group.active');
-    currentActiveGroup.classList.remove('active');
-    currentActiveGroup.querySelector('.mg-dropdown').style = '';
+    if (currentActiveGroup) {
+      currentActiveGroup.classList.remove('active');
+      currentActiveGroup.querySelector('.mg-dropdown').style = '';
+    }
   });
 }
 
