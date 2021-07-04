@@ -45,7 +45,7 @@ function initMenuGroupClickListener() {
         } else {
           // Not sufficient space to show dropdown at the right of menu icon
           dropdown.style.top =
-            elementPosY - navScrollPos - dropdownHeight + 50 + 'px';
+            elementPosY - navScrollPos - dropdownHeight + 10 + 'px';
         }
         if (owGroupHead && owGroupHead === mgHead) {
           // Hide the special label

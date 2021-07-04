@@ -371,6 +371,7 @@ a.menu-item,
   padding: 10px 12px;
   display: none;
   border-radius: 3px;
+  z-index: 2;
 }
 .show-sp-label {
   display: block;
@@ -600,7 +601,8 @@ a.menu-item,
     width: 280px;
     background: #eee;
     border-radius: 8px;
-    display: none;
+
+    /* display: none; */
     padding: 10px 0px;
     margin-top: 0px;
   }
@@ -612,11 +614,26 @@ a.menu-item,
   .menu-group.active .menu-label {
     display: none;
   }
+  .mg-dropdown-label{
+    display: block;
+    color: #fff;
+    background: #747272;
+    padding: 10px 14px;
+    border-radius: 8px;
+  }
+  .toggle-menu .mg-dropdown-label{
+    display: none;
+  }
   .mg-dropdown {
     position: absolute;
     left: 70px;
     width: 280px;
-    display: none;
+    visibility: hidden;
+    display: block;
+  }
+  .menu-group.active .mg-dropdown {
+    visibility: visible;
+    position: fixed;
   }
   .menu-group.active .mg-dropdown-label {
     display: block;
@@ -676,6 +693,7 @@ a.menu-item,
     position: relative;
     left: 0;
     margin-top: 0px;
+    visibility: visible;
   }
   .toggle-menu .menu-group.active .menu-label {
     display: block;
