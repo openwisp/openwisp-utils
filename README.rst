@@ -242,13 +242,15 @@ but can be used to include any custom element in the dashboard.
 
     register_dashboard_template(position, config)
 
-+--------------------+-------------------------------------------------------------+
-| **Parameter**      | **Description**                                             |
-+--------------------+-------------------------------------------------------------+
-| ``position``       | (``int``) The position of the template.                     |
-+--------------------+-------------------------------------------------------------+
-| ``config``         | (``dict``) The configuration of the template.               |
-+--------------------+-------------------------------------------------------------+
++--------------------+----------------------------------------------------------------------------------+
+| **Parameter**      | **Description**                                                                  |
++--------------------+----------------------------------------------------------------------------------+
+| ``position``       | (``int``) The position of the template.                                          |
++--------------------+----------------------------------------------------------------------------------+
+| ``config``         | (``dict``) The configuration of the template.                                    |
++--------------------+----------------------------------------------------------------------------------+
+| ``extra_config``   | **optional** (``dict``) Extra configuration you want to pass to custom template. |
++--------------------+----------------------------------------------------------------------------------+
 
 Following properties can be configured for each template ``config``:
 
@@ -283,7 +285,10 @@ Code example:
               'leaflet/leaflet.extras.js',
               'monitoring/js/leaflet.fullscreen.min.js'
           )
-      }
+      },
+      extra_config={
+          'optional_variable': 'any_valid_value',
+      },
   )
 
 It is recommended to register dashboard templates from the ``ready``

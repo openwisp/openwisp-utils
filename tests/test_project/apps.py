@@ -85,4 +85,5 @@ class TestAppConfig(ApiAppConfig):
                 'css': ('dashboard-test.css',),
                 'js': ('dashboard-test.js',),
             },
+            extra_config={'test_extra_config': 'dashboard-test.config'},
         )

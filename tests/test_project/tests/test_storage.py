@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.staticfiles import storage
 from django.core.management import call_command
 from django.test import TestCase, override_settings
+from openwisp_utils.tests import capture_stdout
 
 
 def create_dir(*paths: str):
@@ -46,6 +47,7 @@ class TestCompressStaticFilesStorage(TestCase):
         super().tearDownClass()
         shutil.rmtree(os.path.join(settings.BASE_DIR, 'test_storage_dir'))
 
+    @capture_stdout()
     def test_hashed_name(self):
         call_command('collectstatic')
         hashed_files = storage.staticfiles_storage.hashed_files

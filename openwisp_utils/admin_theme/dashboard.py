@@ -66,7 +66,7 @@ def _validate_template_config(config):
     return config
 
 
-def register_dashboard_template(position, config):
+def register_dashboard_template(position, config, extra_config=None):
     """
     Registers a dashboard template
     register_dashboard_template(int, dict)
@@ -79,14 +79,19 @@ def register_dashboard_template(position, config):
         raise ImproperlyConfigured(
             'Dashboard template config parameters should be of type `dict`.'
         )
+    if extra_config and not isinstance(extra_config, dict):
+        raise ImproperlyConfigured(
+            'Dashboard template extra_config parameters should be of type `dict`.'
+        )
+
     if position in DASHBOARD_TEMPLATES:
         raise ImproperlyConfigured(
             f'Cannot register template {config["template"]}. '
             f'Another template is already registered at position n. "{position}": '
-            f'{DASHBOARD_TEMPLATES[position]["template"]}'
+            f'{DASHBOARD_TEMPLATES[position][0]["template"]}'
         )
     validated_config = _validate_template_config(config)
-    DASHBOARD_TEMPLATES.update({position: validated_config})
+    DASHBOARD_TEMPLATES.update({position: [validated_config, extra_config]})
 
 
 def unregister_dashboard_template(path):
@@ -98,7 +103,7 @@ def unregister_dashboard_template(path):
         raise ImproperlyConfigured('Dashboard template path should be type `str`')
 
     for key, value in DASHBOARD_TEMPLATES.items():
-        if value['template'] == path:
+        if value[0]['template'] == path:
             key_to_remove = key
             break
     else:
@@ -198,15 +203,18 @@ def get_dashboard_context(request):
             value['filters'] = filters
 
     # dashboard templates
+    extra_config = {}
     templates = []
     css = []
     js = []
-    for position, template_config in DASHBOARD_TEMPLATES.items():
-        templates.append(template_config['template'])
-        if 'css' in template_config:
-            css += list(template_config['css'])
-        if 'js' in template_config:
-            js += list(template_config['js'])
+    for _, template_config in DASHBOARD_TEMPLATES.items():
+        templates.append(template_config[0]['template'])
+        if 'css' in template_config[0]:
+            css += list(template_config[0]['css'])
+        if 'js' in template_config[0]:
+            js += list(template_config[0]['js'])
+        if template_config[1]:
+            extra_config = template_config[1]
 
     context.update(
         {
@@ -216,4 +224,5 @@ def get_dashboard_context(request):
             'dashboard_js': js,
         }
     )
+    context.update(extra_config)
     return context

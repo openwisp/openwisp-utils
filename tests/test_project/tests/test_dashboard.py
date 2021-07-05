@@ -90,7 +90,7 @@ class TestDashboardSchema(UnitTestCase):
         with self.subTest('Registering new dashboard template'):
             register_dashboard_template(-1, dashboard_element)
             self.assertIn(-1, DASHBOARD_TEMPLATES)
-            self.assertEqual(DASHBOARD_TEMPLATES[-1], dashboard_element)
+            self.assertEqual(DASHBOARD_TEMPLATES[-1][0], dashboard_element)
 
         with self.subTest('Registering a dashboard template at existing position'):
             with self.assertRaises(ImproperlyConfigured):
@@ -121,6 +121,11 @@ class TestDashboardSchema(UnitTestCase):
             with self.assertRaises(ImproperlyConfigured):
                 unregister_dashboard_template(dict())
 
+        with self.subTest('Registering with invalid extra_config'):
+            dashboard_element = {'template': 'test.html'}
+            with self.assertRaises(ImproperlyConfigured):
+                register_dashboard_template(1, dashboard_element, 'test')
+
 
 class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
     def test_index_content(self):
@@ -134,6 +139,7 @@ class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
         )
         self.assertContains(response, 'dashboard-test.js')
         self.assertContains(response, 'dashboard-test.css')
+        self.assertContains(response, 'dashboard-test.config')
         self.assertContains(response, 'jquery.init.js')
         self.assertContains(response, 'Operator presence in projects')
         self.assertContains(response, 'with_operator')
