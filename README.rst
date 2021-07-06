@@ -849,7 +849,7 @@ It runs ``isort`` and ``black`` to format python code
 (these two dependencies are required and installed automatically when running
 ``pip install openwisp-utils[qa]``).
 
-The ``stylelint`` and ``jshint`` programs are used to format CSS code and JS code respectively, but they are optional:
+The ``stylelint`` and ``jshint`` programs are used to perform style checks on CSS and JS code respectively, but they are optional:
 if ``stylelint`` and/or ``jshint`` are not installed, the check(s) will be skipped.
 
 ``openwisp-qa-check``
