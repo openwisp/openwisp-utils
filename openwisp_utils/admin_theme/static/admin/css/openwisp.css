@@ -976,3 +976,7 @@ a.menu-item,
   mask-image: url(../../ui/openwisp/images/replies.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/replies.svg);
 }
+.ow-radius-post-log {
+  mask-image: url(../../ui/openwisp/images/log.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/log.svg);
+}

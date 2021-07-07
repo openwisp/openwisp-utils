@@ -22,7 +22,7 @@
       <ul class="mg-list">
         {% for sub_item in item.sub_items %}
         <li>
-          <a href="{{ sub_item.url }}">
+          <a class="mg-link" href="{{ sub_item.url }}">
             <i class="{{ sub_item.icon }}"></i>
             <span>{{ sub_item.label }}</span>
           </a>
@@ -32,12 +32,12 @@
     </div>
   </div>
   {% else %}
-  <a id="i" class="menu-item" href="{{ item.url }}">
+  <a class="menu-item" href="{{ item.url }}">
     <i class="{{ item.icon }}"></i>
     <span class="menu-label">{{ item.label }}</span>
   </a>
   {% endif %} {% endfor %}
-   {% comment %} TODO: Remove below link before merge {%endcomment %}
+  {% comment %} TODO: Remove below link before merge {% endcomment %}
   <a class="menu-item" href="{% url 'admin:index' %}">
     <i class="home"></i>
     <span class="menu-label">{% trans 'Home' %}</span>
