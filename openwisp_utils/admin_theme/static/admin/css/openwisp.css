@@ -614,14 +614,14 @@ a.menu-item,
   .menu-group.active .menu-label {
     display: none;
   }
-  .mg-dropdown-label{
+  .mg-dropdown-label {
     display: block;
     color: #fff;
     background: #747272;
     padding: 10px 14px;
     border-radius: 8px;
   }
-  .toggle-menu .mg-dropdown-label{
+  .toggle-menu .mg-dropdown-label {
     display: none;
   }
   .mg-dropdown {
@@ -883,7 +883,7 @@ a.menu-item,
 }
 
 /* UTILS ICONS */
-.user{
+.user {
   mask-image: url(../../ui/openwisp/images/user.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/user.svg);
 }
@@ -929,7 +929,7 @@ a.menu-item,
   mask-image: url(../../ui/openwisp/images/config.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/config.svg);
 }
-.ow-device{
+.ow-device {
   mask-image: url(../../ui/openwisp/images/device.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/device.svg);
 }
@@ -940,4 +940,39 @@ a.menu-item,
 .ow-vpn {
   mask-image: url(../../ui/openwisp/images/vpn.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/vpn.svg);
+}
+
+/* RADIUS ICONS */
+
+.ow-radius {
+  mask-image: url(../../ui/openwisp/images/radius.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/radius.svg);
+}
+.ow-radius-accounting {
+  mask-image: url(../../ui/openwisp/images/accounting.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/accounting.svg);
+}
+.ow-batch-creation {
+  mask-image: url(../../ui/openwisp/images/batch-user.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/batch-user.svg);
+}
+.ow-radius-checks {
+  mask-image: url(../../ui/openwisp/images/check.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/check.svg);
+}
+.ow-radius-group {
+  mask-image: url(../../ui/openwisp/images/radius-group.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/radius-group.svg);
+}
+.ow-radius-nas {
+  mask-image: url(../../ui/openwisp/images/nas.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/nas.svg);
+}
+.ow-radius-token {
+  mask-image: url(../../ui/openwisp/images/token.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/token.svg);
+}
+.ow-radius-replies {
+  mask-image: url(../../ui/openwisp/images/replies.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/replies.svg);
 }
