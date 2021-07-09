@@ -4,27 +4,14 @@ const owMenu = document.getElementById('menu');
 const owMainContent = document.getElementById('main-content');
 const owMenuToggle = document.querySelector('.menu-toggle');
 const owHamburger = document.querySelector('.hamburger');
-const owNav = document.querySelector('#menu .nav');
-const owLabel = document.querySelector('.special-label');
-var owGroupHead;
+
 (function () {
   setMenu();
   initMenuGroupClickListener();
   initToggleMenuHandlers();
   initAccountViewHandler();
   initToolTipHandlers();
-  initMenuHelpers();
 })();
-
-function isMenuClose() {
-  var windowWidth = window.innerWidth;
-  var isToggleState = (document.querySelector('.toggle-menu') && true) || false;
-  return (
-    windowWidth > 768 &&
-    ((isToggleState && windowWidth > 1024) ||
-      (!isToggleState && windowWidth <= 1024))
-  );
-}
 
 function initMenuGroupClickListener() {
   let mgHeads = document.querySelectorAll('.mg-head');
@@ -33,33 +20,10 @@ function initMenuGroupClickListener() {
     mgHead.addEventListener('click', function (e) {
       e.stopPropagation();
       var currentActiveGroup = document.querySelector('.menu-group.active');
-      var dropdown = mgHead.nextElementSibling;
-      if (isMenuClose()) {
-        // Only when menu is close
-        var elementPosY = mgHead.offsetTop;
-        var navScrollPos = owNav.scrollTop;
-        var dropdownHeight = dropdown.offsetHeight;
-        if (elementPosY - navScrollPos + dropdownHeight < window.innerHeight) {
-          // Sufficient space to show dropdown at the right of menu icon
-          dropdown.style.top = elementPosY - navScrollPos + 'px';
-        } else {
-          // Not sufficient space to show dropdown at the right of menu icon
-          dropdown.style.top =
-            elementPosY - navScrollPos - dropdownHeight + 10 + 'px';
-        }
-        if (owGroupHead && owGroupHead === mgHead) {
-          // Hide the special label
-          owLabel.classList.remove('show-sp-label');
-        }
-      }
-      // Hide dropdown of current active menu group
       if (currentActiveGroup && currentActiveGroup !== mgHead.parentElement) {
         currentActiveGroup.classList.remove('active');
       }
       e.target.parentElement.classList.toggle('active');
-      if (!e.target.parentElement.classList.contains('active')) {
-        dropdown.style = '';
-      }
     });
   });
   // Handle click out side the current active menu group
@@ -67,93 +31,28 @@ function initMenuGroupClickListener() {
     var currentActiveGroup = document.querySelector('.menu-group.active');
     if (currentActiveGroup && !currentActiveGroup.contains(e.target)) {
       currentActiveGroup.classList.remove('active');
-      currentActiveGroup.querySelector('.mg-dropdown').style = '';
-    }
-  });
-}
-
-function initMenuHelpers() {
-  /*
-  It help in showing menu group dropdown and 
-  menu element label when menu is close
-  */
-  var menuItems = document.querySelectorAll('.menu-item');
-  var menuGroupHeads = document.querySelectorAll('.mg-head');
-  function showLabel(label, element) {
-    if (isMenuClose()) {
-      // Only when menu is close
-      var elementPosY = element.offsetTop;
-      var navScrollPos = owNav.scrollTop;
-      owLabel.innerText = label;
-      owLabel.classList.add('show-sp-label');
-      owLabel.style.top = elementPosY - navScrollPos + 10 + 'px';
-    }
-  }
-  function hideLabel(e) {
-    e.stopPropagation();
-    owGroupHead = null;
-    owLabel.classList.remove('show-sp-label');
-  }
-  function showLabelHandler(e) {
-    e.stopPropagation();
-    var element = e.target;
-    owGroupHead = element;
-    var currentActiveGroup = document.querySelector('.menu-group.active');
-    if (
-      currentActiveGroup &&
-      currentActiveGroup.querySelector('.mg-head') === element
-    ) {
-      return;
-    }
-    var labelText = element.querySelector('.menu-label').innerText;
-    showLabel(labelText, element);
-  }
-  menuItems.forEach(function (item) {
-    item.addEventListener('mouseenter', showLabelHandler);
-    item.addEventListener('mouseleave', hideLabel);
-  });
-  menuGroupHeads.forEach(function (item) {
-    item.addEventListener('mouseenter', showLabelHandler);
-    item.addEventListener('mouseleave', hideLabel);
-  });
-  function menuNavScollHandler() {
-    // Hide menu group dropdown and special label
-    // when menu is scrolled
-    var currentActiveGroup = document.querySelector('.menu-group.active');
-    var label = document.querySelector('.show-sp-label');
-    if (currentActiveGroup && isMenuClose()) {
-      currentActiveGroup.classList.remove('active');
-      currentActiveGroup.querySelector('.mg-dropdown').style = '';
-    }
-    if (label) {label.classList.remove('show-sp-label');}
-  }
-  if (owNav) {owNav.addEventListener('scroll', menuNavScollHandler);}
-  // Hide dropdown when window is resized
-  window.addEventListener('resize', function () {
-    var currentActiveGroup = document.querySelector('.menu-group.active');
-    if (currentActiveGroup) {
-      currentActiveGroup.classList.remove('active');
-      currentActiveGroup.querySelector('.mg-dropdown').style = '';
     }
   });
 }
 
 function setMenu() {
   let openMenu = localStorage.getItem('ow-menu');
-  if (!owMenu) {
-    owMainContent.style.marginLeft = '0px';
-  } else if (window.innerWidth > 1024) {
+  if (window.innerWidth > 1024) {
     if (openMenu === null) {
-      // When user vists site first time. Menu must be open for wide screen
+      // User visits first time. Keep open menu
       localStorage.setItem('ow-menu', true);
+      owContainer.classList.toggle('toggle-menu');
     } else if (openMenu === 'false') {
-      // Close menu
+      // Close the menu
       owContainer.classList.toggle('toggle-menu');
     }
   }
   setTimeout(function () {
-    // Dont remove this. Transition fix
-    if (owMenu) {(owMenu.style.transitionDuration = '0.3s');}
+    // Transition fix: Add transition to menu and main content
+    // after some time.
+    if (owMenu) {
+      owMenu.style.transitionDuration = '0.3s';
+    }
     owMainContent.style.transitionDuration = '0.3s';
   }, 1000);
 }
@@ -163,16 +62,15 @@ function initToggleMenuHandlers() {
     owContainer.classList.toggle('toggle-menu');
     let isMenuOpen = localStorage.getItem('ow-menu');
     if (window.innerWidth > 1024) {
-      if (isMenuOpen === 'false') {
-        isMenuOpen = true;
-      } else {
-        isMenuOpen = false;
-      }
-      localStorage.setItem('ow-menu', isMenuOpen);
+      localStorage.setItem('ow-menu', isMenuOpen === 'true' ? false : true);
     }
   }
-  if (owMenuToggle) {owMenuToggle.addEventListener('click', toggleMenuHandler);}
-  if (owHamburger) {owHamburger.addEventListener('click', toggleMenuHandler);}
+  if (owMenuToggle && owContainer) {
+    owMenuToggle.addEventListener('click', toggleMenuHandler);
+  }
+  if (owHamburger && owContainer) {
+    owHamburger.addEventListener('click', toggleMenuHandler);
+  }
 }
 
 function initAccountViewHandler() {

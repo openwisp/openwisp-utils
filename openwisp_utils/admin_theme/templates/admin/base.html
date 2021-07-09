@@ -23,7 +23,7 @@
   data-admin-utc-offset="{% now "Z" %}">
 
 <!-- Container -->
-<div id="container">
+<div id="container" class="toggle-menu {% if not user.is_authenticated %}no-auth{% endif %}" >
   {% if not is_popup %}
     <div id="menu">
       <div class="menu-bar">
@@ -38,7 +38,7 @@
     {% if not is_popup %}
     <!-- Header -->
     {% block header %}
-      <div id="header" {% if not user.is_authenticated %}class="m-0"{% endif %}>
+      <div id="header">
         {% block nav-global %}{% endblock %}
         {% if user.is_authenticated %}
           <div id="ow-user-tools">
