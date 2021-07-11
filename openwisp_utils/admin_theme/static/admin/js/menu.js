@@ -42,7 +42,7 @@ function setMenu() {
       // User visits first time. Keep open menu
       localStorage.setItem('ow-menu', true);
       owContainer.classList.toggle('toggle-menu');
-    } else if (openMenu === 'false') {
+    } else if (openMenu === 'true') {
       // Close the menu
       owContainer.classList.toggle('toggle-menu');
     }
