@@ -981,3 +981,20 @@ h1#site-name {
   mask-image: url(../../ui/openwisp/images/log.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/log.svg);
 }
+
+/* IPAN ICONS */
+
+.ow-ipam  {
+  mask-image: url(../../ui/openwisp/images/ipam.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/ipam.svg);
+}
+
+.ow-subnet {
+  mask-image: url(../../ui/openwisp/images/subnet.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/subnet.svg);
+}
+
+.ow-ip-address {
+  mask-image: url(../../ui/openwisp/images/ip-address.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/ip-address.svg);
+}
