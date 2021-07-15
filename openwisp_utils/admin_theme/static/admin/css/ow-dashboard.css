@@ -1,5 +1,5 @@
 #plot-container {
-  padding: 10px 40px;
+  padding: 0.625rem 2.5rem;
   text-align: center;
 }
 .js-plotly-plot {

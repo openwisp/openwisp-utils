@@ -105,12 +105,12 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
     def test_context_processor(self):
         url = reverse('admin:index')
         response = self.client.get(url)
-        self.assertContains(response, '<i class="shelf">')
+        self.assertContains(response, '<span class="shelf icon">')
 
     def test_superuser_always_sees_menu_items(self):
         url = reverse('admin:index')
         r = self.client.get(url)
-        self.assertContains(r, '<i class="shelf">')
+        self.assertContains(r, '<span class="shelf icon">')
 
     def test_operator_with_perm_can_see_menu_item(self):
         user = User.objects.create(
@@ -126,7 +126,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.client.force_login(user)
         url = reverse('admin:index')
         r = self.client.get(url)
-        self.assertContains(r, '<i class="shelf">')
+        self.assertContains(r, '<span class="shelf icon">')
 
     def test_operator_without_perm_cant_see_menu_item(self):
         user = User.objects.create(
@@ -139,7 +139,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.client.force_login(user)
         url = reverse('admin:index')
         r = self.client.get(url)
-        self.assertNotContains(r, '<i class="shelf">')
+        self.assertNotContains(r, '<span class="shelf icon">')
 
     def test_menu_items_visibility(self):
         with self.subTest("Test menu items are visible when user is logged in"):

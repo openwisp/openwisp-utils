@@ -153,3 +153,62 @@ class TestAppConfig(ApiAppConfig):
         register_menu_group(position=17, config=docs_config)
         register_menu_group(position=18, config=auth_config)
         register_menu_group(position=19, config=docs_config)
+        register_menu_group(
+            position=20,
+            config={
+                'label': _('Docs'),
+                'items': {
+                    1: {
+                        'label': _('OpenWISP'),
+                        'url': 'https://openwisp.org/',
+                        'icon': 'link',
+                    },
+                    2: {
+                        'label': _('Code'),
+                        'url': 'https://openwisp.org/thecode.html',
+                        'icon': 'code',
+                    },
+                    3: {
+                        'label': _('OpenWISP'),
+                        'url': 'https://openwisp.org/',
+                        'icon': 'link',
+                    },
+                    4: {
+                        'label': _('Code'),
+                        'url': 'https://openwisp.org/thecode.html',
+                        'icon': 'code',
+                    },
+                    5: {
+                        'label': _('OpenWISP'),
+                        'url': 'https://openwisp.org/',
+                        'icon': 'link',
+                    },
+                    6: {
+                        'label': _('Code'),
+                        'url': 'https://openwisp.org/thecode.html',
+                        'icon': 'code',
+                    },
+                    7: {
+                        'label': _('OpenWISP'),
+                        'url': 'https://openwisp.org/',
+                        'icon': 'link',
+                    },
+                    8: {
+                        'label': _('Code'),
+                        'url': 'https://openwisp.org/thecode.html',
+                        'icon': 'code',
+                    },
+                    9: {
+                        'label': _('OpenWISP'),
+                        'url': 'https://openwisp.org/',
+                        'icon': 'link',
+                    },
+                    10: {
+                        'label': _('Code'),
+                        'url': 'https://openwisp.org/thecode.html',
+                        'icon': 'code',
+                    },
+                },
+                'icon': 'docs',
+            },
+        )

@@ -1,20 +1,20 @@
 {% load i18n %}
 <button title="close Menu" class="menu-toggle">
-  <i></i>
+  <span></span>
 </button>
 <div class="nav">
   <a class="menu-item" href="{% url 'admin:index' %}">
-    <i class="home"></i>
-    <span class="menu-label">{% trans 'Home' %}</span>
+    <span class="home icon"></span>
+    <span class="label">{% trans 'Home' %}</span>
   </a>
   {% for item in openwisp_menu_groups %} {% if item.sub_items %}
   <div class="menu-group">
     <div class="mg-head">
       <div class="mg-heading">
-        <i class="{{ item.icon }}"></i>
-        <span class="menu-label">{{ item.label }}</span>
+        <span class="{{ item.icon }} icon"></span>
+        <span class="label">{{ item.label }}</span>
       </div>
-      <i class="menu-arrow"></i>
+      <span class="mg-arrow"></span>
     </div>
     <div class="mg-dropdown">
       <div class="mg-dropdown-label">{{ item.label }}</div>
@@ -22,8 +22,8 @@
         {% for sub_item in item.sub_items %}
         <li>
           <a class="mg-link" href="{{ sub_item.url }}">
-            <i class="{{ sub_item.icon }}"></i>
-            <span>{{ sub_item.label }}</span>
+            <span class="{{ sub_item.icon }} icon"></span>
+            <span class="label">{{ sub_item.label }}</span>
           </a>
         </li>
         {% endfor %}
@@ -32,13 +32,13 @@
   </div>
   {% else %}
   <a class="menu-item" href="{{ item.url }}">
-    <i class="{{ item.icon }}"></i>
-    <span class="menu-label">{{ item.label }}</span>
+    <span class="{{ item.icon }} icon"></span>
+    <span class="label">{{ item.label }}</span>
   </a>
   {% endif %} {% endfor %}
   {% comment %} TODO: Remove below link before merge {% endcomment %}
   <a class="menu-item" href="{% url 'admin:index' %}">
-    <i class="home"></i>
-    <span class="menu-label">{% trans 'Home' %}</span>
+    <span class="home icon"></span>
+    <span class="label">{% trans 'Home' %}</span>
   </a>
 </div>

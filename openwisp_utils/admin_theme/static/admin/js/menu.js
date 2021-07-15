@@ -4,6 +4,7 @@ const owMenu = document.getElementById('menu');
 const owMainContent = document.getElementById('main-content');
 const owMenuToggle = document.querySelector('.menu-toggle');
 const owHamburger = document.querySelector('.hamburger');
+var MenuTransitionTime = '0.1s';
 
 (function () {
   setMenu();
@@ -22,6 +23,27 @@ function initMenuGroupClickListener() {
       var currentActiveGroup = document.querySelector('.menu-group.active');
       if (currentActiveGroup && currentActiveGroup !== mgHead.parentElement) {
         currentActiveGroup.classList.remove('active');
+        currentActiveGroup.querySelector('.mg-dropdown').style = '';
+      }
+      if (
+        window.innerWidth > 768 &&
+        document.querySelector('#container.toggle-menu')
+      ) {
+        var group = e.target.parentElement;
+        var groupPos = group.offsetTop;
+        var scrolledBy = document.querySelector('html').scrollTop;
+        var dropdown = group.querySelector('.mg-dropdown');
+        var dropdownHeight = group.querySelector('.mg-dropdown').offsetHeight;
+        if (dropdownHeight + groupPos - scrolledBy >= window.innerHeight) {
+          if (!group.classList.contains('.active')) {
+            e.target.parentElement.classList.toggle('active');
+            dropdown.style.top = -dropdownHeight + 60 + 'px';
+          } else {
+            e.target.parentElement.classList.toggle('active');
+            dropdown.style = '';
+          }
+          return;
+        }
       }
       e.target.parentElement.classList.toggle('active');
     });
@@ -51,9 +73,9 @@ function setMenu() {
     // Transition fix: Add transition to menu and main content
     // after some time.
     if (owMenu) {
-      owMenu.style.transitionDuration = '0.3s';
+      owMenu.style.transitionDuration = MenuTransitionTime;
     }
-    owMainContent.style.transitionDuration = '0.3s';
+    owMainContent.style.transitionDuration = MenuTransitionTime;
   }, 1000);
 }
 
