@@ -53,6 +53,7 @@ function initMenuGroupClickListener() {
     var currentActiveGroup = document.querySelector('.menu-group.active');
     if (currentActiveGroup && !currentActiveGroup.contains(e.target)) {
       currentActiveGroup.classList.remove('active');
+      currentActiveGroup.querySelector('.mg-dropdown').style = '';
     }
   });
 }

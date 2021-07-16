@@ -1,7 +1,6 @@
 body {
   min-width: 320px;
-  height: auto;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 #main-content .breadcrumbs,
 .module caption {
@@ -368,7 +367,7 @@ input[type='button']:hover,
   opacity: 0;
   top: 100px;
 }
-#ow-user-tools span{
+#ow-user-tools span {
   height: 1.375rem;
   width: 1.375rem;
   display: inline-block;
@@ -434,6 +433,8 @@ input[type='button']:hover,
   }
   #main-content #header {
     padding: 0px 0.938rem;
+    top: 0px;
+    position: sticky;
   }
   .account-menu-username {
     display: flex;
@@ -456,6 +457,9 @@ input[type='button']:hover,
 #container.no-auth,
 #container.toggle-menu.no-auth {
   flex-direction: column;
+}
+#container.no-auth {
+  display: flex !important;
 }
 #container.no-auth #menu {
   position: relative;
@@ -507,11 +511,11 @@ a.menu-item,
   font-weight: 500;
   align-items: center;
   color: #777;
-  text-decoration: none!important;
+  text-decoration: none !important;
 }
 .menu-item .icon,
 .mg-heading .icon,
-.mg-link .icon{
+.mg-link .icon {
   background: #777;
   width: 1.375rem;
   height: 1.375rem;
@@ -541,7 +545,7 @@ a.menu-item,
   text-transform: capitalize;
 }
 .menu-item:hover .icon,
-.mg-head:hover .icon{
+.mg-head:hover .icon {
   background: #df5d43;
 }
 .mg-arrow {
@@ -589,7 +593,7 @@ a.menu-item,
   list-style: none;
 }
 .menu-group.active .mg-head .icon,
-.mg-link:hover .icon{
+.mg-link:hover .icon {
   background: #df5d43;
 }
 .menu-group.active .mg-arrow {
@@ -633,7 +637,10 @@ h1#site-name {
 
 /****************** MENU(screen-size > 768px) ******************/
 @media (min-width: 768px) {
-  .toggle-menu .menu-toggle span{
+  #container {
+    display: grid;
+  }
+  .toggle-menu .menu-toggle span {
     transform: rotate(180deg);
   }
   .toggle-menu .hamburger {
@@ -642,8 +649,9 @@ h1#site-name {
 
   /*** MENU OPEN ***/
   #container.toggle-menu {
-    flex-direction: row;
     height: auto;
+    grid-template-columns: 60px 1fr;
+    overflow: hidden;
   }
   #main-content {
     margin-left: 300px;
@@ -685,15 +693,14 @@ h1#site-name {
   .toggle-menu #menu {
     width: 60px;
     position: relative;
-    height: auto;
+    height: 100%;
     min-height: 100vh;
   }
   .toggle-menu #main-content {
     margin-left: 0px;
-    width: calc(100% - 60px);
   }
   .toggle-menu .menu-item .icon,
-  .toggle-menu .mg-heading .icon{
+  .toggle-menu .mg-heading .icon {
     margin: 0px;
   }
 
@@ -769,7 +776,7 @@ h1#site-name {
     pointer-events: all;
   }
   .toggle-menu .menu-item:hover .icon,
-  .toggle-menu .mg-head:hover .icon{
+  .toggle-menu .mg-head:hover .icon {
     background: #777;
   }
 }
@@ -816,7 +823,7 @@ h1#site-name {
   }
   .nav {
     height: calc(100% - 3rem);
-    overflow: scroll;
+    overflow-y: auto;
   }
   .no-auth #site-name a {
     margin-left: 0.938rem;
@@ -831,6 +838,7 @@ h1#site-name {
     z-index: 9999;
     overflow: hidden;
     min-width: 314px;
+    top: -1px;
   }
 
   /*** MENU CLOSE ***/
@@ -994,7 +1002,7 @@ h1#site-name {
 
 /* IPAN ICONS */
 
-.ow-ipam  {
+.ow-ipam {
   mask-image: url(../../ui/openwisp/images/ipam.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/ipam.svg);
 }
