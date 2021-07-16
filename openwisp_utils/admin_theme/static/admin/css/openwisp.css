@@ -367,7 +367,7 @@ input[type='button']:hover,
   opacity: 0;
   top: 100px;
 }
-#ow-user-tools span {
+.account span {
   height: 1.375rem;
   width: 1.375rem;
   display: inline-block;
@@ -951,6 +951,10 @@ h1#site-name {
 .ow-device {
   mask-image: url(../../ui/openwisp/images/device.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/device.svg);
+}
+.ow-device-group {
+  mask-image: url(../../ui/openwisp/images/device-group.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/device-group.svg);
 }
 .ow-template {
   mask-image: url(../../ui/openwisp/images/template.svg);
