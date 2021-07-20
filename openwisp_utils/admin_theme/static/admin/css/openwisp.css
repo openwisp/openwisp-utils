@@ -271,7 +271,7 @@ input[type='button']:hover,
   outline: 0 none;
 }
 
-/* 
+/*
   NOTE:
   "menu-toggle" is a class of a button which is use to close menu.
   "toggle-menu" is a class toggled on "#contianer" when menu changes it state.
@@ -738,7 +738,7 @@ h1#site-name {
   .toggle-menu .menu-item:hover .label,
   .toggle-menu .mg-head:hover .mg-heading .label {
     opacity: 1;
-    left: 4.375rem;
+    left: 4.1rem;
     z-index: 2;
     transition: all 0.2s ease-in;
   }
@@ -747,7 +747,7 @@ h1#site-name {
   }
   .toggle-menu .mg-dropdown {
     position: absolute;
-    left: 4.375rem;
+    left: 3.95rem;
     opacity: 0;
     top: 47px;
     background: transparent;
