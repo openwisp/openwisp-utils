@@ -160,7 +160,7 @@ body.login {
   background: #eeeeee69;
 }
 
-/* For danger,error,red button [ class="danger-btn" ] */
+/* For danger,error, red button [ class="danger-btn" ] */
 .danger-btn,
 div.submit-row a.deletelink,
 .delete-confirmation form input[type='submit'] {
@@ -187,7 +187,7 @@ div.submit-row a.deletelink:active,
   outline: 0 none;
 }
 
-/* For any normal or default, dark button  [ class="default-btn" ] */
+/* For any normal, default, dark button  [ class="default-btn" ] */
 
 .default-btn,
 .button.default,
@@ -248,7 +248,7 @@ input[type='button']:hover,
   background: #1b1c1d;
 }
 
-/* For success,green button  [ class="success-btn" ] */
+/* For success, green button [ class="success-btn" ] */
 .success-btn,
 #main .submit-row .default {
   display: inline-block;
@@ -289,10 +289,7 @@ input[type='button']:hover,
   align-items: center;
 }
 .hamburger span {
-  background: url(../../ui/openwisp/images/hamburger.svg);
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
+  background: url(../../ui/openwisp/images/hamburger.svg) no-repeat center;
   height: 1.375rem;
   width: 1.375rem;
   display: inline-block;
@@ -301,9 +298,9 @@ input[type='button']:hover,
   background: #efefef;
 }
 .menu-toggle {
-  position: absolute;
-  right: -1.5rem;
-  width: 1.5rem;
+  position: fixed;
+  left: 18.75rem;
+  width: 1.2rem;
   border: 0;
   height: 100px;
   cursor: pointer;
@@ -313,24 +310,18 @@ input[type='button']:hover,
   top: 50vh;
   margin-top: -3.125rem;
   z-index: 1;
-  transition: all 0.3s ease;
+  transition: all ease;
   background: #cccccc;
 }
 .menu-toggle span {
-  mask-image: url(../../ui/openwisp/images/left-arrow.svg);
-  -webkit-mask-image: url(../../ui/openwisp/images/left-arrow.svg);
-  mask-repeat: no-repeat;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: 1.125rem;
-  -webkit-mask-position: center;
-  mask-size: 1.125rem;
+  mask: url(../../ui/openwisp/images/left-arrow.svg) no-repeat center;
+  -webkit-mask: url(../../ui/openwisp/images/left-arrow.svg) no-repeat center;
   mask-position: center;
   background: #ffffff;
-  height: 1.25rem;
-  width: 1.25rem;
+  height: 1rem;
+  width: 1rem;
   display: inline-block;
   transition: all 0.3s ease 0.5s;
-  margin-right: -7px;
 }
 .menu-toggle:hover {
   opacity: 1;
@@ -402,9 +393,6 @@ input[type='button']:hover,
 #header .account-menu li:last-child {
   border-bottom: 0px;
 }
-.nav-show-mg {
-  overflow: visible !important;
-}
 .account-menu-username:hover,
 #header .account-menu a:hover {
   color: #df5d43;
@@ -417,14 +405,24 @@ input[type='button']:hover,
   flex-direction: row;
   padding: 0px 2.5rem;
 }
+.no-auth #site-name a {
+  margin-left: 2.5rem;
+  width: 150px;
+  height: 86px;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
+  no-repeat scroll 0 50%/100%;
+}
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   #main-content div.breadcrumbs {
-    padding: 1rem 30px;
+    padding: 1rem 1.875rem;
   }
   #main-content #header {
-    padding: 0px 30px;
+    padding: 0rem 1.875rem;
+  }
+  .no-auth #site-name a{
+    margin-left: 1.875rem;
   }
 }
 @media (max-width: 768px) {
@@ -458,12 +456,12 @@ input[type='button']:hover,
 #container.toggle-menu.no-auth {
   flex-direction: column;
 }
-#container.no-auth {
-  display: flex !important;
+#container.no-auth, .popup #container{
+  display: flex;
 }
 #container.no-auth #menu {
   position: relative;
-  height: auto !important;
+  height: auto;
   width: 100%;
   box-shadow: none;
   min-height: unset;
@@ -473,15 +471,6 @@ input[type='button']:hover,
 }
 #container.no-auth #site-name {
   display: block;
-}
-.no-auth #site-name a {
-  margin-left: 30px;
-  width: 150px;
-  height: 86px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-  no-repeat scroll 0 50%/100%;
 }
 #container.no-auth .hamburger,
 #container.no-auth .menu-toggle {
@@ -522,10 +511,10 @@ a.menu-item,
   flex-shrink: 0;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
-  -webkit-mask-size: 1.25rem;
+  -webkit-mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;
-  mask-size: 1.25rem;
+  mask-size: contain;
   display: inline-block;
   margin-right: 1.375rem;
 }
@@ -550,17 +539,12 @@ a.menu-item,
 }
 .mg-arrow {
   flex-shrink: 0;
-  mask-image: url(../../ui/openwisp/images/down-arrow.svg);
-  -webkit-mask-image: url(../../ui/openwisp/images/down-arrow.svg);
-  background-size: 1.25rem;
+  mask: url(../../ui/openwisp/images/down-arrow.svg) no-repeat center;
+  -webkit-mask: url(../../ui/openwisp/images/down-arrow.svg) no-repeat center;
   height: 1.25rem;
   width: 1.25rem;
   margin-left: 1.25rem;
-  -webkit-mask-position: center;
-  mask-position: center;
   background: #bbbbbb;
-  background-position: center;
-  background-repeat: no-repeat;
   transition-duration: 0.3s;
 }
 .mg-heading {
@@ -619,8 +603,6 @@ h1#site-name {
   width: 150px;
   height: 86px;
   margin: auto;
-  background-repeat: no-repeat;
-  background-position: center;
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
   no-repeat scroll 0 50%/100%;
   text-indent: -2000px;
@@ -646,15 +628,18 @@ h1#site-name {
   .toggle-menu .hamburger {
     display: flex;
   }
+  .toggle-menu .menu-toggle {
+    left: 3.75rem;
+  }
 
   /*** MENU OPEN ***/
   #container.toggle-menu {
     height: auto;
-    grid-template-columns: 60px 1fr;
+    grid-template-columns: 3.75rem 1fr;
     overflow: hidden;
   }
   #main-content {
-    margin-left: 300px;
+    margin-left: 18.75rem;
   }
   .hamburger {
     display: none;
@@ -666,7 +651,7 @@ h1#site-name {
 
   #menu {
     position: fixed;
-    width: 300px;
+    width: 18.75rem;
     height: 100vh;
     z-index: 100;
     overflow: visible;
@@ -691,7 +676,7 @@ h1#site-name {
     position: relative;
   }
   .toggle-menu #menu {
-    width: 60px;
+    width: 3.75rem;
     position: relative;
     height: 100%;
     min-height: 100vh;
@@ -792,6 +777,7 @@ h1#site-name {
   #container {
     overflow: scroll;
     height: 100vh;
+    scrollbar-width: none; /* firefox fix*/
   }
   #header {
     margin-bottom: 3rem;
@@ -804,15 +790,15 @@ h1#site-name {
     display: none;
   }
   h1#site-name {
-    margin-left: 7px;
+
+    /* margin-left: 7px; */
     padding: 0px;
   }
 
   #site-name a {
     width: 2.5rem;
     height: 2.5rem;
-    background-repeat: no-repeat !important;
-    background: url(../../../static/ui/openwisp/images/openwisp-logo-small.svg);
+    background: url(../../../static/ui/openwisp/images/openwisp-logo-small.svg)  no-repeat center;
   }
   .hamburger {
     padding: 0.813rem 1rem;
@@ -838,7 +824,7 @@ h1#site-name {
     z-index: 9999;
     overflow: hidden;
     min-width: 314px;
-    top: -1px;
+    top: 0px;
   }
 
   /*** MENU CLOSE ***/
@@ -870,8 +856,6 @@ h1#site-name {
   width: 150px;
   height: 86px;
   margin: auto;
-  background-repeat: no-repeat;
-  background-position: center;
 }
 .login .hamburger {
   display: none;
@@ -880,25 +864,20 @@ h1#site-name {
 /************
 * Scrollbar
 ************/
-
-/* width */
 ::-webkit-scrollbar {
   width: 5px;
 }
-
-/* Track */
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
-
-/* Handle */
 ::-webkit-scrollbar-thumb {
   background: #777;
 }
-
-/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #333;
+}
+body::-webkit-scrollbar {
+  width: 12px;
 }
 
 /* UTILS ICONS */
@@ -906,7 +885,7 @@ h1#site-name {
   mask-image: url(../../ui/openwisp/images/user.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/user.svg);
 }
-.home {
+.ow-dashboard-icon {
   mask-image: url(../../ui/openwisp/images/dashboard.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/dashboard.svg);
 }
@@ -941,6 +920,10 @@ h1#site-name {
   mask-image: url(../../ui/openwisp/images/user-and-org.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/user-and-org.svg);
 }
+.ow-permission {
+  mask-image: url(../../ui/openwisp/images/permission.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/permission.svg);
+}
 
 /* CONTROLLER ICONS */
 
@@ -963,6 +946,34 @@ h1#site-name {
 .ow-vpn {
   mask-image: url(../../ui/openwisp/images/vpn.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/vpn.svg);
+}
+.ow-geo {
+  mask-image: url(../../ui/openwisp/images/geo-info.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/geo-info.svg);
+}
+.ow-location {
+  mask-image: url(../../ui/openwisp/images/location.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/location.svg);
+}
+.ow-floor {
+  mask-image: url(../../ui/openwisp/images/floor.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/floor.svg);
+}
+.ow-cer-group {
+  mask-image: url(../../ui/openwisp/images/cer-group.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/cer-group.svg);
+}
+.ow-access-credential {
+  mask-image: url(../../ui/openwisp/images/access-credential.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/access-credential.svg);
+}
+.ow-ca {
+  mask-image: url(../../ui/openwisp/images/ca.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/ca.svg);
+}
+.ow-certificate {
+  mask-image: url(../../ui/openwisp/images/certificate.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/certificate.svg);
 }
 
 /* RADIUS ICONS */

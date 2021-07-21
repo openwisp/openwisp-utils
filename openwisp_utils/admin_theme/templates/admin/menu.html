@@ -3,10 +3,6 @@
   <span></span>
 </button>
 <div class="nav">
-  <a class="menu-item" href="{% url 'admin:index' %}">
-    <span class="home icon"></span>
-    <span class="label">{% trans 'Home' %}</span>
-  </a>
   {% for item in openwisp_menu_groups %} {% if item.sub_items %}
   <div class="menu-group">
     <div class="mg-head">
@@ -36,9 +32,4 @@
     <span class="label">{{ item.label }}</span>
   </a>
   {% endif %} {% endfor %}
-  {% comment %} TODO: Remove below link before merge {% endcomment %}
-  <a class="menu-item" href="{% url 'admin:index' %}">
-    <span class="home icon"></span>
-    <span class="label">{% trans 'Home' %}</span>
-  </a>
 </div>
