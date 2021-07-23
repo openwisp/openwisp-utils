@@ -4,6 +4,7 @@ const owMenu = document.getElementById('menu');
 const owMainContent = document.getElementById('main-content');
 const owMenuToggle = document.querySelector('.menu-toggle');
 const owHamburger = document.querySelector('.hamburger');
+const menuBackdrop = document.querySelector('.menu-backdrop');
 var MenuTransitionTime = '0.1s';
 
 (function () {
@@ -37,7 +38,7 @@ function initMenuGroupClickListener() {
           var dropdownHeight = group.querySelector('.mg-dropdown').offsetHeight;
           e.target.parentElement.classList.toggle('active');
           if (dropdownHeight + groupPos - scrolledBy >= window.innerHeight) {
-            dropdown.style.top = -dropdownHeight + 60 + 'px';
+            dropdown.style.top = -dropdownHeight + 40 + 'px';
           }
         } else {
           e.target.parentElement.classList.toggle('active');
@@ -99,6 +100,11 @@ function initToggleMenuHandlers() {
   if (owHamburger && owContainer) {
     owHamburger.addEventListener('click', toggleMenuHandler);
   }
+  // Close menu when backdrop is clicked
+  menuBackdrop.addEventListener('click', function (e){
+    e.stopPropagation();
+    owContainer.classList.toggle('toggle-menu');
+  });
 }
 
 function initAccountViewHandler() {

@@ -2,6 +2,16 @@ body {
   min-width: 320px;
   overflow-x: hidden;
 }
+.menu-backdrop {
+  position: fixed;
+  height: 100vh;
+  width: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.10);
+  z-index: 99999;
+  display: none;
+}
 #main-content .breadcrumbs,
 .module caption {
   padding: 1rem;
@@ -137,11 +147,11 @@ body.login {
   background: #777 !important;
 }
 
-/*
-  Common button styles
-*/
+/*******************************
+* Common button styles
+*******************************/
 
-/* For toggle button  [ class="toggle-btn" ] */
+/* For toggle button [ class="toggle-btn" ] */
 .toggle-btn {
   display: flex;
   justify-content: center;
@@ -456,7 +466,7 @@ input[type='button']:hover,
 #container.toggle-menu.no-auth {
   flex-direction: column;
 }
-#container.no-auth, .popup #container{
+div#container.no-auth, .popup div#container{
   display: flex;
 }
 #container.no-auth #menu {
@@ -618,9 +628,9 @@ h1#site-name {
 }
 
 /****************** MENU(screen-size > 768px) ******************/
-@media (min-width: 768px) {
+@media (min-width: 769px) {
   #container {
-    display: grid;
+    display: block;
   }
   .toggle-menu .menu-toggle span {
     transform: rotate(180deg);
@@ -631,15 +641,23 @@ h1#site-name {
   .toggle-menu .menu-toggle {
     left: 3.75rem;
   }
+  .toggle-menu .menu-backdrop {
+    display: none;
+  }
+  .menu-backdrop{
+    display: block;
+  }
 
   /*** MENU OPEN ***/
   #container.toggle-menu {
     height: auto;
-    grid-template-columns: 3.75rem 1fr;
+    display: grid;
+    grid-template-columns: 3.75rem calc(100% - 3.75rem);
     overflow: hidden;
   }
-  #main-content {
-    margin-left: 18.75rem;
+  #container:not(.toggle-menu) {
+    margin-left: 3.75rem;
+    width: auto;
   }
   .hamburger {
     display: none;
@@ -653,7 +671,7 @@ h1#site-name {
     position: fixed;
     width: 18.75rem;
     height: 100vh;
-    z-index: 100;
+    z-index: 99999;
     overflow: visible;
   }
   #menu .nav {
@@ -675,14 +693,12 @@ h1#site-name {
   .toggle-menu #main-content #header {
     position: relative;
   }
+
   .toggle-menu #menu {
     width: 3.75rem;
     position: relative;
     height: 100%;
     min-height: 100vh;
-  }
-  .toggle-menu #main-content {
-    margin-left: 0px;
   }
   .toggle-menu .menu-item .icon,
   .toggle-menu .mg-heading .icon {
@@ -766,17 +782,41 @@ h1#site-name {
   }
 }
 
+/****************** MENU(screen-size > 1024px) ******************/
+@media (min-width: 1024px) {
+  #container:not(.toggle-menu) {
+    margin-left: 0rem;
+  }
+  .menu-backdrop{
+    display: none;
+  }
+
+  /*** MENU OPEN ***/
+  #main-content {
+    margin-left: 18.75rem;
+  }
+
+  /*** MENU CLOSE ***/
+  .toggle-menu #main-content {
+    margin-left: 0px;
+  }
+}
+
 /****************** MENU(screen-size < 768px) ******************/
 @media (max-width: 768px) {
-  #container::-webkit-scrollbar {
+  #container:not(.toggle-menu)::-webkit-scrollbar {
     display: none !important;
   }
   html {
     overflow: hidden;
   }
   #container {
-    overflow: scroll;
+    overflow: auto;
+    overflow: overlay;
     height: 100vh;
+
+  }
+  #container:not(.toggle-menu){
     scrollbar-width: none; /* firefox fix*/
   }
   #header {
@@ -790,8 +830,6 @@ h1#site-name {
     display: none;
   }
   h1#site-name {
-
-    /* margin-left: 7px; */
     padding: 0px;
   }
 
@@ -832,6 +870,8 @@ h1#site-name {
     height: 3rem;
   }
 }
+
+
 
 /* LOGIN PAGE */
 
@@ -1028,4 +1068,38 @@ body::-webkit-scrollbar {
 .ow-ip-address {
   mask-image: url(../../ui/openwisp/images/ip-address.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/ip-address.svg);
+}
+
+/* MONITORING ICONS */
+
+.ow-monitoring {
+  mask-image: url(../../ui/openwisp/images/monitoring.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/monitoring.svg);
+}
+.ow-metrics {
+  mask-image: url(../../ui/openwisp/images/metrics.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/metrics.svg);
+}
+.ow-monitoring-checks {
+  mask-image: url(../../ui/openwisp/images/montoring-checks.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/montoring-checks.svg);
+}
+
+/* FIRMWARE */
+
+.ow-firmware {
+  mask-image: url(../../ui/openwisp/images/firmware.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/firmware.svg);
+}
+.ow-build {
+  mask-image: url(../../ui/openwisp/images/build.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/build.svg);
+}
+.ow-category {
+  mask-image: url(../../ui/openwisp/images/category.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/category.svg);
+}
+.ow-mass-upgrade {
+  mask-image: url(../../ui/openwisp/images/mass-upgrade.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/mass-upgrade.svg);
 }

@@ -24,6 +24,7 @@
 
 <!-- Container -->
 <div id="container" class="toggle-menu {% if not user.is_authenticated %}no-auth{% endif %}" >
+  <div class="menu-backdrop"></div>
   {% if not is_popup %}
     <div id="menu">
       <div class="menu-bar">
@@ -66,7 +67,7 @@
         {% block messages %}
           {% if messages %}
             <ul class="messagelist">{% for message in messages %}
-              <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+              <li {% if message.tags %}class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
             {% endfor %}</ul>
           {% endif %}
         {% endblock messages %}
