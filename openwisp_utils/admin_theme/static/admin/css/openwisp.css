@@ -1,6 +1,5 @@
 body {
   min-width: 320px;
-  overflow-x: hidden;
 }
 .menu-backdrop {
   position: fixed;
@@ -146,6 +145,24 @@ body.login {
 .selector-chosen h2 {
   background: #777 !important;
 }
+span.datetimeshortcuts .date-icon{
+  mask: url(../../ui/openwisp/images/date.svg) no-repeat center;
+  -webkit-mask: url(../../ui/openwisp/images/date.svg) no-repeat center;
+  -webkit-mask-size: contain;
+  -webkit-mask: contain;
+  background: #df5d43;
+}
+span.datetimeshortcuts .clock-icon{
+  mask: url(../../ui/openwisp/images/clock.svg) no-repeat center;
+  -webkit-mask: url(../../ui/openwisp/images/clock.svg) no-repeat center;
+  -webkit-mask-size: contain;
+  -webkit-mask: contain;
+  background: #df5d43;
+}
+span.datetimeshortcuts .date-icon:hover,
+span.datetimeshortcuts .clock-icon:hover{
+  background: #b31e00;
+}
 
 /*******************************
 * Common button styles
@@ -184,6 +201,9 @@ div.submit-row a.deletelink,
   color: #fff;
   font-weight: 500;
 }
+div.submit-row a.deletelink{
+  display: block;
+}
 .danger-btn:hover,
 .danger-btn:focus,
 .danger-btn:active,
@@ -197,7 +217,7 @@ div.submit-row a.deletelink:active,
   outline: 0 none;
 }
 
-/* For any normal, default, dark button  [ class="default-btn" ] */
+/* For any normal, default, dark button [ class="default-btn" ] */
 
 .default-btn,
 .button.default,
@@ -213,12 +233,32 @@ a.button {
   display: inline-block;
   text-align: center;
   border-radius: 4px;
-  background: #1b1c1d;
+  background: #333;
   cursor: pointer;
   border: 0px;
   padding: 0.625rem 1rem;
   color: #fff;
   font-weight: 500;
+}
+div#toolbar form input[type="submit"]{
+  border: 1px solid #333;
+  padding: 0.625rem 1rem;
+  background: #333;
+  color: #fff;
+}
+div#toolbar #searchbar{
+  padding: 8px 1rem;
+}
+div#changelist .actions .button{
+  padding: 6px 1rem;
+  background: #333;
+  color: #fff;
+  height: unset;
+}
+div#changelist .actions .button:hover,
+div#toolbar form input[type="submit"]:hover{
+  opacity: 0.7;
+  border-color: #333;
 }
 .object-tools a:link,
 .object-tools a:visited {
@@ -255,7 +295,7 @@ input[type='button']:hover,
 .delete-confirmation form .cancel-link:hover {
   opacity: 0.7;
   outline: 0 none;
-  background: #1b1c1d;
+  background: #333;
 }
 
 /* For success, green button [ class="success-btn" ] */
@@ -382,6 +422,7 @@ input[type='button']:hover,
 .account-button {
   padding: 0.313rem 0.625rem;
   position: relative;
+  color: #777;
 }
 .account-menu li {
   list-style: none;
@@ -458,6 +499,23 @@ input[type='button']:hover,
   .error-btn {
     display: block;
     text-align: center;
+  }
+}
+
+@media (max-width:1226px) and (min-width:1024px){
+
+  /*********** Selector fix ***********/
+  .related-widget-wrapper > a{
+    order: 2;
+  }
+  div.selector{display: flex;flex-direction: column;align-items: center;}
+  div.related-widget-wrapper{
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+  }
+  div.selector ul.selector-chooser{
+    margin: 15px auto 20px;
   }
 }
 
@@ -626,6 +684,9 @@ h1#site-name {
 .popup #main-content {
   margin-left: 0px;
 }
+#changelist-search > div{
+  align-items: center;
+}
 
 /****************** MENU(screen-size > 768px) ******************/
 @media (min-width: 769px) {
@@ -677,10 +738,13 @@ h1#site-name {
   #menu .nav {
     height: calc(100% - 105px);
     overflow-y: hidden;
+    scrollbar-width: thin;
   }
   #menu .nav:hover {
     overflow-y: auto;
     overflow-y: overlay;
+    overflow-x: hidden;
+    scrollbar-width: thin;
   }
 
   a.menu-item,
@@ -735,6 +799,7 @@ h1#site-name {
     box-shadow: 0px 0px 4px #00000030;
     pointer-events: none;
   }
+ 
 
   .toggle-menu .menu-item:hover .label,
   .toggle-menu .mg-head:hover .mg-heading .label {
@@ -804,20 +869,16 @@ h1#site-name {
 
 /****************** MENU(screen-size < 768px) ******************/
 @media (max-width: 768px) {
+  #container{
+    height: 100vh;
+    overflow-y: scroll;
+    overflow-y: overlay;
+  }
   #container:not(.toggle-menu)::-webkit-scrollbar {
     display: none !important;
   }
-  html {
-    overflow: hidden;
-  }
-  #container {
-    overflow: auto;
-    overflow: overlay;
-    height: 100vh;
-
-  }
   #container:not(.toggle-menu){
-    scrollbar-width: none; /* firefox fix*/
+    scrollbar-width: none; 
   }
   #header {
     margin-bottom: 3rem;
@@ -904,6 +965,12 @@ h1#site-name {
 /************
 * Scrollbar
 ************/
+:root{
+  scrollbar-color: #777 #f1f1f1 !important;
+}
+body::-webkit-scrollbar {
+  width: 12px;
+}
 ::-webkit-scrollbar {
   width: 5px;
 }
@@ -915,9 +982,6 @@ h1#site-name {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #333;
-}
-body::-webkit-scrollbar {
-  width: 12px;
 }
 
 /* UTILS ICONS */
