@@ -150,7 +150,7 @@ select { height: 36px; padding: 0 12px; }
   padding: 10px 12px !important;
 }
 .related-widget-wrapper .change-related { margin-left: 7px; }
-#main .form-row { padding: 15px; }
+#main .form-row { padding: 15px; box-sizing: border-box; }
 #main .inline-group .tabular td.original p { height: auto; }
 #main .inline-group thead th {
   background: transparent;
@@ -243,12 +243,6 @@ div.breadcrumbs {
   background: #fff;
   color: #8d7d76cf;
   border-bottom: 2px solid #f6f6f6;
-}
-body.login {
-  background: #f4f7f6;
-}
-.login #container {
-  box-shadow: 0px 0px 6px #f4f7f6;
 }
 #main-content div.breadcrumbs {
   padding: 1rem 2.5rem;
@@ -467,7 +461,7 @@ input[type='button']:hover,
 
 /* MENU TOGGLE BUTTONS */
 .login h1#site-name {
-  padding: 0.625rem 0rem;
+  padding: 1.2rem 0;
 }
 .hamburger {
   display: flex;
@@ -696,9 +690,6 @@ div#container.no-auth, .popup div#container{
 #container.no-auth .menu-toggle {
   display: none;
 }
-.login #menu {
-  box-shadow: none;
-}
 #menu {
   background: #fcfcfc;
   box-shadow: 0 1px 4px -1px #00000026;
@@ -838,9 +829,6 @@ h1#site-name {
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
   no-repeat scroll 0 50%/100%;
   text-indent: -2000px;
-}
-.login #main-content {
-  padding-bottom: 1.25rem;
 }
 #main-content.m-0 {
   margin: 0;
@@ -1097,6 +1085,19 @@ h1#site-name {
 
 /* LOGIN PAGE */
 
+.login #main-content {
+  padding-bottom: 1.25rem;
+}
+.login #menu {
+  box-shadow: none;
+}
+body.login {
+  background: #f4f7f6;
+}
+.login #container {
+  box-shadow: 0px 0px 6px #f4f7f6;
+  width: 31em !important;
+}
 .hide {
   display: none;
 }
@@ -1121,6 +1122,16 @@ h1#site-name {
 }
 .login .hamburger {
   display: none;
+}
+.login #main .form-row {
+  padding: 4px 0;
+}
+.login #main #content {
+  padding: 20px 35px 10px;
+}
+.login #main .submit-row {
+  padding-left: 0;
+  text-align: center;
 }
 
 /************
