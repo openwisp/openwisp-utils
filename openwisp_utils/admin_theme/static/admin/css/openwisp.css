@@ -12,31 +12,69 @@ body {
   display: none;
 }
 #main-content .breadcrumbs,
-.module caption {
-  padding: 1rem;
+.module caption,
+div[class^="app-"].module th, div[class^="app-"].module td {
+  padding: 1rem 1.3rem;
 }
+div[class^="app-"].module td { padding-left: 0; }
+#main-content .results thead th .text a {
+  padding: 15px 10px;
+}
+#main-content .results tbody td, #main-content .results tbody th {
+  padding: 1rem 10px;
+}
+#main-content .results thead th {
+  font-size: 13.5px;
+}
+#main-content .breadcrumbs { font-size: 15px; }
 #main-content .breadcrumbs a,
 a.section:link,
-a.section:visited {
+a.section:visited,
+.module th a,
+#main .help a {
   color: #df5d43;
-  text-decoration: underline;
+  text-decoration: none;
 }
 #main-content .breadcrumbs a:hover,
 a.section:link:hover,
-a.section:visited:hover {
+a.section:visited:hover,
+.module th a:hover,
+#main-content .breadcrumbs a:focus,
+a.section:link:focus,
+a.section:visited:focus,
+.module th a:focus,
+#main .help a:hover,
+#main .help a:focus {
+  text-decoration: underline;
+}
+#main-content .module caption a {
   text-decoration: none;
+  color: #000;
+}
+#main-content .module caption a:hover {
+  text-decoration: underline;
 }
 .module h2,
 .module caption,
-.inline-group h2 {
+.inline-group h2,
+fieldset.module h2 {
   background: #f9f9f9;
   color: #333;
+  padding: 15px;
 }
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
 a:link,
 a:visited {
   color: #777;
+  text-decoration: none;
+}
+table thead th.sorted .sortoptions a.sortremove:focus:after,
+table thead th.sorted .sortoptions a.sortremove:hover:after,
+a:hover,
+a:focus {
+  color: #000;
+  text-decoration: none;
 }
 #changelist-filter li.selected a {
   color: #df5d43 !important;
@@ -49,11 +87,84 @@ a:visited {
 #main .form-row label {
   color: #1b1818;
 }
-#main .form-row .help {
-  margin-top: 0.188rem;
-  font-size: 0.813rem;
-  color: #777;
+#main .form-row .help,
+#container #main-content .help {
+  font-size: 14px !important;
+  line-height: 20px;
+  color: rgba(0, 0, 0, 0.45);
 }
+.addlink, .changelink {
+  font-weight: bold;
+}
+.changelink { padding-left: 17px; }
+.addlink:hover, .changelink:hover {
+  color: #000;
+}
+
+/* increase font size and spacing */
+
+.module caption, .inline-group h2,
+#content-related h3,
+fieldset.module h2 {
+  font-size: 16px;
+}
+#main .inline-related h3 {
+  padding: 15px;
+  font-size: 15px;
+  background: #F9F9F9;
+}
+td, th, li {
+  font-size: 14px;
+}
+.mini { font-size: 12px; }
+#main .actionlist li {
+  line-height: 20px;
+  background-position: 0px 4px;
+}
+#main .aligned label,
+input, textarea, select, .form-row p, form .button,
+.readonly,
+#main .form-row { font-size: 15px; }
+select:not([disabled]):not(.readonly) { background: #fff; }
+input[type=text],
+input[type=password], input[type=email],
+input[type=url], input[type=number],
+input[type=tel], textarea,
+#main .vTextField {
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
+select { height: 36px; padding: 0 12px; }
+#main span.select2-selection { min-height: 36px; }
+#main .select2-selection__arrow {
+  height: 28px;
+  top: 3px;
+  right: 7px;
+  width: 24px;
+}
+.select2-selection__rendered {
+  line-height: 34px;
+  padding-left: 12px;
+}
+.select2-results__option {
+  padding: 10px 12px !important;
+}
+.related-widget-wrapper .change-related { margin-left: 7px; }
+#main .form-row { padding: 15px; }
+#main .inline-group .tabular td.original p { height: auto; }
+#main .inline-group thead th {
+  background: transparent;
+}
+#main .inline-group thead th:not(.original),
+#main .add-row td ,
+#main div.add-row {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+#main .add-row td a,
+#main div.add-row a { font-size: 15px !important; }
+#main .delete input { vertical-align: -1px; }
+#main .delete label { font-size: 14px; }
 
 /* hide first delete link, hide save and add anoher */
 #main .submit-row:first-child .deletelink-box,
@@ -142,8 +253,9 @@ body.login {
 #main-content div.breadcrumbs {
   padding: 1rem 2.5rem;
 }
-.selector-chosen h2 {
-  background: #777 !important;
+#main .selector-chosen h2 {
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff ;
 }
 span.datetimeshortcuts .date-icon{
   mask: url(../../ui/openwisp/images/date.svg) no-repeat center;
@@ -177,7 +289,7 @@ span.datetimeshortcuts .clock-icon:hover{
   border-radius: 4px;
   background: #ffff;
   cursor: pointer;
-  border: 0px;
+  border: 0;
   padding: 0.313rem 0.625rem;
 }
 .toggle-btn:hover,
@@ -196,7 +308,7 @@ div.submit-row a.deletelink,
   border-radius: 4px;
   background: #df5d43;
   cursor: pointer;
-  border: 0px;
+  border: 0;
   padding: 0.625rem 1rem;
   color: #fff;
   font-weight: 500;
@@ -235,19 +347,33 @@ a.button {
   border-radius: 4px;
   background: #333;
   cursor: pointer;
-  border: 0px;
+  border: 0;
   padding: 0.625rem 1rem;
   color: #fff;
   font-weight: 500;
+  font-size: 15px;
+}
+div#toolbar {
+  padding: 0.8rem 1.2rem;
 }
 div#toolbar form input[type="submit"]{
-  border: 1px solid #333;
-  padding: 0.625rem 1rem;
+  margin-left: 3px;
+  padding: 0.47rem 1rem;
   background: #333;
+  border: 1px solid #333;
   color: #fff;
 }
-div#toolbar #searchbar{
-  padding: 8px 1rem;
+div#toolbar #searchbar {
+  padding: 15px 0.8em;
+  font-size: 15px;
+}
+div#changelist .actions label,
+div#changelist .actions span {
+  font-size: 14px !important;
+  line-height: 26px;
+}
+div#changelist .actions select {
+  height: 27px !important;
 }
 div#changelist .actions .button{
   padding: 6px 1rem;
@@ -261,15 +387,17 @@ div#toolbar form input[type="submit"]:hover{
   border-color: #333;
 }
 .object-tools a:link,
-.object-tools a:visited {
-  padding: 0.313rem 0.625rem;
+.object-tools a:visited,
+.object-tools button {
+  padding: 0.4rem 0.8rem;
+  font-size: 13px;
 }
 #container .object-tools a.addlink {
   background-image: url(../../ui/openwisp/images/add.svg);
   background-repeat: no-repeat;
-  background-size: 1rem;
-  background-position: center right 0.313rem;
-  padding-right: 1.5rem;
+  background-size: 1.35rem;
+  background-position: 0.5rem 43%;
+  padding-left: 1.9rem;
 }
 .default-btn:hover,
 .default-btn:active,
@@ -293,10 +421,17 @@ input[type='button']:focus,
 input[type='submit']:hover,
 input[type='button']:hover,
 .delete-confirmation form .cancel-link:hover {
-  opacity: 0.7;
   outline: 0 none;
-  background: #333;
+  background: rgba(51, 51, 51, 0.7);
 }
+#main .related-lookup { padding-left: 20px; width: auto; }
+.form-row .item-label {
+  position: relative;
+  bottom: -2px;
+  margin-left: 2px;
+  font-weight: bold;
+}
+#main label.vCheckboxLabel { width: auto; }
 
 /* For success, green button [ class="success-btn" ] */
 .success-btn,
@@ -306,7 +441,7 @@ input[type='button']:hover,
   border-radius: 4px;
   background: #498b26;
   cursor: pointer;
-  border: 0px;
+  border: 0;
   padding: 0.625rem 1rem;
   color: #fff;
   font-weight: 500;
@@ -319,6 +454,9 @@ input[type='button']:hover,
 #main .submit-row .default:focus {
   opacity: 0.8;
   outline: 0 none;
+}
+#main .submit-row input {
+  font-size: 14px;
 }
 
 /*
@@ -361,7 +499,8 @@ input[type='button']:hover,
   margin-top: -3.125rem;
   z-index: 1;
   transition: all ease;
-  background: #cccccc;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 0 3px 3px 0px;
 }
 .menu-toggle span {
   mask: url(../../ui/openwisp/images/left-arrow.svg) no-repeat center;
@@ -375,9 +514,9 @@ input[type='button']:hover,
 }
 .menu-toggle:hover {
   opacity: 1;
-  right: -2.125rem;
-  width: 2.125rem;
-  background: #777;
+  right: -1.65rem;
+  width: 1.65rem;
+  background: rgba(0, 0, 0, 0.6);
 }
 
 /* USER TOOLS */
@@ -389,18 +528,27 @@ input[type='button']:hover,
 .account {
   position: relative;
 }
+.account-button:hover,
+.account-button:focus {
+  color: #df5d43;
+}
+.account-button:hover span,
+.account-button:focus span,
+.account-menu a:hover span {
+  background: #df5d43;
+}
 .account-menu {
   position: absolute;
   opacity: 1;
   transition: all 0.3s ease;
   width: 200px;
   top: 2.5rem;
-  right: 0px;
+  right: 0;
   background: #fff;
   border-radius: 0.5rem;
   box-shadow: 0px 1px 0.188rem #00000040;
   z-index: 10;
-  padding: 0.625rem;
+  padding: 0.45rem 0.625rem;
 }
 .account-menu.hide {
   display: block;
@@ -418,6 +566,9 @@ input[type='button']:hover,
   -webkit-mask-repeat: no-repeat;
   mask-size: 1.375rem;
   mask-repeat: no-repeat;
+}
+.account-menu span {
+  margin-right: 0.5rem;
 }
 .account-button {
   padding: 0.313rem 0.625rem;
@@ -440,16 +591,17 @@ input[type='button']:hover,
   font-weight: 700;
   padding: 0.375rem;
   text-decoration: none;
+  line-height: 22px;
 }
 #header .account-menu li:last-child {
-  border-bottom: 0px;
+  border-bottom: 0;
 }
 .account-menu-username:hover,
 #header .account-menu a:hover {
   color: #df5d43;
 }
 #main-content #header {
-  height: 0px;
+  height: 0;
   overflow: visible;
   z-index: 9999;
   justify-content: flex-end;
@@ -482,7 +634,7 @@ input[type='button']:hover,
   }
   #main-content #header {
     padding: 0px 0.938rem;
-    top: 0px;
+    top: 0;
     position: sticky;
   }
   .account-menu-username {
@@ -492,7 +644,7 @@ input[type='button']:hover,
     display: none;
   }
   #ow-user-tools .account-button .user {
-    margin-right: 0px;
+    margin-right: 0;
   }
   .default-btn,
   .success-btn,
@@ -550,8 +702,8 @@ div#container.no-auth, .popup div#container{
 #menu {
   background: #fcfcfc;
   box-shadow: 0 1px 4px -1px #00000026;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
 }
 .menu-bar {
   border-bottom: 2px solid #f6f6f6;
@@ -564,11 +716,12 @@ a.menu-item,
   word-break: break-word;
   cursor: pointer;
   text-transform: uppercase;
-  font-size: 0.813rem;
+  font-size: 0.86rem;
   font-weight: 500;
   align-items: center;
   color: #777;
   text-decoration: none !important;
+
 }
 .menu-item .icon,
 .mg-heading .icon,
@@ -584,25 +737,36 @@ a.menu-item,
   mask-position: center;
   mask-size: contain;
   display: inline-block;
-  margin-right: 1.375rem;
+  margin-right: 0.8rem;
 }
 .menu-item:hover,
 .mg-head:hover,
-.mg-link:hover {
-  color: #df5d43;
-  background: #ffe5e5;
+#menu .mg-link:hover,
+.menu-item:focus,
+.mg-head:focus,
+#menu .mg-link:focus,
+.select2-results__option--highlighted[aria-selected] {
+  color: #df5d43 !important;
+  background: #ffe5e5 !important;
+}
+#menu .mg-link:hover,
+#menu .mg-link:focus {
+  color: #c74126;
 }
 .mg-head {
   justify-content: space-between;
 }
-.mg-link {
+#menu .mg-link {
   font-weight: 300;
-  font-size: 0.75rem;
-  padding: 0.313rem 1rem;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
   text-transform: capitalize;
+  color: rgba(0, 0, 0, 0.675);
 }
 .menu-item:hover .icon,
-.mg-head:hover .icon {
+.mg-head:hover .icon,
+.menu-item:focus .icon,
+.mg-head:focus .icon {
   background: #df5d43;
 }
 .mg-arrow {
@@ -620,14 +784,14 @@ a.menu-item,
   align-items: center;
 }
 .mg-dropdown {
-  max-height: 0px;
+  max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
   background: #fdf2f2;
 }
-.menu-group.active .mg-dropdown {
 
-  /* for transition in the height of mg-dropdown */
+/* for transition in the height of mg-dropdown */
+.menu-group.active .mg-dropdown {
   max-height: 200vh;
 }
 .mg-dropdown-label {
@@ -638,8 +802,8 @@ a.menu-item,
   display: none;
 }
 .mg-list {
-  padding: 0px;
-  margin: 0px;
+  padding: 0;
+  margin: 0;
 }
 .mg-list li {
   list-style: none;
@@ -663,13 +827,13 @@ a.menu-item,
   background: #fdf2f2f2;
 }
 h1#site-name {
-  margin: 0px;
+  margin: 0;
   padding: 0.5rem 0px;
 }
 #site-name a {
   display: block;
-  width: 150px;
-  height: 86px;
+  width: 165px;
+  height: 95px;
   margin: auto;
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
   no-repeat scroll 0 50%/100%;
@@ -679,10 +843,10 @@ h1#site-name {
   padding-bottom: 1.25rem;
 }
 #main-content.m-0 {
-  margin: 0px;
+  margin: 0;
 }
 .popup #main-content {
-  margin-left: 0px;
+  margin-left: 0;
 }
 #changelist-search > div{
   align-items: center;
@@ -725,7 +889,7 @@ h1#site-name {
   }
   #main-content #header {
     position: sticky;
-    top: 0px;
+    top: 0;
   }
 
   #menu {
@@ -766,7 +930,7 @@ h1#site-name {
   }
   .toggle-menu .menu-item .icon,
   .toggle-menu .mg-heading .icon {
-    margin: 0px;
+    margin: 0;
   }
 
   .toggle-menu .menu-item,
@@ -799,7 +963,6 @@ h1#site-name {
     box-shadow: 0px 0px 4px #00000030;
     pointer-events: none;
   }
- 
 
   .toggle-menu .menu-item:hover .label,
   .toggle-menu .mg-head:hover .mg-heading .label {
@@ -863,7 +1026,7 @@ h1#site-name {
 
   /*** MENU CLOSE ***/
   .toggle-menu #main-content {
-    margin-left: 0px;
+    margin-left: 0;
   }
 }
 
@@ -878,20 +1041,20 @@ h1#site-name {
     display: none !important;
   }
   #container:not(.toggle-menu){
-    scrollbar-width: none; 
+    scrollbar-width: none;
   }
   #header {
     margin-bottom: 3rem;
     position: sticky;
   }
   .no-auth #header {
-    margin-bottom: 0px;
+    margin-bottom: 0;
   }
   .menu-toggle {
     display: none;
   }
   h1#site-name {
-    padding: 0px;
+    padding: 0;
   }
 
   #site-name a {
@@ -923,7 +1086,7 @@ h1#site-name {
     z-index: 9999;
     overflow: hidden;
     min-width: 314px;
-    top: 0px;
+    top: 0;
   }
 
   /*** MENU CLOSE ***/
@@ -931,8 +1094,6 @@ h1#site-name {
     height: 3rem;
   }
 }
-
-
 
 /* LOGIN PAGE */
 
