@@ -13,7 +13,47 @@ var MenuTransitionTime = '0.1s';
   initToggleMenuHandlers();
   initAccountViewHandler();
   initToolTipHandlers();
+  initResizeScreenHelpers();
 })();
+
+function Window() {
+  /*
+    To prevent editing of variables from console.
+    Because variables are used to manage state of window
+  */ 
+  var windowWidth = window.innerWidth;
+  this.setWindowWidth = function (size) {
+    windowWidth = size;
+  };
+  this.getWindowWidth = function () {
+    return windowWidth;
+  };
+}
+
+function initResizeScreenHelpers() {
+  function changeMenuState(owWindow) {
+    var currentWidth = window.innerWidth;
+    var isMenuOpen = !owContainer.classList.contains('toggle-menu');
+    if (currentWidth <= 1024) {
+      if (owWindow.getWindowWidth() > 1024 && isMenuOpen) {
+        // close window
+        owContainer.classList.add('toggle-menu');
+        owWindow.setWindowWidth(currentWidth);
+        setMenuToggleText();
+      }
+    } else if (owWindow.getWindowWidth() <= 1024) {
+      // when window width is greater than 1024px
+      // work according to user last choice
+      setMenuState();
+      owWindow.setWindowWidth(currentWidth);
+      setMenuToggleText();
+    }
+  }
+  var owWindow = new Window();
+  window.addEventListener('resize', function () {
+    changeMenuState(owWindow);
+  });
+}
 
 function initMenuGroupClickListener() {
   let mgHeads = document.querySelectorAll('.mg-head');
@@ -59,7 +99,7 @@ function initMenuGroupClickListener() {
   });
 }
 
-function setMenu() {
+function setMenuState() {
   let openMenu = localStorage.getItem('ow-menu');
   if (window.innerWidth > 1024) {
     if (openMenu === null) {
@@ -71,6 +111,21 @@ function setMenu() {
       owContainer.classList.toggle('toggle-menu');
     }
   }
+}
+
+function setMenuToggleText(){
+  var isMenuOpen = !owContainer.classList.contains('toggle-menu');
+  if(isMenuOpen){
+    owMenuToggle.setAttribute('title','Minimize menu');
+  }
+  else{
+    owMenuToggle.setAttribute('title','Maximize menu');
+  }
+}
+
+function setMenu() {
+  setMenuState();
+  setMenuToggleText();
   setTimeout(function () {
     // Transition fix: Add transition to menu and main content
     // after some time.
@@ -84,6 +139,7 @@ function setMenu() {
       owMenuToggle.style.transitionDuration = MenuTransitionTime;
     }
   }, 1000);
+  setMenuToggleText();
 }
 
 function initToggleMenuHandlers() {
@@ -93,6 +149,7 @@ function initToggleMenuHandlers() {
     if (window.innerWidth > 1024) {
       localStorage.setItem('ow-menu', isMenuOpen === 'true' ? false : true);
     }
+    setMenuToggleText();
   }
   if (owMenuToggle && owContainer) {
     owMenuToggle.addEventListener('click', toggleMenuHandler);
@@ -101,7 +158,7 @@ function initToggleMenuHandlers() {
     owHamburger.addEventListener('click', toggleMenuHandler);
   }
   // Close menu when backdrop is clicked
-  menuBackdrop.addEventListener('click', function (e){
+  menuBackdrop.addEventListener('click', function (e) {
     e.stopPropagation();
     owContainer.classList.toggle('toggle-menu');
   });

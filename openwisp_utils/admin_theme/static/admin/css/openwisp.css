@@ -8,7 +8,7 @@ body {
   top: 0;
   left: 0;
   background: rgba(0, 0, 0, 0.10);
-  z-index: 99999;
+  z-index: 9999;
   display: none;
 }
 #main-content .breadcrumbs,
@@ -597,7 +597,7 @@ input[type='button']:hover,
 #main-content #header {
   height: 0;
   overflow: visible;
-  z-index: 9999;
+  z-index: 999;
   justify-content: flex-end;
   flex-direction: row;
   padding: 0px 2.5rem;
@@ -608,6 +608,29 @@ input[type='button']:hover,
   height: 86px;
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
   no-repeat scroll 0 50%/100%;
+}
+
+/* Fix for object tools */
+#content-main .object-tools{
+  display: none;
+}
+.title-wrapper h1,
+.title-wrapper h2{
+  float: left;
+  margin-top: 26px;
+  margin-bottom: 0px;
+}
+.title-wrapper .object-tools{
+  float: right;
+  margin: 20px 0px!important;
+  height: auto;
+}
+.title-wrapper .object-tools li{
+  height: auto;
+}
+.dashboard .title-wrapper h1{
+  float: none;
+  margin-bottom: 26px;
 }
 
 /* RESPONSIVE */
@@ -646,6 +669,17 @@ input[type='button']:hover,
     display: block;
     text-align: center;
   }
+  .title-wrapper .object-tools {
+    height: auto;
+    flex-direction: column;
+    align-items: self-start;
+    width: 100%;
+  }
+  .title-wrapper .object-tools li{
+    margin-left: 0px;
+    width: 100%;
+  }
+
 }
 
 @media (max-width:1226px) and (min-width:1024px){
@@ -757,7 +791,12 @@ a.menu-item,
 .menu-item:hover .icon,
 .mg-head:hover .icon,
 .menu-item:focus .icon,
-.mg-head:focus .icon {
+.mg-head:focus .icon,
+.mg-head:hover .mg-arrow,
+.mg-head:focus .mg-arrow,
+.menu-group.active .mg-head .icon,
+.mg-link:hover .icon,
+.menu-group.active .mg-arrow {
   background: #df5d43;
 }
 .mg-arrow {
@@ -768,7 +807,7 @@ a.menu-item,
   width: 1.25rem;
   margin-left: 1.25rem;
   background: #bbbbbb;
-  transition-duration: 0.3s;
+  transition: transform 0.3s;
 }
 .mg-heading {
   display: flex;
@@ -798,10 +837,6 @@ a.menu-item,
 }
 .mg-list li {
   list-style: none;
-}
-.menu-group.active .mg-head .icon,
-.mg-link:hover .icon {
-  background: #df5d43;
 }
 .menu-group.active .mg-arrow {
   transform: rotate(-90deg);
@@ -884,7 +919,7 @@ h1#site-name {
     position: fixed;
     width: 18.75rem;
     height: 100vh;
-    z-index: 99999;
+    z-index: 9999;
     overflow: visible;
   }
   #menu .nav {
@@ -1031,9 +1066,10 @@ h1#site-name {
   #container:not(.toggle-menu){
     scrollbar-width: none;
   }
-  #header {
+  #main-content #header {
     margin-bottom: 3rem;
     position: sticky;
+    z-index: 9999;
   }
   .no-auth #header {
     margin-bottom: 0;
