@@ -166,6 +166,11 @@ select { height: 36px; padding: 0 12px; }
 #main .delete input { vertical-align: -1px; }
 #main .delete label { font-size: 14px; }
 
+ul.messagelist li {
+  padding: 15px 10px 15px 65px;
+  background-position: 40px 17px;
+}
+
 /* hide first delete link, hide save and add anoher */
 #main .submit-row:first-child .deletelink-box,
 .submit-row input[name='_addanother'] {
@@ -656,6 +661,7 @@ input[type='button']:hover,
   }
   .account-menu-username {
     display: flex;
+    padding-bottom: 5px;
   }
   .account-button strong {
     display: none;
@@ -1079,6 +1085,7 @@ h1#site-name {
   }
   h1#site-name {
     padding: 0;
+    margin-left: 10px;
   }
 
   #site-name a {
