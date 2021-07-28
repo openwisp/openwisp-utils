@@ -165,7 +165,6 @@ select { height: 36px; padding: 0 12px; }
 #main div.add-row a { font-size: 15px !important; }
 #main .delete input { vertical-align: -1px; }
 #main .delete label { font-size: 14px; }
-
 ul.messagelist li {
   padding: 15px 10px 15px 65px;
   background-position: 40px 17px;
