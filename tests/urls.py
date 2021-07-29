@@ -1,9 +1,8 @@
-from django.conf.urls import url
 from django.contrib import admin
-from django.urls import include
+from django.urls import include, path
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^api/v1/', include('openwisp_utils.api.urls')),
-    url(r'^api/v1/', include('test_project.api.urls')),
+    path('admin/', admin.site.urls),
+    path('api/v1/', include('openwisp_utils.api.urls')),
+    path('api/v1/', include('test_project.api.urls')),
 ]
