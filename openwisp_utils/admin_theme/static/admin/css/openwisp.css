@@ -807,7 +807,7 @@ a.menu-item,
 }
 #menu .mg-link {
   font-weight: 300;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   padding: 0.55rem 1rem;
   text-transform: capitalize;
   color: rgba(0, 0, 0, 0.675);
@@ -1050,10 +1050,6 @@ h1#site-name {
     top: 0;
     z-index: 1;
     pointer-events: all;
-  }
-  .toggle-menu .menu-item:hover .icon,
-  .toggle-menu .mg-head:hover .icon {
-    background: #777;
   }
 }
 
