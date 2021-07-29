@@ -1,21 +1,24 @@
-.user-icon{
-  background-image: url('./icons/user.png');
+.auth {
+  mask-image: url("./icons/auth.svg");
+  -webkit-mask-image: url("./icons/auth.svg");
 }
-.add-icon{
-  background-image: url('./icons/add.png');
+.shelf {
+  mask-image: url("./icons/shelf.svg");
+  -webkit-mask-image: url("./icons/shelf.svg");
 }
-.edit{
-  background-image: url('./icons/edit.png');
+.docs {
+  mask-image: url("./icons/docs.svg");
+  -webkit-mask-image: url("./icons/docs.svg");
 }
-.lock{
-  background-image: url('./icons/lock.png');
+.code {
+  mask-image: url("./icons/code.svg");
+  -webkit-mask-image: url("./icons/code.svg");
 }
-.key{
-  background-image: url('./icons/key.png');
+.link {
+  mask-image: url("./icons/link.svg");
+  -webkit-mask-image: url("./icons/link.svg");
 }
-.shelf-icon{
-  background-image: url('./icons/shelf.png');
-}
-.link{
-  background-image: url('./icons/link.png');
+.add-user {
+  mask-image: url("./icons/add-user.svg");
+  -webkit-mask-image: url("./icons/add-user.svg");
 }

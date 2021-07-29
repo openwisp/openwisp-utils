@@ -664,14 +664,16 @@ How to use custom icons in the menu
 
 Create a CSS file and use following syntax to provide the image for each
 icon used in the menu. The CSS class name should be same as the ``icon``
-parameter  used in configuration of a menu item or group.
+parameter used in configuration of a menu item or group and ``icon`` should be
+in ``svg`` format.
 
 Example:
 
 .. code-block:: css
 
     .icon-class-name:{
-        background: url(imageurl);
+        mask-image: url(imageurl);
+        -webkit-mask-image: url(imageurl);
     }
 
 Follow the instructions in
