@@ -351,6 +351,7 @@ div.submit-row a.deletelink:active,
 .default-btn,
 .button.default,
 input[type='submit'].default,
+.object-tools a,
 .object-tools a:link,
 .object-tools a:visited,
 .button,
@@ -358,7 +359,8 @@ input[type='submit'],
 input[type='button'],
 .submit-row input,
 .delete-confirmation form .cancel-link,
-a.button {
+a.button,
+.object-tools button {
   display: inline-block;
   text-align: center;
   border-radius: 4px;
@@ -403,6 +405,7 @@ div#toolbar form input[type="submit"]:hover{
   opacity: 0.7;
   border-color: #333;
 }
+.object-tools a,
 .object-tools a:link,
 .object-tools a:visited,
 .object-tools button {
@@ -667,7 +670,6 @@ p.paginator a:link, p.paginator a:visited{
 }
 p.paginator a:focus, p.paginator a:hover{
   background: #b31e00;
-
 }
 p.paginator a.showall{
   background: none;
@@ -678,6 +680,35 @@ p.paginator a.showall:focus, p.paginator a.showall:hover{
 }
 div#toolbar #searchbar{
   max-width: 68%;
+}
+#main .option-container {
+  position: absolute;
+  margin-top: 39px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  z-index: 999;
+  background-color: #efefef;
+  border-radius: 8px;
+  box-shadow: 0px 1px 3px #00000040;
+  color: #333333;
+  font-weight: normal;
+}
+#main .option-container .option {
+  padding: 10px;
+  border: 0;
+  font-weight: normal;
+  cursor: pointer;
+  background-color: #efefef;
+  color: #333333;
+  border-radius: 0;
+}
+#main .option-container .option:hover,
+#main .option-container .option:focus,
+#main .option-container .option:active {
+  background: #df5d43;
+  color: #fff;
+  outline: 0 none;
 }
 
 /* RESPONSIVE */
