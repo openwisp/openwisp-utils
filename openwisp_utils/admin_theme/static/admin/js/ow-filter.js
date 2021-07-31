@@ -111,6 +111,7 @@ function initSliderHandlers() {
   }
   // When slider is scrolled
   slider.addEventListener('scroll', setArrowButtonVisibility);
+  window.addEventListener('resize', setArrowButtonVisibility);
 }
 
 function filterHandlers() {

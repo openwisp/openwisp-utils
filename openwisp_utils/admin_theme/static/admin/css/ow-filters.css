@@ -23,11 +23,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
 }
 .filters-bottom {
   height: 3.125rem;
   margin-top: 1.25rem;
   position: relative;
+  width: 97%;
+  margin: auto;
 }
 .filter {
   margin-right: 0.625rem;
@@ -47,7 +50,7 @@
   height: 0px;
   transition: all 0.2s ease;
   opacity: 0;
-  box-shadow: 0px 1px 4px #00000040;
+  box-shadow: 0px 1px 3px #00000040;
   pointer-events: none;
 }
 .filter-title {
@@ -91,16 +94,15 @@
   margin-top: 5px;
   pointer-events: all;
 }
-.filter-options .selected {
+.filter-options .selected,.filter-options .selected:hover,
+.filter-options .selected:focus {
   background: #df5d43;
   color: #ffff;
 }
-.filter-options label:hover {
+.filter-options label:hover,
+.filter-options label:focus {
   background: #ffe5e5;
   color: #ba2121;
-}
-#ow-apply-filte:hover {
-  background: #e45959;
 }
 .ow-filter-slider {
   overflow-x: auto;
@@ -160,7 +162,6 @@
   }
   .filters-bottom{
     width: 90%;
-    margin: auto;
     margin-top: 1.25rem;
   }
 }
