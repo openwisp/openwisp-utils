@@ -14,6 +14,7 @@ var MenuTransitionTime = '0.1s';
   initAccountViewHandler();
   initToolTipHandlers();
   initResizeScreenHelpers();
+  showActiveItems();
 })();
 
 function Window() {
@@ -206,4 +207,16 @@ function initToolTipHandlers() {
       }
     });
   });
+}
+
+function showActiveItems(){
+  var activeLink = document.querySelector(`.nav a[href="${window.location.pathname}"]`);
+  if(!activeLink){
+    return;
+  }
+  activeLink.classList.add('active-menu-link');
+  if(activeLink.classList.contains('mg-link')){
+    var group = activeLink.closest('.menu-group');
+    group.classList.add('active-mg');
+  }
 }

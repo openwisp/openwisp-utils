@@ -848,7 +848,9 @@ a.menu-item,
 .mg-head:focus,
 #menu .mg-link:focus,
 .select2-results__option--highlighted[aria-selected],
-.select2-results__option[aria-selected=true] {
+.select2-results__option[aria-selected=true],
+.active-menu-link,
+.active-mg .mg-head {
   background: #ffe5e5 !important;
   color: #df5d43 !important;
 }
@@ -874,7 +876,10 @@ a.menu-item,
 .mg-head:focus .mg-arrow,
 .menu-group.active .mg-head .icon,
 .mg-link:hover .icon,
-.menu-group.active .mg-arrow {
+.menu-group.active .mg-arrow,
+a.active-menu-link .icon,
+.active-mg .mg-head .icon,
+.active-mg .mg-head .mg-arrow {
   background: #df5d43;
 }
 .mg-arrow {
@@ -896,6 +901,9 @@ a.menu-item,
   overflow: hidden;
   transition: max-height 0.3s ease;
   background: #fdf2f2;
+}
+.mg-list li{
+  padding: 0;
 }
 
 /* for transition in the height of mg-dropdown */
