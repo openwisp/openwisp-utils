@@ -1425,11 +1425,12 @@ Example usage:
 Installing for development
 --------------------------
 
-Install sqlite:
+Install the system dependencies:
 
 .. code-block:: shell
 
     sudo apt-get install sqlite3 libsqlite3-dev
+    sudo snap install -y chromium
 
 Install your forked repo:
 
@@ -1457,6 +1458,9 @@ Set up the pre-push hook to run tests and QA checks automatically right before t
 
     openwisp-pre-push-hook --install
 
+Install WebDriver for Chromium for your browser version from `<https://chromedriver.chromium.org/home>`_
+and Extract ``chromedriver`` to one of directories from your ``$PATH`` (example: ``~/.local/bin/``).
+    
 Create database:
 
 .. code-block:: shell

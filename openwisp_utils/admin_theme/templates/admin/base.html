@@ -23,7 +23,7 @@
   data-admin-utc-offset="{% now "Z" %}">
 
 <!-- Container -->
-<div id="container" class="toggle-menu {% if not user.is_authenticated %}no-auth{% endif %}" >
+<div id="container" class="toggle-menu{% if not user.is_authenticated %} no-auth{% endif %}" >
   <div class="menu-backdrop"></div>
   {% if not is_popup %}
     <div id="menu">

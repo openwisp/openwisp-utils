@@ -42,6 +42,13 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install Chromium for Selenium testing
+      run: |
+        sudo snap install chromium
+        wget https://chromedriver.storage.googleapis.com/91.0.4472.19/chromedriver_linux64.zip
+        sudo unzip chromedriver_linux64.zip -d /usr/local/bin/
+        sudo chmod +x /usr/local/bin/chromedriver
+
     - name: Install python dependencies
       run: |
         pip install -U pip wheel setuptools

@@ -14,6 +14,16 @@
     <link rel="stylesheet" type="text/css" href="{% static "admin/css/openwisp.css" %}" />
     <link rel="icon" type="image/x-icon" href="{% static "ui/openwisp/images/favicon.png" %}" />
 {% endif %}
+{% if OPENWISP_TEST_MODE %}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/openwisp.css" %}" />
+    <link rel="icon" type="image/x-icon" href="{% static "ui/openwisp/images/favicon.png" %}" />
+    {% comment %} disable transitions during testing {% endcomment %}
+    <style>
+      *{
+        transition:none!important;
+      }
+    </style>
+{% endif %}
 {% endblock %}
 
 {% block menu-bar %}
