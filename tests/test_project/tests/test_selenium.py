@@ -21,10 +21,12 @@ class TestMenu(SeleniumTestCase):
     def setUpClass(cls):
         super().setUpClass()
         chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--headless')
         chrome_options.add_argument('--window-size=1366,768')
         chrome_options.add_argument('--ignore-certificate-errors')
         chrome_options.add_argument('--remote-debugging-port=9222')
         capabilities = DesiredCapabilities.CHROME
+        capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
         cls.web_driver = webdriver.Chrome(
             options=chrome_options, desired_capabilities=capabilities
         )

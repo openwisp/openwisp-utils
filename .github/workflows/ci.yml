@@ -44,6 +44,8 @@ jobs:
 
     - name: Install Chromium for Selenium testing
       run: |
+        sudo apt update
+        sudo apt install snapd
         sudo snap install chromium
         wget https://chromedriver.storage.googleapis.com/91.0.4472.19/chromedriver_linux64.zip
         sudo unzip chromedriver_linux64.zip -d /usr/local/bin/
