@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 from openwisp_utils.admin_theme.menu import (
     MenuGroup,
     MenuLink,
@@ -63,15 +64,16 @@ class TestMenuSchema(TestCase):
             ModelLink(config=model_link_config),
             MenuGroup(config=menu_group_config),
         ]
+        user = get_user_model().objects.create_superuser(
+            username='administrator', password='admin', email='test@test.org'
+        )
+        self.client.force_login(user)
+        url = reverse('admin:index')
         for position, config in test_menu_groups.items():
             register_menu_group(position=position, config=config)
 
         with self.subTest('Test ordering of menu groups'):
-            url = reverse('admin:index')
             request = self.factory.get(url)
-            user = get_user_model().objects.create_superuser(
-                username='administrator', password='admin', email='test@test.org'
-            )
             request.user = user
             current_item_index = 0
             for item in MENU.values():
@@ -99,6 +101,19 @@ class TestMenuSchema(TestCase):
         with self.subTest('Registering with unknow menu group'):
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_group(position=-1, config={})
+
+        with self.subTest('Model Link with invalid name'):
+            _config = self._get_model_link_config(name="invalid_name")
+            with self.assertRaises(NoReverseMatch):
+                register_menu_group(position=-1, config=_config)
+                self.client.get(url)
+        with self.subTest('Model Group with invalid name in item'):
+            _config = self._get_menu_group_config(
+                items={1: self._get_model_link_config(name="invalid_name")}
+            )
+            with self.assertRaises(NoReverseMatch):
+                register_menu_group(position=-2, config=_config)
+                self.client.get(url)
 
     def test_menu_link(self):
 
