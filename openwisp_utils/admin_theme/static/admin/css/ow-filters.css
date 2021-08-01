@@ -41,8 +41,8 @@
 .filter-options {
   flex-direction: column;
   min-width: 11.25rem;
-  margin-top: 2.5rem;
-  border-radius: 0.5rem;
+  margin-top: 2px;
+  border-radius: 0.35rem;
   background: #ffffff;
   max-height: 18.75rem;
   overflow-y: auto;
@@ -55,18 +55,17 @@
 }
 .filter-title {
   border: 1px solid #747272;
-  border-radius: 0.5rem;
-  padding: 0.3125rem 1.25rem 0.3125rem 1rem;
+  border-radius: 0.2rem;
+  padding: 0.4rem 1.25rem 0.3125rem 1rem;
   cursor: pointer;
 }
 .filter-title h3 {
   margin: 0px;
-  margin-top: -14px;
-  margin-left: -8px;
-  background: #fff;
+  margin: -17px 0 1px -8px;
+  padding: 0px 5px;
   width: fit-content;
-  padding: 0px 8px;
-  color: #747272;
+  background: #fff;
+  color: rgba(0, 0, 0, 0.65);
   pointer-events: none;
   font-weight: 300;
 }
@@ -85,13 +84,13 @@
 .filter-options label {
   padding: 0.5rem 0.75rem;
   cursor: pointer;
-  border-radius: 0.5rem;
-  margin: 0.1875rem;
+  border-radius: 4px;
+  margin: 0.12rem;
 }
 .ow-filter.active .filter-options {
   height: auto;
   opacity: 1;
-  margin-top: 5px;
+  margin-top: 2px;
   pointer-events: all;
 }
 .filter-options .selected,.filter-options .selected:hover,
