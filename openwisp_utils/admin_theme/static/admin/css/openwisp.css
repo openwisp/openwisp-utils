@@ -741,10 +741,10 @@ div.calendarbox, div.clockbox{
   box-shadow: 0px 1px 3px #00000040;
 }
 div.calendar th{
-  padding: 12px 14px;
+  padding: 10px;
 }
 div.calendar td a{
-  padding: 12px 14px;
+  padding: 10px;
 }
 ul.timelist a{
   padding: 8px 0px;
@@ -779,7 +779,7 @@ div.calendarbox .calendarnav-next:hover,
   background: #fff;
 }
 div.calendar-shortcuts{
-  padding: 12px;
+  padding: 10px;
 }
 p.calendar-cancel {
   padding: 10px;
