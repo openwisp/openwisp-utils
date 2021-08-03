@@ -848,9 +848,8 @@ a.menu-item,
 .mg-head:focus,
 #menu .mg-link:focus,
 .select2-results__option--highlighted[aria-selected],
-.select2-results__option[aria-selected=true],
-.active-menu-link,
-.active-mg .mg-head {
+.select2-results__option[aria-selected=true]
+{
   background: #ffe5e5 !important;
   color: #df5d43 !important;
 }
@@ -876,10 +875,9 @@ a.menu-item,
 .mg-head:focus .mg-arrow,
 .menu-group.active .mg-head .icon,
 .mg-link:hover .icon,
-.menu-group.active .mg-arrow,
+.menu-group.active-mg .mg-arrow,
 a.active-menu-link .icon,
-.active-mg .mg-head .icon,
-.active-mg .mg-head .mg-arrow {
+.active-mg .mg-head .icon{
   background: #df5d43;
 }
 .mg-arrow {
@@ -907,8 +905,9 @@ a.active-menu-link .icon,
 }
 
 /* for transition in the height of mg-dropdown */
-.menu-group.active .mg-dropdown {
-  max-height: 200vh;
+.menu-group.active .mg-dropdown,
+.menu-group.active-mg .mg-dropdown{
+  max-height: 200vh!important;
 }
 .mg-dropdown-label {
   text-transform: uppercase;
@@ -924,7 +923,8 @@ a.active-menu-link .icon,
 .mg-list li {
   list-style: none;
 }
-.menu-group.active .mg-arrow {
+.menu-group.active .mg-arrow ,
+.menu-group.active-mg .mg-arrow {
   transform: rotate(-90deg);
 }
 .menu-group.active .mg-head {
@@ -935,7 +935,8 @@ a.active-menu-link .icon,
 .mg-arrow {
   pointer-events: none;
 }
-.menu-group.active {
+.menu-group.active,
+.menu-group.active-mg {
   background: #fdf2f2f2;
 }
 h1#site-name {
@@ -960,6 +961,27 @@ h1#site-name {
 #changelist-search > div{
   align-items: center;
 }
+
+/* Highlight menu item */
+
+a.active-menu-link
+{
+  background: rgb(69, 196, 200)!important;
+  color: #df5d43 !important;
+  cursor: default;
+}
+.menu-group.active-mg .mg-head{
+  pointer-events: none;
+}
+.toggle-menu .menu-group.active-mg .mg-head{
+  pointer-events: all;
+  background: rgb(69, 196, 200)!important;
+}
+.menu-item.active-menu-link:hover,
+#menu .mg-link.active-menu-link:hover{
+  background: rgb(69, 196, 200)!important;
+}
+
 
 /****************** MENU(screen-size > 768px) ******************/
 @media (min-width: 769px) {

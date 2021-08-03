@@ -25,5 +25,5 @@ class OpenWispAdminThemeConfig(AppConfig):
         # register dashboard item
         register_menu_group(
             position=10,
-            config={'label': _('Home'), 'url': '/admin/', 'icon': 'ow-dashboard-icon'},
+            config={'label': _('Home'), 'url': '/admin', 'icon': 'ow-dashboard-icon'},
         )

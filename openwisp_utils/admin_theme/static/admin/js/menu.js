@@ -21,7 +21,7 @@ function Window() {
   /*
     To prevent editing of variables from console.
     Because variables are used to manage state of window
-  */ 
+  */
   var windowWidth = window.innerWidth;
   this.setWindowWidth = function (size) {
     windowWidth = size;
@@ -106,21 +106,20 @@ function setMenuState() {
     if (openMenu === null) {
       // User visits first time. Keep open menu
       localStorage.setItem('ow-menu', true);
-      owContainer.classList.toggle('toggle-menu');
+      owContainer.classList.remove('toggle-menu');
     } else if (openMenu === 'true') {
       // Close the menu
-      owContainer.classList.toggle('toggle-menu');
+      owContainer.classList.remove('toggle-menu');
     }
   }
 }
 
-function setMenuToggleText(){
+function setMenuToggleText() {
   var isMenuOpen = !owContainer.classList.contains('toggle-menu');
-  if(isMenuOpen){
-    owMenuToggle.setAttribute('title','Minimize menu');
-  }
-  else{
-    owMenuToggle.setAttribute('title','Maximize menu');
+  if (isMenuOpen) {
+    owMenuToggle.setAttribute('title', 'Minimize menu');
+  } else {
+    owMenuToggle.setAttribute('title', 'Maximize menu');
   }
 }
 
@@ -209,13 +208,13 @@ function initToolTipHandlers() {
   });
 }
 
-function showActiveItems(){
-  var activeLink = document.querySelector(`.nav a[href="${window.location.pathname}"]`);
-  if(!activeLink){
-    return;
-  }
+function showActiveItems() {
+  var pathname = window.location.pathname;
+  const regex = new RegExp(/[\d\w-]*\/change\//);
+  pathname = pathname.replace(regex, '');
+  var activeLink = document.querySelector(`.nav a[href="${pathname}"]`);
   activeLink.classList.add('active-menu-link');
-  if(activeLink.classList.contains('mg-link')){
+  if (activeLink.classList.contains('mg-link')) {
     var group = activeLink.closest('.menu-group');
     group.classList.add('active-mg');
   }
