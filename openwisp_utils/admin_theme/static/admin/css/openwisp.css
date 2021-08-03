@@ -725,7 +725,7 @@ div.calendar caption, div.calendarbox h2{
   color: #fff;
 }
 div.calendar caption{
-  padding: 1rem 10px;
+  padding: 0.9rem 10px;
 }
 .calendarbox a.calendarnav-previous,
 .calendarbox a.calendarnav-next{
