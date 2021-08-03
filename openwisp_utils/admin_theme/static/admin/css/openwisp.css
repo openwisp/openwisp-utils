@@ -711,6 +711,83 @@ div#toolbar #searchbar{
   outline: 0 none;
 }
 
+/* Calender style */
+div.calendar caption,
+div.calendar td,
+div.calendar th,
+div.calendar-shortcuts,
+p.calendar-cancel {
+  font-size: 14px;
+  line-height: 20px;
+}
+div.calendar caption, div.calendarbox h2{
+  background: #df5d43;
+  color: #fff;
+}
+div.calendar caption{
+  padding: 0.9rem 10px;
+}
+.calendarbox a.calendarnav-previous,
+.calendarbox a.calendarnav-next{
+  background: rgb(255 255 255 / 75%);
+  mask-size: contain!important;
+  -webkit-mask-size: contain!important;
+  top: 15px;
+}
+div.calendarbox, div.clockbox{
+  width: auto;
+  background-color: #efefef;
+  border-radius: 8px;
+  box-shadow: 0px 1px 3px #00000040;
+}
+div.calendar th{
+  padding: 10px;
+}
+div.calendar td a{
+  padding: 10px;
+}
+ul.timelist a{
+  padding: 8px 0px;
+}
+div.calendar td a:hover,
+div.calendar td.selected a,
+ul.timelist a:hover{
+  background: #ffe5e5;
+  color: #df5d43;
+}
+.calendarbox a.calendarnav-previous{
+  mask: url(../../ui/openwisp/images/calender-prev.svg) no-repeat center;
+  -webkit-mask: url(../../ui/openwisp/images/calender-prev.svg) no-repeat center;
+}
+.calendarbox a.calendarnav-next{
+  mask: url(../../ui/openwisp/images/calender-next.svg) no-repeat center;
+  -webkit-mask: url(../../ui/openwisp/images/calender-next.svg) no-repeat center;
+}
+.calendarbox a.calendarnav-previous,
+.calendarbox a.calendarnav-next{
+  padding: 4px;
+  top: 13px;
+  margin: 0 3px;
+  mask-size: inherit !important;
+  -webkit-mask-size: inherit !important;
+}
+ul.timelist,
+div.calendarbox .calendarnav-next:focus,
+div.calendarbox .calendarnav-next:hover,
+.calendarbox .calendarnav-previous:focus,
+.calendarbox .calendarnav-previous:hover{
+  background: #fff;
+}
+div.calendar-shortcuts{
+  padding: 10px;
+}
+p.calendar-cancel {
+  padding: 10px;
+}
+div.calendar-shortcuts a:hover{
+  color: #df5d43;
+}
+
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   #main-content div.breadcrumbs {
