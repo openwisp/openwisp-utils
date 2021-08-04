@@ -1364,10 +1364,6 @@ body::-webkit-scrollbar {
 
 /* USERS ICONS */
 
-.ow-users {
-  mask-image: url(../../ui/openwisp/images/users.svg);
-  -webkit-mask-image: url(../../ui/openwisp/images/users.svg);
-}
 .ow-org {
   mask-image: url(../../ui/openwisp/images/org.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/org.svg);
