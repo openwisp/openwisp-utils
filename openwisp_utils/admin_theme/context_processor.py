@@ -41,11 +41,7 @@ def build_menu(request):
         view_perm = f'{app_label}.view_{model_label}'
         change_perm = f'{app_label}.change_{model_label}'
         user = request.user
-        # use cached helper from openwisp-users if available
-        has_permission_method = (
-            user.has_permission if hasattr(user, 'has_permission') else user.has_perm
-        )
-        if has_permission_method(view_perm) or has_permission_method(change_perm):
+        if user.has_perm(view_perm) or user.has_perm(change_perm):
             menu.append({'url': url, 'label': label, 'class': model_label})
     return menu
 

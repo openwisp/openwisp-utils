@@ -82,10 +82,7 @@ class ModelLink(BaseMenuItem):
         view_perm = f'{app_label}.view_{model_label}'
         change_perm = f'{app_label}.change_{model_label}'
         user = request.user
-        has_permission_method = (
-            user.has_permission if hasattr(user, 'has_permission') else user.has_perm
-        )
-        if has_permission_method(view_perm) or has_permission_method(change_perm):
+        if user.has_perm(view_perm) or user.has_perm(change_perm):
             return {'label': self.label, 'url': url, 'icon': self.icon}
         return None
 
