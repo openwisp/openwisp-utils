@@ -136,3 +136,6 @@ class TestAppConfig(ApiAppConfig):
         )
         register_menu_group(position=32, config=auth_config)
         register_menu_group(position=33, config=docs_config)
+        # TODO: Remove before merge
+        for i in range(20):
+            register_menu_group(position=34 + i, config=auth_config)
