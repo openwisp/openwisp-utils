@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_urls static admin_list %}
+{% load i18n admin_urls static admin_list ow_create_filter %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -45,12 +45,14 @@
       <div class="filters-top">
         <h2>{% trans 'Filter' %}</h2>
         <div class="filters-control">
-            {% if cl.has_active_filters %}
+          {% if cl.has_active_filters %}
             <h3 id="changelist-filter-clear">
               <a href="{{ cl.clear_all_filters_qs }}">&#10006; {% trans "Clear all filters" %}</a>
             </h3>
           {% endif %}
-          <button id="ow-apply-filter" class="danger-btn">Apply Filters</button>
+          {% if cl.filter_specs|length > 4 %}
+            <button id="ow-apply-filter" class="danger-btn">Apply Filters</button>
+          {% endif %}
         </div>
       </div>
       <div class="filters-bottom">
@@ -62,7 +64,7 @@
             </span>
         <div class="ow-filter-slider">
           <div class="slider">
-            {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+              {% for spec in cl.filter_specs %}{% ow_create_filter cl spec cl.filter_specs|length %}{% endfor %}
           </div>
         </div>
       </div>

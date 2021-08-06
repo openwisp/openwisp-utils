@@ -2,7 +2,6 @@
 var leftArrow, rightArrow, slider;
 const scrollDX = 200,
   btnAnimationTime = 100; //ms
-
 (function () {
   document.addEventListener(
     'DOMContentLoaded',
@@ -27,7 +26,7 @@ function initFilterDropdownHandler() {
     toggler.addEventListener('click', function () {
       // Close if any active filter
       var activeFilter = document.querySelector('.ow-filter.active');
-      if (activeFilter) {
+      if (activeFilter && activeFilter !== filter) {
         activeFilter.classList.remove('active');
       }
       filter.classList.toggle('active');
@@ -51,7 +50,9 @@ function initFilterDropdownHandler() {
       );
       selectedElement.classList.remove('selected');
       filterRadio.previousElementSibling.classList.add('selected');
-      view.innerHTML = filterRadio.previousElementSibling.innerHTML;
+      var text = filterRadio.previousElementSibling.innerHTML;
+      view.innerHTML = text;
+      filter.querySelector('.filter-title').setAttribute('title', text);
       filter.classList.remove('active');
     });
   });
@@ -115,68 +116,70 @@ function initSliderHandlers() {
 }
 
 function filterHandlers() {
-  document
-    .querySelector('#ow-apply-filter')
-    .addEventListener('click', function () {
-      const selectedInputs = document.querySelectorAll(
-        '.filter-options input:checked'
-      );
-      // Create params map which knows about the last applied filters
-      var path = window.location.href.split('?');
-      var paramsMap = {};
-      if (path.length > 1) {
-        // Only if path contains query params
-        path[1].split('&').map(function (param) {
-          const [name, val] = param.split('=');
-          paramsMap[name] = val;
+  const filterButton = document.querySelector('#ow-apply-filter');
+  if (!filterButton) {
+    return;
+  }
+  filterButton.addEventListener('click', function () {
+    const selectedInputs = document.querySelectorAll(
+      '.filter-options input:checked'
+    );
+    // Create params map which knows about the last applied filters
+    var path = window.location.href.split('?');
+    var paramsMap = {};
+    if (path.length > 1) {
+      // Only if path contains query params
+      path[1].split('&').map(function (param) {
+        const [name, val] = param.split('=');
+        paramsMap[name] = val;
+      });
+    }
+    var qs = Object.assign({}, paramsMap);
+    // qs will be modified according to the last applied filters
+    // and current filters that need to be applied
+    selectedInputs.forEach(function (selectedInput) {
+      let value = selectedInput.value;
+      // create params map for each option
+      let currParamsMap = {};
+      value
+        .substring(1)
+        .split('&')
+        .forEach(function (param) {
+          if (param != '') {
+            let [name, val] = param.split('=');
+            currParamsMap[name] = val;
+          }
         });
-      }
-      var qs = Object.assign({}, paramsMap);
-      // qs will be modified according to the last applied filters
-      // and current filters that need to be applied
-      selectedInputs.forEach(function (selectedInput) {
-        let value = selectedInput.value;
-        // create params map for each option
-        let currParamsMap = {};
-        value
-          .substring(1)
-          .split('&')
-          .forEach(function (param) {
-            if (param != '') {
-              let [name, val] = param.split('=');
-              currParamsMap[name] = val;
-            }
-          });
-        Object.keys(paramsMap).forEach(function (key) {
-          /*
+      Object.keys(paramsMap).forEach(function (key) {
+        /*
             LOGIC: 
               For any filter if we check the values present in the options available
               for it, we will notice that only its options have the different pararms
               that can change or remove from currently applied filter but all other
               options of other filters always remain same.
           */
-          if (key in qs) {
-            if (key in currParamsMap) {
-              if (currParamsMap[key] != paramsMap[key]) {
-                qs[key] = currParamsMap[key];
-              }
-            } else {
-              delete qs[key];
+        if (key in qs) {
+          if (key in currParamsMap) {
+            if (currParamsMap[key] != paramsMap[key]) {
+              qs[key] = currParamsMap[key];
             }
+          } else {
+            delete qs[key];
           }
-          delete currParamsMap[key];
-        });
-        Object.keys(currParamsMap).forEach(function (key) {
-          // Add if any new filter is applied
-          qs[key] = currParamsMap[key];
-        });
+        }
+        delete currParamsMap[key];
       });
-      var queryParams = '';
-      if (Object.keys(qs).length) {
-        queryParams = '?' + Object.keys(qs).map(function (q) {
-          return `${q}=${qs[q]}`;
-        }).join('&');
-      }
-      window.location.href = window.location.pathname + queryParams;
+      Object.keys(currParamsMap).forEach(function (key) {
+        // Add if any new filter is applied
+        qs[key] = currParamsMap[key];
+      });
     });
+    var queryParams = '';
+    if (Object.keys(qs).length) {
+      queryParams = '?' + Object.keys(qs).map(function (q) {
+            return `${q}=${qs[q]}`;
+      }).join('&');
+    }
+    window.location.href = window.location.pathname + queryParams;
+  });
 }
