@@ -23,7 +23,7 @@ class UserAdmin(admin.ModelAdmin):
 @admin.register(Operator)
 class OperatorAdmin(admin.ModelAdmin):
     list_display = ['first_name', 'last_name']
-    list_filter = ['project__name']
+    list_filter = ['project__name']  # DO NOT CHANGE: used for testing filters
 
 
 @admin.register(RadiusAccounting)
@@ -53,13 +53,11 @@ class ProjectAdmin(UUIDAdmin, ReceiveUrlAdmin):
 
 @admin.register(Shelf)
 class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
-    list_filter = (
+    # DO NOT CHANGE: used for testing filters
+    list_filter = [
         'books_type',
         'name',
         'owner__username',
         'owner__is_staff',
         'owner__is_active',
-        'locked',
-        'books_count',
-        'created_at',
-    )
+    ]

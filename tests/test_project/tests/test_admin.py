@@ -267,3 +267,30 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, 'login')
+
+    def test_filters(self):
+        with self.subTest('Test when number of filters is less than equal to 4'):
+            url = reverse('admin:test_project_operator_changelist')
+            response = self.client.get(url)
+            real_count = self._assert_contains(
+                response,
+                'class="ow-filter"',
+                status_code=response.status_code,
+                msg_prefix='',
+                html=False,
+            )[1]
+            self.assertLessEqual(real_count, 4)
+            self.assertNotContains(response, 'id="ow-apply-filter"')
+
+        with self.subTest('Test when number of filters is greater than 4'):
+            url = reverse('admin:test_project_shelf_changelist')
+            response = self.client.get(url)
+            real_count = self._assert_contains(
+                response,
+                'class="ow-filter"',
+                status_code=response.status_code,
+                msg_prefix='',
+                html=False,
+            )[1]
+            self.assertGreater(real_count, 4)
+            self.assertContains(response, 'id="ow-apply-filter"')
