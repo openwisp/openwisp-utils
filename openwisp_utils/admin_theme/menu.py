@@ -173,9 +173,10 @@ class MenuGroup(BaseMenuItem):
 
     def create_context(self, request):
         _items = []
-        for item in self.items.values():
+        for position, item in self.items.items():
             context = item.get_context(request)
             if context:
+                context['id'] = position
                 _items.append(context)
         if not _items:
             return None
@@ -213,8 +214,9 @@ def register_menu_group(position, config):
 
 def build_menu_groups(request):
     menu = []
-    for item in MENU.values():
+    for position, item in MENU.items():
         item_context = item.get_context(request)
         if item_context:
+            item_context['id'] = position
             menu.append(item_context)
     return menu

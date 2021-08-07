@@ -18,32 +18,33 @@
 
 {% block menu-bar %}
   <div class="head">
-    <span class="hamburger"><span></span></span>
+    <span tabindex="0" role="button" aria-label="Maxamize menu"class="hamburger"><span></span></span>
     <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
   </div>
 {% endblock %}
 
 {% block user-tools %}
   <div  class="account">
-    <button title="account" type="button" class="account-button toggle-btn tooltip-sm">
+    <div title="account" id="account-btn" role="button" tabindex="0" aria-label="account button"
+    aria-expanded="false" aria-controls="account-dropdown" class="account-button toggle-btn tooltip-sm">
       <span class="user"></span>
       <strong>{% firstof user.get_short_name user.get_username %}</strong>
-    </button>
-    <ul class="account-menu hide">
+    </div>
+    <ul id="account-dropdown" role="list" aria-labelledby="account-btn" class="account-menu hide">
       <li class="account-menu-username">
         <span class="user"></span>
         <strong>{% firstof user.get_short_name user.get_username %}</strong>
       </li>
       {% if user.has_usable_password %}
       <li>
-        <a href="{% url 'admin:password_change' %}">
+        <a tabindex="-1" href="{% url 'admin:password_change' %}">
           <span class="password"></span>
           {% trans 'Change password' %}
         </a>
       </li>
       {% endif %}
       <li>
-        <a class="menu-link" href="{% url 'admin:logout' %}">
+        <a tabindex="-1" class="menu-link" href="{% url 'admin:logout' %}">
           <span class="logout"></span>
           {% trans 'Log out' %}
         </a>
