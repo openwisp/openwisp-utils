@@ -35,10 +35,9 @@
 }
 .filters-bottom {
   height: 3.125rem;
+  margin: auto 10px;
   margin-top: 1.25rem;
   position: relative;
-  width: 97%;
-  margin: auto;
 }
 .filter {
   margin-right: 0.625rem;
@@ -72,8 +71,6 @@
   min-width: 11.5rem;
   font-weight: 600;
   letter-spacing: 0.5px;
-
-  /* font-size: 14px; */
   line-height: 20px;
 }
 .filter-title h3 {
@@ -81,6 +78,7 @@
   margin: -17px 0 1px -8px;
   padding: 0px 5px;
   width: fit-content;
+  width: -moz-fit-content;
   background: #fff;
   color: rgba(0, 0, 0, 0.65);
   pointer-events: none;
@@ -138,8 +136,7 @@
 }
 .ow-filter-slider {
   overflow-x: auto;
-  padding: 0.625rem 0rem;
-  margin: 0rem 1rem;
+  padding: 0.625rem 1rem;
   scroll-behavior: smooth;
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -164,6 +161,7 @@
   align-items: center;
   justify-content: center;
   transition-timing-function: ease;
+  z-index: 3;
 }
 .left-arrow {
   left: -2.125rem;
@@ -195,7 +193,7 @@
     padding: 1.25rem 1.875rem;
   }
   .filters-bottom{
-    width: 90%;
+    margin: auto 30px;
     margin-top: 1.25rem;
   }
 }

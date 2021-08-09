@@ -58,7 +58,7 @@ function initFilterDropdownHandler() {
   });
 }
 
-function ButtonAnimation(button) {
+function buttonAnimation(button) {
   // Animate button by adding and removing classes
   button.classList.add('down');
   setTimeout(function () {
@@ -67,7 +67,7 @@ function ButtonAnimation(button) {
 }
 
 function scrollLeft() {
-  ButtonAnimation(leftArrow);
+  buttonAnimation(leftArrow);
   slider.scrollLeft -= scrollDX;
   if (slider.scrollLeft == 0) {
     leftArrow.classList.add('force-inactive');
@@ -78,7 +78,7 @@ function scrollLeft() {
 }
 
 function scrollRight() {
-  ButtonAnimation(rightArrow);
+  buttonAnimation(rightArrow);
   slider.scrollLeft += scrollDX;
   if (slider.scrollLeft + slider.offsetWidth >= slider.scrollWidth) {
     rightArrow.classList.add('force-inactive');
@@ -177,7 +177,7 @@ function filterHandlers() {
     var queryParams = '';
     if (Object.keys(qs).length) {
       queryParams = '?' + Object.keys(qs).map(function (q) {
-            return `${q}=${qs[q]}`;
+        return `${q}=${qs[q]}`;
       }).join('&');
     }
     window.location.href = window.location.pathname + queryParams;
