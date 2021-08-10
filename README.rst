@@ -680,6 +680,19 @@ Follow the instructions in
 `Supplying custom CSS and JS for the admin theme <#supplying-custom-css-and-js-for-the-admin-theme>`_
 to know how to configure your OpenWISP instance to load custom CSS files.
 
+Modified Filter 
+---------------
+
+OpenWISP provides a new style of changelist filter which occupies less space as compared to django.
+Multiple filters can be applied at same time with the help of "apply filter" button. This button is
+only visible when total number of filters is greater than 4. When total filters are less or equal to 4
+then this button is not visible and filter works like it work in django but design remains same.
+
+Sample:
+
+.. figure:: https://github.com/openwisp/openwisp-utils/blob/issues/196-restyle-filters/docs/filter.gif
+  :align: center
+
 Model utilities
 ---------------
 
