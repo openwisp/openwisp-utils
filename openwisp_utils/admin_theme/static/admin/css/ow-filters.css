@@ -81,11 +81,11 @@
   width: min-content;
   max-height: 18.75rem;
   min-width: 100%;
-  overflow-y: auto;
   transition: all 0.3s ease;
   box-shadow: 0px 1px 4px #00000040;
   pointer-events: none;
   display: none;
+  overflow: auto;
 }
 .filter-options ul{
   margin: 0px;
@@ -141,7 +141,7 @@
   letter-spacing: 0.5px;
   font-size: 14px;
 }
-.ow-filter.active .filter-title {
+.ow-filter.ow-active .filter-title {
   border-color: #df5d43;
   color: #df5d43;
 }
@@ -153,7 +153,7 @@
   display: block;
   box-sizing: border-box;
 }
-.ow-filter.active .filter-options {
+.ow-filter.ow-active .filter-options {
   pointer-events: all;
   opacity: 1;
   margin-top: 3px;
