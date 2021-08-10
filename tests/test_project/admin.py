@@ -80,6 +80,7 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
         ShelfFilter,
         ['books_type', InputFilter],
         ['id', InputFilter],
+        'book_type',
         'name',
         'owner__is_staff',
         'owner__is_active',

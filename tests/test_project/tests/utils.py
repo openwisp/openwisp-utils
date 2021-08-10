@@ -4,6 +4,8 @@ import os
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support import expected_conditions as EC
@@ -219,3 +221,58 @@ class SeleniumTestMixin(TestConfigMixin):
                 is_menu_close = True
         if not is_menu_close:
             hamburger.click()
+
+    def _get_filter(self):
+        return self.web_driver.find_element_by_id('ow-changelist-filter')
+
+    def _get_filter_button(self):
+        return self.web_driver.find_element_by_id('ow-apply-filter')
+
+    def _get_clear_button(self):
+        return self.web_driver.find_element_by_id('changelist-filter-clear')
+
+    def check_exists_by_id(self, id):
+        try:
+            self.web_driver.find_element_by_id(id)
+        except NoSuchElementException:
+            return False
+        return True
+
+    def check_exists_by_xpath(self, xpath):
+        try:
+            self.web_driver.find_element_by_xpath(xpath)
+        except NoSuchElementException:
+            return False
+        return True
+
+    def check_exists_by_css_selector(self, selector):
+        try:
+            self.web_driver.find_element_by_css_selector(selector)
+        except NoSuchElementException:
+            return False
+        return True
+
+    def _get_filter_selected_option(self, filter_class):
+        return self.web_driver.find_element_by_css_selector(
+            f'.{filter_class} .selected-option'
+        )
+
+    def _get_filter_dropdown(self, filter_class):
+        return self.web_driver.find_element_by_css_selector(
+            f'.{filter_class} .filter-options'
+        )
+
+    def _get_filter_title(self, filter_class):
+        return self.web_driver.find_element_by_css_selector(
+            f'.{filter_class} .filter-title'
+        )
+
+    def _get_filter_anchor(self, query):
+        return self.web_driver.find_element_by_xpath(f'//a[@href="?{query}"]')
+
+    def wait_for_dropdown(self, filter_class):
+        WebDriverWait(self.web_driver, 2).until(
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, f'.{filter_class} .filter-options')
+            )
+        )

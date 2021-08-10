@@ -2,6 +2,8 @@
 var leftArrow, rightArrow, slider;
 const scrollDX = 200,
   btnAnimationTime = 100; //ms
+var gettext;
+
 (function () {
   document.addEventListener(
     'DOMContentLoaded',
@@ -16,6 +18,8 @@ const scrollDX = 200,
       if (slider) {
         setArrowButtonVisibility();
       }
+      gettext = window.gettext || function (v) { return v; };
+      add_clear_button();
     },
     false
   );
@@ -28,7 +32,7 @@ function showFilterOptions(filter, callback = null) {
   filter.querySelector('.filter-options').style.display = 'block';
   filter.querySelector('.filter-title').setAttribute('aria-expanded', 'true');
   setTimeout(function () {
-    filter.classList.add('active');
+    filter.classList.add('ow-active');
     if (callback) {
       callback(filter);
     }
@@ -39,15 +43,15 @@ function hideFilterOptions(filter){
   if(!filter){return;}
   filter.querySelector('.filter-options').style='';
   filter.querySelector('.filter-title').setAttribute('aria-expanded','false');
-  filter.classList.remove('active');
+  filter.classList.remove('ow-active');
 }
 
 function toggleFilter(filter, callback = null) {
-  var activeFilter = document.querySelector('.ow-filter.active');
+  var activeFilter = document.querySelector('.ow-filter.ow-active');
   if (activeFilter && activeFilter !== filter) {
     hideFilterOptions(activeFilter);
   }
-  if (filter.classList.contains('active')) {
+  if (filter.classList.contains('ow-active')) {
     return hideFilterOptions(filter);
   }
   showFilterOptions(filter, callback);
@@ -68,7 +72,6 @@ function initFilterDropdownHandler() {
       return;
     }
     toggler.addEventListener('click', function () {
-      // Close if any active filter
       toggleFilter(filter);
     });
     toggler.addEventListener('keypress', function (e) {
@@ -90,15 +93,15 @@ function initFilterDropdownHandler() {
 
   // Handle click outside of an active filter
   document.addEventListener('click', function (e) {
-    var activeFilter = document.querySelector('.ow-filter.active');
+    var activeFilter = document.querySelector('.ow-filter.ow-active');
     if (activeFilter && !activeFilter.contains(e.target)) {
-      activeFilter.classList.remove('active');
+      hideFilterOptions(activeFilter);
     }
   });
 
   // Handle focus shift from filter
   document.addEventListener('focusin', function (e) {
-    var activeFilter = document.querySelector('.ow-filter.active');
+    var activeFilter = document.querySelector('.ow-filter.ow-active');
     if (activeFilter && !activeFilter.contains(e.target)) {
       hideFilterOptions(activeFilter);
     }
@@ -112,12 +115,10 @@ function initFilterDropdownHandler() {
   filterValues.forEach(function (filterValue) {
     filterValue.addEventListener('click', function (e) {
       e.preventDefault();
-      let filter = document.querySelector('.ow-filter.active');
-      let selectedOption = filter.querySelector('.selected-option');
-      let selectedElement = filter.querySelector('.selected');
-      if (selectedElement) {
-        selectedElement.classList.remove('selected');
-      }
+      var filter = document.querySelector('.ow-filter.ow-active');
+      var selectedOption = filter.querySelector('.selected-option');
+      var selectedElement = filter.querySelector('.selected');
+      selectedElement.classList.remove('selected');
       filterValue.classList.add('selected');
       var text = filterValue.innerHTML;
       selectedOption.innerHTML = text;
@@ -294,4 +295,24 @@ function filterHandlers() {
     }
     window.location.href = window.location.pathname + queryParams;
   });
+}
+
+function add_clear_button(){
+  /*
+  Some django versions do not support filter clear functionality
+  */ 
+  var path = window.location.href.split('?');
+  if (
+    path.length > 1 &&
+    path[1] != '' &&
+    !document.querySelector('#changelist-filter-clear')
+  ) {
+    var button = document.createElement('h3');
+    button.setAttribute('id', 'changelist-filter-clear');
+    var link = document.createElement('a');
+    link.setAttribute('href', path[0]);
+    link.innerText = gettext('Clear all filters');
+    button.appendChild(link);
+    document.querySelector('.filters-control').prepend(button);
+  }
 }
