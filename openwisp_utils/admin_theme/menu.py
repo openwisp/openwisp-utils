@@ -103,8 +103,14 @@ class MenuLink(BaseMenuItem):
             raise ImproperlyConfigured(
                 f'"url" should be a type of "str". Error for the config- {config}'
             )
-        self.url = url
+        self.url = self.make_django_url(url)
         self.icon = config.get('icon')
+
+    def make_django_url(self, url):
+        # Add "/" at the end of link
+        if url[-1] != '/':
+            return url + '/'
+        return url
 
 
 class MenuGroup(BaseMenuItem):

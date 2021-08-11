@@ -141,7 +141,7 @@ class TestMenuSchema(TestCase):
             menu_link = MenuLink(config=_config)
             context = menu_link.create_context()
             self.assertEqual(context.get('label'), _config['label'])
-            self.assertEqual(context.get('url'), _config['url'])
+            self.assertEqual(context.get('url'), _config['url'] + '/')
             self.assertEqual(context.get('icon'), _config['icon'])
 
         with self.subTest('Menu Link without icon'):
