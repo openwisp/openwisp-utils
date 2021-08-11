@@ -187,7 +187,7 @@ def register_menu_group(position, config):
             item_description = 'group'
         label = MENU[position].label
         raise ImproperlyConfigured(
-            f'An group/link with config {config} is being registered at position "{position}",\
+            f'A group/link with config {config} is being registered at position "{position}",\
                 but another {item_description} named "{label}" is already registered at the same position.'
         )
     if config.get('url'):
