@@ -188,8 +188,13 @@ def register_menu_group(position, config):
     if not isinstance(config, dict):
         raise ImproperlyConfigured('config should be a type of "dict"')
     if position in MENU:
+        item_description = 'link'
+        if isinstance(MENU[position], MenuGroup):
+            item_description = 'group'
+        label = MENU[position].label
         raise ImproperlyConfigured(
-            f'Another group is already registered at position "{position}"'
+            f'A group/link with config {config} is being registered at position "{position}",\
+                but another {item_description} named "{label}" is already registered at the same position.'
         )
     if config.get('url'):
         # It is a menu link
