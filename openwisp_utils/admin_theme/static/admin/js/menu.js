@@ -17,7 +17,16 @@ var wasActiveGroupOpen = false;
   initToolTipHandlers();
   initResizeScreenHelpers();
   showActiveItems();
+  cleanUp();
 })();
+
+function cleanUp(){
+  // remove dublicate of objects-tools
+  var dublicateObject = document.querySelector('#content-main .object-tools');
+  if(dublicateObject){
+    dublicateObject.remove();
+  }
+}
 
 function Window() {
   /*

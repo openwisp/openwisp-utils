@@ -21,21 +21,28 @@ div[class^="app-"].module th, div[class^="app-"].module td {
   padding: 1rem 1.3rem;
 }
 div[class^="app-"].module td { padding-left: 0; }
-#main-content .results thead th .text a {
+#main-content .results thead th .text a,
+#main-content thead th  {
   padding: 15px 10px;
-}
-#main-content .results tbody td, #main-content .results tbody th {
-  padding: 1rem 10px;
-}
-#main-content .results thead th {
   font-size: 13.5px;
 }
+#main-content .results tbody td, #main-content .results tbody th,
+div#main-content table tbody th,
+div#main-content table tbody td {
+  padding: 1rem 10px;
+  vertical-align: middle;
+  font-size: 14px;
+}
+
 #main-content .breadcrumbs { font-size: 15px; }
 #main-content .breadcrumbs a,
 a.section:link,
 a.section:visited,
 .module th a,
-#main .help a {
+#main .help a,
+fieldset.collapsed a.collapse-toggle,
+fieldset a.collapse-toggle
+ {
   color: #df5d43;
   text-decoration: none;
 }
@@ -317,7 +324,7 @@ span.datetimeshortcuts .clock-icon:hover {
 .toggle-btn:focus,
 .toggle-btn:active {
   outline: 0 none;
-  background: #eeeeee69;
+  background: #f8f8f8;
 }
 
 /* For danger,error, red button [ class="danger-btn" ] */
@@ -648,24 +655,19 @@ input[type='button']:hover,
   display: none;
 }
 .title-wrapper h1,
-.title-wrapper h2 {
-  float: left;
-  margin-top: 26px;
-  margin-bottom: 0px;
+.title-wrapper h2{
+  display: inline-block;
+  margin: 0px;
+  margin-bottom: 20px;
 }
-.title-wrapper .object-tools {
-  float: right;
-  margin: 20px 0px !important;
-  height: auto;
+.title-wrapper .object-tools{
+  margin-top: -4px;
+  margin-bottom: 20px;
 }
 .title-wrapper .object-tools li {
   height: auto;
 }
-.dashboard .title-wrapper h1 {
-  float: none;
-  margin-bottom: 26px;
-}
-#changelist .results + .paginator {
+#changelist .results + .paginator{
   box-sizing: border-box;
   font-size: 14px;
 }
@@ -690,7 +692,8 @@ div#toolbar #searchbar {
 }
 #main .option-container {
   position: absolute;
-  margin-top: 39px;
+  margin-top: 0px;
+  top: 39px;
   display: flex;
   flex-direction: column;
   text-align: center;
@@ -716,6 +719,9 @@ div#toolbar #searchbar {
   background: #df5d43;
   color: #fff;
   outline: 0 none;
+}
+#content p {
+  margin: 10px 0;
 }
 
 /* Calender style */
@@ -832,11 +838,14 @@ div.calendar-shortcuts a:hover{
     display: block;
     text-align: center;
   }
+  .title-wrapper h1,
+  .title-wrapper h2{
+    margin-bottom: 15px;
+    display: block;
+  }
   .title-wrapper .object-tools {
-    height: auto;
-    flex-direction: column;
-    align-items: self-start;
-    width: 100%;
+    display: inline-block;
+    margin-bottom: 15px!important;
   }
   .title-wrapper .object-tools li {
     margin-left: 0px;
@@ -1533,4 +1542,22 @@ body::-webkit-scrollbar {
 .ow-mass-upgrade {
   mask-image: url(../../ui/openwisp/images/mass-upgrade.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/mass-upgrade.svg);
+}
+
+/* NETWORK TOPOLOGY */
+.ow-network-topology {
+  mask-image: url(../../ui/openwisp/images/network-topology.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/network-topology.svg);
+}
+.ow-link{
+  mask-image: url(../../ui/openwisp/images/link.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/link.svg);
+}
+.ow-topology{
+  mask-image: url(../../ui/openwisp/images/topology.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/topology.svg);
+}
+.ow-node{
+  mask-image: url(../../ui/openwisp/images/node.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/node.svg);
 }

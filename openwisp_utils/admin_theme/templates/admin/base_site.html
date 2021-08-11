@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "./base.html" %}
 {% load static i18n %}
 
 {% block title %}{{ title }} | {{ site_title }}{% endblock %}
@@ -65,7 +65,7 @@
     if we put it in extrahead it will be
     loaded before jQuery is loaded
 {% endcomment %}
-{% if has_permission %}
+{% if user.is_authenticated %}
     <script src="{% static "admin/js/menu.js" %}"></script>
 {% endif %}
 {% if OPENWISP_ADMIN_THEME_JS %}
