@@ -102,6 +102,12 @@ class SeleniumTestCase(StaticLiveServerTestCase):
             '//*[@class="nav"]/div[1]/div[1]/div[1]/span[2]'
         )
 
+    def _get_active_mg(self):
+        return self.web_driver.find_element_by_css_selector('.active-mg .mg-dropdown')
+
+    def _get_active_mg_head(self):
+        return self.web_driver.find_element_by_css_selector('.active-mg .mg-head')
+
     def _get_test_mg_dropdown(self):
         return self.web_driver.find_element_by_xpath('//*[@class="nav"]/div[1]/div[2]')
 

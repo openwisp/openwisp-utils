@@ -4,6 +4,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = '@s8$swhj9du^aglt5+@ut^)wepr+un1m7r*+ixcq(-5i^st=y^'
 
+SELENIUM_HEADLESS = True if os.environ.get('SELENIUM_HEADLESS', False) else False
+
 DEBUG = True
 
 ALLOWED_HOSTS = []

@@ -1,5 +1,7 @@
+from django.conf import settings
+from django.urls import reverse
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -21,7 +23,8 @@ class TestMenu(SeleniumTestCase):
     def setUpClass(cls):
         super().setUpClass()
         chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--headless')
+        if getattr(settings, 'SELENIUM_HEADLESS', True):
+            chrome_options.add_argument('--headless')
         chrome_options.add_argument('--window-size=1366,768')
         chrome_options.add_argument('--ignore-certificate-errors')
         chrome_options.add_argument('--remote-debugging-port=9222')
@@ -124,9 +127,80 @@ class TestMenu(SeleniumTestCase):
             self._test_menu_state(True)
         self._test_account_component()
         self._test_menu_dropdown()
+        self._open_menu()
         with self.subTest('Test menu on popup page'):
             self._test_popup_page()
         self._test_login_and_logout_page()
+
+    def test_active_menu_group(self):
+
+        '''
+                Test active menu group:
+                - Active group should only close from clicked on menu else
+                it should remain open.
+        '''
+        self.login()
+        url = reverse('admin:auth_user_changelist')
+        self.open(url)
+        WebDriverWait(self.web_driver, 2).until(
+            EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+        )
+        with self.subTest('Test active menu group on wide screen'):
+            active_mg = self._get_active_mg()
+            account_button = self._get_account_button()
+            toggle_button = self._get_menu_toggle()
+            self.assertEqual(active_mg.is_displayed(), True)
+            account_button.click()
+            self.assertEqual(active_mg.is_displayed(), True)
+            toggle_button.click()
+            self.assertEqual(active_mg.is_displayed(), False)
+            toggle_button.click()
+            self.assertEqual(active_mg.is_displayed(), True)
+            # now close the group
+            mg_head = self._get_active_mg_head()
+            mg_head.click()
+            self.assertEqual(active_mg.is_displayed(), False)
+            toggle_button.click()
+            self.assertEqual(active_mg.is_displayed(), False)
+            toggle_button.click()
+            self.assertEqual(active_mg.is_displayed(), False)
+
+        with self.subTest('Test active menu group on medium screen'):
+            self.web_driver.set_window_size(980, 600)
+            self.web_driver.refresh()
+            WebDriverWait(self.web_driver, 2).until(
+                EC.visibility_of_element_located((By.XPATH, '//*[@class="hamburger"]'))
+            )
+            active_mg = self._get_active_mg()
+            toggle_button = self._get_menu_toggle()
+            self.assertEqual(active_mg.is_displayed(), False)
+            toggle_button.click()
+            self.assertEqual(active_mg.is_displayed(), True)
+            mg_head = self._get_active_mg_head()
+            mg_head.click()
+            toggle_button.click()
+            toggle_button.click()
+            self.assertEqual(active_mg.is_displayed(), False)
+
+        with self.subTest('Test active menu group on narrow screen'):
+            self.web_driver.set_window_size(450, 600)
+            self.web_driver.refresh()
+            active_mg = self._get_active_mg()
+            hamburger = self._get_hamburger()
+            account_button = self._get_account_button()
+            WebDriverWait(self.web_driver, 2).until(
+                EC.visibility_of_element_located((By.XPATH, '//*[@class="hamburger"]'))
+            )
+            hamburger.click()
+            self.assertEqual(active_mg.is_displayed(), True)
+            account_button.click()
+            self.assertEqual(active_mg.is_displayed(), True)
+            mg_head = self._get_active_mg_head()
+            mg_head.click()
+            hamburger.click()
+            hamburger.click()
+            self.assertEqual(active_mg.is_displayed(), False)
+        self.web_driver.set_window_size(1366, 768)
 
     def test_menu_on_medium_screen(self):
         self.login()
@@ -156,6 +230,7 @@ class TestMenu(SeleniumTestCase):
         self._test_menu_dropdown(is_medium=True)
         with self.subTest('Test menu on popup page'):
             self._test_popup_page()
+        # Test active menu group
         self._test_login_and_logout_page()
         self.web_driver.set_window_size(1366, 768)
 
@@ -287,7 +362,18 @@ class TestMenu(SeleniumTestCase):
             self.assertEqual(mg_icon.is_displayed(), True)
             # Test mg dropdown gets visible on clicking mg head
             mg_head.click()
-            self.assertEqual(mg_dropdown.is_displayed(), True)
+            is_visible = True
+            try:
+                WebDriverWait(self.web_driver, 2).until(
+                    EC.visibility_of_element_located(
+                        (By.XPATH, '//*[@class="nav"]/div[1]/div[2]')
+                    )
+                )
+            except TimeoutException:
+                is_visible = False
+            self.assertEqual(
+                is_visible, True,
+            )
             self.assertEqual(mg_dropdown_label.is_displayed(), True)
             # Test mg dropdown gets invisible on clicking mg head
             mg_head.click()
@@ -302,7 +388,16 @@ class TestMenu(SeleniumTestCase):
             actions = ActionChains(self.web_driver)
             actions.move_to_element(mg_head)
             actions.perform()
-            self.assertEqual(mg_label.is_displayed(), True)
+            is_visible = True
+            try:
+                WebDriverWait(self.web_driver, 2).until(
+                    EC.visibility_of_element_located(
+                        (By.XPATH, '//*[@class="nav"]/div[1]/div[1]/div[1]/span[2]')
+                    )
+                )
+            except TimeoutException:
+                is_visible = False
+            self.assertEqual(is_visible, True)
             mg_head.click()
             actions.move_to_element(mg_head)
             actions.perform()
