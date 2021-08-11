@@ -12,7 +12,9 @@ const scrollDX = 200,
       initFilterDropdownHandler();
       initSliderHandlers();
       filterHandlers();
-      setArrowButtonVisibility();
+      if (slider) {
+        setArrowButtonVisibility();
+      }
     },
     false
   );
@@ -111,7 +113,9 @@ function initSliderHandlers() {
     rightArrow.addEventListener('click', scrollRight);
   }
   // When slider is scrolled
-  slider.addEventListener('scroll', setArrowButtonVisibility);
+  if (slider) {
+    slider.addEventListener('scroll', setArrowButtonVisibility);
+  }
   window.addEventListener('resize', setArrowButtonVisibility);
 }
 

@@ -684,7 +684,7 @@ to know how to configure your OpenWISP instance to load custom CSS files.
 Admin filters 
 -------------
 
-.. figure:: https://github.com/openwisp/openwisp-utils/blob/issues/196-restyle-filters/docs/filter.gif
+.. figure:: https://github.com/openwisp/openwisp-utils/blob/media/docs/filter.gif
   :align: center
 
 The ``admin_theme`` sub app provides an improved UI for the changelist filter
