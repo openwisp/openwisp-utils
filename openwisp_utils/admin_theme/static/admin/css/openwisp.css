@@ -395,6 +395,7 @@ div#toolbar form input[type='submit'] {
 }
 div#toolbar #searchbar {
   padding: 15px 0.8em;
+  margin: 0 4px 0 7px;
   font-size: 15px;
 }
 div#changelist .actions label,
@@ -404,6 +405,7 @@ div#changelist .actions span {
 }
 div#changelist .actions select {
   height: 27px !important;
+  margin-right: 7px;
 }
 div#changelist .actions .button {
   padding: 6px 1rem;
@@ -667,24 +669,32 @@ input[type='button']:hover,
 .title-wrapper .object-tools li {
   height: auto;
 }
-#changelist .results + .paginator{
+#changelist .paginator{
   box-sizing: border-box;
   font-size: 14px;
 }
-p.paginator .this-page {
-  font-size: 14px;
-}
-p.paginator a:link, p.paginator a:visited {
+#changelist p.paginator a,
+#changelist p.paginator .this-page {
   background: #df5d43;
+  padding: 5px 10px;
+  margin-right: 5px;
+  border-radius: 2px;
 }
-p.paginator a:focus, p.paginator a:hover {
+#changelist p.paginator .this-page {
+  background: transparent;
+  border: 1px solid rgba(223, 93, 67, 0.7);
+  padding: 4px 9px;
+}
+#changelist p.paginator a:focus,
+#changelist p.paginator a:hover {
   background: #b31e00;
 }
-p.paginator a.showall {
+#changelist p.paginator a.showall {
   background: none;
   color: #df5d43;
 }
-p.paginator a.showall:focus, p.paginator a.showall:hover {
+#changelist p.paginator a.showall:focus,
+#changelist p.paginator a.showall:hover {
   color: #b31e00;
 }
 div#toolbar #searchbar {
