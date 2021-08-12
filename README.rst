@@ -660,6 +660,63 @@ Following is the description of the configuration:
 |                  | is displayed if not provided.                                |
 +------------------+--------------------------------------------------------------+
 
+``register_menu_subitem``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It allows us to register an item in a registered group.
+
+**Syntax:**
+
+.. code-block:: python
+
+    register_menu_subitem(group_position, item_position, config)
+
++--------------------------+--------------------------------------------------------------+
+| **Parameter**            | **Description**                                              |
++--------------------------+--------------------------------------------------------------+
+| ``group_position``       | (``int``) Position of group in which item will be added.     |
++--------------------------+--------------------------------------------------------------+
+| ``item_position``        | (``int``) Position at which item should be added in the group|
++--------------------------+--------------------------------------------------------------+
+| ``config``               | (``dict``) Configuration of the item.                        |
++--------------------------+--------------------------------------------------------------+
+
+Code example:
+
+.. code-block:: python
+
+    from django.utils.translation import ugettext_lazy as _
+    from openwisp_utils.admin_theme.menu import register_menu_subitem
+
+    # To register a model link
+    register_menu_subitem(
+        group_position=10,
+        item_position=2,
+        config={
+            'label': _('Users List'),
+            'model': 'auth.User',
+            'name': 'changelist',
+            'icon': 'list-icon',
+        },
+    )
+
+    # To register a generic link
+    register_menu_subitem(
+        group_position=10,
+        item_position=2,
+        config={'label': _('My Link'), 'url': 'https://link.com'},
+    )
+    
+.. note::
+    An ``ImproperlyConfigured`` exception is raised if group is not already registered at group_position.
+
+    An ``ImproperlyConfigured`` exception is raised if group already has an item registered at item_position.
+
+    You can only register a model link or a generic link. An ``ImproperlyConfigured`` exception is raised
+    if you will try to register a group in place of item.
+
+    It is recommended to use ``register_menu_subitem`` in the ``ready`` method of the ``AppConfig``.
+
 How to use custom icons in the menu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
