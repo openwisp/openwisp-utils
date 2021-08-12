@@ -12,13 +12,6 @@ from .utils import SeleniumTestCase
 
 
 class TestMenu(SeleniumTestCase):
-    admin_username = 'admin'
-    admin_password = 'password'
-    maxamize_menu = 'Maximize menu'
-    minimize_menu = 'Minimize menu'
-    transition = 'none 0s ease 0s'
-    # none because transition has been set to none during tests
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -44,22 +37,18 @@ class TestMenu(SeleniumTestCase):
         self.web_driver.execute_script('window.localStorage.clear()')
 
     def setUp(self):
-        self.admin = self._create_admin(
-            username=self.admin_username, password=self.admin_password
-        )
+        self.admin = self._create_admin()
 
     def test_addition_of_transition_effect(self):
+        transition = 'none 0s ease 0s'
+        # none because transition has been set to none during tests
         self.login()
         menu = self.web_driver.find_element_by_id('menu')
         main_content = self._get_main_content()
         menu_toggle = self._get_menu_toggle()
-        self.assertEqual(menu.value_of_css_property('transition'), self.transition)
-        self.assertEqual(
-            main_content.value_of_css_property('transition'), self.transition
-        )
-        self.assertEqual(
-            menu_toggle.value_of_css_property('transition'), self.transition
-        )
+        self.assertEqual(menu.value_of_css_property('transition'), transition)
+        self.assertEqual(main_content.value_of_css_property('transition'), transition)
+        self.assertEqual(menu_toggle.value_of_css_property('transition'), transition)
 
     def _test_menu_state(self, open, is_narrow=False):
         logo = self._get_logo()
@@ -78,7 +67,9 @@ class TestMenu(SeleniumTestCase):
                 self.assertEqual(hamburger.is_displayed(), False)
                 self.assertEqual(menu_toggle.is_displayed(), True)
             self.assertEqual(menu_item_label.is_displayed(), True)
-            self.assertEqual(menu_toggle.get_attribute('title'), self.minimize_menu)
+            self.assertEqual(
+                menu_toggle.get_attribute('title'), self.config['minimize_menu']
+            )
             self.assertEqual(container.get_attribute('class'), '')
         else:
             if is_narrow:
@@ -91,7 +82,9 @@ class TestMenu(SeleniumTestCase):
                 self.assertEqual(menu_item_label.is_displayed(), False)
                 self.assertEqual(menu_toggle.is_displayed(), True)
             self.assertEqual(hamburger.is_displayed(), True)
-            self.assertEqual(menu_toggle.get_attribute('title'), self.maxamize_menu)
+            self.assertEqual(
+                menu_toggle.get_attribute('title'), self.config['maximize_menu']
+            )
             container_class = container.get_attribute('class')
             self.assertEqual(container_class, 'toggle-menu')
 
@@ -102,7 +95,9 @@ class TestMenu(SeleniumTestCase):
         with self.subTest('Test menu remains open on page change or refresh'):
             self.web_driver.refresh()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+                EC.visibility_of_element_located(
+                    (By.XPATH, self.config['site_name_xpath'])
+                )
             )
             self._test_menu_state(True)
         menu_toggle = self._get_menu_toggle()
@@ -113,7 +108,9 @@ class TestMenu(SeleniumTestCase):
         with self.subTest('Test menu menu remains close on page change or refresh'):
             self.web_driver.refresh()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@class="hamburger"]'))
+                EC.visibility_of_element_located(
+                    (By.XPATH, self.config['hamburger_xpath'])
+                )
             )
             self._test_menu_state(False)
         menu_toggle = self._get_menu_toggle()
@@ -133,17 +130,16 @@ class TestMenu(SeleniumTestCase):
         self._test_login_and_logout_page()
 
     def test_active_menu_group(self):
-
-        '''
-                Test active menu group:
-                - Active group should only close from clicked on menu else
-                it should remain open.
-        '''
+        """
+            Test active menu group:
+            - Active group should close only when clicked on menu else
+              it should remain open.
+        """
         self.login()
         url = reverse('admin:auth_user_changelist')
         self.open(url)
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+            EC.visibility_of_element_located((By.XPATH, self.config['site_name_xpath']))
         )
         with self.subTest('Test active menu group on wide screen'):
             active_mg = self._get_active_mg()
@@ -169,7 +165,9 @@ class TestMenu(SeleniumTestCase):
             self.web_driver.set_window_size(980, 600)
             self.web_driver.refresh()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@class="hamburger"]'))
+                EC.visibility_of_element_located(
+                    (By.XPATH, self.config['hamburger_xpath'])
+                )
             )
             active_mg = self._get_active_mg()
             toggle_button = self._get_menu_toggle()
@@ -189,7 +187,9 @@ class TestMenu(SeleniumTestCase):
             hamburger = self._get_hamburger()
             account_button = self._get_account_button()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@class="hamburger"]'))
+                EC.visibility_of_element_located(
+                    (By.XPATH, self.config['hamburger_xpath'])
+                )
             )
             hamburger.click()
             self.assertEqual(active_mg.is_displayed(), True)
@@ -222,7 +222,7 @@ class TestMenu(SeleniumTestCase):
         self._open_menu()
         self.web_driver.refresh()
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, '//*[@class="hamburger"]'))
+            EC.visibility_of_element_located((By.XPATH, self.config['hamburger_xpath']))
         )
         with self.subTest('Test menu remains close on page change or refresh'):
             self._test_menu_state(False)
@@ -273,7 +273,7 @@ class TestMenu(SeleniumTestCase):
         # Test login page
         self.web_driver.refresh()
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+            EC.visibility_of_element_located((By.XPATH, self.config['site_name_xpath']))
         )
         hamburger = self._get_hamburger()
         logo = self._get_logo()
@@ -290,12 +290,10 @@ class TestMenu(SeleniumTestCase):
     def _test_account_component(self, is_logged_in=True, is_narrow=False):
         if not is_logged_in:
             self.login()
-        '''
-        should_be_visible:
-            should account_button username be visible on the screen.
-            if medium and wide: True
-            else: False
-        '''
+        # should_be_visible:
+        #     should account_button username be visible on the screen.
+        #     if medium and wide: True
+        #     else: False
         should_be_visible = not is_narrow
         if is_narrow:
             menu_toggle = self._get_hamburger()
@@ -406,11 +404,15 @@ class TestMenu(SeleniumTestCase):
     def _test_popup_page(self):
         self.open('/admin/auth/user/add/?_to_field=id&_popup=1')
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, '//*[@id="main-content"]'))
+            EC.visibility_of_element_located(
+                (By.XPATH, self.config['main_content_xpath'])
+            )
         )
         with self.assertRaises(NoSuchElementException):
             self._get_menu()
         self.open('/admin/')
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, '//*[@id="main-content"]'))
+            EC.visibility_of_element_located(
+                (By.XPATH, self.config['main_content_xpath'])
+            )
         )

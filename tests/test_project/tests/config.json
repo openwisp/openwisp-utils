@@ -1,0 +1,17 @@
+{
+  "driver": "chromium",
+  "admin_username": "admin",
+  "admin_password": "password",
+  "admin_email": "admin@admin.com",
+  "maximize_menu": "Maximize menu",
+  "minimize_menu": "Minimize menu",
+  "site_name_xpath": "//*[@id=\"site-name\"]",
+  "hamburger_xpath": "//*[@class=\"hamburger\"]",
+  "main_content_xpath": "//*[@id=\"main-content\"]",
+  "login_url": "/admin/login/",
+  "tester_username": "tester",
+  "tester_password": "tester",
+  "tester_first_name": "Tester",
+  "tester_last_name": "Tester",
+  "tester_email": "test@tester.com"
+}

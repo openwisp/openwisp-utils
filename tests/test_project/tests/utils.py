@@ -1,10 +1,24 @@
+import json
+import os
+
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 
 User = get_user_model()
 
 
-class SeleniumTestCase(StaticLiveServerTestCase):
+class TestConfig(object):
+    """
+    Get the configurations that are to be used for all the tests.
+    """
+
+    config_file = os.path.join(os.path.dirname(__file__), 'config.json')
+    root_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+    with open(config_file) as json_file:
+        config = json.load(json_file)
+
+
+class SeleniumTestCase(StaticLiveServerTestCase, TestConfig):
     def open(self, url, driver=None):
         """
         Opens a URL
@@ -18,11 +32,11 @@ class SeleniumTestCase(StaticLiveServerTestCase):
 
     def _create_user(self, **kwargs):
         opts = dict(
-            username='tester',
-            password='tester',
-            first_name='Tester',
-            last_name='Tester',
-            email='test@tester.com',
+            username=self.config['tester_username'],
+            password=self.config['tester_password'],
+            first_name=self.config['tester_first_name'],
+            last_name=self.config['tester_last_name'],
+            email=self.config['tester_email'],
         )
         opts.update(kwargs)
         user = User(**opts)
@@ -31,7 +45,11 @@ class SeleniumTestCase(StaticLiveServerTestCase):
 
     def _create_admin(self, **kwargs):
         opts = dict(
-            username='admin', email='admin@admin.com', is_superuser=True, is_staff=True
+            username=self.config['admin_username'],
+            email=self.config['admin_email'],
+            password=self.config['admin_password'],
+            is_superuser=True,
+            is_staff=True,
         )
         opts.update(kwargs)
         return self._create_user(**opts)
@@ -47,10 +65,11 @@ class SeleniumTestCase(StaticLiveServerTestCase):
         if not driver:
             driver = self.web_driver
         if not username:
-            username = self.admin_username
+            username = self.config['admin_username']
         if not password:
-            password = self.admin_password
-        driver.get(f'{self.live_server_url}/admin/login/')
+            password = self.config['admin_password']
+        url = self.live_server_url + self.config['login_url']
+        driver.get(url)
         if 'admin/login' in driver.current_url:
             driver.find_element_by_name('username').send_keys(username)
             driver.find_element_by_name('password').send_keys(password)
