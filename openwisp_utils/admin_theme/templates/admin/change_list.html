@@ -41,7 +41,7 @@
 
 {% block filters %}
   {% if cl.has_filters %}
-    <div aria-label="changelist filter" id="ow-changelist-filter">
+    <div id="ow-changelist-filter">
       <div class="filters-top">
         <h2>{% trans 'Filter' %}</h2>
         <div class="filters-control">
@@ -62,7 +62,7 @@
         <span class="right-arrow">
           <img src="{% static "ui/openwisp/images/right-arrow.svg" %}" alt="right">
         </span>
-        <div class="ow-filter-slider">
+        <div  aria-label="changelist filters region" tabindex="0" class="ow-filter-slider">
           <div class="slider">
             {% for spec in cl.filter_specs %}{% ow_create_filter cl spec cl.filter_specs|length %}{% endfor %}
           </div>

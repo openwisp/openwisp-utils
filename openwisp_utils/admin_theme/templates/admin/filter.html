@@ -3,15 +3,16 @@
 <div class="ow-filter">
   {% for choice in choices %}
     {% if choice.selected %}
-      <div class="filter-title" title="{{ choice.display }}">
-      <h3>{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</h3>
-        <div class="selected-option">
-          {{ choice.display }}
-        </div>
+      <div id="{{title}}" aria-label="by {{title}}" tabindex="0" aria-controls="choices-{{filter_title}}" role="button"
+        aria-expanded="false" class="filter-title">
+        <h3>{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</h3>
+          <div class="selected-option" tabindex="0" aria-label="selected value {{choice.display}}"  title="{{ choice.display }}">
+            {{ choice.display }}
+          </div>
       </div>
     {% endif %}
   {% endfor %}
-  <div class="filter-options">
+  <div id="choices-{{title}}" role="region" aria-labelledby="{{title}}" class="filter-options">
     {% for choice in choices %}
       <a {% if choice.selected %} class="selected"{% endif %} title="{{ choice.display }}"
       href="{{ choice.query_string|iriencode }}">

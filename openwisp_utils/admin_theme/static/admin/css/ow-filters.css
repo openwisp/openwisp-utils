@@ -50,10 +50,12 @@
   width: min-content;
   min-width: 100%;
   overflow-y: auto;
-  display: inline-flex;
+  /* display: inline-flex;
+   */
   transition: all 0.2s ease;
   box-shadow: 0px 1px 3px #00000040;
   pointer-events: none;
+  display:none;
 }
 .filter-title {
   border: 1px solid #747272;

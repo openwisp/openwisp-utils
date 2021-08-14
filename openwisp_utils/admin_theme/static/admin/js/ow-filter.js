@@ -20,6 +20,40 @@ const scrollDX = 200,
   );
 })();
 
+function showFilterOptions(filter,callback=null) {
+  if(!filter){return;}
+  filter.querySelector('.filter-options').style.display='inline-flex';
+  filter.querySelector('.filter-title').setAttribute('aria-expanded','true');
+  setTimeout(function(){
+    filter.classList.add('active');
+    if(callback) {callback(filter)}
+  },10)
+}
+
+function hideFilterOptions(filter){
+  if(!filter){return;}
+  filter.querySelector('.filter-options').style='';
+  filter.querySelector('.filter-title').setAttribute('aria-expanded','false');
+  filter.classList.remove('active');
+}
+
+function toggleFilter(filter,callback=null) {
+  var activeFilter = document.querySelector('.ow-filter.active');
+  if (activeFilter && activeFilter !== filter) {
+    hideFilterOptions(activeFilter)
+    }
+      if(filter.classList.contains('active')){
+        return hideFilterOptions(filter);
+      }
+      showFilterOptions(filter,callback);
+}
+
+function moveFocus(filter){
+  var option = filter.querySelectorAll('a');
+  option = option[0];
+  option.focus();
+}
+
 function initFilterDropdownHandler() {
   const filters = document.querySelectorAll('.ow-filter');
   // When filter title is clicked
@@ -27,13 +61,25 @@ function initFilterDropdownHandler() {
     var toggler = filter.querySelector('.filter-title');
     toggler.addEventListener('click', function () {
       // Close if any active filter
-      var activeFilter = document.querySelector('.ow-filter.active');
-      if (activeFilter && activeFilter !== filter) {
-        activeFilter.classList.remove('active');
-      }
-      filter.classList.toggle('active');
+      toggleFilter(filter);
     });
+    toggler.addEventListener('keypress', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ') {
+        return;
+      }
+      toggleFilter(filter, moveFocus);
+    })
+    // Escape key handler
+    var filterDropdown = filter.querySelector('.filter-options');
+    filterDropdown.addEventListener('keyup',function(e){
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        hideFilterOptions(filter);
+        filter.querySelector('.filter-title').focus();
+      }
+    })
   });
+
   // Handle click outside of an active filter
   document.addEventListener('click', function (e) {
     var activeFilter = document.querySelector('.ow-filter.active');
@@ -55,9 +101,17 @@ function initFilterDropdownHandler() {
       var text = filterValue.innerHTML;
       selectedOption.innerHTML = text;
       filter.querySelector('.filter-title').setAttribute('title', text);
-      filter.classList.remove('active');
+      hideFilterOptions(filter)
     });
   });
+  // Handle focus shift from filter
+  document.addEventListener('focusin', function (e) {
+    var activeFilter = document.querySelector('.ow-filter.active');
+    if(activeFilter && !activeFilter.contains(e.target)){
+      hideFilterOptions(activeFilter);
+    }
+  })
+  
 }
 
 function buttonAnimation(button) {
