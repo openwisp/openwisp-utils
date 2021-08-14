@@ -42,18 +42,18 @@ function initFilterDropdownHandler() {
     }
   });
   // Handle change in filter option
-  const filterRadios = document.querySelectorAll('.filter-options input');
-  filterRadios.forEach(function (filterRadio) {
-    filterRadio.addEventListener('change', function () {
+  if(filters.length<=4) { return; }
+  const filterValues = document.querySelectorAll('.filter-options a');
+  filterValues.forEach(function (filterValue) {
+    filterValue.addEventListener('click', function (e) {
+      e.preventDefault();
       let filter = document.querySelector('.ow-filter.active');
-      let view = document.querySelector('.ow-filter.active .selected-option');
-      let selectedElement = document.querySelector(
-        '.ow-filter.active .selected'
-      );
+      let selectedOption = filter.querySelector('.selected-option');
+      let selectedElement = filter.querySelector('.selected');
       selectedElement.classList.remove('selected');
-      filterRadio.previousElementSibling.classList.add('selected');
-      var text = filterRadio.previousElementSibling.innerHTML;
-      view.innerHTML = text;
+      filterValue.classList.add('selected');
+      var text = filterValue.innerHTML;
+      selectedOption.innerHTML = text;
       filter.querySelector('.filter-title').setAttribute('title', text);
       filter.classList.remove('active');
     });
@@ -125,8 +125,8 @@ function filterHandlers() {
     return;
   }
   filterButton.addEventListener('click', function () {
-    const selectedInputs = document.querySelectorAll(
-      '.filter-options input:checked'
+    const selectedOptions = document.querySelectorAll(
+      '.filter-options .selected'
     );
     // Create params map which knows about the last applied filters
     var path = window.location.href.split('?');
@@ -141,8 +141,8 @@ function filterHandlers() {
     var qs = Object.assign({}, paramsMap);
     // qs will be modified according to the last applied filters
     // and current filters that need to be applied
-    selectedInputs.forEach(function (selectedInput) {
-      let value = selectedInput.value;
+    selectedOptions.forEach(function (selectedOption) {
+      let value = selectedOption.getAttribute('href');
       // create params map for each option
       let currParamsMap = {};
       value
