@@ -12,9 +12,6 @@
 #changelist-filter-clear {
   margin: 0px;
 }
-#changelist-filter-clear {
-  margin-right: 1.25rem;
-}
 #ow-apply-filter {
   font-size: 13px;
   font-weight: 500;
@@ -22,6 +19,7 @@
   padding: 0.4rem 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  margin-left: 1.25rem;
 }
 .filters-control {
   display: flex;
@@ -41,9 +39,6 @@
 }
 .filter {
   margin-right: 0.625rem;
-}
-.filter-options input {
-  display: none;
 }
 .filter-options {
   flex-direction: column;
@@ -110,7 +105,6 @@
   border-color: #df5d43;
   color: #df5d43;
 }
-.filter-options label,
 .filter-options a {
   padding: 0.5rem 0.75rem;
   cursor: pointer;
@@ -127,9 +121,7 @@
   color: #ffff;
   cursor: default;
 }
-.filter-options label:hover,
 .filter-options a:hover,
-.filter-options label:focus,
 .filter-options a:focus {
   background: #ffe5e5;
   color: #ba2121;
