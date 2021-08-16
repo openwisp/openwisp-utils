@@ -250,7 +250,8 @@ def register_menu_subitem(group_position, item_position, config):
         name = group.items[item_position]
         raise ImproperlyConfigured(
             f'A group item with config {config} is being registered at position\
-            "{item_position}" in a group but another item named "{name}" is already present their.'
+            "{item_position}" in a group but another item named "{name}" is already registered\
+            at the same position.'
         )
     group.items.update({item_position: item})
 
