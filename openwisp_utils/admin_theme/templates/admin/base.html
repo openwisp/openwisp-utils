@@ -23,25 +23,25 @@
   data-admin-utc-offset="{% now "Z" %}">
 
 <!-- Container -->
-<div id="container" class="toggle-menu{% if not user.is_authenticated %} no-auth{% endif %}" >
-  <div class="menu-backdrop"></div>
+<div id="container" class="toggle-menu {% if not user.is_authenticated or not user.is_staff %}no-auth{% endif %}" >
   {% if not is_popup %}
+    <div class="menu-backdrop"></div>
     <div id="menu">
       <div class="menu-bar">
         {% block menu-bar %}{% endblock %}
       </div>
-      {% if user.is_authenticated  %}
+      {% if user.is_authenticated and user.is_staff %}
       {% block menu %}{% endblock %}
       {% endif %}
     </div>
   {% endif %}
-  <div id="main-content" {% if not user.is_authenticated %}class="m-0"{% endif %}>
+  <div id="main-content" {% if not user.is_staff or not user.is_authenticated %}class="m-0"{% endif %}>
     {% if not is_popup %}
     <!-- Header -->
     {% block header %}
       <div id="header">
         {% block nav-global %}{% endblock %}
-        {% if user.is_authenticated %}
+        {% if user.is_authenticated and user.is_staff %}
           <div id="ow-user-tools">
           {% block user-tools %}{% endblock  %}
           </div>
