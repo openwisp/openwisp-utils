@@ -1,4 +1,5 @@
 from django import template
+from django.template.defaultfilters import stringfilter
 from django.template.loader import get_template
 
 register = template.Library()
@@ -15,3 +16,9 @@ def ow_create_filter(cl, spec, total_filters):
             'show_button': total_filters > 4,
         }
     )
+
+
+@register.filter
+@stringfilter
+def join_string(value):
+    return value.lower().replace(' ', '-')
