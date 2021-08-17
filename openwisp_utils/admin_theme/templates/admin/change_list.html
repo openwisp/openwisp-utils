@@ -10,6 +10,8 @@
   <link rel="stylesheet" type="text/css" href="{% static "admin/css/ow-filters.css" %}">
   {% if cl.formset or action_form %}
     <script src="{% url 'admin:jsi18n' %}"></script>
+  {% endif %}
+  {% if cl.has_filters %}
     <script src="{% static "admin/js/ow-filter.js" %}"></script>
   {% endif %}
   {{ media.css }}
