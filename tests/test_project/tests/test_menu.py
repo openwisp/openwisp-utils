@@ -150,9 +150,19 @@ class TestMenuSchema(TestCase):
                 register_menu_subitem(
                     group_position=102, item_position=1, config=config
                 )
+            with self.assertRaises(ImproperlyConfigured):
+                register_menu_subitem(
+                    group_position=100,
+                    item_position=3,
+                    config=self._get_menu_group_config(),
+                )
 
         with self.subTest('Test menu subitem with valid data'):
+            model_link_config = self._get_model_link_config()
             register_menu_subitem(group_position=100, item_position=3, config=config)
+            register_menu_subitem(
+                group_position=100, item_position=4, config=model_link_config
+            )
             user = get_user_model().objects.create_superuser(
                 username='administrator', password='admin', email='test@test.org'
             )
@@ -163,6 +173,10 @@ class TestMenuSchema(TestCase):
             item_context = item.get_context(request)
             registered_item_context = MENU[100].items[3].get_context(request)
             self.assertEqual(registered_item_context, item_context)
+            model_link_item = ModelLink(config=model_link_config)
+            model_link_context = model_link_item.get_context(request)
+            registered_model_context = MENU[100].items[4].get_context(request)
+            self.assertEqual(model_link_context, registered_model_context)
 
     def test_menu_link(self):
 
