@@ -472,7 +472,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
 ``register_menu_group``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-It allows us to register different menu item or group at different position in the Main Navigation Menu.
+It allows to register different menu item or group at the specified position in the Main Navigation Menu.
 
 **Syntax:**
 
@@ -532,8 +532,8 @@ Code example:
 .. note::
     An ``ImproperlyConfigured`` exception is raised if a menu element is already registered at the same position.
 
-    An ``ImproperlyConfigured`` exception is raised also if proper configuration is not provided based on the different types of
-    menu elements that you can register. Different types of configurations will be discussed in the next sections.
+    An ``ImproperlyConfigured`` exception is raised if proper configuration is not provided based on the different types of
+    menu elements that can be registered. Different types of configurations will be discussed in the next sections.
 
     It is recommended to use ``register_menu_group`` in the ``ready`` method of the ``AppConfig``.
 
@@ -544,7 +544,7 @@ Code example:
 Adding a generic link
 ~~~~~~~~~~~~~~~~~~~~~
 
-If you want to add a link which contains a custom url then you can use following syntax for config.
+To add a link which contains a custom url the following syntax can be used.
 
 **Syntax:**
 
@@ -572,15 +572,15 @@ Following is the description of the configuration:
 Adding a model link
 ~~~~~~~~~~~~~~~~~~~
 
-If you want to add a link that contains url of ``add`` or ``list`` page of a model
-then you can use following syntax. Users will only be able to see links for
+To add a link that contains url of ``add`` or ``list`` page of a model
+then the following syntax can be used. Users will only be able to see links for
 models they have permission to either view or edit.
 
 **Syntax:**
 
 .. code-block:: python
 
-    # adding a link of list page
+    # add a link of list page
     register_menu_group(
         position=1,
         config={
@@ -591,7 +591,7 @@ models they have permission to either view or edit.
         },
     )
 
-    # adding a link of add page
+    # add a link of add page
     register_menu_group(
         position=2,
         config={
@@ -621,7 +621,7 @@ Following is the description of the configuration:
 Adding a menu group
 ~~~~~~~~~~~~~~~~~~~
 
-If you want to add a nested menu group then you can use following syntax.
+To add a nested menu group of links the following syntax can be used.
 It creates a dropdown in the menu.
 
 **Syntax:**
@@ -663,7 +663,7 @@ Following is the description of the configuration:
 ``register_menu_subitem``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It allows us to register an item in a registered group.
+It allows to register an item in a registered group.
 
 **Syntax:**
 
@@ -714,12 +714,12 @@ Code example:
     An ``ImproperlyConfigured`` exception is raised if group already has an
     item registered at ``item_position``.
 
-    You can only register a model link or a generic link.
-    An ``ImproperlyConfigured`` exception is raised
-    if you will try to register a group in place of item.
+    Registeration of a model link or a generic link is only possible.
+    An ``ImproperlyConfigured`` exception is raised if configuration of 
+    group is provided in the function.
 
-    It is recommended to use ``register_menu_subitem``
-    in the ``ready`` method of the ``AppConfig``.
+    It is recommended to use ``register_menu_subitem`` in the ``ready`` 
+    method of the ``AppConfig``.
 
 How to use custom icons in the menu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
