@@ -21,7 +21,7 @@ def ow_create_filter(cl, spec, total_filters):
 @register.filter
 @stringfilter
 def join_string(value):
-    '''
+    """
     Can be used to join strings with "-" to make id or class
-    '''
+    """
     return value.lower().replace(' ', '-')
