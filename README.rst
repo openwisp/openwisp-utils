@@ -472,7 +472,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
 ``register_menu_group``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-It allows to register different menu item or group at the specified position in the Main Navigation Menu.
+It allows to register a new menu item or group at the specified position in the Main Navigation Menu.
 
 **Syntax:**
 
@@ -532,8 +532,8 @@ Code example:
 .. note::
     An ``ImproperlyConfigured`` exception is raised if a menu element is already registered at the same position.
 
-    An ``ImproperlyConfigured`` exception is raised if proper configuration is not provided based on the different types of
-    menu elements that can be registered. Different types of configurations will be discussed in the next sections.
+    An ``ImproperlyConfigured`` exception is raised if supplied configuration does not match with the different types of
+    possible configurations available( different configurations will be discussed in the next section).
 
     It is recommended to use ``register_menu_group`` in the ``ready`` method of the ``AppConfig``.
 
@@ -544,7 +544,7 @@ Code example:
 Adding a generic link
 ~~~~~~~~~~~~~~~~~~~~~
 
-To add a link which contains a custom url the following syntax can be used.
+To add a link which contains a custom URL the following syntax can be used.
 
 **Syntax:**
 
@@ -572,7 +572,7 @@ Following is the description of the configuration:
 Adding a model link
 ~~~~~~~~~~~~~~~~~~~
 
-To add a link that contains url of ``add`` or ``list`` page of a model
+To add a link that contains URL of add form or change list page of a model
 then the following syntax can be used. Users will only be able to see links for
 models they have permission to either view or edit.
 
@@ -663,7 +663,7 @@ Following is the description of the configuration:
 ``register_menu_subitem``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It allows to register an item in a registered group.
+It allows to add an item in a registered group.
 
 **Syntax:**
 
@@ -714,7 +714,7 @@ Code example:
     An ``ImproperlyConfigured`` exception is raised if group already has an
     item registered at ``item_position``.
 
-    Registeration of a model link or a generic link is only possible.
+    It is only possible to register links to specific models or custom URL.
     An ``ImproperlyConfigured`` exception is raised if configuration of 
     group is provided in the function.
 
