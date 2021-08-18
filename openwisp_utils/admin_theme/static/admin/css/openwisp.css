@@ -424,6 +424,8 @@ div#toolbar form input[type='submit']:hover {
 .object-tools button {
   padding: 0.4rem 0.8rem;
   font-size: 13px;
+  line-height: 20px;
+  text-transform: uppercase;
 }
 #container .object-tools a.addlink {
   background-image: url(../../ui/openwisp/images/add.svg);
@@ -444,6 +446,8 @@ input[type='submit'].default:focus,
 .object-tools a:hover,
 .object-tools a:active,
 .object-tools a:focus,
+.object-tools button:hover,
+.object-tools button:focus,
 .button:active,
 input[type='submit']:active,
 input[type='button']:active,
