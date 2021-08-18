@@ -233,13 +233,7 @@ function initGroupViewHandlers() {
   document.addEventListener('focusin', function (e) {
     var activeGroup = document.querySelector('.menu-group.active');
     if (activeGroup && !activeGroup.contains(e.target)) {
-      if (
-        activeGroup.classList.contains('active-mg') &&
-        owNav.contains(e.target)
-      ) {
-        wasActiveGroupOpen = false;
-        closeActiveGroup(activeGroup);
-      } else if (!activeGroup.classList.contains('active-mg')) {
+      if (!activeGroup.classList.contains('active-mg')) {
         closeActiveGroup(activeGroup);
       }
     }

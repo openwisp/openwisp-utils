@@ -18,7 +18,8 @@
 
 {% block menu-bar %}
   <div class="head">
-    <span tabindex="0" role="button" aria-label="Maxamize menu"class="hamburger"><span></span></span>
+    <span tabindex="0" role="button" aria-label="{% trans 'Maxamize menu' %}" class="hamburger">
+    <span></span></span>
     <h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header }}</a></h1>
   </div>
 {% endblock %}

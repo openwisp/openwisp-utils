@@ -91,6 +91,15 @@ function initFilterDropdownHandler() {
       activeFilter.classList.remove('active');
     }
   });
+
+  // Handle focus shift from filter
+  document.addEventListener('focusin', function (e) {
+    var activeFilter = document.querySelector('.ow-filter.active');
+    if (activeFilter && !activeFilter.contains(e.target)) {
+      hideFilterOptions(activeFilter);
+    }
+  });
+
   // Handle change in filter option
   if (filters.length <= 4) {
     return;
@@ -109,13 +118,6 @@ function initFilterDropdownHandler() {
       filter.querySelector('.filter-title').setAttribute('title', text);
       hideFilterOptions(filter);
     });
-  });
-  // Handle focus shift from filter
-  document.addEventListener('focusin', function (e) {
-    var activeFilter = document.querySelector('.ow-filter.active');
-    if (activeFilter && !activeFilter.contains(e.target)) {
-      hideFilterOptions(activeFilter);
-    }
   });
 }
 
