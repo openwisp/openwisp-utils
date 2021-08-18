@@ -4,7 +4,7 @@ from openwisp_utils.admin_theme import (
     register_dashboard_chart,
     register_dashboard_template,
 )
-from openwisp_utils.admin_theme.menu import register_menu_group
+from openwisp_utils.admin_theme.menu import register_menu_group, register_menu_subitem
 from openwisp_utils.api.apps import ApiAppConfig
 from openwisp_utils.utils import register_menu_items
 
@@ -116,12 +116,7 @@ class TestAppConfig(ApiAppConfig):
                     'label': _('OpenWISP'),
                     'url': 'https://openwisp.org/',
                     'icon': 'link',
-                },
-                2: {
-                    'label': _('Code'),
-                    'url': 'https://openwisp.org/thecode.html',
-                    'icon': 'code',
-                },
+                }
             },
             'icon': 'docs',
         }
@@ -136,3 +131,12 @@ class TestAppConfig(ApiAppConfig):
         )
         register_menu_group(position=32, config=auth_config)
         register_menu_group(position=33, config=docs_config)
+        register_menu_subitem(
+            group_position=33,
+            item_position=2,
+            config={
+                'label': _('Code'),
+                'url': 'https://openwisp.org/thecode.html',
+                'icon': 'code',
+            },
+        )

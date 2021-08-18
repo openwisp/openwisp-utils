@@ -211,6 +211,51 @@ def register_menu_group(position, config):
     MENU.update({position: group_class})
 
 
+def register_menu_subitem(group_position, item_position, config):
+    if not isinstance(group_position, int):
+        raise ImproperlyConfigured(
+            f'Invalid group_position "{group_position}". It should be a type of "int"'
+        )
+    if not isinstance(item_position, int):
+        raise ImproperlyConfigured(
+            f'Invalid item_position "{item_position}". It should be a type of "int"'
+        )
+    if not isinstance(config, dict):
+        raise ImproperlyConfigured(
+            'Config of sub group item should be a type of "dict"'
+        )
+    if group_position not in MENU:
+        raise ImproperlyConfigured(
+            f'A group item with config {config} is being registered in a group\
+            which does not exits.',
+        )
+    group = MENU[group_position]
+    if not isinstance(group, MenuGroup):
+        raise ImproperlyConfigured(
+            f'A group item with config {config} is being registered at group_position\
+            "{group_position}" which do not contain any group.',
+        )
+    if config.get('url'):
+        # It is a menu link
+        item = MenuLink(config=config)
+    elif config.get('model'):
+        # It is a model link
+        item = ModelLink(config=config)
+    else:
+        # Unknown
+        raise ImproperlyConfigured(
+            f'Invalid config "{config}" provided for sub group item'
+        )
+    if item_position in group.items:
+        name = group.items[item_position]
+        raise ImproperlyConfigured(
+            f'A group item with config {config} is being registered at position\
+            "{item_position}" in a group but another item named "{name}" is already registered\
+            at the same position.'
+        )
+    group.items.update({item_position: item})
+
+
 def build_menu_groups(request):
     menu = []
     for item in MENU.values():
