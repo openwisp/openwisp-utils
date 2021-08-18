@@ -541,7 +541,7 @@ Code example:
     future versions. Links added using ``register_menu_items`` will be shown at the top
     of navigation menu and above any ``register_menu_group`` items.
 
-Adding a generic link
+Adding a custom link
 ~~~~~~~~~~~~~~~~~~~~~
 
 To add a link which contains a custom URL the following syntax can be used.
@@ -653,7 +653,7 @@ Following is the description of the configuration:
 | ``label``        | (``str``) Display name for the link.                         |
 +------------------+--------------------------------------------------------------+
 | ``items``        | (``dict``) Items to be displayed in the dropdown.            |
-|                  | It can be a dict of generic links or model links             |
+|                  | It can be a dict of custom links or model links              |
 |                  | with key as their position in the group.                     |
 +------------------+--------------------------------------------------------------+
 | ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
@@ -700,7 +700,7 @@ Code example:
         },
     )
 
-    # To register a generic link
+    # To register a custom link
     register_menu_subitem(
         group_position=10,
         item_position=2,
