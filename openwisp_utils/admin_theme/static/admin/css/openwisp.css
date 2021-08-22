@@ -987,6 +987,7 @@ a.menu-item,
 .menu-group.active-mg .mg-head .icon,
 .menu-group.active-mg .mg-head .mg-arrow,
 .mg-link:hover .icon,
+.mg-link:focus .icon,
 #menu a.active .icon {
   background: #df5d43;
 }
@@ -1302,6 +1303,9 @@ h1#site-name {
   /*** MENU CLOSE ***/
   .toggle-menu #menu {
     height: 3rem;
+  }
+  .toggle-menu .nav{
+    display: none;
   }
 }
 
