@@ -573,7 +573,7 @@ Adding a model link
 ~~~~~~~~~~~~~~~~~~~
 
 To add a link that contains URL of add form or change list page of a model
-then the following syntax can be used. Users will only be able to see links for
+then following syntax can be used. Users will only be able to see links for
 models they have permission to either view or edit.
 
 **Syntax:**
