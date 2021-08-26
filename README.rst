@@ -43,6 +43,7 @@ Current features
 ----------------
 
 * `Configurable admin theme <#using-the-admin_theme>`_
+* `OpenWISP Dashboard <#openwisp-dashboard>`_
 * `Configurable navigation menu <#main-navigation-menu>`_
 * `Improved admin filters <#admin-filters>`_
 * `OpenAPI / Swagger documentation <#openwisp_api_docs>`_
