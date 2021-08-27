@@ -24,13 +24,13 @@ to add customization.
     {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission and inline_admin_form.original %}<span class="delete">{{ inline_admin_form.deletion_field.field }} {{ inline_admin_form.deletion_field.label_tag }}</span>{% endif %}
   </h3>
   {% comment %} OpenWISP customization begin {% endcomment %}
-  {% if inline_admin_formset.formset.object_help_text %}
-    {% with inline_admin_formset.formset.object_help_text as object_help_text %}
-        <div class="help-text-warning">
-            <img src="{{ object_help_text.image_url|default:'/static/admin/img/icon-alert.svg' }}">
-            <p>{{ object_help_text.text}}
-            {% if object_help_text.documentation_url %}
-                {% trans 'Please refer to the' %} <a href="{{object_help_text.documentation_url}}">{% trans 'documentation' %}</a> {% trans 'for more information' %}</p>
+  {% if inline_admin_formset.formset.help_text %}
+    {% with inline_admin_formset.formset.help_text as help_text %}
+        <div class="ow-help-text">
+            <img src="{{ help_text.image_url|default:'/static/admin/img/icon-alert.svg' }}">
+            <p>{{ help_text.text}}
+            {% if help_text.documentation_url %}
+                {% trans 'Please refer to the' %} <a href="{{help_text.documentation_url}}">{% trans 'documentation' %}</a> {% trans 'for more information' %}</p>
             {% endif %}
         </div>
     {% endwith %}

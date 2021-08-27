@@ -1,13 +1,13 @@
-.help-text-warning {
+.ow-help-text {
   background-color: #ffe5e5;
   padding: 5px 10px;
   font-size: 15px;
   font-weight: bolder;
   display: flex;
 }
-.help-text-warning img {
+.ow-help-text img {
   min-width: 30px;
 }
-.help-text-warning a {
+.ow-help-text a {
   color: #df5d43;
 }

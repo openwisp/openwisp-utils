@@ -156,7 +156,7 @@ class ReceiveUrlAdmin(ModelAdmin):
 
 
 class HelpTextStackedInline(StackedInline):
-    object_help_text = None
+    help_text = None
     template = 'admin/edit_inline/help_text_stacked.html'
 
     class Media:
@@ -164,5 +164,5 @@ class HelpTextStackedInline(StackedInline):
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
-        formset.object_help_text = self.object_help_text
+        formset.help_text = self.help_text
         return formset

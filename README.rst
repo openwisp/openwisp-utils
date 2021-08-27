@@ -845,8 +845,8 @@ inline object. Following is an example:
         MultitenantAdminMixin, TimeReadonlyAdminMixin, HelpTextStackedInline
     ):
         model = Model
-        # It is required to set "object_help_text" attribute
-        object_help_text = {
+        # It is required to set "help_text" attribute
+        help_text = {
             # (required) Help text to display
             'text': _(
                 'Please keep in mind that once the subnet division rule is created '
@@ -862,7 +862,7 @@ inline object. Following is an example:
             'image_url': '/static/admin/img/icon-alert.svg'
         }
 
-.. figure:: https://github.com/openwisp/openwisp-utils/raw/media/docs/help-text-stacked-inline
+.. figure:: https://github.com/openwisp/openwisp-utils/raw/media/docs/help-text-stacked-inline.png
   :align: center
 
 Code utilities
