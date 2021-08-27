@@ -1,4 +1,4 @@
-from django.contrib.admin import ModelAdmin
+from django.contrib.admin import ModelAdmin, StackedInline
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -153,3 +153,16 @@ class ReceiveUrlAdmin(ModelAdmin):
         js = ('admin/js/jquery.init.js', 'openwisp-utils/js/receive_url.js')
 
     receive_url.short_description = _('URL')
+
+
+class HelpTextStackedInline(StackedInline):
+    object_help_text = None
+    template = 'admin/edit_inline/help_text_stacked.html'
+
+    class Media:
+        css = {'all': ['admin/css/help-text-stacked.css']}
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.object_help_text = self.object_help_text
+        return formset

@@ -746,7 +746,7 @@ to know how to configure your OpenWISP instance to load custom CSS files.
 Admin filters
 -------------
 
-.. figure:: https://github.com/openwisp/openwisp-utils/blob/media/docs/filter.gif
+.. figure:: https://github.com/openwisp/openwisp-utils/raw/media/docs/filter.gif
   :align: center
 
 The ``admin_theme`` sub app provides an improved UI for the changelist filter
@@ -830,6 +830,40 @@ An admin class that provides the UUID of the object as a read-only input field
 
 An admin class that provides an URL as a read-only input field
 (to make it easy and quick to copy/paste).
+
+``openwisp_utils.admin.HelpTextStackedInline``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A stacked inline admin class that displays a help text for entire
+inline object. Following is an example:
+
+.. code-block:: python
+
+    from openwisp_utils.admin import HelpTextStackedInline
+
+    class SubnetDivisionRuleInlineAdmin(
+        MultitenantAdminMixin, TimeReadonlyAdminMixin, HelpTextStackedInline
+    ):
+        model = Model
+        # It is required to set "object_help_text" attribute
+        object_help_text = {
+            # (required) Help text to display
+            'text': _(
+                'Please keep in mind that once the subnet division rule is created '
+                'and used, changing "Size" and "Number of Subnets" and decreasing '
+                '"Number of IPs" will not be possible.'
+            ),
+            # (optional) You can provide a link to documentation for user reference
+            'documentation_url': (
+                'https://github.com/openwisp/openwisp-utils'
+            )
+            # (optional) Icon to be shown along with help text. By default it uses
+            # "/static/admin/img/icon-alert.svg"
+            'image_url': '/static/admin/img/icon-alert.svg'
+        }
+
+.. figure:: https://github.com/openwisp/openwisp-utils/raw/media/docs/help-text-stacked-inline
+  :align: center
 
 Code utilities
 --------------
