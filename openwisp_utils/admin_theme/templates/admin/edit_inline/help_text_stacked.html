@@ -30,8 +30,11 @@ to add customization.
             <img src="{{ help_text.image_url|default:'/static/admin/img/icon-alert.svg' }}">
             <p>{{ help_text.text}}
             {% if help_text.documentation_url %}
-                {% trans 'Please refer to the' %} <a href="{{help_text.documentation_url}}">{% trans 'documentation' %}</a> {% trans 'for more information' %}</p>
+              {% blocktrans with anchor_open='<a href="'|add:help_text.documentation_url|add:'">'|safe anchor_close='</a>'|safe %}
+                Please refer to the {{ anchor_open }}documentation{{ anchor_close }} for more information.
+              {% endblocktrans %}
             {% endif %}
+            </p>
         </div>
     {% endwith %}
   {% endif %}

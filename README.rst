@@ -834,6 +834,9 @@ An admin class that provides an URL as a read-only input field
 ``openwisp_utils.admin.HelpTextStackedInline``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. figure:: https://github.com/openwisp/openwisp-utils/raw/media/docs/help-text-stacked-inline.png
+  :align: center
+
 A stacked inline admin class that displays a help text for entire
 inline object. Following is an example:
 
@@ -861,9 +864,6 @@ inline object. Following is an example:
             # "/static/admin/img/icon-alert.svg"
             'image_url': '/static/admin/img/icon-alert.svg'
         }
-
-.. figure:: https://github.com/openwisp/openwisp-utils/raw/media/docs/help-text-stacked-inline.png
-  :align: center
 
 Code utilities
 --------------
