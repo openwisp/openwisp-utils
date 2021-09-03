@@ -446,7 +446,7 @@ specified dashboard chart is not registered.
 Main navigation menu
 --------------------
 
-The ``admin_theme`` sub app of this package provides a navigation menu which can be
+The ``admin_theme`` sub app of this package provides a navigation menu that can be
 manipulated with the functions described in the next sections.
 
 Add ``openwisp_utils.admin_theme.context_processor.menu_groups`` to
@@ -473,7 +473,7 @@ template ``context_processors`` in ``settings.py`` as shown below.
 ``register_menu_group``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-It allows us to register different menu item or group at different position in the Main Navigation Menu.
+Allows registering a new menu item or group at the specified position in the Main Navigation Menu.
 
 **Syntax:**
 
@@ -533,8 +533,8 @@ Code example:
 .. note::
     An ``ImproperlyConfigured`` exception is raised if a menu element is already registered at the same position.
 
-    An ``ImproperlyConfigured`` exception is raised also if proper configuration is not provided based on the different types of
-    menu elements that you can register. Different types of configurations will be discussed in the next sections.
+    An ``ImproperlyConfigured`` exception is raised if the supplied configuration does not match with the different types of
+    possible configurations available (different configurations will be discussed in the next section).
 
     It is recommended to use ``register_menu_group`` in the ``ready`` method of the ``AppConfig``.
 
@@ -542,10 +542,10 @@ Code example:
     future versions. Links added using ``register_menu_items`` will be shown at the top
     of navigation menu and above any ``register_menu_group`` items.
 
-Adding a generic link
+Adding a custom link
 ~~~~~~~~~~~~~~~~~~~~~
 
-If you want to add a link which contains a custom url then you can use following syntax for config.
+To add a link that contains a custom URL the following syntax can be used.
 
 **Syntax:**
 
@@ -573,15 +573,15 @@ Following is the description of the configuration:
 Adding a model link
 ~~~~~~~~~~~~~~~~~~~
 
-If you want to add a link that contains url of ``add`` or ``list`` page of a model
-then you can use following syntax. Users will only be able to see links for
+To add a link that contains URL of add form or change list page of a model
+then following syntax can be used. Users will only be able to see links for
 models they have permission to either view or edit.
 
 **Syntax:**
 
 .. code-block:: python
 
-    # adding a link of list page
+    # add a link of list page
     register_menu_group(
         position=1,
         config={
@@ -592,7 +592,7 @@ models they have permission to either view or edit.
         },
     )
 
-    # adding a link of add page
+    # add a link of add page
     register_menu_group(
         position=2,
         config={
@@ -622,7 +622,7 @@ Following is the description of the configuration:
 Adding a menu group
 ~~~~~~~~~~~~~~~~~~~
 
-If you want to add a nested menu group then you can use following syntax.
+To add a nested group of links in the menu the following syntax can be used.
 It creates a dropdown in the menu.
 
 **Syntax:**
@@ -654,7 +654,7 @@ Following is the description of the configuration:
 | ``label``        | (``str``) Display name for the link.                         |
 +------------------+--------------------------------------------------------------+
 | ``items``        | (``dict``) Items to be displayed in the dropdown.            |
-|                  | It can be a dict of generic links or model links             |
+|                  | It can be a dict of custom links or model links              |
 |                  | with key as their position in the group.                     |
 +------------------+--------------------------------------------------------------+
 | ``icon``         | An **optional** ``str`` CSS class name for the icon. No icon |
@@ -664,7 +664,7 @@ Following is the description of the configuration:
 ``register_menu_subitem``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-It allows us to register an item in a registered group.
+Allows adding an item to a registered group.
 
 **Syntax:**
 
@@ -672,15 +672,15 @@ It allows us to register an item in a registered group.
 
     register_menu_subitem(group_position, item_position, config)
 
-+--------------------------+---------------------------------------------------------------+
-| **Parameter**            | **Description**                                               |
-+--------------------------+---------------------------------------------------------------+
-| ``group_position``       | (``int``) Position of group in which item will be added.      |
-+--------------------------+---------------------------------------------------------------+
-| ``item_position``        | (``int``) Position at which item should be added in the group |
-+--------------------------+---------------------------------------------------------------+
-| ``config``               | (``dict``) Configuration of the item.                         |
-+--------------------------+---------------------------------------------------------------+
++--------------------------+----------------------------------------------------------------+
+| **Parameter**            | **Description**                                                |
++--------------------------+----------------------------------------------------------------+
+| ``group_position``       | (``int``) Position of the group in which item should be added. |
++--------------------------+----------------------------------------------------------------+
+| ``item_position``        | (``int``) Position at which item should be added in the group  |
++--------------------------+----------------------------------------------------------------+
+| ``config``               | (``dict``) Configuration of the item.                          |
++--------------------------+----------------------------------------------------------------+
 
 Code example:
 
@@ -701,7 +701,7 @@ Code example:
         },
     )
 
-    # To register a generic link
+    # To register a custom link
     register_menu_subitem(
         group_position=10,
         item_position=2,
@@ -709,26 +709,26 @@ Code example:
     )
 
 .. note::
-    An ``ImproperlyConfigured`` exception is raised if group is not already
+    An ``ImproperlyConfigured`` exception is raised if the group is not already
     registered at ``group_position``.
 
-    An ``ImproperlyConfigured`` exception is raised if group already has an
+    An ``ImproperlyConfigured`` exception is raised if the group already has an
     item registered at ``item_position``.
 
-    You can only register a model link or a generic link.
-    An ``ImproperlyConfigured`` exception is raised
-    if you will try to register a group in place of item.
+    It is only possible to register links to specific models or custom URL.
+    An ``ImproperlyConfigured`` exception is raised if the configuration of 
+    group is provided in the function.
 
-    It is recommended to use ``register_menu_subitem``
-    in the ``ready`` method of the ``AppConfig``.
+    It is recommended to use ``register_menu_subitem`` in the ``ready`` 
+    method of the ``AppConfig``.
 
 How to use custom icons in the menu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a CSS file and use following syntax to provide the image for each
-icon used in the menu. The CSS class name should be same as the ``icon``
-parameter used in configuration of a menu item or group and ``icon`` should be
-in ``svg`` format.
+Create a CSS file and use the following syntax to provide the image for each
+icon used in the menu. The CSS class name should be the same as the ``icon``
+parameter used in the configuration of a menu item or group. Also icon being used
+should be in ``svg`` format.
 
 Example:
 
