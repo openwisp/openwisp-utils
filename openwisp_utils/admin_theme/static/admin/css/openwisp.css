@@ -145,6 +145,10 @@ input[type=tel], textarea,
   padding: 8px 12px;
   box-sizing: border-box;
 }
+input.readonly {
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  background-color: rgba(0, 0, 0, 0.07);
+}
 select { height: 36px; padding: 0 12px; }
 #main span.select2-selection {
   min-height: 36px;

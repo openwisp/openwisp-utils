@@ -1,8 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.forms import ModelForm
+from django.utils.translation import ugettext_lazy as _
 from openwisp_utils.admin import (
     AlwaysHasChangedMixin,
+    HelpTextStackedInline,
     ReadOnlyAdmin,
     ReceiveUrlAdmin,
     TimeReadonlyAdminMixin,
@@ -36,10 +38,14 @@ class OperatorForm(AlwaysHasChangedMixin, ModelForm):
     pass
 
 
-class OperatorInline(admin.StackedInline):
+class OperatorInline(HelpTextStackedInline):
     model = Operator
     form = OperatorForm
     extra = 0
+    help_text = {
+        'text': _('Only added operators will have permission to access the project.'),
+        'documentation_url': 'https://github.com/openwisp/openwisp-utils/',
+    }
 
 
 @admin.register(Project)

@@ -190,6 +190,16 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, expected_receive_url)
 
+    def test_stacked_inline_help_text(self):
+        project = Project.objects.create(name='test_receive_url_change')
+        Operator.objects.create(first_name='Jane', last_name='Doe', project=project)
+        path = reverse('admin:test_project_project_change', args=[project.pk])
+        response = self.client.get(path)
+        self.assertContains(
+            response, 'Only added operators will have permission to access the project.'
+        )
+        self.assertContains(response, 'https://github.com/openwisp/openwisp-utils/')
+
     def test_admin_theme_css_setting(self):
         # test for improper configuration : not a list
         setattr(
