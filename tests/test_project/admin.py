@@ -10,6 +10,7 @@ from openwisp_utils.admin import (
     TimeReadonlyAdminMixin,
     UUIDAdmin,
 )
+from openwisp_utils.admin_theme.filter import InputFilter
 
 from .models import Operator, Project, RadiusAccounting, Shelf
 
@@ -57,12 +58,21 @@ class ProjectAdmin(UUIDAdmin, ReceiveUrlAdmin):
     receive_url_name = 'receive_project'
 
 
+class ShelfFilter(InputFilter):
+    parameter_name = 'shelf'
+    title = _('Shelf')
+
+    def queryset(self, request, queryset):
+        if self.value() is not None:
+            return queryset.filter(name__icontains=self.value())
+
+
 @admin.register(Shelf)
 class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
     # DO NOT CHANGE: used for testing filters
     list_filter = [
         'books_type',
-        'name',
+        ShelfFilter,
         'owner__username',
         'owner__is_staff',
         'owner__is_active',

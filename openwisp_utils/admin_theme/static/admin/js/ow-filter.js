@@ -11,6 +11,7 @@ const scrollDX = 200,
       slider = document.querySelector('.ow-filter-slider');
       initFilterDropdownHandler();
       initSliderHandlers();
+      initInputFilterHandler();
       filterHandlers();
       if (slider) {
         setArrowButtonVisibility();
@@ -164,6 +165,29 @@ function setArrowButtonVisibility() {
   }
 }
 
+function initInputFilterHandler() {
+  if (!document.querySelector('#ow-apply-filter')) {
+    return;
+  }
+  var inputFilterFields = document.querySelectorAll('.ow-input-filter-field');
+  inputFilterFields.forEach(function (field) {
+    field.addEventListener('change', function (e) {
+      var filter = e.target.closest('.ow-input-filter'),
+        selectedOption = filter.querySelector('.filter-options a'),
+        value = e.target.value,
+        newHref = '?' + selectedOption.getAttribute('parameter_name') +
+          '=' + value;
+      selectedOption.setAttribute('href', newHref);
+    });
+  });
+  var inputFilterForms = document.querySelectorAll('.ow-input-filter form');
+  inputFilterForms.forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+    });
+  });
+}
+
 function initSliderHandlers() {
   // When left arrow is clicked
   if (leftArrow) {
@@ -189,7 +213,10 @@ function filterHandlers() {
     const selectedOptions = document.querySelectorAll(
       '.filter-options .selected'
     );
-    // Create params map which knows about the last applied filters
+    const inputFilters = document.querySelectorAll(
+      '.ow-input-filter .filter-options a'
+    );
+    // Create params 1map which knows about the last applied filters
     var path = window.location.href.split('?');
     var paramsMap = {};
     if (path.length > 1) {
@@ -238,6 +265,16 @@ function filterHandlers() {
         // Add if any new filter is applied
         qs[key] = currParamsMap[key];
       });
+    });
+    inputFilters.forEach(function (filter){
+      var href = filter.getAttribute('href');
+      var [key, val] = href.substring(1).split('=');
+      if(val.length === 0 && key in qs){
+        
+        delete qs[key];
+      }else if(val.length !== 0) {
+        qs[key] = val;
+      }
     });
     var queryParams = '';
     if (Object.keys(qs).length) {
