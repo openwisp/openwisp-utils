@@ -2,12 +2,14 @@ import json
 import os
 
 from django.contrib.auth import get_user_model
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
 User = get_user_model()
 
 
-class TestConfig(object):
+class TestConfigMixin(object):
     """
     Get the configurations that are to be used for all the tests.
     """
@@ -18,7 +20,7 @@ class TestConfig(object):
         config = json.load(json_file)
 
 
-class SeleniumTestCase(StaticLiveServerTestCase, TestConfig):
+class SeleniumTestMixin(TestConfigMixin):
     def open(self, url, driver=None):
         """
         Opens a URL
@@ -29,6 +31,11 @@ class SeleniumTestCase(StaticLiveServerTestCase, TestConfig):
         if not driver:
             driver = self.web_driver
         driver.get(f'{self.live_server_url}{url}')
+        WebDriverWait(self.web_driver, 2).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, self.config['main_content_xpath'])
+            )
+        )
 
     def _create_user(self, **kwargs):
         opts = dict(

@@ -16,10 +16,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'openwisp_utils.admin_theme',
-    'django.contrib.sites',
     # test project
     'test_project',
+    'openwisp_utils.admin_theme',
+    'django.contrib.sites',
     # admin
     'django.contrib.admin',
     # rest framework
