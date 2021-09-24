@@ -296,9 +296,9 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertLessEqual(real_count, 4)
             self.assertNotContains(response, 'id="ow-apply-filter"')
 
+        url = reverse('admin:test_project_shelf_changelist')
+        response = self.client.get(url)
         with self.subTest('Test when number of filters is greater than 4'):
-            url = reverse('admin:test_project_shelf_changelist')
-            response = self.client.get(url)
             real_count = self._assert_contains(
                 response,
                 'class="ow-filter',
@@ -308,3 +308,9 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             )[1]
             self.assertGreater(real_count, 4)
             self.assertContains(response, 'id="ow-apply-filter"')
+
+        with self.subTest('Test input filter'):
+            self.assertContains(response, 'class="ow-filter ow-input-filter')
+            url += '?shelf="test"'
+            response = self.client.get(url)
+            self.assertContains(response, 'href="?">&#x2716;')

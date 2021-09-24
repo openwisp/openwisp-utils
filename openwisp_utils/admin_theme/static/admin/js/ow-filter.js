@@ -216,7 +216,7 @@ function filterHandlers() {
     const inputFilters = document.querySelectorAll(
       '.ow-input-filter .filter-options a'
     );
-    // Create params 1map which knows about the last applied filters
+    // Create params map which knows about the last applied filters
     var path = window.location.href.split('?');
     var paramsMap = {};
     if (path.length > 1) {
@@ -269,8 +269,7 @@ function filterHandlers() {
     inputFilters.forEach(function (filter){
       var href = filter.getAttribute('href');
       var [key, val] = href.substring(1).split('=');
-      if(val.length === 0 && key in qs){
-        
+      if(val.length === 0 && key in qs){ 
         delete qs[key];
       }else if(val.length !== 0) {
         qs[key] = val;

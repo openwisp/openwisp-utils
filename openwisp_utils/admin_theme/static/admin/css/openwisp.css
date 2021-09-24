@@ -762,8 +762,8 @@ div.calendar caption{
 .calendarbox a.calendarnav-previous,
 .calendarbox a.calendarnav-next{
   background: rgb(255 255 255 / 75%);
-  mask-size: contain!important;
-  -webkit-mask-size: contain!important;
+  mask-size: contain !important;
+  -webkit-mask-size: contain !important;
   top: 15px;
 }
 div.calendarbox, div.clockbox{
@@ -864,7 +864,7 @@ div.calendar-shortcuts a:hover{
   }
   .title-wrapper .object-tools {
     display: inline-block;
-    margin-bottom: 15px!important;
+    margin-bottom: 15px !important;
   }
   .title-wrapper .object-tools li {
     margin-left: 0px;
