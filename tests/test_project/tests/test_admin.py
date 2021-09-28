@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -200,6 +202,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         )
         self.assertContains(response, 'https://github.com/openwisp/openwisp-utils/')
 
+    @patch('openwisp_utils.admin_theme.settings.OPENWISP_ADMIN_THEME_LINKS', [])
     def test_admin_theme_css_setting(self):
         # test for improper configuration : not a list
         setattr(
@@ -241,6 +244,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         response = self.client.get(reverse('admin:index'))
         self.assertContains(response, '/static/custom-admin-theme.css" media="all"')
 
+    @patch('openwisp_utils.admin_theme.settings.OPENWISP_ADMIN_THEME_JS', [])
     def test_admin_theme_js_setting(self):
         # test for improper configuration : not a list
         setattr(

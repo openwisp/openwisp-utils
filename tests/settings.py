@@ -71,6 +71,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'openwisp_utils.admin_theme.context_processor.menu_groups',
                 'openwisp_utils.admin_theme.context_processor.admin_theme_settings',
+                'test_project.context_processors.test_theme_helper',
             ],
         },
     }
