@@ -122,7 +122,8 @@ def check_commit_message():
     # default issue mentions
     issues = []
     # ensure there's a blank line between short and long desc
-    if long_desc:
+    if long_desc and long_desc[-1] == '.':
+        long_desc = long_desc[:-1]
         if len(lines) > 1 and lines[1] != '':
             errors.append(
                 'please ensure there is a blank line between '
