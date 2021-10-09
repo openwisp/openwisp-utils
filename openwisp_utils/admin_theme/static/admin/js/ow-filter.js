@@ -64,6 +64,9 @@ function initFilterDropdownHandler() {
   // When filter title is clicked
   filters.forEach(function (filter) {
     var toggler = filter.querySelector('.filter-title');
+    if(!toggler) {
+      return;
+    }
     toggler.addEventListener('click', function () {
       // Close if any active filter
       toggleFilter(filter);
@@ -112,7 +115,9 @@ function initFilterDropdownHandler() {
       let filter = document.querySelector('.ow-filter.active');
       let selectedOption = filter.querySelector('.selected-option');
       let selectedElement = filter.querySelector('.selected');
-      selectedElement.classList.remove('selected');
+      if (selectedElement) {
+        selectedElement.classList.remove('selected');
+      }
       filterValue.classList.add('selected');
       var text = filterValue.innerHTML;
       selectedOption.innerHTML = text;
@@ -227,6 +232,7 @@ function filterHandlers() {
       });
     }
     var qs = Object.assign({}, paramsMap);
+    var appliedFilters = {};  // To manage duplicate filters
     // qs will be modified according to the last applied filters
     // and current filters that need to be applied
     selectedOptions.forEach(function (selectedOption) {
@@ -254,9 +260,11 @@ function filterHandlers() {
           if (key in currParamsMap) {
             if (currParamsMap[key] != paramsMap[key]) {
               qs[key] = currParamsMap[key];
+              appliedFilters[key] = true;
             }
           } else {
             delete qs[key];
+            appliedFilters[key] = false;
           }
         }
         delete currParamsMap[key];
@@ -264,13 +272,17 @@ function filterHandlers() {
       Object.keys(currParamsMap).forEach(function (key) {
         // Add if any new filter is applied
         qs[key] = currParamsMap[key];
+        appliedFilters[key] = true;
       });
     });
     inputFilters.forEach(function (filter){
       var href = filter.getAttribute('href');
       var [key, val] = href.substring(1).split('=');
-      if(val.length === 0 && key in qs){ 
-        delete qs[key];
+      if(val.length === 0 && key in qs){
+        if(!(key in appliedFilters) || !appliedFilters[key]){
+          delete qs[key];
+        }
+          
       }else if(val.length !== 0) {
         qs[key] = val;
       }

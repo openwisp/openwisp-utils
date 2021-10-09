@@ -311,6 +311,6 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
 
         with self.subTest('Test input filter'):
             self.assertContains(response, 'class="ow-filter ow-input-filter')
-            url += '?shelf="test"'
+            url += '?name__exact="test"'
             response = self.client.get(url)
             self.assertContains(response, 'href="?">&#x2716;')

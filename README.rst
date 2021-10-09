@@ -866,6 +866,62 @@ inline object. Following is an example:
             'image_url': '/static/admin/img/icon-alert.svg'
         }
 
+``openwisp_utils.admin_theme.filter.InputFilter``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``admin_theme`` sub app of this package provides an input filter that can be used in changelist page
+to filter ``UUIDField`` or ``CharField``. By default it filters items that matches the exact 
+value provided in the input field for the filter.
+
+Code example:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin_theme.filter import InputFilter
+    from my_app.models import MyModel
+
+    @admin.register(MyModel)
+    class MyModelAdmin(admin.ModelAdmin):
+        list_filter = [
+            ('my_field', InputFilter),
+            'other_field'
+            ...
+        ]
+
+By default ``InputFilter`` use exact lookup to filter items which matches to the value being
+searched by the user. But this behavior can be changed by some modification in the ``InputFilter``.
+
+Code example:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin_theme.filter import InputFilter
+    from my_app.models import MyModel
+
+    class MyInputFilter(InputFilter):
+        lookup = 'icontains'
+    
+
+    @admin.register(MyModel)
+    class MyModelAdmin(admin.ModelAdmin):
+        list_filter = [
+            ('my_field', MyInputFilter),
+            'other_field'
+            ...
+        ]
+
+To know about other lookups that can be used please check 
+`Django Lookup API Reference <https://docs.djangoproject.com/en/3.2/ref/models/lookups/#django.db.models.Lookup>`__
+
+.. note::
+    ``InputFilter`` can be placed anywhere when duplicate filters are not used but to not
+    get any unexpected result it is recommended to place it on the top in the list_filter list.
+
+    When multiple filters of same type is used then ``InputFilter`` will get priority in the searched result.
+
+
 Code utilities
 --------------
 
