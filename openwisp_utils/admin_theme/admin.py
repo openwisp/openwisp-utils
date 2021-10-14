@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import admin
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from . import settings as app_settings
 from .dashboard import get_dashboard_context
@@ -16,7 +16,7 @@ class OpenwispAdminSite(admin.AdminSite):
     # h1 text
     site_header = getattr(settings, 'OPENWISP_ADMIN_SITE_HEADER', 'OpenWISP')
     # text at the top of the admin index page
-    index_title = ugettext_lazy(
+    index_title = gettext_lazy(
         getattr(settings, 'OPENWISP_ADMIN_INDEX_TITLE', 'Network Administration')
     )
     enable_nav_sidebar = False

@@ -15,7 +15,7 @@ def create_dir(*paths: str):
     and all the intermidiate ones according to the joined path using os.makedirs
     """
     joined_path = os.path.join(*paths)
-    os.makedirs(joined_path)
+    os.makedirs(joined_path, exist_ok=True)
     return joined_path
 
 

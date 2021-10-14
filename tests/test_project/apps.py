@@ -1,5 +1,5 @@
 from django.db.models import Case, Count, Sum, When
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from openwisp_utils.admin_theme import (
     register_dashboard_chart,
     register_dashboard_template,
@@ -18,6 +18,7 @@ class TestAppConfig(ApiAppConfig):
         'DEFAULT_THROTTLE_RATES': {'test': '10/minute'},
         'TEST': True,
     }
+    default_auto_field = 'django.db.models.AutoField'
 
     def ready(self, *args, **kwargs):
         super().ready(*args, **kwargs)
