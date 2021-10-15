@@ -15,7 +15,7 @@ from openwisp_utils.utils import deep_merge_dicts, print_color
 
 from ..models import Shelf
 
-status_signal = Signal(providing_args=['status'])
+status_signal = Signal()  # providing_args=['status']
 
 
 class TestUtils(TestCase):

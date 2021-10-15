@@ -1,7 +1,7 @@
 import uuid
 
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from model_utils.fields import AutoCreatedField, AutoLastModifiedField
 from openwisp_utils.utils import get_random_key
 from openwisp_utils.validators import key_validator
