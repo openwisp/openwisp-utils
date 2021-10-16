@@ -104,7 +104,6 @@ class SeleniumTestMixin(TestConfigMixin):
         return self.web_driver.find_element_by_id('main-content')
 
     def _get_menu_home_item_label(self):
-        # TODO: CHange name
         return self.web_driver.find_element_by_xpath(
             '//span[@class="label" and contains(.,"Home")]'
         )

@@ -1430,7 +1430,9 @@ Install the system dependencies:
 .. code-block:: shell
 
     sudo apt-get install sqlite3 libsqlite3-dev
-    sudo snap install -y chromium
+    
+    # For running E2E Selenium tests
+    sudo apt install chromium
 
 Install your forked repo:
 
