@@ -1,0 +1,13 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  {% if OPENWISP_TEST_MODE %}
+   <style>
+    *, *:before, *:after {
+      transition:none!important;
+    }
+   </style>
+  {% endif %}
+{% endblock  %}

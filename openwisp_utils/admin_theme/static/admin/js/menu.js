@@ -330,6 +330,7 @@ function initToggleMenuHandlers() {
     e.stopPropagation();
     closeActiveGroup();
     owContainer.classList.toggle('toggle-menu');
+    setMenuToggleText();
   });
 
   owHamburger.addEventListener('keypress', function (e) {

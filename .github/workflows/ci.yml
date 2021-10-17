@@ -60,6 +60,8 @@ jobs:
 
     - name: Tests
       run: coverage run --source=openwisp_utils runtests.py
+      env:
+        SELENIUM_HEADLESS: 1
 
     - name: Upload Coverage
       run: coveralls --service=github

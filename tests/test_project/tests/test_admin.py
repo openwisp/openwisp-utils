@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -202,31 +204,33 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
 
     def test_admin_theme_css_setting(self):
         # test for improper configuration : not a list
-        setattr(
+        with patch.object(
             admin_theme_settings, 'OPENWISP_ADMIN_THEME_LINKS', 'string instead of list'
-        )
-        self.assertIn(
-            'OPENWISP_ADMIN_THEME_LINKS',
-            str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
-        )
+        ):
+            self.assertIn(
+                'OPENWISP_ADMIN_THEME_LINKS',
+                str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
+            )
         # test for improper configuration : list_elements != type(dict)
-        setattr(
+        with patch.object(
             admin_theme_settings,
             'OPENWISP_ADMIN_THEME_LINKS',
             ['/static/custom-admin-theme.css'],
-        )
-        self.assertIn(
-            'OPENWISP_ADMIN_THEME_LINKS',
-            str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
-        )
+        ):
+            self.assertIn(
+                'OPENWISP_ADMIN_THEME_LINKS',
+                str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
+            )
         # test for improper configuration: dict missing required keys
-        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_LINKS', [{'wrong': True}])
-        self.assertIn(
-            'OPENWISP_ADMIN_THEME_LINKS',
-            str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
-        )
+        with patch.object(
+            admin_theme_settings, 'OPENWISP_ADMIN_THEME_LINKS', [{'wrong': True}]
+        ):
+            self.assertIn(
+                'OPENWISP_ADMIN_THEME_LINKS',
+                str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
+            )
         # test with desired configuration
-        setattr(
+        with patch.object(
             admin_theme_settings,
             'OPENWISP_ADMIN_THEME_LINKS',
             [
@@ -237,33 +241,33 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
                     'media': 'all',
                 }
             ],
-        )
-        response = self.client.get(reverse('admin:index'))
-        self.assertContains(response, '/static/custom-admin-theme.css" media="all"')
+        ):
+            response = self.client.get(reverse('admin:index'))
+            self.assertContains(response, '/static/custom-admin-theme.css" media="all"')
 
     def test_admin_theme_js_setting(self):
         # test for improper configuration : not a list
-        setattr(
+        with patch.object(
             admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS', 'string instead of list'
-        )
-        self.assertIn(
-            'OPENWISP_ADMIN_THEME_JS',
-            str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
-        )
+        ):
+            self.assertIn(
+                'OPENWISP_ADMIN_THEME_JS',
+                str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
+            )
         # test for improper configuration : list_elements != type(str)
-        setattr(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS', [0, 1, 2])
-        self.assertIn(
-            'OPENWISP_ADMIN_THEME_JS',
-            str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
-        )
+        with patch.object(admin_theme_settings, 'OPENWISP_ADMIN_THEME_JS', [0, 1, 2]):
+            self.assertIn(
+                'OPENWISP_ADMIN_THEME_JS',
+                str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
+            )
         # test with desired configuration
-        setattr(
+        with patch.object(
             admin_theme_settings,
             'OPENWISP_ADMIN_THEME_JS',
             ['/static/openwisp-utils/js/uuid.js'],
-        )
-        response = self.client.get(reverse('admin:index'))
-        self.assertContains(response, 'src="/static/openwisp-utils/js/uuid.js"')
+        ):
+            response = self.client.get(reverse('admin:index'))
+            self.assertContains(response, 'src="/static/openwisp-utils/js/uuid.js"')
 
     def test_login(self):
         url = reverse('admin:login')

@@ -6,13 +6,13 @@
 {% block extrastyle %}
 {{ block.super }}
 {% if OPENWISP_ADMIN_THEME_LINKS %}
-    {% for link in OPENWISP_ADMIN_THEME_LINKS %}
-        <link rel="{{ link.rel }}" type="{{ link.type }}"
-              href="{{ link.href }}" {% if link.media %}media="{{ link.media }}" {% endif %}/>
-    {% endfor %}
+  {% for link in OPENWISP_ADMIN_THEME_LINKS %}
+    <link rel="{{ link.rel }}" type="{{ link.type }}"
+      href="{{ link.href }}" {% if link.media %}media="{{ link.media }}" {% endif %}/>
+  {% endfor %}
 {% else %}
-    <link rel="stylesheet" type="text/css" href="{% static "admin/css/openwisp.css" %}" />
-    <link rel="icon" type="image/x-icon" href="{% static "ui/openwisp/images/favicon.png" %}" />
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/openwisp.css" %}" />
+  <link rel="icon" type="image/x-icon" href="{% static "ui/openwisp/images/favicon.png" %}" />
 {% endif %}
 {% endblock %}
 
