@@ -13,3 +13,14 @@ API_INFO = getattr(
         'description': 'OpenWISP REST API',
     },
 )
+
+OPENWISP_EMAIL_TEMPLATE = getattr(
+    settings, 'OPENWISP_EMAIL_TEMPLATE', 'openwisp-utils/email_template.html',
+)
+
+OPENWISP_EMAIL_LOGO = getattr(
+    settings,
+    'OPENWISP_EMAIL_LOGO',
+    'https://raw.githubusercontent.com/openwisp/openwisp-utils/master/openwisp_utils/'
+    'static/openwisp-utils/images/openwisp-logo.png',
+)
