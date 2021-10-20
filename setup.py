@@ -42,7 +42,7 @@ setup(
     scripts=['openwisp-qa-check', 'openwisp-qa-format', 'openwisp-pre-push-hook'],
     zip_safe=False,
     install_requires=[
-        'django-model-utils>=4.0.0,<4.1.0',
+        'django-model-utils>=4.0.0',
         'django-compress-staticfiles~=1.0.1b',
         'swapper>=1.1.2,<1.3.0',
     ],
