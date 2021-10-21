@@ -91,16 +91,17 @@
         <img src="{{ logo_url }}" alt="Logo" id="logo" class="logo">
       </div>
       <div class="subject">
-        {{ instance.email_subject }}
+        {{ subject }}
       </div>
       {% endblock mail_header %}
       {% block mail_body %}
       <div class="msg">
-        {{ instance.email_message }}
+        {{ message }}
       </div>
-      {% if target_url %}
+      {% if call_to_action_url %}
       <div class="call-to-action">
-        <a href="{{ target_url }}" class="btn">{% trans 'Find out more' %}</a>
+        <a href="{{ call_to_action_url }}" class="btn">
+          {% blocktrans %} {{ call_to_action_text }} {% endblocktrans</a>
       </div>
       {% endif %}
       {% endblock mail_body %}

@@ -69,27 +69,27 @@ def print_color(string, color_name, end='\n'):
     print(f'\033[{color}m{string}\033[0m', end=end)
 
 
-def send_email_notification(instance, **kwargs):
-    subject = instance.email_subject
-    target_url = instance.data.get('url') if instance.data else None
-    description = instance.message
-    if target_url:
-        description += '\n\nFor more information see {0}.'.format(target_url)
+def send_email(subject, body, recipient_email, url=None, extra_context={}, **kwargs):
+    if url:
+        body += '\n\nFor more information see {0}.'.format(url)
 
     mail = EmailMultiAlternatives(
         subject=subject,
-        body=strip_tags(description),
+        body=strip_tags(body),
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[instance.recipient.email],
+        to=[recipient_email],
     )
+    context = dict(
+        subject=subject,
+        message=body,
+        logo_url=app_settings.OPENWISP_EMAIL_LOGO,
+        call_to_action_text='Find out more',
+        call_to_action_url=url,
+    )
+    context.update(extra_context)
     if app_settings.OPENWISP_HTML_EMAIL:
         html_message = render_to_string(
-            app_settings.OPENWISP_EMAIL_TEMPLATE,
-            context=dict(
-                logo_url=app_settings.OPENWISP_EMAIL_LOGO,
-                notification=instance,
-                target_url=target_url,
-            ),
+            app_settings.OPENWISP_EMAIL_TEMPLATE, context=context,
         )
         mail.attach_alternative(html_message, 'text/html')
     mail.send()
