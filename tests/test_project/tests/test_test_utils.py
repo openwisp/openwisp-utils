@@ -63,7 +63,8 @@ class TestUtils(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].from_email, 'test@openwisp.io')
         self.assertIn(
-            'https://raw.githubusercontent.com/openwisp/openwisp-utils/master/openwisp_utils/static/openwisp-utils/images/openwisp-logo.png',
+            'https://raw.githubusercontent.com/openwisp/openwisp-utils/master/'
+            'openwisp_utils/static/openwisp-utils/images/openwisp-logo.png',
             mail.outbox[0].alternatives[0][0],
         )
         self.assertIn(
