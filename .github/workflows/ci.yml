@@ -23,14 +23,16 @@ jobs:
         python-version:
           - 3.7
           - 3.8
+          - 3.9
         django-version:
           - django~=3.0.0
           - django~=3.1.0
           - django~=3.2.0
         include:
-          - django-version: django~=4.0a1
+          - django-version: django~=4.0b1
+            python-version: 3.9
+          - django-version: django~=4.0b1
             python-version: 3.8
-            experimental: true
 
     steps:
     - uses: actions/checkout@v2
