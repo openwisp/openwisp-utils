@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # test project
     'test_project',
+    'openwisp_utils',
     'openwisp_utils.admin_theme',
     'django.contrib.sites',
     # admin

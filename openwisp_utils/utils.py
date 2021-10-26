@@ -69,7 +69,7 @@ def print_color(string, color_name, end='\n'):
     print(f'\033[{color}m{string}\033[0m', end=end)
 
 
-def send_email(subject, body, recipient_email, url=None, extra_context={}, **kwargs):
+def send_email(subject, body, recipient_email, url=None, extra_context={}):
     if url:
         body += '\n\nFor more information see {0}.'.format(url)
 
@@ -87,11 +87,10 @@ def send_email(subject, body, recipient_email, url=None, extra_context={}, **kwa
         call_to_action_url=url,
     )
     context.update(extra_context)
-    if app_settings.OPENWISP_HTML_EMAIL:
+    if app_settings.OPENWISP_EMAIL_TEMPLATE:
         html_message = render_to_string(
             app_settings.OPENWISP_EMAIL_TEMPLATE, context=context,
         )
         mail.attach_alternative(html_message, 'text/html')
     mail.send()
-
     return mail
