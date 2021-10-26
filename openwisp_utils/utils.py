@@ -87,7 +87,8 @@ def send_email(subject, body, recipient_email, url=None, extra_context={}):
         call_to_action_url=url,
     )
     context.update(extra_context)
-    if app_settings.OPENWISP_EMAIL_TEMPLATE:
+
+    if getattr(app_settings, 'OPENWISP_HTML_EMAIL', True):
         html_message = render_to_string(
             app_settings.OPENWISP_EMAIL_TEMPLATE, context=context,
         )
