@@ -29,9 +29,9 @@ jobs:
           - django~=3.1.0
           - django~=3.2.0
         include:
-          - django-version: django~=4.0.b1
+          - django-version: django~=4.0b1
             python-version: 3.9
-          - django-version: django~=4.0.b1
+          - django-version: django~=4.0b1
             python-version: 3.8
 
     steps:
