@@ -1,7 +1,6 @@
 import sys
 import unittest
 
-from django.core import mail
 from django.dispatch import Signal
 from django.test import TestCase, override_settings
 from openwisp_utils.tests import (
@@ -12,7 +11,7 @@ from openwisp_utils.tests import (
     capture_stdout,
     catch_signal,
 )
-from openwisp_utils.utils import deep_merge_dicts, print_color, send_email
+from openwisp_utils.utils import deep_merge_dicts, print_color
 
 from ..models import Shelf
 
@@ -51,38 +50,6 @@ class TestUtils(TestCase):
             'unchanged': 'unchanged',
         }
         self.assertDictEqual(deep_merge_dicts(dict1, dict2), merged)
-
-    @override_settings(DEFAULT_FROM_EMAIL='test@openwisp.io')
-    def test_from_email(self):
-        send_email(
-            "Test mail",
-            "This is a test email",
-            "devkapilbansal@gmail.com",
-            "https://openwisp.io/docs/index.html",
-        )
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].from_email, 'test@openwisp.io')
-        self.assertIn(
-            'https://raw.githubusercontent.com/openwisp/openwisp-utils/master/'
-            'openwisp_utils/static/openwisp-utils/images/openwisp-logo.png',
-            mail.outbox[0].alternatives[0][0],
-        )
-        self.assertIn(
-            '<a href="https://openwisp.io/docs/index.html" class="btn">',
-            mail.outbox[0].alternatives[0][0],
-        )
-        self.assertIn('Find out more </a>', mail.outbox[0].alternatives[0][0])
-
-    def test_email_action_text(self):
-        send_email(
-            "Test mail",
-            "This is a test email",
-            "devkapilbansal@gmail.com",
-            "https://openwisp.io/docs/index.html",
-            extra_context={'call_to_action_text': 'Click on me'},
-        )
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('Click on me </a>\n', mail.outbox[0].alternatives[0][0])
 
     @override_settings(OPENWISP_SLOW_TEST_THRESHOLD=[0.0, 0.0])
     @capture_any_output()

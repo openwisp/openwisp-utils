@@ -2,12 +2,7 @@ from collections import OrderedDict
 from copy import deepcopy
 
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
 from django.utils.crypto import get_random_string
-from django.utils.html import strip_tags
-
-from . import settings as app_settings
 
 
 class SortedOrderedDict(OrderedDict):
@@ -67,31 +62,3 @@ def print_color(string, color_name, end='\n'):
     }
     color = color_dict.get(color_name, '0')
     print(f'\033[{color}m{string}\033[0m', end=end)
-
-
-def send_email(subject, body, recipient_email, url=None, extra_context={}):
-    if url:
-        body += '\n\nFor more information see {0}.'.format(url)
-
-    mail = EmailMultiAlternatives(
-        subject=subject,
-        body=strip_tags(body),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[recipient_email],
-    )
-    context = dict(
-        subject=subject,
-        message=body,
-        logo_url=app_settings.OPENWISP_EMAIL_LOGO,
-        call_to_action_text='Find out more',
-        call_to_action_url=url,
-    )
-    context.update(extra_context)
-
-    if getattr(app_settings, 'OPENWISP_HTML_EMAIL', True):
-        html_message = render_to_string(
-            app_settings.OPENWISP_EMAIL_TEMPLATE, context=context,
-        )
-        mail.attach_alternative(html_message, 'text/html')
-    mail.send()
-    return mail
