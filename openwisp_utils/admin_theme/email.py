@@ -6,9 +6,7 @@ from django.utils.html import strip_tags
 from . import settings as app_settings
 
 
-def send_email(subject, body, recipients, url=None, extra_context={}):
-    if url:
-        body += '\n\nFor more information see {0}.'.format(url)
+def send_email(subject, body, recipients, extra_context={}):
 
     mail = EmailMultiAlternatives(
         subject=subject,
@@ -21,7 +19,6 @@ def send_email(subject, body, recipients, url=None, extra_context={}):
         message=body,
         logo_url=app_settings.OPENWISP_EMAIL_LOGO,
         call_to_action_text='Find out more',
-        call_to_action_url=url,
     )
     context.update(extra_context)
 
@@ -31,4 +28,3 @@ def send_email(subject, body, recipients, url=None, extra_context={}):
         )
         mail.attach_alternative(html_message, 'text/html')
     mail.send()
-    return mail

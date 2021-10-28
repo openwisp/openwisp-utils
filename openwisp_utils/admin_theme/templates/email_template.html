@@ -96,7 +96,7 @@
       {% endblock mail_header %}
       {% block mail_body %}
       <div class="msg">
-        {{ message }}
+        {{ message | safe }}
       </div>
       {% if call_to_action_url %}
       <div class="call-to-action">
