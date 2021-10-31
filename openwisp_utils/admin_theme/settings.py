@@ -20,3 +20,5 @@ OPENWISP_EMAIL_LOGO = getattr(
     'https://raw.githubusercontent.com/openwisp/openwisp-utils/master/openwisp_utils/'
     'static/openwisp-utils/images/openwisp-logo.png',
 )
+
+OPENWISP_HTML_EMAIL = getattr(settings, 'OPENWISP_NOTIFICATIONS_HTML_EMAIL', True)
