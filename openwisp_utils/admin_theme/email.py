@@ -22,7 +22,7 @@ def send_email(subject, body, recipients, extra_context={}):
     )
     context.update(extra_context)
 
-    if getattr(app_settings, 'OPENWISP_HTML_EMAIL', True):
+    if app_settings.OPENWISP_HTML_EMAIL:
         html_message = render_to_string(
             app_settings.OPENWISP_EMAIL_TEMPLATE, context=context,
         )

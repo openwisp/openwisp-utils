@@ -21,4 +21,4 @@ OPENWISP_EMAIL_LOGO = getattr(
     'static/openwisp-utils/images/openwisp-logo.png',
 )
 
-OPENWISP_HTML_EMAIL = getattr(settings, 'OPENWISP_NOTIFICATIONS_HTML_EMAIL', True)
+OPENWISP_HTML_EMAIL = getattr(settings, 'OPENWISP_HTML_EMAIL', True)
