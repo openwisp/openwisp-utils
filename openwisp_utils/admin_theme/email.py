@@ -15,10 +15,7 @@ def send_email(subject, body, recipients, extra_context={}):
         to=recipients,
     )
     context = dict(
-        subject=subject,
-        message=body,
-        logo_url=app_settings.OPENWISP_EMAIL_LOGO,
-        call_to_action_text='Find out more',
+        subject=subject, message=body, logo_url=app_settings.OPENWISP_EMAIL_LOGO,
     )
     context.update(extra_context)
 

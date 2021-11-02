@@ -49,10 +49,6 @@ class TestEmail(TestCase):
             'Test mail',
             'This is a test email',
             ['devkapilbansal@gmail.com', 'test123@openwisp.io'],
-            extra_context={
-                'call_to_action_text': 'Click on me',
-                'call_to_action_url': 'https://openwisp.io/docs/index.html',
-            },
         )
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()

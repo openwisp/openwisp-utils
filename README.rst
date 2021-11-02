@@ -943,6 +943,9 @@ To use point ``STATICFILES_STORAGE`` to ``openwisp_utils.storage.CompressStaticF
 
     STATICFILES_STORAGE = 'openwisp_utils.storage.CompressStaticFilesStorage'
 
+Admin utilities
+---------------
+
 ``openwisp_utils.admin_theme.email.send_email``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -958,19 +961,20 @@ You can use `OPENWISP_HTML_EMAIL <#openwisp_html_email>`_ option to choose wheth
 
     send_email(subject, body, recipients)
 
-+--------------------+----------------------------------------------------------------------------------+
-| **Parameter**      | **Description**                                                                  |
-+--------------------+----------------------------------------------------------------------------------+
-| ``subject``        | (``str``) The subject of the email template.                                     |
-+--------------------+----------------------------------------------------------------------------------+
-| ``body``           | (``str``) The body of the email template.                                        |
-+--------------------+----------------------------------------------------------------------------------+
-| ``recipients``     | (``list``) The list of recipients you want to send the mail to.                  |
-+--------------------+----------------------------------------------------------------------------------+
-| ``extra_context``  | **optional** (``dict``) Extra context you want to pass.                          |
-+--------------------+----------------------------------------------------------------------------------+
++--------------------+------------------------------------------------------------------------+
+| **Parameter**      | **Description**                                                        |
++--------------------+------------------------------------------------------------------------+
+| ``subject``        | (``str``) The subject of the email template.                           |
++--------------------+------------------------------------------------------------------------+
+| ``body``           | (``str``) The body of the email template.                              |
++--------------------+------------------------------------------------------------------------+
+| ``recipients``     | (``list``) The list of recipients to send the mail to.                 |
++--------------------+------------------------------------------------------------------------+
+| ``extra_context``  | **optional** (``dict``) Extra context which is passed to the template. |
+|                    | The dictionary keys ``call_to_action_text`` and ``call_to_action_url`` |
+|                    | can be passed to show a call to action button.                         |
++--------------------+------------------------------------------------------------------------+
 
-``call_to_action_text`` and ``call_to_action_url`` can be passed in ``extra_context`` to show a call to action button.
 
 **Note**: Data passed in body should be validated and user supplied data should not be sent directly to the function.
 
