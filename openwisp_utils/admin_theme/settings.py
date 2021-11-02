@@ -11,7 +11,7 @@ OPENWISP_ADMIN_THEME_JS = getattr(settings, 'OPENWISP_ADMIN_THEME_JS', [])
 ADMIN_DASHBOARD_ENABLED = getattr(settings, 'OPENWISP_ADMIN_DASHBOARD_ENABLED', True)
 
 OPENWISP_EMAIL_TEMPLATE = getattr(
-    settings, 'OPENWISP_EMAIL_TEMPLATE', 'email_template.html',
+    settings, 'OPENWISP_EMAIL_TEMPLATE', 'openwisp_utils/email_template.html',
 )
 
 OPENWISP_EMAIL_LOGO = getattr(
