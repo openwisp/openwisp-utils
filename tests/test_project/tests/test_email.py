@@ -10,7 +10,7 @@ class TestEmail(TestCase):
     @override_settings(DEFAULT_FROM_EMAIL='test@openwisp.io')
     def test_email(self):
         send_email(
-            'Test mail', 'This is a test email', ['devkapilbansal@gmail.com'],
+            'Test mail', '', 'This is a test email', ['devkapilbansal@gmail.com'],
         )
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
@@ -28,6 +28,7 @@ class TestEmail(TestCase):
     def test_email_action_text_and_url(self):
         send_email(
             'Test mail',
+            '',
             'This is a test email',
             ['devkapilbansal@gmail.com', 'test123@openwisp.io'],
             extra_context={
@@ -48,6 +49,7 @@ class TestEmail(TestCase):
         send_email(
             'Test mail',
             'This is a test email',
+            'Email body in html message',
             ['devkapilbansal@gmail.com', 'test123@openwisp.io'],
         )
         self.assertEqual(len(mail.outbox), 1)

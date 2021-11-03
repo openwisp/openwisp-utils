@@ -949,24 +949,28 @@ Admin utilities
 ``openwisp_utils.admin_theme.email.send_email``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This function let you send customised mail using the template and logo that can be customised using 
-`OPENWISP_EMAIL_TEMPLATE <#openwisp_email_template>`_ and `OPENWISP_EMAIL_LOGO <#openwisp_email_logo>`_ respectively.
+This function let you send customised mail using the template and logo that can be
+customised using `OPENWISP_EMAIL_TEMPLATE <#openwisp_email_template>`_ and
+`OPENWISP_EMAIL_LOGO <#openwisp_email_logo>`_ respectively.
 
-You can use `OPENWISP_HTML_EMAIL <#openwisp_html_email>`_ option to choose whether html template should be used or plain text should be sent.
+You can use `OPENWISP_HTML_EMAIL <#openwisp_html_email>`_ option to choose whether
+html template should be used or plain text should be sent.
 
 
 **Syntax:**
 
 .. code-block:: python
 
-    send_email(subject, body, recipients)
+    send_email(subject, body_text, body_html, recipients)
 
 +--------------------+------------------------------------------------------------------------+
 | **Parameter**      | **Description**                                                        |
 +--------------------+------------------------------------------------------------------------+
 | ``subject``        | (``str``) The subject of the email template.                           |
 +--------------------+------------------------------------------------------------------------+
-| ``body``           | (``str``) The body of the email template.                              |
+| ``body_text``           | (``str``) The body of the text message to be emailed.             |
++--------------------+------------------------------------------------------------------------+
+| ``body_html``           | (``str``) The body of the html template to be emailed.            |
 +--------------------+------------------------------------------------------------------------+
 | ``recipients``     | (``list``) The list of recipients to send the mail to.                 |
 +--------------------+------------------------------------------------------------------------+
