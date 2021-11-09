@@ -360,6 +360,7 @@ div.submit-row a.deletelink:active,
   background: #b31e00;
   outline: 0 none;
 }
+#content .submit-row p.deletelink-box { margin: 0; }
 
 /* For any normal, default, dark button [ class="default-btn" ] */
 
