@@ -21,7 +21,8 @@ class FileHashedNameMixin:
 
 
 class CompressStaticFilesStorage(
-    FileHashedNameMixin, BaseCompressStaticFilesStorage,
+    FileHashedNameMixin,
+    BaseCompressStaticFilesStorage,
 ):
     """
     A static files storage backend for compression that inherits from

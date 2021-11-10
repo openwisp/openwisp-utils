@@ -55,10 +55,20 @@ class TestAppConfig(ApiAppConfig):
                     'model': 'project',
                     'annotate': {
                         'with_operator': Count(
-                            Case(When(operator__isnull=False, then=1,))
+                            Case(
+                                When(
+                                    operator__isnull=False,
+                                    then=1,
+                                )
+                            )
                         ),
                         'without_operator': Count(
-                            Case(When(operator__isnull=True, then=1,))
+                            Case(
+                                When(
+                                    operator__isnull=True,
+                                    then=1,
+                                )
+                            )
                         ),
                     },
                     'aggregate': {
