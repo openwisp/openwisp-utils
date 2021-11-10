@@ -90,9 +90,11 @@
       <div class="logo-container">
         <img src="{{ logo_url }}" alt="Logo" id="logo" class="logo">
       </div>
+      {% if subject %}
       <div class="subject">
         {{ subject }}
       </div>
+      {% endif %}
       {% endblock mail_header %}
       {% block mail_body %}
       <div class="msg">
