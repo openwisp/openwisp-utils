@@ -24,7 +24,8 @@ def send_email(subject, body_text, body_html, recipients, extra_context={}):
         context.update(extra_context)
 
         html_message = render_to_string(
-            app_settings.OPENWISP_EMAIL_TEMPLATE, context=context,
+            app_settings.OPENWISP_EMAIL_TEMPLATE,
+            context=context,
         )
         mail.attach_alternative(html_message, 'text/html')
     mail.send()

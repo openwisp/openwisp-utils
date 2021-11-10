@@ -100,13 +100,20 @@
       <div class="msg">
         {{ message | safe }}
       </div>
+      {% endblock mail_body %}
+      {% block call_to_action %}
       {% if call_to_action_url %}
       <div class="call-to-action">
         <a href="{{ call_to_action_url }}" class="btn">
           {{ call_to_action_text }} </a>
       </div>
       {% endif %}
-      {% endblock mail_body %}
+      {% endblock call_to_action %}
+      {% block mail_footer %}
+        {% if footer %}
+        {{ footer }}
+        {% endif %}
+      {% endblock mail_footer %}
     </div>
   </div>
   {% endblock body %}

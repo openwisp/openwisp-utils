@@ -10,7 +10,10 @@ class TestEmail(TestCase):
     @override_settings(DEFAULT_FROM_EMAIL='test@openwisp.io')
     def test_email(self):
         send_email(
-            'Test mail', '', 'This is a test email', ['devkapilbansal@gmail.com'],
+            'Test mail',
+            '',
+            'This is a test email',
+            ['devkapilbansal@gmail.com'],
         )
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
