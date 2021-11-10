@@ -192,7 +192,8 @@ class TestMenu(StaticLiveServerTestCase, SeleniumTestMixin):
             except TimeoutException:
                 is_visible = False
             self.assertEqual(
-                is_visible, True,
+                is_visible,
+                True,
             )
             self.assertEqual(mg_dropdown_label.is_displayed(), True)
             # Test mg dropdown gets invisible on clicking mg head
@@ -284,9 +285,9 @@ class TestMenu(StaticLiveServerTestCase, SeleniumTestMixin):
 
     def test_active_menu_group(self):
         """
-            Test active menu group:
-            - Active group should close only when clicked on menu else
-              it should remain open.
+        Test active menu group:
+        - Active group should close only when clicked on menu else
+          it should remain open.
         """
         self.login()
         url = reverse('admin:auth_user_changelist')
