@@ -977,6 +977,7 @@ html template should be used or plain text should be sent.
 | ``extra_context``  | **optional** (``dict``) Extra context which is passed to the template. |
 |                    | The dictionary keys ``call_to_action_text`` and ``call_to_action_url`` |
 |                    | can be passed to show a call to action button.                         |
+|                    | Similarly, ``footer`` can be passed to add a footer.                   |
 +--------------------+------------------------------------------------------------------------+
 
 
