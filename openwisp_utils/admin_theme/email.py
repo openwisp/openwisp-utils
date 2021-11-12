@@ -15,7 +15,7 @@ def send_email(subject, body_text, body_html, recipients, extra_context={}):
         to=recipients,
     )
 
-    if app_settings.OPENWISP_HTML_EMAIL:
+    if app_settings.OPENWISP_HTML_EMAIL and body_html:
         context = dict(
             subject=subject,
             message=body_html,

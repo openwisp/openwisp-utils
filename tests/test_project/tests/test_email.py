@@ -60,3 +60,16 @@ class TestEmail(TestCase):
         self.assertEqual(email.subject, 'Test mail')
         self.assertEqual(email.body, 'This is a test email')
         self.assertFalse(email.alternatives)
+
+    def test_blank_html_body(self):
+        send_email(
+            'Test mail',
+            'This is a test email',
+            '',
+            ['devkapilbansal@gmail.com', 'test123@openwisp.io'],
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox.pop()
+        self.assertEqual(email.subject, 'Test mail')
+        self.assertEqual(email.body, 'This is a test email')
+        self.assertFalse(email.alternatives)
