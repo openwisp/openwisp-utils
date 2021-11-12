@@ -51,6 +51,7 @@ Current features
 * `Storage utilities <#storage-utilities>`_
 * `Admin utilities <#admin-utilities>`_
 * `Code utilities <#code-utilities>`_
+* `Admin Theme utilities <#admin-theme-utilities>`_
 * `REST API utilities <#rest-api-utilities>`_
 * `Test utilities <#test-utilities>`_
 * `Quality assurance checks <#quality-assurance-checks>`_
@@ -943,8 +944,8 @@ To use point ``STATICFILES_STORAGE`` to ``openwisp_utils.storage.CompressStaticF
 
     STATICFILES_STORAGE = 'openwisp_utils.storage.CompressStaticFilesStorage'
 
-Admin utilities
----------------
+Admin Theme utilities
+---------------------
 
 ``openwisp_utils.admin_theme.email.send_email``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1478,11 +1479,11 @@ text email is sent.
 ``OPENWISP_EMAIL_TEMPLATE``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+---------+-------------------------+
-| type    | ``str``                 |
-+---------+-------------------------+
-| default | ``email_template.html`` |
-+---------+-------------------------+
++---------+----------------------------------------+
+| type    | ``str``                                |
++---------+----------------------------------------+
+| default | ``openwisp_utils/email_template.html`` |
++---------+----------------------------------------+
 
 This setting takes the path to the template for email. Thus, making it possible to
 customize email. You can either extend the default email template or write your own
@@ -1491,7 +1492,7 @@ shown below.
 
 .. code-block:: django
 
-    {% extends 'email_template.html' %}
+    {% extends 'openwisp_utils/email_template.html' %}
     {% block styles %}
     {{ block.super }}
     <style>
@@ -1512,7 +1513,7 @@ shown below.
 
 Similarly, you can customize the HTML of the template by overriding the ``body`` block.
 See `email_template.html <https://github.com/openwisp/openwisp-utils/blob/
-master/openwisp_utils/admin_themetemplates/email_template.html>`_
+master/openwisp_utils/admin_theme/templates/openwisp_utils/email_template.html>`_
 for reference implementation.
 
 ``OPENWISP_EMAIL_LOGO``
