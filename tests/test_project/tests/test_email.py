@@ -35,13 +35,13 @@ class TestEmail(TestCase):
             'This is a test email',
             ['devkapilbansal@gmail.com', 'test123@openwisp.io'],
             extra_context={
-                'call_to_action_text': 'Click on me',
+                'call_to_action_text': 'Click me',
                 'call_to_action_url': 'https://openwisp.io/docs/index.html',
             },
         )
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
-        self.assertIn('Click on me </a>\n', email.alternatives[0][0])
+        self.assertIn('Click me</a>\n', email.alternatives[0][0])
         self.assertIn(
             '<a href="https://openwisp.io/docs/index.html" class="btn">',
             email.alternatives[0][0],
