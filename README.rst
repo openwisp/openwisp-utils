@@ -950,13 +950,12 @@ Admin Theme utilities
 ``openwisp_utils.admin_theme.email.send_email``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This function let you send customised mail using the template and logo that can be
-customised using `OPENWISP_EMAIL_TEMPLATE <#openwisp_email_template>`_ and
-`OPENWISP_EMAIL_LOGO <#openwisp_email_logo>`_ respectively.
+This function allows sending email in both plain text and HTML version (using the template
+and logo that can be customised using `OPENWISP_EMAIL_TEMPLATE <#openwisp_email_template>`_
+and `OPENWISP_EMAIL_LOGO <#openwisp_email_logo>`_ respectively).
 
-You can use `OPENWISP_HTML_EMAIL <#openwisp_html_email>`_ option to choose whether
-html template should be used or plain text should be sent.
-
+In case the HTML version if not needed it may be disabled by
+setting `OPENWISP_HTML_EMAIL <#openwisp_html_email>`_ to ``False``.
 
 **Syntax:**
 
@@ -969,9 +968,9 @@ html template should be used or plain text should be sent.
 +--------------------+------------------------------------------------------------------------+
 | ``subject``        | (``str``) The subject of the email template.                           |
 +--------------------+------------------------------------------------------------------------+
-| ``body_text``           | (``str``) The body of the text message to be emailed.             |
+| ``body_text``      | (``str``) The body of the text message to be emailed.                  |
 +--------------------+------------------------------------------------------------------------+
-| ``body_html``           | (``str``) The body of the html template to be emailed.            |
+| ``body_html``      | (``str``) The body of the html template to be emailed.                 |
 +--------------------+------------------------------------------------------------------------+
 | ``recipients``     | (``list``) The list of recipients to send the mail to.                 |
 +--------------------+------------------------------------------------------------------------+
@@ -1472,9 +1471,8 @@ Example usage:
 | default | ``True`` |
 +---------+----------+
 
-If ``True``, attaches markdown rendered HTML of message in email.
-If ``False``, HTML rendering of message will be disabled and a plain
-text email is sent.
+If ``True``, an HTML themed version of the email can be sent using
+the `send_email <#openwisp_utilsadmin_themeemailsend_email>`_ function.
 
 ``OPENWISP_EMAIL_TEMPLATE``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1485,10 +1483,9 @@ text email is sent.
 | default | ``openwisp_utils/email_template.html`` |
 +---------+----------------------------------------+
 
-This setting takes the path to the template for email. Thus, making it possible to
-customize email. You can either extend the default email template or write your own
-email template from scratch. An example of extending default email template to customize styling is
-shown below.
+This setting allows to change the django template used for sending emails with
+the `send_email <#openwisp_utilsadmin_themeemailsend_email>`_ function.
+It is recommended to extend the default email template as in the example below.
 
 .. code-block:: django
 
@@ -1526,7 +1523,7 @@ for reference implementation.
 |         | openwisp_utils/static/openwisp-utils/images/openwisp-logo.png>`_                    |
 +---------+-------------------------------------------------------------------------------------+
 
-This setting takes the URL of the logo to be displayed on email.
+This setting allows to change the logo which is displayed in HTML version of the email.
 
 **Note**: Provide a URL which points to the logo on your own web server. Ensure that the URL provided is
 publicly accessible from the internet. Otherwise, the logo may not be displayed in the email.
