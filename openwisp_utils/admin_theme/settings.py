@@ -9,3 +9,18 @@ ADMIN_SITE_CLASS = getattr(
 OPENWISP_ADMIN_THEME_LINKS = getattr(settings, 'OPENWISP_ADMIN_THEME_LINKS', [])
 OPENWISP_ADMIN_THEME_JS = getattr(settings, 'OPENWISP_ADMIN_THEME_JS', [])
 ADMIN_DASHBOARD_ENABLED = getattr(settings, 'OPENWISP_ADMIN_DASHBOARD_ENABLED', True)
+
+OPENWISP_EMAIL_TEMPLATE = getattr(
+    settings,
+    'OPENWISP_EMAIL_TEMPLATE',
+    'openwisp_utils/email_template.html',
+)
+
+OPENWISP_EMAIL_LOGO = getattr(
+    settings,
+    'OPENWISP_EMAIL_LOGO',
+    'https://raw.githubusercontent.com/openwisp/openwisp-utils/master/openwisp_utils/'
+    'static/openwisp-utils/images/openwisp-logo.png',
+)
+
+OPENWISP_HTML_EMAIL = getattr(settings, 'OPENWISP_HTML_EMAIL', True)

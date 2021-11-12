@@ -51,6 +51,7 @@ Current features
 * `Storage utilities <#storage-utilities>`_
 * `Admin utilities <#admin-utilities>`_
 * `Code utilities <#code-utilities>`_
+* `Admin Theme utilities <#admin-theme-utilities>`_
 * `REST API utilities <#rest-api-utilities>`_
 * `Test utilities <#test-utilities>`_
 * `Quality assurance checks <#quality-assurance-checks>`_
@@ -943,6 +944,45 @@ To use point ``STATICFILES_STORAGE`` to ``openwisp_utils.storage.CompressStaticF
 
     STATICFILES_STORAGE = 'openwisp_utils.storage.CompressStaticFilesStorage'
 
+Admin Theme utilities
+---------------------
+
+``openwisp_utils.admin_theme.email.send_email``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This function allows sending email in both plain text and HTML version (using the template
+and logo that can be customised using `OPENWISP_EMAIL_TEMPLATE <#openwisp_email_template>`_
+and `OPENWISP_EMAIL_LOGO <#openwisp_email_logo>`_ respectively).
+
+In case the HTML version if not needed it may be disabled by
+setting `OPENWISP_HTML_EMAIL <#openwisp_html_email>`_ to ``False``.
+
+**Syntax:**
+
+.. code-block:: python
+
+    send_email(subject, body_text, body_html, recipients)
+
++--------------------+------------------------------------------------------------------------+
+| **Parameter**      | **Description**                                                        |
++--------------------+------------------------------------------------------------------------+
+| ``subject``        | (``str``) The subject of the email template.                           |
++--------------------+------------------------------------------------------------------------+
+| ``body_text``      | (``str``) The body of the text message to be emailed.                  |
++--------------------+------------------------------------------------------------------------+
+| ``body_html``      | (``str``) The body of the html template to be emailed.                 |
++--------------------+------------------------------------------------------------------------+
+| ``recipients``     | (``list``) The list of recipients to send the mail to.                 |
++--------------------+------------------------------------------------------------------------+
+| ``extra_context``  | **optional** (``dict``) Extra context which is passed to the template. |
+|                    | The dictionary keys ``call_to_action_text`` and ``call_to_action_url`` |
+|                    | can be passed to show a call to action button.                         |
+|                    | Similarly, ``footer`` can be passed to add a footer.                   |
++--------------------+------------------------------------------------------------------------+
+
+
+**Note**: Data passed in body should be validated and user supplied data should not be sent directly to the function.
+
 REST API utilities
 ------------------
 
@@ -1421,6 +1461,72 @@ Example usage:
     OPENWISP_STATICFILES_VERSIONED_EXCLUDE = [
         '*png',
     ]
+
+``OPENWISP_HTML_EMAIL``
+^^^^^^^^^^^^^^^^^^^^^^^
+
++---------+----------+
+| type    | ``bool`` |
++---------+----------+
+| default | ``True`` |
++---------+----------+
+
+If ``True``, an HTML themed version of the email can be sent using
+the `send_email <#openwisp_utilsadmin_themeemailsend_email>`_ function.
+
+``OPENWISP_EMAIL_TEMPLATE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
++---------+----------------------------------------+
+| type    | ``str``                                |
++---------+----------------------------------------+
+| default | ``openwisp_utils/email_template.html`` |
++---------+----------------------------------------+
+
+This setting allows to change the django template used for sending emails with
+the `send_email <#openwisp_utilsadmin_themeemailsend_email>`_ function.
+It is recommended to extend the default email template as in the example below.
+
+.. code-block:: django
+
+    {% extends 'openwisp_utils/email_template.html' %}
+    {% block styles %}
+    {{ block.super }}
+    <style>
+      .background {
+        height: 100%;
+        background: linear-gradient(to bottom, #8ccbbe 50%, #3797a4 50%);
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        padding: 50px;
+      }
+
+      .mail-header {
+        background-color: #3797a4;
+        color: white;
+      }
+    </style>
+    {% endblock styles %}
+
+Similarly, you can customize the HTML of the template by overriding the ``body`` block.
+See `email_template.html <https://github.com/openwisp/openwisp-utils/blob/
+master/openwisp_utils/admin_theme/templates/openwisp_utils/email_template.html>`_
+for reference implementation.
+
+``OPENWISP_EMAIL_LOGO``
+^^^^^^^^^^^^^^^^^^^^^^^
+
++---------+-------------------------------------------------------------------------------------+
+| type    | ``str``                                                                             |
++---------+-------------------------------------------------------------------------------------+
+| default | `OpenWISP logo <https://raw.githubusercontent.com/openwisp/openwisp-utils/master/ \ |
+|         | openwisp_utils/static/openwisp-utils/images/openwisp-logo.png>`_                    |
++---------+-------------------------------------------------------------------------------------+
+
+This setting allows to change the logo which is displayed in HTML version of the email.
+
+**Note**: Provide a URL which points to the logo on your own web server. Ensure that the URL provided is
+publicly accessible from the internet. Otherwise, the logo may not be displayed in the email.
 
 Installing for development
 --------------------------
