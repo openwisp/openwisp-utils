@@ -10,9 +10,9 @@
       {% endfor %}
       <input  type="text"
               class="ow-input-filter-field"
-              title="{{ all_choice.value | default_if_none:'' }}"
-              value="{{ all_choice.value | default_if_none:'' }}"
-              name="{{ all_choice.parameter_name }}"
+              title="{{ spec.value | default_if_none:'' }}"
+              value="{{ spec.value | default_if_none:'' }}"
+              name="{{ spec.parameter_name }}"
       />
       {% if not all_choice.selected %}
       <a  class='field-clear'
@@ -23,9 +23,9 @@
     </form>
   </div>
   <div class="filter-options">
-  <a  name="{{ all_choice.parameter_name }}"
-      parameter_name="{{ all_choice.parameter_name}}"
-      href="?{{ all_choice.parameter_name }}={{ all_choice.value | default_if_none:'' }}">
+  <a  name="{{ spec.parameter_name }}"
+      parameter_name="{{ spec.parameter_name}}"
+      href="?{{ spec.parameter_name }}={{ spec.value | default_if_none:'' }}">
   </a>
   </div>
   {% endwith %}

@@ -1,8 +1,11 @@
 import json
 import os
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -21,6 +24,26 @@ class TestConfigMixin(object):
 
 
 class SeleniumTestMixin(TestConfigMixin):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        chrome_options = webdriver.ChromeOptions()
+        if getattr(settings, 'SELENIUM_HEADLESS', True):
+            chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--window-size=1366,768')
+        chrome_options.add_argument('--ignore-certificate-errors')
+        chrome_options.add_argument('--remote-debugging-port=9222')
+        capabilities = DesiredCapabilities.CHROME
+        capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
+        cls.web_driver = webdriver.Chrome(
+            options=chrome_options, desired_capabilities=capabilities
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_driver.quit()
+        super().tearDownClass()
+
     def open(self, url, driver=None):
         """
         Opens a URL
@@ -160,6 +183,19 @@ class SeleniumTestMixin(TestConfigMixin):
 
     def _get_menu_backdrop(self):
         return self.web_driver.find_element_by_css_selector('.menu-backdrop')
+
+    def _get_simple_input_filter(self):
+        return self.web_driver.find_element_by_xpath(
+            '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[1]/div[1]/form/input'
+        )
+
+    def _get_input_filter(self):
+        return self.web_driver.find_element_by_xpath(
+            '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/input'
+        )
+
+    def _get_apply_filter(self):
+        return self.web_driver.find_element_by_xpath('//*[@id="ow-apply-filter"]')
 
     def _open_menu(self):
         hamburger = self._get_hamburger()

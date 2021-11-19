@@ -10,7 +10,7 @@ from openwisp_utils.admin import (
     TimeReadonlyAdminMixin,
     UUIDAdmin,
 )
-from openwisp_utils.admin_theme.filter import InputFilter
+from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
 
 from .models import Operator, Project, RadiusAccounting, Shelf
 
@@ -58,7 +58,7 @@ class ProjectAdmin(UUIDAdmin, ReceiveUrlAdmin):
     receive_url_name = 'receive_project'
 
 
-class ShelfFilter(InputFilter):
+class ShelfFilter(SimpleInputFilter):
     parameter_name = 'shelf'
     title = _('Shelf')
 
@@ -71,7 +71,7 @@ class ShelfFilter(InputFilter):
 class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
     # DO NOT CHANGE: used for testing filters
     list_filter = [
-        ['name', InputFilter],
+        ShelfFilter,
         ['books_type', InputFilter],
         'owner__username',
         'name',

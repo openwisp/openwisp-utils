@@ -423,6 +423,7 @@ function initToolTipHandlers() {
     });
   });
 }
+
 function showActiveItems() {
   if (!owMenu) {
     return;

@@ -1,12 +1,45 @@
-from django.contrib.admin.filters import FieldListFilter
+from django.contrib.admin.filters import FieldListFilter, SimpleListFilter
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import CharField, UUIDField
 from django.utils.translation import gettext_lazy as _
 
 
-class InputFilter(FieldListFilter):
+class InputFilterMixin:
     template = 'admin/input_filter.html'
+
+    def lookups(self, request, model_admin):
+        # Required to show the filter.
+        return [tuple()]
+
+    def choices(self, changelist):
+        # Grab only the "all" option.
+        all_choice = {
+            'selected': self.value() is None,
+            'query_string': changelist.get_query_string(remove=[self.parameter_name]),
+            'display': _('All'),
+        }
+        all_choice['query_parts'] = []
+        for key, value in changelist.get_filters_params().items():
+            if key != self.parameter_name:
+                all_choice['query_parts'].append((key, value))
+        yield all_choice
+
+    def value(self):
+        """
+        Return the value (in string format) provided in the request's
+        query string for this filter, if any, or None if the value wasn't
+        provided.
+        """
+        return self.used_parameters.get(self.parameter_name)
+
+
+class SimpleInputFilter(InputFilterMixin, SimpleListFilter):
+    def queryset(self, request, queryset):
+        raise NotImplementedError
+
+
+class InputFilter(InputFilterMixin, FieldListFilter):
     parameter_name = None
     lookup = 'exact'
     allowed_fields = (CharField, UUIDField)
@@ -53,22 +86,6 @@ class InputFilter(FieldListFilter):
             self.lookup_title = other_model._meta.verbose_name
         self.title = self.lookup_title
         self.empty_value_display = model_admin.get_empty_value_display()
-
-    def choices(self, changelist):
-        all_choice = {
-            'selected': self.lookup_val is None,
-            'query_string': changelist.get_query_string(
-                remove=[self.lookup_kwarg, self.lookup_kwarg_isnull]
-            ),
-            'display': _('All'),
-            'query_parts': [],
-            'parameter_name': self.parameter_name,
-            'value': self.lookup_val,
-        }
-        for key, value in changelist.get_filters_params().items():
-            if key != self.parameter_name:
-                all_choice["query_parts"].append((key, value))
-        yield all_choice
 
     def lookups(self, request, model_admin):
         # Required to show the filter.

@@ -866,19 +866,18 @@ inline object. Following is an example:
             'image_url': '/static/admin/img/icon-alert.svg'
         }
 
-``openwisp_utils.admin_theme.filter.InputFilter``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``openwisp_utils.admin_theme.filters.InputFilter``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``admin_theme`` sub app of this package provides an input filter that can be used in changelist page
-to filter ``UUIDField`` or ``CharField``. By default it filters items that matches the exact 
-value provided in the input field for the filter.
+to filter ``UUIDField`` or ``CharField``.
 
 Code example:
 
 .. code-block:: python
 
     from django.contrib import admin
-    from openwisp_utils.admin_theme.filter import InputFilter
+    from openwisp_utils.admin_theme.filters import InputFilter
     from my_app.models import MyModel
 
     @admin.register(MyModel)
@@ -897,12 +896,12 @@ Code example:
 .. code-block:: python
 
     from django.contrib import admin
-    from openwisp_utils.admin_theme.filter import InputFilter
+    from openwisp_utils.admin_theme.filters import InputFilter
     from my_app.models import MyModel
 
     class MyInputFilter(InputFilter):
         lookup = 'icontains'
-    
+
 
     @admin.register(MyModel)
     class MyModelAdmin(admin.ModelAdmin):
@@ -912,15 +911,40 @@ Code example:
             ...
         ]
 
-To know about other lookups that can be used please check 
+To know about other lookups that can be used please check
 `Django Lookup API Reference <https://docs.djangoproject.com/en/3.2/ref/models/lookups/#django.db.models.Lookup>`__
 
-.. note::
-    ``InputFilter`` can be placed anywhere when duplicate filters are not used but to not
-    get any unexpected result it is recommended to place it on the top in the list_filter list.
+``openwisp_utils.admin_theme.filters.SimpleInputFilter``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    When multiple filters of same type is used then ``InputFilter`` will get priority in the searched result.
+A stripped down version of ``openwisp_utils.admin_theme.filters.InputFilter`` that provides
+flexibility to customize filtering. It can be used to filter objects using indirectly
+related fields.
 
+The derived filter class should define the ``queryset`` method as shown in following example:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin_theme.filters import SimpleInputFilter
+    from my_app.models import MyModel
+
+    class MyInputFilter(SimpleInputFilter):
+        parameter_name = 'shelf'
+        title = _('Shelf')
+
+        def queryset(self, request, queryset):
+            if self.value() is not None:
+                return queryset.filter(name__icontains=self.value())
+
+
+    @admin.register(MyModel)
+    class MyModelAdmin(admin.ModelAdmin):
+        list_filter = [
+            MyInputFilter,
+            'other_field'
+            ...
+        ]
 
 Code utilities
 --------------
@@ -1592,7 +1616,7 @@ Install the system dependencies:
 .. code-block:: shell
 
     sudo apt-get install sqlite3 libsqlite3-dev
-    
+
     # For running E2E Selenium tests
     sudo apt install chromium
 
@@ -1624,7 +1648,7 @@ Set up the pre-push hook to run tests and QA checks automatically right before t
 
 Install WebDriver for Chromium for your browser version from `<https://chromedriver.chromium.org/home>`_
 and Extract ``chromedriver`` to one of directories from your ``$PATH`` (example: ``~/.local/bin/``).
-    
+
 Create database:
 
 .. code-block:: shell
