@@ -1,17 +1,19 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
 from openwisp_utils.admin import ReadOnlyAdmin
 from openwisp_utils.admin_theme import settings as admin_theme_settings
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
+from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
 
-from ..admin import ProjectAdmin
-from ..models import Operator, Project, RadiusAccounting
+from ..admin import ProjectAdmin, ShelfAdmin
+from ..models import Operator, Project, RadiusAccounting, Shelf
 from . import AdminTestMixin, CreateMixin
 
 User = get_user_model()
@@ -308,3 +310,36 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             )[1]
             self.assertGreater(real_count, 4)
             self.assertContains(response, 'id="ow-apply-filter"')
+
+    def test_simple_input_filter(self):
+        class TestFilter(SimpleInputFilter):
+            title = 'Test'
+            parameter_name = 'test'
+
+        filter = TestFilter(
+            request=None, params={}, model=Shelf, model_admin=ShelfAdmin
+        )
+        with self.assertRaises(NotImplementedError):
+            filter.queryset(None, None)
+
+    def test_input_filter(self):
+        with self.assertRaises(ImproperlyConfigured):
+            field = MagicMock()
+            field.target_field = True
+            InputFilter(
+                field,
+                request=None,
+                params={},
+                model=Shelf,
+                model_admin=ShelfAdmin,
+                field_path='mocked',
+            )
+        with self.assertRaises(ImproperlyConfigured):
+            InputFilter(
+                Shelf.created_at,
+                request=None,
+                params={},
+                model=Shelf,
+                model_admin=ShelfAdmin,
+                field_path='created_at',
+            )

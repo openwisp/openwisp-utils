@@ -403,8 +403,11 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
 
     def test_input_filters(self):
         url = reverse('admin:test_project_shelf_changelist')
-        self._create_shelf(name='Horror', books_type='HORROR')
-        self._create_shelf(name='Factual', books_type='FACTUAL')
+        user = self._create_user()
+        horror_shelf = self._create_shelf(
+            name='Horror', books_type='HORROR', owner=self.admin
+        )
+        self._create_shelf(name='Factual', books_type='FACTUAL', owner=user)
         self.login()
         horror_result_xpath = (
             '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "Horror")]'
@@ -446,3 +449,43 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
             ).click()
             self.web_driver.find_element_by_xpath(horror_result_xpath)
             self.web_driver.find_element_by_xpath(factual_result_xpath)
+
+        with self.subTest('Test InputFilter: UUID'):
+            self.open(url)
+            input_field = self.web_driver.find_element_by_xpath(
+                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[3]/div[1]/form/input'
+            )
+            input_field.send_keys(str(horror_shelf.id))
+            self._get_apply_filter().click()
+            # Horror shelf is present
+            self.web_driver.find_element_by_xpath(horror_result_xpath)
+            with self.assertRaises(NoSuchElementException):
+                # Factual shelf is absent
+                self.web_driver.find_element_by_xpath(factual_result_xpath)
+            # Both shelves should be present after clearing filter
+            self.web_driver.find_element_by_xpath(
+                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[3]/div[1]/form/a'
+            ).click()
+            self.web_driver.find_element_by_xpath(horror_result_xpath)
+            self.web_driver.find_element_by_xpath(factual_result_xpath)
+
+        with self.subTest('Test InputFilter: Related field'):
+            admin_xpath = f'//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{self.admin.username}")]'
+            user_xpath = f'//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{user.username}")]'
+            self.open(reverse('admin:auth_user_changelist'))
+            input_field = self.web_driver.find_element_by_xpath(
+                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/input'
+            )
+            input_field.send_keys(str(horror_shelf.id))
+            self._get_apply_filter().click()
+            # Admin user is present
+            self.web_driver.find_element_by_xpath(admin_xpath)
+            with self.assertRaises(NoSuchElementException):
+                # User is absent
+                self.web_driver.find_element_by_xpath(user_xpath)
+            # Both users should be present after clearing filter
+            self.web_driver.find_element_by_xpath(
+                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/a'
+            ).click()
+            self.web_driver.find_element_by_xpath(admin_xpath)
+            self.web_driver.find_element_by_xpath(user_xpath)

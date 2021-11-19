@@ -87,9 +87,5 @@ class InputFilter(InputFilterMixin, FieldListFilter):
         self.title = self.lookup_title
         self.empty_value_display = model_admin.get_empty_value_display()
 
-    def lookups(self, request, model_admin):
-        # Required to show the filter.
-        return [tuple()]
-
     def expected_parameters(self):
         return [self.lookup_kwarg, self.lookup_kwarg_isnull]

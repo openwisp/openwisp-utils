@@ -20,7 +20,13 @@ admin.site.unregister(User)
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ['username', 'is_staff', 'is_superuser', 'is_active']
-    list_filter = [['username', InputFilter], 'is_staff', 'is_superuser', 'is_active']
+    list_filter = [
+        ('username', InputFilter),
+        ('shelf', InputFilter),
+        'is_staff',
+        'is_superuser',
+        'is_active',
+    ]
 
 
 @admin.register(Operator)
@@ -73,7 +79,7 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
     list_filter = [
         ShelfFilter,
         ['books_type', InputFilter],
-        'owner__username',
+        ['id', InputFilter],
         'name',
         'owner__is_staff',
         'owner__is_active',
