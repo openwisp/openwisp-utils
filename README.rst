@@ -889,9 +889,7 @@ Code example:
         ]
 
 By default ``InputFilter`` use exact lookup to filter items which matches to the value being
-searched by the user. But this behavior can be changed by some modification in the ``InputFilter``.
-
-Code example:
+searched by the user. But this behavior can be changed by modifying ``InputFilter`` as following:
 
 .. code-block:: python
 

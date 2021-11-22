@@ -13,13 +13,12 @@ class InputFilterMixin:
         return [tuple()]
 
     def choices(self, changelist):
-        # Grab only the "all" option.
         all_choice = {
             'selected': self.value() is None,
             'query_string': changelist.get_query_string(remove=[self.parameter_name]),
             'display': _('All'),
+            'query_parts': [],
         }
-        all_choice['query_parts'] = []
         for key, value in changelist.get_filters_params().items():
             if key != self.parameter_name:
                 all_choice['query_parts'].append((key, value))
