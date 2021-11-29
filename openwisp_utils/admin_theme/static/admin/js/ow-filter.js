@@ -250,7 +250,7 @@ function filterHandlers() {
         });
       Object.keys(paramsMap).forEach(function (key) {
         /*
-            LOGIC: 
+            LOGIC:
               For any filter if we check the values present in the options available
               for it, we will notice that only its options have the different pararms
               that can change or remove from currently applied filter but all other
@@ -282,8 +282,7 @@ function filterHandlers() {
         if(!(key in appliedFilters) || !appliedFilters[key]){
           delete qs[key];
         }
-          
-      }else if(val.length !== 0) {
+      } else if(val.length !== 0) {
         qs[key] = val;
       }
     });

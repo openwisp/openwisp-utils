@@ -1,29 +1,24 @@
 {% load i18n ow_tags %}
 
 <div class="ow-filter">
-  <div  id="{{title|join_string}}"
-        aria-label="by {{title}}"
-        tabindex="0"
-        aria-controls="choices-{{filter_title}}" role="button"
-        aria-expanded="false" class="filter-title">
-  <h3>
+  <div id="{{title|join_string}}" aria-label="by {{title}}"
+    tabindex="0" aria-controls="choices-{{filter_title}}"
+    role="button" aria-expanded="false" class="filter-title">
+    <h3>
       {% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}
-  </h3>
-  <div class="selected-option" tabindex="0" title="{{ selected_choice | default_if_none:'------' }}">
+    </h3>
+    <div class="selected-option" tabindex="0" title="{{ selected_choice | default_if_none:'------' }}">
       {{ selected_choice | default_if_none:'------' }}
+    </div>
   </div>
-  </div>
-  <div  id="choices-{{title|join_string}}"
-        role="region"
-        aria-labelledby="{{title|join_string}}" 
-        class="filter-options">
+  <div id="choices-{{title|join_string}}" role="region"
+    aria-labelledby="{{title|join_string}}" class="filter-options">
     <ul>
     {% for choice in choices %}
       <li>
-        <a  {% if choice.selected %} class="selected"{% endif %}
-            title="{{ choice.display }}"
-            href="{{ choice.query_string|iriencode }}">
-            {{ choice.display }}
+        <a {% if choice.selected %} class="selected" {% endif %} title="{{ choice.display }}"
+          href="{{ choice.query_string|iriencode }}">
+          {{ choice.display }}
         </a>
       </li>
     {% endfor %}
