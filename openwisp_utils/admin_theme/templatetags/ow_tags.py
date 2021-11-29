@@ -8,12 +8,18 @@ register = template.Library()
 @register.simple_tag
 def ow_create_filter(cl, spec, total_filters):
     tpl = get_template(spec.template)
+    choices = list(spec.choices(cl))
+    selected_choice = None
+    for choice in choices:
+        if choice['selected']:
+            selected_choice = choice['display']
     return tpl.render(
         {
             'title': spec.title,
             'choices': list(spec.choices(cl)),
             'spec': spec,
             'show_button': total_filters > 4,
+            'selected_choice': selected_choice,
         }
     )
 

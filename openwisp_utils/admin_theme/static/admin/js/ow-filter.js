@@ -11,6 +11,7 @@ const scrollDX = 200,
       slider = document.querySelector('.ow-filter-slider');
       initFilterDropdownHandler();
       initSliderHandlers();
+      initInputFilterHandler();
       filterHandlers();
       if (slider) {
         setArrowButtonVisibility();
@@ -63,6 +64,9 @@ function initFilterDropdownHandler() {
   // When filter title is clicked
   filters.forEach(function (filter) {
     var toggler = filter.querySelector('.filter-title');
+    if(!toggler) {
+      return;
+    }
     toggler.addEventListener('click', function () {
       // Close if any active filter
       toggleFilter(filter);
@@ -111,7 +115,9 @@ function initFilterDropdownHandler() {
       let filter = document.querySelector('.ow-filter.active');
       let selectedOption = filter.querySelector('.selected-option');
       let selectedElement = filter.querySelector('.selected');
-      selectedElement.classList.remove('selected');
+      if (selectedElement) {
+        selectedElement.classList.remove('selected');
+      }
       filterValue.classList.add('selected');
       var text = filterValue.innerHTML;
       selectedOption.innerHTML = text;
@@ -164,6 +170,29 @@ function setArrowButtonVisibility() {
   }
 }
 
+function initInputFilterHandler() {
+  if (!document.querySelector('#ow-apply-filter')) {
+    return;
+  }
+  var inputFilterFields = document.querySelectorAll('.ow-input-filter-field');
+  inputFilterFields.forEach(function (field) {
+    field.addEventListener('change', function (e) {
+      var filter = e.target.closest('.ow-input-filter'),
+        selectedOption = filter.querySelector('.filter-options a'),
+        value = e.target.value,
+        newHref = '?' + selectedOption.getAttribute('parameter_name') +
+          '=' + value;
+      selectedOption.setAttribute('href', newHref);
+    });
+  });
+  var inputFilterForms = document.querySelectorAll('.ow-input-filter form');
+  inputFilterForms.forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+    });
+  });
+}
+
 function initSliderHandlers() {
   // When left arrow is clicked
   if (leftArrow) {
@@ -189,6 +218,9 @@ function filterHandlers() {
     const selectedOptions = document.querySelectorAll(
       '.filter-options .selected'
     );
+    const inputFilters = document.querySelectorAll(
+      '.ow-input-filter .filter-options a'
+    );
     // Create params map which knows about the last applied filters
     var path = window.location.href.split('?');
     var paramsMap = {};
@@ -200,6 +232,7 @@ function filterHandlers() {
       });
     }
     var qs = Object.assign({}, paramsMap);
+    var appliedFilters = {};  // To manage duplicate filters
     // qs will be modified according to the last applied filters
     // and current filters that need to be applied
     selectedOptions.forEach(function (selectedOption) {
@@ -217,7 +250,7 @@ function filterHandlers() {
         });
       Object.keys(paramsMap).forEach(function (key) {
         /*
-            LOGIC: 
+            LOGIC:
               For any filter if we check the values present in the options available
               for it, we will notice that only its options have the different pararms
               that can change or remove from currently applied filter but all other
@@ -227,9 +260,11 @@ function filterHandlers() {
           if (key in currParamsMap) {
             if (currParamsMap[key] != paramsMap[key]) {
               qs[key] = currParamsMap[key];
+              appliedFilters[key] = true;
             }
           } else {
             delete qs[key];
+            appliedFilters[key] = false;
           }
         }
         delete currParamsMap[key];
@@ -237,7 +272,19 @@ function filterHandlers() {
       Object.keys(currParamsMap).forEach(function (key) {
         // Add if any new filter is applied
         qs[key] = currParamsMap[key];
+        appliedFilters[key] = true;
       });
+    });
+    inputFilters.forEach(function (filter){
+      var href = filter.getAttribute('href');
+      var [key, val] = href.substring(1).split('=');
+      if(val.length === 0 && key in qs){
+        if(!(key in appliedFilters) || !appliedFilters[key]){
+          delete qs[key];
+        }
+      } else if(val.length !== 0) {
+        qs[key] = val;
+      }
     });
     var queryParams = '';
     if (Object.keys(qs).length) {

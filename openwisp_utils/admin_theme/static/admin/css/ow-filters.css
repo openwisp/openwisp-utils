@@ -41,6 +41,37 @@
 .filter {
   margin-right: 0.625rem;
 }
+.ow-input-filter .filter-options{
+  display: none !important;
+}
+.ow-input-filter .filter-title{
+  padding: 0.4rem 0rem 0.3125rem 0rem;
+  min-width: 13.5rem;
+}
+.ow-input-filter .filter-title h3{
+  margin-left: 8px;
+}
+.ow-input-filter .ow-input-filter-field{
+  padding: 0.4rem 2.25rem 0.3125rem 1rem;
+  position: absolute;
+  height: 100%;
+  position: absolute;
+  top: 0px;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  left: 0px;
+  z-index: 0;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  margin: auto;
+  border: 0px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
 .filter-options {
   margin-top: 47px;
   opacity: 0;
@@ -90,7 +121,6 @@
   font-weight: 300;
 }
 .selected-option {
-  pointer-events: none;
   height: 100%;
   position: absolute;
   top: 0;
@@ -153,6 +183,7 @@
   display: flex;
   position: relative;
   z-index: 1;
+  pointer-events: none;
 }
 .left-arrow,
 .right-arrow {
@@ -190,6 +221,13 @@
 }
 .disabled-click{
   pointer-events: none;
+}
+a.field-clear {
+  cursor: pointer;
+  right: 0.5rem;
+  top: 8px;
+  color: #ba2121;
+  position: absolute;
 }
 
 /* RESPONSIVE */
