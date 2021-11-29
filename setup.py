@@ -44,7 +44,7 @@ setup(
     install_requires=[
         'django-model-utils~=4.2.0',
         'django-compress-staticfiles~=1.0.1b',
-        'swapper>=1.1.2,<1.3.0',
+        'swapper~=1.3.0',
     ],
     extras_require={
         'qa': [
