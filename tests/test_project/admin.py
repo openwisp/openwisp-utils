@@ -12,7 +12,7 @@ from openwisp_utils.admin import (
 )
 from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
 
-from .models import Operator, Project, RadiusAccounting, Shelf
+from .models import Book, Operator, Project, RadiusAccounting, Shelf
 
 admin.site.unregister(User)
 
@@ -27,6 +27,11 @@ class UserAdmin(admin.ModelAdmin):
         'is_superuser',
         'is_active',
     ]
+
+
+@admin.register(Book)
+class BookAdmin(admin.ModelAdmin):
+    list_filter = ['name']
 
 
 @admin.register(Operator)
@@ -80,8 +85,6 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
         ShelfFilter,
         ['books_type', InputFilter],
         ['id', InputFilter],
-        'book_type',
-        'name',
-        'owner__is_staff',
-        'owner__is_active',
+        'owner__username',
+        'books_type',
     ]
