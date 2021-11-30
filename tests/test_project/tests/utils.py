@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support import expected_conditions as EC
@@ -195,9 +194,6 @@ class SeleniumTestMixin(TestConfigMixin):
         return self.web_driver.find_element_by_xpath(
             '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/input'
         )
-
-    def _get_apply_filter(self):
-        return self.web_driver.find_element_by_xpath('//*[@id="ow-apply-filter"]')
 
     def _open_menu(self):
         hamburger = self._get_hamburger()
