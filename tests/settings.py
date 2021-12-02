@@ -105,19 +105,19 @@ OPENWISP_TEST_ADMIN_MENU_ITEMS = [{'model': 'test_project.Project'}]
 OPENWISP_ADMIN_THEME_LINKS = [
     {
         'type': 'text/css',
-        'href': '/static/admin/css/openwisp.css',
+        'href': 'admin/css/openwisp.css',
         'rel': 'stylesheet',
         'media': 'all',
     },
     {
         'type': 'text/css',
-        'href': '/static/menu-test.css',
+        'href': 'menu-test.css',
         'rel': 'stylesheet',
         'media': 'all',
     },  # custom css for testing menu icons
     {
         'type': 'image/x-icon',
-        'href': '/static/ui/openwisp/images/favicon.png',
+        'href': 'ui/openwisp/images/favicon.png',
         'rel': 'icon',
     },
 ]
