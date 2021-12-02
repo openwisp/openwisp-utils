@@ -3,7 +3,6 @@ import sys
 
 from django.apps import registry
 from django.conf import settings
-from django.templatetags.static import static
 from django.urls import reverse
 
 from ..admin_theme.menu import build_menu_groups
@@ -48,19 +47,10 @@ def build_menu(request):
 
 
 def admin_theme_settings(request):
-    theme_links = {
+    return {
         'OPENWISP_ADMIN_THEME_LINKS': app_settings.OPENWISP_ADMIN_THEME_LINKS,
         'OPENWISP_ADMIN_THEME_JS': app_settings.OPENWISP_ADMIN_THEME_JS,
     }
-
-    for css_files in theme_links['OPENWISP_ADMIN_THEME_LINKS']:
-        css_files['href'] = static(css_files['href'])
-
-    theme_links['OPENWISP_ADMIN_THEME_JS'] = map(
-        static, theme_links['OPENWISP_ADMIN_THEME_JS']
-    )
-
-    return theme_links
 
 
 # Kept for backward compatibility

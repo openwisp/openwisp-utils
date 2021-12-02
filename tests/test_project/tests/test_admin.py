@@ -266,7 +266,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         with patch.object(
             admin_theme_settings,
             'OPENWISP_ADMIN_THEME_JS',
-            ['openwisp-utils/js/uuid.js'],
+            ['/static/openwisp-utils/js/uuid.js'],
         ):
             response = self.client.get(reverse('admin:index'))
             self.assertContains(response, 'src="/static/openwisp-utils/js/uuid.js"')
