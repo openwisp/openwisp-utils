@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from django.conf import settings
 from django.templatetags.static import static
 from django.utils.translation import gettext_lazy as _
 
@@ -32,7 +31,9 @@ class OpenWispAdminThemeConfig(AppConfig):
         )
 
     def modify_admin_theme_settings_links(self):
-        OPENWISP_ADMIN_THEME_LINKS = getattr(app_settings, 'OPENWISP_ADMIN_THEME_LINKS', [])
+        OPENWISP_ADMIN_THEME_LINKS = getattr(
+            app_settings, 'OPENWISP_ADMIN_THEME_LINKS', []
+        )
         OPENWISP_ADMIN_THEME_JS = getattr(app_settings, 'OPENWISP_ADMIN_THEME_JS', [])
 
         css_files = []
