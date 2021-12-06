@@ -125,6 +125,13 @@ class TestQa(TestCase):
                 '[fix] Fixed extensibility of openwisp-users and added sample_users test app #377\n\n'
                 'Closes #377\r\n\r\nCo-authored-by: Ajay Tripathi <ajay39in@gmail.com>',
             ],
+            [
+                'commitcheck',
+                '--quiet',
+                '--message',
+                '[feature] Allow device name to be configured as not unique #443\n\n'
+                'Unique device names can now be turned off.\n\nCloses #443.',
+            ],
         ]
         for option in options:
             with patch('argparse._sys.argv', option), self.subTest(option):
