@@ -241,7 +241,9 @@ def _find_issue_mentions(message):
     good_mentions = 0
     for issue_location in issue_locations:
         word = words[issue_location - 1]
-        issues.append(words[issue_location])
+        issue = words[issue_location]
+        issue = issue.replace('.', '')
+        issues.append(issue)
         # check whether issue is just being referred to
         if issue_location > 1:
             preceding_2words = '{} {}'.format(
