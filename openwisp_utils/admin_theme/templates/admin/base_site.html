@@ -11,8 +11,8 @@
       href="{{ link.href }}" {% if link.media %}media="{{ link.media }}" {% endif %}/>
   {% endfor %}
 {% else %}
-  <link rel="stylesheet" type="text/css" href="{% static "admin/css/openwisp.css" %}" />
-  <link rel="icon" type="image/x-icon" href="{% static "ui/openwisp/images/favicon.png" %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'admin/css/openwisp.css' %}" />
+  <link rel="icon" type="image/x-icon" href="{% static 'ui/openwisp/images/favicon.png' %}" />
 {% endif %}
 {% endblock %}
 

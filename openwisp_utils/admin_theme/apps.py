@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.templatetags.static import static
 from django.utils.translation import gettext_lazy as _
 
 from . import settings as app_settings
@@ -13,6 +14,7 @@ class OpenWispAdminThemeConfig(AppConfig):
     def ready(self):
         admin_theme_settings_checks(self)
         self.register_menu_groups()
+        self.modify_admin_theme_settings_links()
         # monkey patch django.contrib.admin.apps.AdminConfig.default_site
         # in order to supply our customized admin site class
         # this is necessary in order to avoid having to modify
@@ -27,3 +29,19 @@ class OpenWispAdminThemeConfig(AppConfig):
             position=10,
             config={'label': _('Home'), 'url': '/admin', 'icon': 'ow-dashboard-icon'},
         )
+
+    def modify_admin_theme_settings_links(self):
+        link_files = []
+        for link_file in app_settings.OPENWISP_ADMIN_THEME_LINKS:
+            href = link_file['href']
+            href = href.replace('/static/', '')
+            link_file['href'] = static(href)
+            link_files.append(link_file)
+
+        js_files = []
+        for js_file in app_settings.OPENWISP_ADMIN_THEME_JS:
+            js_file = js_file.replace('/static/', '')
+            js_files.append(static(js_file))
+
+        app_settings.OPENWISP_ADMIN_THEME_LINKS = link_files
+        app_settings.OPENWISP_ADMIN_THEME_JS = js_files
