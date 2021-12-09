@@ -31,24 +31,17 @@ class OpenWispAdminThemeConfig(AppConfig):
         )
 
     def modify_admin_theme_settings_links(self):
-        OPENWISP_ADMIN_THEME_LINKS = getattr(
-            app_settings, 'OPENWISP_ADMIN_THEME_LINKS', []
-        )
-        OPENWISP_ADMIN_THEME_JS = getattr(app_settings, 'OPENWISP_ADMIN_THEME_JS', [])
-
-        css_files = []
-
-        for css_file in OPENWISP_ADMIN_THEME_LINKS:
-            link = css_file['href']
-            link = link.replace('/static/', '')
-            css_file['href'] = static(link)
-            css_files.append(css_file)
+        link_files = []
+        for link_file in app_settings.OPENWISP_ADMIN_THEME_LINKS:
+            href = link_file['href']
+            href = href.replace('/static/', '')
+            link_file['href'] = static(href)
+            link_files.append(link_file)
 
         js_files = []
+        for js_file in app_settings.OPENWISP_ADMIN_THEME_JS:
+            js_file = js_file.replace('/static/', '')
+            js_files.append(static(js_file))
 
-        for link in OPENWISP_ADMIN_THEME_JS:
-            link = link.replace('/static/', '')
-            js_files.append(static(link))
-
-        setattr(app_settings, 'OPENWISP_ADMIN_THEME_LINKS', css_files)
-        setattr(app_settings, 'OPENWISP_ADMIN_THEME_JS', js_files)
+        app_settings.OPENWISP_ADMIN_THEME_LINKS = link_files
+        app_settings.OPENWISP_ADMIN_THEME_JS = js_files
