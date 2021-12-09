@@ -35,13 +35,20 @@ class OpenWispAdminThemeConfig(AppConfig):
         for link_file in app_settings.OPENWISP_ADMIN_THEME_LINKS:
             href = link_file['href']
             href = href.replace('/static/', '')
-            link_file['href'] = static(href)
+            link_file['href'] = self._staticfy(href)
             link_files.append(link_file)
 
         js_files = []
         for js_file in app_settings.OPENWISP_ADMIN_THEME_JS:
             js_file = js_file.replace('/static/', '')
-            js_files.append(static(js_file))
+            js_files.append(self._staticfy(js_file))
 
         app_settings.OPENWISP_ADMIN_THEME_LINKS = link_files
         app_settings.OPENWISP_ADMIN_THEME_JS = js_files
+
+    def _staticfy(self, value):
+        try:
+            return static(value)
+        # maintain backward compatibility
+        except ValueError:
+            return value
