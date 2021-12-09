@@ -121,6 +121,7 @@ OPENWISP_ADMIN_THEME_LINKS = [
         'rel': 'icon',
     },
 ]
+OPENWISP_ADMIN_THEME_JS = ['dummy.js']
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:
