@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from openwisp_utils.admin import ReadOnlyAdmin
 from openwisp_utils.admin_theme import settings as admin_theme_settings
-from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig
+from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig, _staticfy
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
 from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
 
@@ -253,6 +253,17 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.assertContains(response, '/static/menu-test.css" media="all"')
         self.assertContains(response, 'href="/static/ui/openwisp/images/favicon.png"')
         self.assertContains(response, '/static/dummy.js')
+
+    def test_admin_theme_static_backward_compatible(self):
+        # test for backward compatibility
+        with patch('openwisp_utils.admin_theme.apps.static', side_effect=ValueError):
+            self.assertEqual(
+                _staticfy('admin/css/openwisp.css'), 'admin/css/openwisp.css'
+            )
+        # test static files are loaded with staticfiles
+        self.assertEqual(
+            _staticfy('admin/css/openwisp.css'), '/static/admin/css/openwisp.css'
+        )
 
     def test_admin_theme_js_setting(self):
         # test for improper configuration : not a list

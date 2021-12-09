@@ -7,6 +7,14 @@ from .checks import admin_theme_settings_checks
 from .menu import register_menu_group
 
 
+def _staticfy(value):
+    try:
+        return static(value)
+    # maintain backward compatibility
+    except ValueError:
+        return value
+
+
 class OpenWispAdminThemeConfig(AppConfig):
     app_label = 'openwisp_admin'
     name = 'openwisp_utils.admin_theme'
@@ -35,20 +43,13 @@ class OpenWispAdminThemeConfig(AppConfig):
         for link_file in app_settings.OPENWISP_ADMIN_THEME_LINKS:
             href = link_file['href']
             href = href.replace('/static/', '')
-            link_file['href'] = self._staticfy(href)
+            link_file['href'] = _staticfy(href)
             link_files.append(link_file)
 
         js_files = []
         for js_file in app_settings.OPENWISP_ADMIN_THEME_JS:
             js_file = js_file.replace('/static/', '')
-            js_files.append(self._staticfy(js_file))
+            js_files.append(_staticfy(js_file))
 
         app_settings.OPENWISP_ADMIN_THEME_LINKS = link_files
         app_settings.OPENWISP_ADMIN_THEME_JS = js_files
-
-    def _staticfy(self, value):
-        try:
-            return static(value)
-        # maintain backward compatibility
-        except ValueError:
-            return value
