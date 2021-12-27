@@ -671,6 +671,16 @@ input[type='button']:hover,
   margin: 0px;
   margin-bottom: 20px;
 }
+.title-wrapper h2 {
+  margin-left: 10px;
+  font-weight: normal;
+}
+.title-wrapper h2::before {
+  content: "(";
+}
+.title-wrapper h2::after {
+  content: ")";
+}
 .title-wrapper .object-tools{
   margin-top: -4px;
   margin-bottom: 20px;
