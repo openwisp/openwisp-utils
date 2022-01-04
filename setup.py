@@ -55,7 +55,7 @@ setup(
             'coveralls~=3.0.0',  # depends on coverage as well
         ],
         'rest': [
-            'djangorestframework~=3.12.0',
+            'djangorestframework~=3.13.0',
             'django-filter>=2.2.0<2.4.0',
             'drf-yasg~=1.20.0',
         ],
