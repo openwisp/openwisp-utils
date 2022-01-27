@@ -1594,3 +1594,16 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/node.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/node.svg);
 }
+
+/* LOGIN SCREEN */
+@media only screen and (max-width: 576px) {
+ 
+  .login #container  {
+    width: auto !important;
+    max-width: 280px !important;
+    margin: 50px auto !important;
+  }
+  .menu-bar{
+    width: 280px !important;
+  }
+}
