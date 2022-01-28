@@ -1,58 +1,83 @@
-:root{
-  --ow-theme-color: #df5d43 !important;
-  --ow-topbar-color: #d3d3d3 !important;
+/* LOGO */
+#swagger-ui > section > div.topbar > div > div > a > img{
+  content: url(../ui/openwisp/images/openwisp-logo-black.svg);
+  width: 165px;
+  height: 95px;
 }
 
 /* TOPBAR */
 .swagger-ui .topbar {
   padding: 10px 0;
-  background-color: var(--ow-topbar-color);
+  background-color: #f9f9f9;
+  border-bottom: 1px solid #eee;
 }
 .swagger-ui .topbar .download-url-wrapper input[type=text] {
-  border-color: #df5d43;
+  border-color: rgb(0, 0, 0);
 }
+.swagger-ui .topbar .download-url-wrapper input[type=text]:focus{
+  border: 3px solid rgb(0, 0, 0);
+}
+
+/* EXPLORE BTN */
 .swagger-ui .topbar .download-url-wrapper .download-url-button{
-  background: var(--ow-theme-color);
+  background: #333;
 }
-#swagger-ui > section > div.topbar > div > div > a > img{
-  content: url(../ui/openwisp/images/openwisp-logo-black.svg);
-}
-
-/* AUTH BTN */
-#django-session-auth .btn.authorize a {
-  color: var(--ow-theme-color);
-  text-decoration: none;
-}
-#django-session-auth > div.btn.authorize{
-  border-color: var(--ow-theme-color);
-}
-#swagger-ui > section > div.swagger-ui > div:nth-child(2) > div.scheme-container > section > div > button{
-  border-color: var(--ow-theme-color);
-}
-#swagger-ui > section > div.swagger-ui > div:nth-child(2) > div.scheme-container > section > div > button > span{
-  color: var(--ow-theme-color);
-}
-.swagger-ui .btn.authorize svg {
-  fill: var(--ow-theme-color);
-}
-#swagger-ui > section > div.swagger-ui > div:nth-child(2) > div.scheme-container > section > label > select > option:focus{
-  color: var(--ow-theme-color);
+.swagger-ui .topbar .download-url-wrapper .download-url-button:hover{
+  background: #999;
 }
 
-/* AUTH FORM */
-.swagger-ui .btn.authorize {
-  color: var(--ow-theme-color);
-  border-color: var(--ow-theme-color);
+/* SCHEMES */
+.swagger-ui select{
+  border-color: #ccc;
 }
 
 /* AUTH LABEL */
 .label-primary {
-  background-color: var(--ow-theme-color);
+  color: #df5d43;
+  background-color: #ffe5e5;
 }
 
-/* OPBLOCK */
-.swagger-ui .opblock.opblock-post{border-color: var(--ow-theme-color);background: rgba(73,204,144,.1);}
+/* AUTH BTN */
+#django-session-auth .btn.authorize a {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* LOGOUT BTN */
+#django-session-auth > div.btn.authorize{
+  background-color: #333;
+  border: 0;
+}
+#django-session-auth > div.btn.authorize:hover{
+  background-color: #999;
+}
+.swagger-ui .btn.authorize svg {
+  fill: #fff;
+}
+
+/* AUTH BTN */
+.swagger-ui .btn.authorize {
+  color: #fff;
+  border: 0;
+  background-color: #df5d43;
+}
+.swagger-ui .btn.authorize:hover {
+  background-color: #b31e00;
+}
+
+/* LOGOUT & CLOSE BTN */
+.swagger-ui .btn{
+  color: #fff;
+  border: 0;
+  background-color: #333;
+}
+.swagger-ui .btn:hover{
+  background-color: #999;
+}
+
+/* TODO AFTER REVIEW : OPBLOCK & MODEL CSS */
+/* .swagger-ui .opblock.opblock-post{border-color: var(--ow-theme-color);background: rgba(73,204,144,.1);}
 .swagger-ui .opblock.opblock-post .opblock-summary-method{background: var(--ow-theme-color);}
 .swagger-ui .opblock.opblock-post .opblock-summary{border-color: var(--ow-theme-color);}
 .swagger-ui .opblock.opblock-post .tab-header .tab-item.active h4 span:after{background: var(--ow-theme-color);}
-.swagger-ui .opblock.opblock-post .tab-header .tab-item.active h4 span:after{background: var(--ow-theme-color);}
+.swagger-ui .opblock.opblock-post .tab-header .tab-item.active h4 span:after{background: var(--ow-theme-color);} */
