@@ -1,3 +1,26 @@
+/************
+* Scrollbar
+************/
+:root {
+  scrollbar-color: #777 #f1f1f1 !important;
+}
+body::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #777;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+
+
 /* LOGO */
 #swagger-ui > section > div.topbar > div > div > a > img{
   content: url(../ui/openwisp/images/openwisp-logo-black.svg);
@@ -73,6 +96,71 @@
 }
 .swagger-ui .btn:hover{
   background-color: #999;
+}
+
+
+/* OPBLOCK */
+
+.swagger-ui .opblock-tag.no-desc span:hover{
+  background: #fdf2f2f2;
+  color: #df5d43;
+}
+.swagger-ui .opblock-tag:hover .nostyle > span{
+  background-color: #fdf2f2f2;
+  color: #df5d43;
+}
+.swagger-ui .opblock-tag:hover{
+  background-color: #fdf2f2f2;
+}
+
+/* OPBLOCK EXECUTE */
+
+.swagger-ui .btn.cancel {
+  border: 0;
+  color: #fff;
+  background-color: #333;
+}
+.swagger-ui .btn.cancel:hover{
+  background-color: #999;
+}
+.swagger-ui .btn.execute {
+  border: 0;
+  color: #fff;
+  background-color: #333;
+}
+.swagger-ui .btn.execute:hover{
+
+  background-color: #999;
+}
+
+/* MODELS */
+
+.swagger-ui section.models .model-container {
+  background: #f6f6f9;
+}
+.swagger-ui section.models .model-container:hover{
+  background: #fdf2f2f2;
+  color: #df5d43;
+}
+.swagger-ui .model-title:hover{
+  color: #df5d43;
+}
+.swagger-ui section.models .model-container.is-open:hover{
+  background: #fdf2f2f2;
+  color: #df5d43;
+}
+.swagger-ui .prop-type {
+  color: #df5d43;
+}
+.swagger-ui section.models .model-container:hover .model-box>.pointer>.model-box>.model-title{
+  color: #df5d43;
+}
+.swagger-ui section.models .model-container:hover .model-box>.pointer>.model-toggle .collapsed{
+  color: #df5d43;
+}
+#swagger-ui > section > div.swagger-ui > div > div > section > section > h4:hover{
+  background: #fdf2f2f2;
+  color: #df5d43;
 }
 
 /* TODO AFTER REVIEW : OPBLOCK & MODEL CSS */
