@@ -3,7 +3,7 @@ from unittest.mock import patch
 from django.core import mail
 from django.test import TestCase, override_settings
 from openwisp_utils.admin_theme import settings as app_settings
-from openwisp_utils.admin_theme.email import send_email
+from openwisp_utils.admin_theme.email import SMTPRecipientsRefused, send_email
 
 
 class TestEmail(TestCase):
@@ -73,3 +73,13 @@ class TestEmail(TestCase):
         self.assertEqual(email.subject, 'Test mail')
         self.assertEqual(email.body, 'This is a test email')
         self.assertFalse(email.alternatives)
+
+    @patch('django.core.mail.EmailMultiAlternatives.send')
+    def test_catch_smtp_recipients_refused(self, send_email_patch):
+        recipients = ['invalid@email.com']
+        send_email_patch.side_effect = SMTPRecipientsRefused(recipients)
+        with patch('logging.Logger.warning') as mocked_logger:
+            send_email('test', 'test', '', recipients)
+            mocked_logger.assert_called_once_with(
+                f'SMTP recipients refused: {recipients}'
+            )

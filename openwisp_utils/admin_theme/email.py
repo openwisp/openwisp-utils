@@ -1,9 +1,14 @@
+import logging
+from smtplib import SMTPRecipientsRefused
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
 from . import settings as app_settings
+
+logger = logging.getLogger(__name__)
 
 
 def send_email(subject, body_text, body_html, recipients, extra_context={}):
@@ -28,4 +33,7 @@ def send_email(subject, body_text, body_html, recipients, extra_context={}):
             context=context,
         )
         mail.attach_alternative(html_message, 'text/html')
-    mail.send()
+    try:
+        mail.send()
+    except SMTPRecipientsRefused as err:
+        logger.warning(f'SMTP recipients refused: {err.recipients}')
