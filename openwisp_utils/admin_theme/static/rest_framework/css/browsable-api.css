@@ -11,3 +11,118 @@
   content: "\a";
   white-space: pre;
 }
+
+/* OW ADMIN THEME CSS */
+
+/************
+* Scrollbar
+************/
+:root {
+  scrollbar-color: #777 #f1f1f1 !important;
+}
+body::-webkit-scrollbar {
+  width: 12px;
+}
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #777;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+.navbar {
+  background: #f9f9f9;
+  color: #777;
+  border: 0;
+}
+.navbar .nav li, .navbar .nav li a{
+  margin-top: 20px;
+  color: #df5d43;
+  background-color: #ffe5e5;
+  font-weight: bold;
+  padding: .2em .6em .3em;
+  text-align: center;
+  border-radius: .25em;
+}
+.navbar-brand{
+  width: 165px;
+  height: 70px;
+}
+ul.breadcrumb {
+  margin: 90px 0 0 0;
+}
+.navbar-brand>img{
+  padding-bottom: 25px;
+}
+.str, .atv {
+  color: #f7745a;
+  font-weight: bold; 
+}
+.kwd, .prettyprint .tag {
+  color: #333;
+  font-weight: bold; 
+}
+.lit {
+  color: #333;
+  font-weight: bold; 
+}
+.pun, .opn, .clo {
+  color: #333;
+  font-weight: bold;
+}
+.pln {
+  color: #333;
+  font-weight: bold;
+}
+.btn-primary {
+  color: #fff;
+  background-color: #333;
+  border: 0;
+}
+.btn-primary:hover {
+  color: #fff;
+  background-color: #999;
+  border: 0;
+}
+.btn-primary.active, .btn-primary:active, .open>.dropdown-toggle.btn-primary {
+  color: #fff;
+  background-color: #333 !important;
+  background-image: none;
+  border: 0;
+}
+.dropdown-menu>li>a {
+  color: #777;
+}
+.dropdown-menu>li:hover, .dropdown-menu>li>a:hover{
+  color: #df5d43;
+  background: #fdf2f2f2;
+}
+.nav-tabs li a {
+  margin-right: 0;
+  color: #777;
+  font-weight: bold;
+}
+.nav-tabs li a:visited{
+  color: #777;
+}
+.nav-tabs li a:hover{
+  color: #df5d43;
+  background-color: #fdf2f2f2;
+}
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
+  color: #df5d43;
+  cursor: default;
+  font-weight: bold;
+  background-color: #fdf2f2f2;
+  border: 1px solid #ddd;
+  border-bottom-color: transparent;
+}
+.form-control:focus {
+  border: 2px solid rgb(0, 0, 0);
+  box-shadow: none;
+}
