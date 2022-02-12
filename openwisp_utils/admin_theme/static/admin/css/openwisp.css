@@ -1600,10 +1600,5 @@ body::-webkit-scrollbar {
  
   .login #container  {
     width: auto !important;
-    max-width: 280px !important;
-    margin: 50px auto !important;
-  }
-  .menu-bar{
-    width: 280px !important;
   }
 }
