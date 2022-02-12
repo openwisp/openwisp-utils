@@ -84,6 +84,10 @@ ul.breadcrumb{
 .pun, .opn, .clo, .pln  {
   color: #333;
 }
+.prettyprint {
+  font-size: 14px !important;
+  line-height: 22px;
+}
 .btn-primary {
   color: #fff;
   background-color: #333;
