@@ -44,6 +44,9 @@ body::-webkit-scrollbar {
 /* EXPLORE BTN */
 .swagger-ui .topbar .download-url-wrapper .download-url-button{
   background: #333;
+  font-size: 15px;
+  font-weight: normal;
+  text-transform: uppercase;
 }
 .swagger-ui .topbar .download-url-wrapper .download-url-button:hover{
   background: #999;
@@ -52,6 +55,13 @@ body::-webkit-scrollbar {
 /* SCHEMES */
 .swagger-ui select{
   border-color: #ccc;
+}
+.swagger-ui .info a {
+  color: #df5d43;
+}
+.swagger-ui .info a:hover, 
+.swagger-ui .info a:visited{
+  color: #D32F2F;
 }
 
 /* AUTH LABEL */
@@ -87,12 +97,21 @@ body::-webkit-scrollbar {
 .swagger-ui .btn.authorize:hover {
   background-color: #b31e00;
 }
+.swagger-ui .btn.authorize span {
+  padding: 5px 10px 1px 0;
+}
 
 /* LOGOUT & CLOSE BTN */
 .swagger-ui .btn{
   color: #fff;
   border: 0;
   background-color: #333;
+  font-size: 13px;
+  line-height: 20px;
+  text-transform: uppercase;
+  font-weight: normal;
+  margin: 0 5px;
+  font-family: "Roboto","Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-seri;
 }
 .swagger-ui .btn:hover{
   background-color: #999;
@@ -101,6 +120,10 @@ body::-webkit-scrollbar {
 
 /* OPBLOCK */
 
+.swagger-ui .opblock-tag.no-desc{
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding-left: 26px;
+}
 .swagger-ui .opblock-tag.no-desc span:hover{
   background: #fdf2f2f2;
   color: #df5d43;
@@ -111,6 +134,12 @@ body::-webkit-scrollbar {
 }
 .swagger-ui .opblock-tag:hover{
   background-color: #fdf2f2f2;
+}
+.swagger-ui .download-contents {
+  width: 89px;
+  font-size: 13px;
+  right: 5px;
+  padding-top: 7px;
 }
 
 /* OPBLOCK EXECUTE */
@@ -162,10 +191,3 @@ body::-webkit-scrollbar {
   background: #fdf2f2f2;
   color: #df5d43;
 }
-
-/* TODO AFTER REVIEW : OPBLOCK & MODEL CSS */
-/* .swagger-ui .opblock.opblock-post{border-color: var(--ow-theme-color);background: rgba(73,204,144,.1);}
-.swagger-ui .opblock.opblock-post .opblock-summary-method{background: var(--ow-theme-color);}
-.swagger-ui .opblock.opblock-post .opblock-summary{border-color: var(--ow-theme-color);}
-.swagger-ui .opblock.opblock-post .tab-header .tab-item.active h4 span:after{background: var(--ow-theme-color);}
-.swagger-ui .opblock.opblock-post .tab-header .tab-item.active h4 span:after{background: var(--ow-theme-color);} */

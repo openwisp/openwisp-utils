@@ -35,29 +35,45 @@ body::-webkit-scrollbar {
 ::-webkit-scrollbar-thumb:hover {
   background: #333;
 }
+body{
+  background: none;
+  background-attachment: initial;
+}
 .navbar {
-  background: #f9f9f9;
+  background: #fff;
+  padding-top: 10px;
+  padding-bottom: 0;
   color: #777;
   border: 0;
+  position: static;
+  border-bottom: 1px solid #eee;
 }
 .navbar .nav li, .navbar .nav li a{
-  margin-top: 20px;
-  color: #df5d43;
-  background-color: #ffe5e5;
+  margin-top: 30px;
+  color: #000;
+  background-color: rgba(0, 0, 0, 0.1);
   font-weight: bold;
-  padding: .2em .6em .3em;
+  padding: 0.4em 0.9em 0.5em;
   text-align: center;
-  border-radius: .25em;
+  border-radius: 0.25em;
+}
+.navbar-brand>img{
+  width: 165px;
+  height: 95px;
+  margin-left: 15px;
+  margin-bottom: 100px;
 }
 .navbar-brand{
-  width: 165px;
-  height: 70px;
+  width: 185px;
+  height: 105px;
+  margin: 0;
+  padding: 0;
 }
 ul.breadcrumb {
   margin: 90px 0 0 0;
 }
-.navbar-brand>img{
-  padding-bottom: 25px;
+ul.breadcrumb{
+  display: none;
 }
 .str, .atv {
   color: #f7745a;
@@ -112,17 +128,21 @@ ul.breadcrumb {
 }
 .nav-tabs li a:hover{
   color: #df5d43;
-  background-color: #fdf2f2f2;
+  background-color: #f9f9f9;
 }
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
   color: #df5d43;
   cursor: default;
   font-weight: bold;
-  background-color: #fdf2f2f2;
+  background-color: #f5f5f5;
   border: 1px solid #ddd;
   border-bottom-color: transparent;
 }
 .form-control:focus {
   border: 2px solid rgb(0, 0, 0);
   box-shadow: none;
+}
+.form-group label{
+  font-weight: normal;
+  color: #000;
 }
