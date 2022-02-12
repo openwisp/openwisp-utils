@@ -4,38 +4,38 @@
   --secondary: #417690 !important;
   --accent: #f5dd5d !important;
   --primary-fg: #fff !important;
-  
+
   --body-fg: #333 !important;
   --body-bg: #fff !important;
   --body-quiet-color: #666 !important;
   --body-loud-color: #000 !important;
-  
+
   --header-color: #ffc !important;
   --header-branding-color: var(--accent) !important;
   --header-bg: var(--secondary) !important;
   --header-link-color: var(--primary-fg) !important;
-  
+
   --breadcrumbs-fg: #c4dce8 !important;
   --breadcrumbs-link-fg: var(--body-bg) !important;
   --breadcrumbs-bg: var(--primary) !important;
-  
+
   --link-fg: #447e9b !important;
   --link-hover-color: #036 !important;
   --link-selected-fg: #5b80b2 !important;
-  
+
   --hairline-color: #e8e8e8 !important;
   --border-color: #ccc !important;
-  
+
   --error-fg: #ba2121 !important;
-  
+
   --message-success-bg: #dfd !important;
   --message-warning-bg: #ffc !important;
   --message-error-bg: #ffefef !important;
-  
+
   --darkened-bg: #f8f8f8 !important; /* A bit darker than --body-bg */
   --selected-bg: #e4e4e4 !important; /* E.g. selected table cells */
   --selected-row: #ffc !important;
-  
+
   --button-fg: #fff !important;
   --button-bg: var(--primary) !important;
   --button-hover-bg: #609ab6 !important;
@@ -45,7 +45,7 @@
   --close-button-hover-bg: #747474 !important;
   --delete-button-bg: #ba2121 !important;
   --delete-button-hover-bg: #a41515 !important;
-  
+
   --object-tools-fg: var(--button-fg) !important;
   --object-tools-bg: var(--close-button-bg) !important;
   --object-tools-hover-bg: var(--close-button-hover-bg) !important;
@@ -1648,7 +1648,7 @@ body::-webkit-scrollbar {
 
 /* LOGIN SCREEN */
 @media only screen and (max-width: 576px) {
- 
+
   .login #container  {
     width: auto !important;
   }
