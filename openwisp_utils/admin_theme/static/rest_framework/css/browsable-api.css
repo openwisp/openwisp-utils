@@ -75,25 +75,14 @@ ul.breadcrumb {
 ul.breadcrumb{
   display: none;
 }
-.str, .atv {
-  color: #f7745a;
-  font-weight: bold; 
-}
 .kwd, .prettyprint .tag {
   color: #333;
-  font-weight: bold; 
 }
 .lit {
-  color: #333;
-  font-weight: bold; 
+  color: #000;
 }
-.pun, .opn, .clo {
+.pun, .opn, .clo, .pln  {
   color: #333;
-  font-weight: bold;
-}
-.pln {
-  color: #333;
-  font-weight: bold;
 }
 .btn-primary {
   color: #fff;

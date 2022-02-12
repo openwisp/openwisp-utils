@@ -59,15 +59,15 @@ body::-webkit-scrollbar {
 .swagger-ui .info a {
   color: #df5d43;
 }
-.swagger-ui .info a:hover, 
+.swagger-ui .info a:hover,
 .swagger-ui .info a:visited{
   color: #D32F2F;
 }
 
 /* AUTH LABEL */
 .label-primary {
-  color: #df5d43;
-  background-color: #ffe5e5;
+  color: #000;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 /* AUTH BTN */
@@ -98,7 +98,7 @@ body::-webkit-scrollbar {
   background-color: #b31e00;
 }
 .swagger-ui .btn.authorize span {
-  padding: 5px 10px 1px 0;
+  padding: 4px 10px 0 0;
 }
 
 /* LOGOUT & CLOSE BTN */
@@ -116,7 +116,6 @@ body::-webkit-scrollbar {
 .swagger-ui .btn:hover{
   background-color: #999;
 }
-
 
 /* OPBLOCK */
 
@@ -138,8 +137,11 @@ body::-webkit-scrollbar {
 .swagger-ui .download-contents {
   width: 89px;
   font-size: 13px;
-  right: 5px;
+  right: 15px;
   padding-top: 7px;
+}
+.swagger-ui .copy-to-clipboard {
+  right: 115px;
 }
 
 /* OPBLOCK EXECUTE */
@@ -158,7 +160,6 @@ body::-webkit-scrollbar {
   background-color: #333;
 }
 .swagger-ui .btn.execute:hover{
-
   background-color: #999;
 }
 
