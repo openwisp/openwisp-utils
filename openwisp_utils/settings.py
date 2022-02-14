@@ -13,3 +13,6 @@ API_INFO = getattr(
         'description': 'OpenWISP REST API',
     },
 )
+
+CELERY_HARD_TIME_LIMIT = getattr(settings, 'OPENWISP_CELERY_HARD_TIME_LIMIT', 30)
+CELERY_SOFT_TIME_LIMIT = getattr(settings, 'OPENWISP_CELERY_SOFT_TIME_LIMIT', 10)

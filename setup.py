@@ -59,6 +59,7 @@ setup(
             'django-filter>=2.2.0<2.4.0',
             'drf-yasg~=1.20.0',
         ],
+        'celery': ['celery~=5.2.3'],
     },
     classifiers=[
         'Development Status :: 3 - Alpha',
