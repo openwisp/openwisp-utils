@@ -717,6 +717,12 @@ input[type='button']:hover,
 #content-main .object-tools {
   display: none;
 }
+#content-main .form-row a:link {
+  text-decoration: underline;
+}
+#content-main .form-row a:link:hover, #content-main a:link:focus {
+  text-decoration: none;
+}
 .title-wrapper h1,
 .title-wrapper h2{
   display: inline-block;
