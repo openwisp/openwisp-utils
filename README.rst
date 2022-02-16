@@ -998,14 +998,12 @@ If you want to print a string in ``Red Bold``, you can do it as below.
 
 You may also provide the ``end`` arguement similar to built-in print method.
 
-
 ``openwisp_utils.utils.SorrtedOrderedDict``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Extends ``collections.SortedDict`` and implements logic to sort inserted
 items based on ``key`` value. Sorting is done at insert operation which
 incurs memory space overhead.
-
 
 ``openwisp_utils.tasks.OpenwispCeleryTask``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
