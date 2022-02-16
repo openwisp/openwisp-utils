@@ -998,13 +998,36 @@ If you want to print a string in ``Red Bold``, you can do it as below.
 
 You may also provide the ``end`` arguement similar to built-in print method.
 
-
 ``openwisp_utils.utils.SorrtedOrderedDict``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Extends ``collections.SortedDict`` and implements logic to sort inserted
 items based on ``key`` value. Sorting is done at insert operation which
 incurs memory space overhead.
+
+``openwisp_utils.tasks.OpenwispCeleryTask``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A custom celery task class that sets hard and soft time limits of celery tasks
+using `OPENWISP_CELERY_HARD_TIME_LIMIT <#openwisp_celery_hard_time_limit>`_
+and `OPENWISP_CELERY_SOFT_TIME_LIMIT <#openwisp_celery_soft_time_limit>`_
+settings respectively.
+
+Usage:
+
+.. code-block:: python
+
+    from celery import shared_task
+
+    from openwisp_utils.tasks import OpenwispCeleryTask
+
+    @shared_task(base=OpenwispCeleryTask)
+    def your_celery_task():
+        pass
+
+**Note:** This task class should be used for regular background tasks
+but not for complex background tasks which can take a long time to execute
+(eg: firmware upgrades, network operations with retry mechanisms).
 
 Storage utilities
 -----------------
@@ -1605,6 +1628,30 @@ This setting allows to change the logo which is displayed in HTML version of the
 
 **Note**: Provide a URL which points to the logo on your own web server. Ensure that the URL provided is
 publicly accessible from the internet. Otherwise, the logo may not be displayed in the email.
+
+``OPENWISP_CELERY_SOFT_TIME_LIMIT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
++---------+---------------------+
+| type    | ``int``             |
++---------+---------------------+
+| default | ``30`` (in seconds) |
++---------+---------------------+
+
+Sets the soft time limit for celery tasks using
+`OpenwispCeleryTask <#openwisp_utilstasksopenwispcelerytask>`_.
+
+``OPENWISP_CELERY_HARD_TIME_LIMIT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
++---------+----------------------+
+| type    | ``int``              |
++---------+----------------------+
+| default | ``120`` (in seconds) |
++---------+----------------------+
+
+Sets the hard time limit for celery tasks using
+`OpenwispCeleryTask <#openwisp_utilstasksopenwispcelerytask>`_.
 
 Installing for development
 --------------------------
