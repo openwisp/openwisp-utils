@@ -74,7 +74,9 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         # Test login page
         self.web_driver.refresh()
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, self.config['site_name_xpath']))
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, self.config['site_name_css_selector'])
+            )
         )
         hamburger = self._get_hamburger()
         logo = self._get_logo()
@@ -165,7 +167,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             try:
                 WebDriverWait(self.web_driver, 2).until(
                     EC.visibility_of_element_located(
-                        (By.XPATH, '//*[@class="nav"]/div[1]/div[2]')
+                        (By.CSS_SELECTOR, '#mg-dropdown-32')
                     )
                 )
             except TimeoutException:
@@ -192,7 +194,10 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             try:
                 WebDriverWait(self.web_driver, 2).until(
                     EC.visibility_of_element_located(
-                        (By.XPATH, '//*[@class="nav"]/div[1]/div[1]/div[1]/span[2]')
+                        (
+                            By.CSS_SELECTOR,
+                            '#mg-control-32 > div:nth-child(1) > span:nth-child(2)',
+                        )
                     )
                 )
             except TimeoutException:
@@ -229,7 +234,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             self.web_driver.refresh()
             WebDriverWait(self.web_driver, 2).until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, self.config['site_name_xpath'])
+                    (By.CSS_SELECTOR, self.config['site_name_css_selector'])
                 )
             )
             self._test_menu_state(True)
@@ -242,7 +247,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             self.web_driver.refresh()
             WebDriverWait(self.web_driver, 2).until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, self.config['hamburger_xpath'])
+                    (By.CSS_SELECTOR, self.config['hamburger_css_selector'])
                 )
             )
             self._test_menu_state(False)
@@ -272,7 +277,9 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         url = reverse('admin:auth_user_changelist')
         self.open(url)
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, self.config['site_name_xpath']))
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, self.config['site_name_css_selector'])
+            )
         )
         with self.subTest('Test active menu group on wide screen'):
             active_mg = self._get_active_mg()
@@ -299,7 +306,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             self.web_driver.refresh()
             WebDriverWait(self.web_driver, 2).until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, self.config['hamburger_xpath'])
+                    (By.CSS_SELECTOR, self.config['hamburger_css_selector'])
                 )
             )
             active_mg = self._get_active_mg()
@@ -321,7 +328,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             account_button = self._get_account_button()
             WebDriverWait(self.web_driver, 2).until(
                 EC.visibility_of_element_located(
-                    (By.XPATH, self.config['hamburger_xpath'])
+                    (By.CSS_SELECTOR, self.config['hamburger_css_selector'])
                 )
             )
             hamburger.click()
@@ -355,7 +362,9 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         self._open_menu()
         self.web_driver.refresh()
         WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.XPATH, self.config['hamburger_xpath']))
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, self.config['hamburger_css_selector'])
+            )
         )
         with self.subTest('Test menu remains close on page change or refresh'):
             self._test_menu_state(False)
@@ -470,7 +479,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
         with self.subTest('Test apply filter'):
             filter_button.click()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+                EC.visibility_of_element_located((By.CSS_SELECTOR, '#site-name'))
             )
             self.assertEqual(self.check_exists_by_id('changelist-filter-clear'), True)
             paginator = self.web_driver.find_element_by_css_selector('.paginator')
@@ -480,7 +489,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
             clear_button = self._get_clear_button()
             clear_button.click()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+                EC.visibility_of_element_located((By.CSS_SELECTOR, '#site-name'))
             )
             paginator = self.web_driver.find_element_by_css_selector('.paginator')
             self.assertEqual(paginator.get_attribute('innerText'), '4 shelfs')
@@ -498,7 +507,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
             filter_button = self._get_filter_button()
             filter_button.click()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+                EC.visibility_of_element_located((By.CSS_SELECTOR, '#site-name'))
             )
             paginator = self.web_driver.find_element_by_css_selector('.paginator')
             self.assertEqual(paginator.get_attribute('innerText'), '0 shelfs')
@@ -531,7 +540,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
             self.assertEqual(dropdown.is_displayed(), True)
             option.click()
             WebDriverWait(self.web_driver, 2).until(
-                EC.visibility_of_element_located((By.XPATH, '//*[@id="site-name"]'))
+                EC.visibility_of_element_located((By.CSS_SELECTOR, '#site-name'))
             )
             selected_option = self._get_filter_selected_option('name')
             self.assertNotEqual(old_value, selected_option.get_attribute('innerText'))
@@ -577,9 +586,7 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
                 # Factual shelf is absent
                 self.web_driver.find_element_by_xpath(factual_result_xpath)
             # Both shelves should be present after clearing filter
-            self.web_driver.find_element_by_xpath(
-                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[1]/div[1]/form/a'
-            ).click()
+            self.web_driver.find_element_by_css_selector('.field-clear').click()
             self.web_driver.find_element_by_xpath(horror_result_xpath)
             self.web_driver.find_element_by_xpath(factual_result_xpath)
 
@@ -594,16 +601,14 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
                 # Factual shelf is absent
                 self.web_driver.find_element_by_xpath(factual_result_xpath)
             # Both shelves should be present after clearing filter
-            self.web_driver.find_element_by_xpath(
-                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/a'
-            ).click()
+            self.web_driver.find_element_by_css_selector('.field-clear').click()
             self.web_driver.find_element_by_xpath(horror_result_xpath)
             self.web_driver.find_element_by_xpath(factual_result_xpath)
 
         with self.subTest('Test InputFilter: UUID'):
             self.open(url)
-            input_field = self.web_driver.find_element_by_xpath(
-                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[3]/div[1]/form/input'
+            input_field = self.web_driver.find_element_by_css_selector(
+                'input[name=id__exact]'
             )
             input_field.send_keys(str(horror_shelf.id))
             self._get_filter_button().click()
@@ -613,9 +618,7 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
                 # Factual shelf is absent
                 self.web_driver.find_element_by_xpath(factual_result_xpath)
             # Both shelves should be present after clearing filter
-            self.web_driver.find_element_by_xpath(
-                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[3]/div[1]/form/a'
-            ).click()
+            self.web_driver.find_element_by_css_selector('.field-clear').click()
             self.web_driver.find_element_by_xpath(horror_result_xpath)
             self.web_driver.find_element_by_xpath(factual_result_xpath)
 
@@ -634,8 +637,6 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
                 # User is absent
                 self.web_driver.find_element_by_xpath(user_xpath)
             # Both users should be present after clearing filter
-            self.web_driver.find_element_by_xpath(
-                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/a'
-            ).click()
+            self.web_driver.find_element_by_css_selector('.field-clear').click()
             self.web_driver.find_element_by_xpath(admin_xpath)
             self.web_driver.find_element_by_xpath(user_xpath)

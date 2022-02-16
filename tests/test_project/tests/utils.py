@@ -37,7 +37,8 @@ class SeleniumTestMixin(TestConfigMixin):
         capabilities = DesiredCapabilities.CHROME
         capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
         cls.web_driver = webdriver.Chrome(
-            options=chrome_options, desired_capabilities=capabilities
+            options=chrome_options,
+            desired_capabilities=capabilities,
         )
 
     @classmethod
@@ -57,7 +58,7 @@ class SeleniumTestMixin(TestConfigMixin):
         driver.get(f'{self.live_server_url}{url}')
         WebDriverWait(self.web_driver, 2).until(
             EC.visibility_of_element_located(
-                (By.XPATH, self.config['main_content_xpath'])
+                (By.CSS_SELECTOR, self.config['main_content_css_selector'])
             )
         )
 
@@ -104,7 +105,7 @@ class SeleniumTestMixin(TestConfigMixin):
         if 'admin/login' in driver.current_url:
             driver.find_element_by_name('username').send_keys(username)
             driver.find_element_by_name('password').send_keys(password)
-            driver.find_element_by_xpath('//input[@type="submit"]').click()
+            driver.find_element_by_css_selector('input[type="submit"]').click()
 
     def logout(self):
         account_button = self._get_account_button()
@@ -128,8 +129,8 @@ class SeleniumTestMixin(TestConfigMixin):
         return self.web_driver.find_element_by_id('main-content')
 
     def _get_menu_home_item_label(self):
-        return self.web_driver.find_element_by_xpath(
-            '//span[@class="label" and contains(.,"Home")]'
+        return self.web_driver.find_element_by_css_selector(
+            'a.menu-item:nth-child(1) > span:nth-child(2)'
         )
 
     def _get_logo(self):
@@ -139,16 +140,14 @@ class SeleniumTestMixin(TestConfigMixin):
         return self.web_driver.find_element_by_id('container')
 
     def _get_test_mg_head(self):
-        return self.web_driver.find_element_by_xpath('//*[@class="nav"]/div[1]/div[1]')
+        return self.web_driver.find_element_by_css_selector('#mg-control-32')
 
     def _get_test_mg_icon(self):
-        return self.web_driver.find_element_by_xpath(
-            '//*[@class="nav"]/div[1]/div[1]/div[1]/span[1]'
-        )
+        return self.web_driver.find_element_by_css_selector('.auth')
 
     def _get_test_mg_label(self):
-        return self.web_driver.find_element_by_xpath(
-            '//*[@class="nav"]/div[1]/div[1]/div[1]/span[2]'
+        return self.web_driver.find_element_by_css_selector(
+            '#mg-control-32 > div:nth-child(1) > span:nth-child(2)'
         )
 
     def _get_active_mg(self):
@@ -158,11 +157,11 @@ class SeleniumTestMixin(TestConfigMixin):
         return self.web_driver.find_element_by_css_selector('.active-mg .mg-head')
 
     def _get_test_mg_dropdown(self):
-        return self.web_driver.find_element_by_xpath('//*[@class="nav"]/div[1]/div[2]')
+        return self.web_driver.find_element_by_css_selector('#mg-dropdown-32')
 
     def _get_test_mg_dropdown_label(self):
-        return self.web_driver.find_element_by_xpath(
-            '//*[@class="nav"]/div[1]/div[2]/div[1]'
+        return self.web_driver.find_element_by_css_selector(
+            '#mg-dropdown-32 > div:nth-child(1)'
         )
 
     def _get_account_button(self):
@@ -178,21 +177,17 @@ class SeleniumTestMixin(TestConfigMixin):
         return self.web_driver.find_element_by_css_selector('.account-menu-username')
 
     def _get_logout_link(self):
-        return self.web_driver.find_element_by_xpath(
-            '//a[@class="menu-link" and @href="/admin/logout/"]'
-        )
+        return self.web_driver.find_element_by_css_selector('.menu-link')
 
     def _get_menu_backdrop(self):
         return self.web_driver.find_element_by_css_selector('.menu-backdrop')
 
     def _get_simple_input_filter(self):
-        return self.web_driver.find_element_by_xpath(
-            '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[1]/div[1]/form/input'
-        )
+        return self.web_driver.find_element_by_css_selector('input[name=shelf]')
 
     def _get_input_filter(self):
-        return self.web_driver.find_element_by_xpath(
-            '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/input'
+        return self.web_driver.find_element_by_css_selector(
+            'input[name=books_type__exact]'
         )
 
     def _open_menu(self):
