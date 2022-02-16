@@ -10,5 +10,5 @@ class TestOpenwispCeleryTask(TestCase):
         def do_nothing():
             pass
 
-        self.assertEqual(do_nothing.soft_time_limit, 10)
-        self.assertEqual(do_nothing.time_limit, 30)
+        self.assertEqual(do_nothing.soft_time_limit, 30)
+        self.assertEqual(do_nothing.time_limit, 120)

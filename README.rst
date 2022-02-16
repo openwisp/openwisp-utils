@@ -1027,6 +1027,10 @@ Usage:
     def your_celery_task():
         pass
 
+**Note:** This task class should be used for regular background tasks
+but not for complex background tasks which can take a long time to execute
+(eg: firmware upgrades, network operations with retry mechanisms).
+
 Storage utilities
 -----------------
 
@@ -1633,7 +1637,7 @@ publicly accessible from the internet. Otherwise, the logo may not be displayed 
 +---------+---------------------+
 | type    | ``int``             |
 +---------+---------------------+
-| default | ``10`` (in seconds) |
+| default | ``30`` (in seconds) |
 +---------+---------------------+
 
 Sets the soft time limit for celery tasks using
@@ -1642,11 +1646,11 @@ Sets the soft time limit for celery tasks using
 ``OPENWISP_CELERY_HARD_TIME_LIMIT``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+---------+---------------------+
-| type    | ``int``             |
-+---------+---------------------+
-| default | ``30`` (in seconds) |
-+---------+---------------------+
++---------+----------------------+
+| type    | ``int``              |
++---------+----------------------+
+| default | ``120`` (in seconds) |
++---------+----------------------+
 
 Sets the hard time limit for celery tasks using
 `OpenwispCeleryTask <#openwisp_utilstasksopenwispcelerytask>`_.
