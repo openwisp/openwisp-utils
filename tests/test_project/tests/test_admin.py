@@ -156,6 +156,40 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             response = self.client.get('/admin/login/')
             self.assertNotContains(response, 'id="nav"')
 
+    def test_menu_on_non_admin_page(self):
+        url = reverse('menu-test-view')
+        with self.subTest('Test menu visibility when user is a staff'):
+            user = User.objects.create(
+                username='tester',
+                password='pass',
+                email='email@email',
+                is_staff=True,
+                is_superuser=False,
+            )
+            self.client.force_login(user)
+            response = self.client.get(url)
+            self.assertContains(response, 'class="nav"')
+            self.assertContains(
+                response, '<strong>Does user has staff privileges?:</strong> True'
+            )
+            self.client.logout()
+
+        with self.subTest('Test menu visibility when user is not staff'):
+            # Test with non staff user
+            user = User.objects.create(
+                username='tester2',
+                password='pass',
+                email='email@email',
+                is_staff=False,
+                is_superuser=False,
+            )
+            self.client.force_login(user)
+            response = self.client.get(url)
+            self.assertNotContains(response, 'class="nav"')
+            self.assertContains(
+                response, '<strong>Does user has staff privileges?:</strong> False'
+            )
+
     def test_uuid_field_in_change(self):
         p = Project.objects.create(name='test-project')
         path = reverse('admin:test_project_project_change', args=[p.pk])

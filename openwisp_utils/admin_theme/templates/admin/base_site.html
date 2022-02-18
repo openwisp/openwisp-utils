@@ -67,7 +67,7 @@
     if we put it in extrahead it will be
     loaded before jQuery is loaded
 {% endcomment %}
-{% if user.is_authenticated %}
+{% if user.is_authenticated and user.is_staff %}
     <script src="{% static "admin/js/menu.js" %}"></script>
 {% endif %}
 {% if OPENWISP_ADMIN_THEME_JS %}

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1> Menu Render Test View </h1>
+<p>
+  <strong>User:</strong> {{ request.user }} </br>
+  <strong>Is user authenticated?:</strong> {{ request.user.is_authenticated }} </br>
+  <strong>Does user has staff privileges?:</strong> {{ request.user.is_staff }} </br>
+</p>
+{% endblock %}
