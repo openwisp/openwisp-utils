@@ -55,7 +55,10 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
                 menu_toggle.get_attribute('title'), self.config['maximize_menu']
             )
             container_class = container.get_attribute('class')
-            self.assertEqual(container_class, 'toggle-menu')
+            self.assertIn(
+                'toggle-menu',
+                container_class,
+            )
 
     def _test_login_and_logout_page(self, is_logged_in=True):
         if not is_logged_in:
