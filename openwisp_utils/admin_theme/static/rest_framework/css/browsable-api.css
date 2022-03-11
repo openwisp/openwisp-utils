@@ -139,3 +139,17 @@ ul.breadcrumb{
   font-weight: normal;
   color: #000;
 }
+.pagination>li>a, .pagination>li>span{
+  color: #777;
+}
+.pagination>li>a:hover, .pagination>li>span:hover{
+  color: #df5d43;
+  background-color: #ffe5e5;
+  border-color: #ffd2c9;
+}
+.pagination>.active>a, .pagination>.active>a:focus, .pagination>.active>a:hover, 
+.pagination>.active>span, .pagination>.active>span:focus, .pagination>.active>span:hover {
+  color: #df5d43;
+  background-color: #ffe5e5;
+  border-color: #ffd2c9;
+}
