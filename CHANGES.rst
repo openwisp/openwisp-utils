@@ -23,7 +23,7 @@ Features
 Changes
 ~~~~~~~
 
-- `Updated OpenWISP's admin theme <https://medium.com/@niteshsinha1707/new-navigation-menu-and-ui-ux-improvements-project-report-a94c37514b7d>`_
+- `Updated OpenWISP's admin theme <https://medium.com/@niteshsinha1707/new-navigation-menu-and-ui-ux-improvements-project-report-a94c37514b7d>`__
 
 **Dependencies**:
 
