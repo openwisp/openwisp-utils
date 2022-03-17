@@ -25,13 +25,7 @@ Changes
 
 - `Updated OpenWISP's admin theme <https://medium.com/@niteshsinha1707/new-navigation-menu-and-ui-ux-improvements-project-report-a94c37514b7d>`_
 
-Bugfixes
-~~~~~~~~
-
-- Fixed `checkcommit` failing for `trailing period (.) after closing keyword <https://github.com/openwisp/openwisp-utils/issues/187>`_
-
-Dependencies
-~~~~~~~~~~~~
+**Dependencies**:
 
 - Bumped ``django-model-utils~=4.2.0``
 - Bumped ``black<=21.10b0``
@@ -39,6 +33,11 @@ Dependencies
 - Added ``swapper~=1.3.0``, ``django-compress-staticfiles~=1.0.1b`` and ``celery~=5.2.3``
 - Added support for Django ``3.2.x`` and ``4.0.x``
 - Added support for Python ``3.9``
+
+Bugfixes
+~~~~~~~~
+
+- Fixed `checkcommit` failing for `trailing period (.) after closing keyword <https://github.com/openwisp/openwisp-utils/issues/187>`_
 
 Version 0.7.5 [2021-06-01]
 --------------------------
