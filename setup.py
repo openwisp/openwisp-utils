@@ -48,7 +48,7 @@ setup(
     ],
     extras_require={
         'qa': [
-            'black<=21.10b0',
+            'black~=22.3.0',
             'flake8<=3.9',
             'isort~=5.0',
             'readme-renderer~=28.0',
