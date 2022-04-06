@@ -144,6 +144,7 @@ class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
         self.assertContains(response, 'Operator presence in projects')
         self.assertContains(response, 'with_operator')
         self.assertContains(response, 'without_operator')
+        self.assertContains(response, 'project__name__exact')
 
         with self.subTest('Test no data'):
             Project.objects.all().delete()

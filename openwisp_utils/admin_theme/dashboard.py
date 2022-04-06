@@ -184,7 +184,9 @@ def get_dashboard_context(request):
                 if value.get('colors') and qs_key in value['colors']:
                     colors.append(value['colors'][qs_key])
                 values.append(obj['count'])
-            value['target_link'] = f'/admin/{app_label}/{model_name}/?{group_by}='
+            value[
+                'target_link'
+            ] = f'/admin/{app_label}/{model_name}/?{group_by}__exact='
 
         if aggregate:
             for qs_key, qs_value in qs.items():
