@@ -351,38 +351,38 @@ and optionally, how the returned values have to be colored and labeled.
 
 Following properties can be configured for each chart ``config``:
 
-+-----------------+------------------------------------------------------------------------------------------------------+
-| **Property**    | **Description**                                                                                      |
-+-----------------+------------------------------------------------------------------------------------------------------+
-| ``query_param`` | It is a required property in form of ``dict`` containing following properties:                       |
-|                 |                                                                                                      |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | **Property**  | **Description**                                                                 |  |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``name``      | (``str``) Chart title shown in the user interface.                              |  |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``app_label`` | (``str``) App label of the model that will be used to query the database.       |  |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``model``     | (``str``) Name of the model that will be used to query the database.            |  |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``group_by``  | (``str``) The property which will be used to group values.                      |  |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``annotate``  | Alternative to ``group_by``, ``dict`` used for more complex queries.            |  |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-|                 | | ``aggregate`` | Alternative to ``group_by``, ``dict`` used for more complex queries.            |  |
-|                 | +---------------+---------------------------------------------------------------------------------+  |
-+-----------------+------------------------------------------------------------------------------------------------------+
-| ``colors``      | An **optional** ``dict`` which can be used to define colors for each distinct                        |
-|                 | value shown in the pie charts.                                                                       |
-+-----------------+------------------------------------------------------------------------------------------------------+
-| ``labels``      | An **optional** ``dict`` which can be used to define translatable strings for each distinct          |
-|                 | value shown in the pie charts. Can be used also to provide fallback human readable values for        |
-|                 | raw values stored in the database which would be otherwise hard to understand for the user.          |
-+-----------------+------------------------------------------------------------------------------------------------------+
-| ``filters``     | An **optional** ``dict`` which can be used when using ``aggregate`` and ``annotate`` in              |
-|                 | ``query_params`` to define the link that will be generated to filter results (pie charts are         |
-|                 | clickable and clicking on a portion of it will show the filtered results).                           |
-+-----------------+------------------------------------------------------------------------------------------------------+
++------------------+--------------------------------------------------------------------------------------------------------+
+| **Property**     | **Description**                                                                                        |
++------------------+--------------------------------------------------------------------------------------------------------+
+| ``query_params`` | It is a required property in form of ``dict`` containing following properties:                         |
+|                  |                                                                                                        |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
+|                  | | **Property**    | **Description**                                                                 |  |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
+|                  | | ``name``        | (``str``) Chart title shown in the user interface.                              |  |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
+|                  | | ``app_label``   | (``str``) App label of the model that will be used to query the database.       |  |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
+|                  | | ``model``       | (``str``) Name of the model that will be used to query the database.            |  |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
+|                  | | ``group_by``    | (``str``) The property which will be used to group values.                      |  |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
+|                  | | ``annotate``    | Alternative to ``group_by``, ``dict`` used for more complex queries.            |  |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
+|                  | | ``aggregate``   | Alternative to ``group_by``, ``dict`` used for more complex queries.            |  |
+|                  | +-----------------+---------------------------------------------------------------------------------+  |
++------------------+--------------------------------------------------------------------------------------------------------+
+| ``colors``       | An **optional** ``dict`` which can be used to define colors for each distinct                          |
+|                  | value shown in the pie charts.                                                                         |
++------------------+--------------------------------------------------------------------------------------------------------+
+| ``labels``       | An **optional** ``dict`` which can be used to define translatable strings for each distinct            |
+|                  | value shown in the pie charts. Can be used also to provide fallback human readable values for          |
+|                  | raw values stored in the database which would be otherwise hard to understand for the user.            |
++------------------+--------------------------------------------------------------------------------------------------------+
+| ``filters``      | An **optional** ``dict`` which can be used when using ``aggregate`` and ``annotate`` in                |
+|                  | ``query_params`` to define the link that will be generated to filter results (pie charts are           |
+|                  | clickable and clicking on a portion of it will show the filtered results).                             |
++------------------+--------------------------------------------------------------------------------------------------------+
 
 Code example:
 
