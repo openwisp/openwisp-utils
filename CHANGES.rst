@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 1.0.1 [2022-04-07]
+--------------------------
+
+- Fixed ``ImportError`` in click dependency of black
+  (updated black dependency to ``black~=22.3.0``)
+- Fixed target link of pie charts which use group by queries
+
 Version 1.0.0 [2022-02-18]
 --------------------------
 
