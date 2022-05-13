@@ -30,6 +30,7 @@
 
   for (let i = 0; i < elementsParam.length; ++i) {
     layout.title.text = elementsParam[i].name;
+    delete layout.annotations;
     let data = {
       type: 'pie',
       hole: 0.6,
