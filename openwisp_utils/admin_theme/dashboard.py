@@ -12,6 +12,7 @@ DASHBOARD_TEMPLATES = SortedOrderedDict()
 
 def _validate_chart_config(config):
     query_params = config.get('query_params', None)
+    quick_link = config.get('quick_link', None)
 
     assert query_params is not None
     assert 'name' in config
@@ -21,6 +22,13 @@ def _validate_chart_config(config):
     assert not ('group_by' in query_params and 'annotate' in query_params)
     if 'annotate' in query_params:
         assert 'filters' in config, 'filters must be defined when using annotate'
+    if quick_link:
+        assert 'url' in quick_link, 'url must be defined when using quick_link'
+        assert 'label' in quick_link, 'label must be defined when using quick_link'
+        if 'custom_css_classes' in quick_link:
+            assert isinstance(quick_link['custom_css_classes'], list) or isinstance(
+                quick_link['custom_css_classes'], tuple
+            ), 'custom_css_classes must be either a list or a tuple'
     return config
 
 

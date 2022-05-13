@@ -13,6 +13,18 @@
 .js-plotly-plot .hoverlayer {
   text-transform: capitalize;
 }
+.js-plotly-plot .quick-link-container {
+  position: absolute;
+  margin-top: -30px;
+  width: 460px;
+}
+.quick-link.button.negative-top-20 {
+  position: relative;
+  top: -20px;
+}
+.js-plotly-plot .button.quick-link {
+  padding: 0.3rem 1rem;
+}
 .dashboard:not([class*='app-']) #container #content {
   margin: 0 auto;
   width: auto;
@@ -35,7 +47,7 @@
 }
 
 @media only screen and (max-width: 576px) {
- 
+
   #plot-container {
     display: flex;
     align-items: center;

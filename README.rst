@@ -383,6 +383,21 @@ Following properties can be configured for each chart ``config``:
 |                  | ``query_params`` to define the link that will be generated to filter results (pie charts are           |
 |                  | clickable and clicking on a portion of it will show the filtered results).                             |
 +------------------+--------------------------------------------------------------------------------------------------------+
+| ``quick_link``   | An **optional** ``dict`` which contains configuration for the quick link button rendered               |
+|                  | below the chart.                                                                                       |
+|                  |                                                                                                        |
+|                  | **NOTE**: The chart legend is disabled if configuration for quick link button is provided.             |
+|                  |                                                                                                        |
+|                  | +------------------------+--------------------------------------------------------------------------+  |
+|                  | | **Property**           | **Description**                                                          |  |
+|                  | +------------------------+--------------------------------------------------------------------------+  |
+|                  | | ``url``                | (``str``) URL for the anchor tag                                         |  |
+|                  | +------------------------+--------------------------------------------------------------------------+  |
+|                  | | ``label``              | (``str``) Label shown on the button                                      |  |
+|                  | +------------------------+--------------------------------------------------------------------------+  |
+|                  | | ``custom_css_classes`` | (``list``) List of CSS classes that'll be applied on the button          |  |
+|                  | +------------------------+--------------------------------------------------------------------------+  |
++------------------+--------------------------------------------------------------------------------------------------------+
 
 Code example:
 
