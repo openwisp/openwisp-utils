@@ -30,6 +30,10 @@
 
   for (let i = 0; i < elementsParam.length; ++i) {
     layout.title.text = elementsParam[i].name;
+    // Remove annotations added from previous chart.
+    // Otherwise, empty chart will show annotations from
+    // the previous chart.
+    delete layout.annotations;
     let data = {
       type: 'pie',
       hole: 0.6,
