@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from copy import deepcopy
 from unittest import TestCase as UnitTestCase
 from unittest.mock import patch
 
@@ -46,6 +47,29 @@ class TestDashboardSchema(UnitTestCase):
         with self.subTest('Unregistering "Test Chart"'):
             unregister_dashboard_chart('Test Chart')
             self.assertNotIn(-1, DASHBOARD_CHARTS)
+
+        with self.subTest('Invalid "quick_link" config'):
+            invalid_config = deepcopy(dashboard_element)
+            invalid_config['quick_link'] = {'register': True}
+            with self.assertRaises(AssertionError) as context:
+                register_dashboard_chart(-2, invalid_config)
+            self.assertEqual(
+                str(context.exception), 'url must be defined when using quick_link'
+            )
+            invalid_config['quick_link']['url'] = '/'
+            with self.assertRaises(AssertionError) as context:
+                register_dashboard_chart(-2, invalid_config)
+            self.assertEqual(
+                str(context.exception), 'label must be defined when using quick_link'
+            )
+            invalid_config['quick_link']['label'] = 'index'
+            invalid_config['quick_link']['custom_css_classes'] = 'custom'
+            with self.assertRaises(AssertionError) as context:
+                register_dashboard_chart(-2, invalid_config)
+            self.assertEqual(
+                str(context.exception),
+                'custom_css_classes must be either a list or a tuple',
+            )
 
     def test_miscellaneous_DASHBOARD_CHARTS_validation(self):
         with self.subTest('Registering with incomplete config'):
@@ -134,6 +158,14 @@ class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
         self.assertContains(response, '\'values\': [1, 1]')
         self.assertContains(response, '\'labels\': [\'User\', \'Utils\']')
         self.assertContains(response, '\'colors\': [\'orange\', \'red\']')
+        self.assertContains(
+            response,
+            (
+                '\'quick_link\': {\'url\': \'/admin/test_project/operator/\','
+                ' \'label\': \'Open Operators list\', \'custom_css_classes\': '
+                '[\'negative-top-20\']'
+            ),
+        )
         self.assertContains(
             response, '<div style="display:none">Testing dashboard</div>'
         )

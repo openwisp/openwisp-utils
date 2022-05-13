@@ -37,6 +37,7 @@
     let data = {
       type: 'pie',
       hole: 0.6,
+      showlegend: !elementsParam[i].hasOwnProperty('quick_link')
     },
     element = document.createElement('div');
 
@@ -103,6 +104,26 @@
         }
         window.location = path;
       });
+    }
+
+    // Add quick link button
+    if (elementsParam[i].hasOwnProperty('quick_link')) {
+      let quickLinkContainer = document.createElement('div');
+      quickLinkContainer.classList.add('quick-link-container');
+      let quickLink = document.createElement('a');
+      quickLink.href = elementsParam[i].quick_link.url;
+      quickLink.innerHTML = elementsParam[i].quick_link.label;
+      quickLink.classList.add('button', 'quick-link');
+      // Add custom css classes
+      if (elementsParam[i].quick_link.custom_css_classes) {
+        for(let j=0; j<elementsParam[i].quick_link.custom_css_classes.length; ++j){
+          quickLink.classList.add(elementsParam[i].quick_link.custom_css_classes[j]);
+        }
+      }
+      quickLinkContainer.appendChild(quickLink);
+      element.appendChild(
+        quickLinkContainer
+      );
     }
     container.appendChild(element);
   }
