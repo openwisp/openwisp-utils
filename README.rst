@@ -1751,3 +1751,10 @@ License
 -------
 
 See `LICENSE <https://github.com/openwisp/openwisp-utils/blob/master/LICENSE>`_.
+
+Attribution
+-----------
+
+`Wireless icon <https://github.com/openwisp/openwisp-utils/blob/master/openwisp_utils/admin_theme/static/ui/openwisp/images/monitoring-wifi.svg>`_
+is licensed by Gregbaker, under `CC BY-SA 4.0 <https://creativecommons.org/licenses/by-sa/4.0>`_ ,
+via `Wikimedia Commons <https://commons.wikimedia.org/wiki/File:Wireless-icon.svg>`_.

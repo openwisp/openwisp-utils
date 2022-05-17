@@ -1613,6 +1613,10 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/montoring-checks.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/montoring-checks.svg);
 }
+.ow-monitoring-wifi {
+  mask-image: url(../../ui/openwisp/images/monitoring-wifi.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/monitoring-wifi.svg);
+}
 
 /* FIRMWARE */
 
