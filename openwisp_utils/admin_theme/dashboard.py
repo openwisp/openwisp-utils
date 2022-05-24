@@ -71,12 +71,12 @@ def unregister_dashboard_chart(name):
 
 def _validate_template_config(config):
     assert 'template' in config
-    if not config.get('after_charts'):
-        config['after_charts'] = False
     return config
 
 
-def register_dashboard_template(position, config, extra_config=None):
+def register_dashboard_template(
+    position, config, extra_config=None, after_charts=False
+):
     """
     Registers a dashboard template
     register_dashboard_template(int, dict)
@@ -101,7 +101,9 @@ def register_dashboard_template(position, config, extra_config=None):
             f'{DASHBOARD_TEMPLATES[position][0]["template"]}'
         )
     validated_config = _validate_template_config(config)
-    DASHBOARD_TEMPLATES.update({position: [validated_config, extra_config]})
+    DASHBOARD_TEMPLATES.update(
+        {position: [validated_config, extra_config, after_charts]}
+    )
 
 
 def unregister_dashboard_template(path):
@@ -221,7 +223,7 @@ def get_dashboard_context(request):
     css = []
     js = []
     for _, template_config in DASHBOARD_TEMPLATES.items():
-        if template_config[0]['after_charts']:
+        if template_config[2]:
             templates_after_charts.append(template_config[0]['template'])
         else:
             templates_before_charts.append(template_config[0]['template'])
