@@ -216,7 +216,7 @@ def get_dashboard_context(request):
         if 'js' in template_config[0]:
             js += list(template_config[0]['js'])
         if template_config[1]:
-            extra_config = template_config[1]
+            extra_config.update(template_config[1])
 
     context.update(
         {

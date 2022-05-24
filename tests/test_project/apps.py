@@ -98,7 +98,14 @@ class TestAppConfig(ApiAppConfig):
                 'css': ('dashboard-test.css',),
                 'js': ('dashboard-test.js',),
             },
-            extra_config={'test_extra_config': 'dashboard-test.config'},
+            extra_config={'test_extra_config1': 'dashboard-test.config1'},
+        )
+        register_dashboard_template(
+            position=1,
+            config={
+                'template': 'dashboard_test.html',
+            },
+            extra_config={'test_extra_config2': 'dashboard-test.config2'},
         )
 
     def register_menu_groups(self):
