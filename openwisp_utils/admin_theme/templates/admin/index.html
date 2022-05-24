@@ -22,11 +22,16 @@
 
 {% if not app_label and dashboard_enabled %}
 
-{% for template in dashboard_templates %}
-{% include template %}
+{% for template in dashboard_templates_before_charts %}
+  {% include template %}
 {% endfor %}
 
 <div id="plot-container"></div>
+
+{% for template in dashboard_templates_after_charts %}
+  {% include template %}
+{% endfor %}
+
 {% endif %}
 {% endblock %}
 
