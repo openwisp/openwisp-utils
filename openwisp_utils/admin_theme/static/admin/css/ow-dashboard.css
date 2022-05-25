@@ -22,7 +22,7 @@
   position: relative;
   top: -20px;
 }
-.js-plotly-plot .button.quick-link {
+.quick-link-container .button.quick-link {
   padding: 0.3rem 1rem;
 }
 .dashboard:not([class*='app-']) #container #content {
