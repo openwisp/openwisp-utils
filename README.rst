@@ -237,7 +237,7 @@ shipped by
 `OpenWISP Monitoring <https://github.com/openwisp/openwisp-monitoring>`_
 but can be used to include any custom element in the dashboard.
 
-**Note**: templates are loaded before charts.
+**Note**: you can configure to load templates before or after charts.
 
 **Syntax:**
 
@@ -253,6 +253,10 @@ but can be used to include any custom element in the dashboard.
 | ``config``         | (``dict``) The configuration of the template.                                    |
 +--------------------+----------------------------------------------------------------------------------+
 | ``extra_config``   | **optional** (``dict``) Extra configuration you want to pass to custom template. |
++--------------------+----------------------------------------------------------------------------------+
+| ``after_charts``   | **optional** (``bool``) Whether the template should be loaded after dashboard    |
+|                    | charts. Defaults to ``False``, i.e. templates are loaded before dashboard        |
+|                    | charts by default.                                                               |
 +--------------------+----------------------------------------------------------------------------------+
 
 Following properties can be configured for each template ``config``:
