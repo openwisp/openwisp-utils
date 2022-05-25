@@ -298,6 +298,7 @@ Code example:
         extra_config={
             'optional_variable': 'any_valid_value',
         },
+        after_charts=True,
     )
 
 It is recommended to register dashboard templates from the ``ready``
