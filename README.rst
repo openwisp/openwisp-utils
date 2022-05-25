@@ -277,28 +277,28 @@ Code example:
 
 .. code-block:: python
 
-	from openwisp_utils.admin_theme import register_dashboard_template
+    from openwisp_utils.admin_theme import register_dashboard_template
 
-  register_dashboard_template(
-      position=0,
-      config={
-          'template': 'admin/dashboard/device_map.html',
-          'css': (
-              'monitoring/css/device-map.css',
-              'leaflet/leaflet.css',
-              'monitoring/css/leaflet.fullscreen.css',
-          ),
-          'js': (
-              'monitoring/js/device-map.js',
-              'leaflet/leaflet.js',
-              'leaflet/leaflet.extras.js',
-              'monitoring/js/leaflet.fullscreen.min.js'
-          )
-      },
-      extra_config={
-          'optional_variable': 'any_valid_value',
-      },
-  )
+    register_dashboard_template(
+        position=0,
+        config={
+            'template': 'admin/dashboard/device_map.html',
+            'css': (
+                'monitoring/css/device-map.css',
+                'leaflet/leaflet.css',
+                'monitoring/css/leaflet.fullscreen.css',
+            ),
+            'js': (
+                'monitoring/js/device-map.js',
+                'leaflet/leaflet.js',
+                'leaflet/leaflet.extras.js',
+                'monitoring/js/leaflet.fullscreen.min.js'
+            )
+        },
+        extra_config={
+            'optional_variable': 'any_valid_value',
+        },
+    )
 
 It is recommended to register dashboard templates from the ``ready``
 method of the AppConfig of the app where the templates are defined.
