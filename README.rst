@@ -237,7 +237,9 @@ shipped by
 `OpenWISP Monitoring <https://github.com/openwisp/openwisp-monitoring>`_
 but can be used to include any custom element in the dashboard.
 
-**Note**: you can configure to load templates before or after charts.
+**Note**: it is possible to register templates to be loaded
+before or after charts using the ``after_charts`` keyword argument
+(see below).
 
 **Syntax:**
 
