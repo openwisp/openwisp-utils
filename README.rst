@@ -395,6 +395,8 @@ Following properties can be configured for each chart ``config``:
 |                  | +------------------------+--------------------------------------------------------------------------+  |
 |                  | | ``label``              | (``str``) Label shown on the button                                      |  |
 |                  | +------------------------+--------------------------------------------------------------------------+  |
+|                  | | ``title``              | (``str``) Title attribute of the button element                          |  |
+|                  | +------------------------+--------------------------------------------------------------------------+  |
 |                  | | ``custom_css_classes`` | (``list``) List of CSS classes that'll be applied on the button          |  |
 |                  | +------------------------+--------------------------------------------------------------------------+  |
 +------------------+--------------------------------------------------------------------------------------------------------+
@@ -415,6 +417,12 @@ Code example:
                 'group_by': 'project__name',
             },
             'colors': {'Utils': 'red', 'User': 'orange'},
+            'quick_link': {
+                'url': '/admin/test_project/operator',
+                'label': 'Open Operators list',
+                'title': 'View complete list of operators',
+                'custom_css_classes': ['negative-top-20'],
+            },
         },
     )
 

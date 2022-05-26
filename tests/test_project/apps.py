@@ -48,6 +48,7 @@ class TestAppConfig(ApiAppConfig):
                 'quick_link': {
                     'url': reverse_lazy('admin:test_project_operator_changelist'),
                     'label': 'Open Operators list',
+                    'title': 'View complete list of operators',
                     'custom_css_classes': ['negative-top-20'],
                 },
             },

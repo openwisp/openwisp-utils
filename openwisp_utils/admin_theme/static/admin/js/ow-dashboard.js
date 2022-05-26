@@ -113,6 +113,7 @@
       let quickLink = document.createElement('a');
       quickLink.href = elementsParam[i].quick_link.url;
       quickLink.innerHTML = elementsParam[i].quick_link.label;
+      quickLink.title = elementsParam[i].quick_link.title || elementsParam[i].quick_link.label;
       quickLink.classList.add('button', 'quick-link');
       // Add custom css classes
       if (elementsParam[i].quick_link.custom_css_classes) {
