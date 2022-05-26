@@ -188,8 +188,9 @@ class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
             response,
             (
                 '\'quick_link\': {\'url\': \'/admin/test_project/operator/\','
-                ' \'label\': \'Open Operators list\', \'custom_css_classes\': '
-                '[\'negative-top-20\']'
+                ' \'label\': \'Open Operators list\', \'title\':'
+                ' \'View complete list of operators\', \'custom_css_classes\':'
+                ' [\'negative-top-20\']'
             ),
         )
         self.assertContains(
