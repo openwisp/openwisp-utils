@@ -237,7 +237,9 @@ shipped by
 `OpenWISP Monitoring <https://github.com/openwisp/openwisp-monitoring>`_
 but can be used to include any custom element in the dashboard.
 
-**Note**: templates are loaded before charts.
+**Note**: it is possible to register templates to be loaded
+before or after charts using the ``after_charts`` keyword argument
+(see below).
 
 **Syntax:**
 
@@ -253,6 +255,10 @@ but can be used to include any custom element in the dashboard.
 | ``config``         | (``dict``) The configuration of the template.                                    |
 +--------------------+----------------------------------------------------------------------------------+
 | ``extra_config``   | **optional** (``dict``) Extra configuration you want to pass to custom template. |
++--------------------+----------------------------------------------------------------------------------+
+| ``after_charts``   | **optional** (``bool``) Whether the template should be loaded after dashboard    |
+|                    | charts. Defaults to ``False``, i.e. templates are loaded before dashboard        |
+|                    | charts by default.                                                               |
 +--------------------+----------------------------------------------------------------------------------+
 
 Following properties can be configured for each template ``config``:
@@ -271,28 +277,29 @@ Code example:
 
 .. code-block:: python
 
-	from openwisp_utils.admin_theme import register_dashboard_template
+    from openwisp_utils.admin_theme import register_dashboard_template
 
-  register_dashboard_template(
-      position=0,
-      config={
-          'template': 'admin/dashboard/device_map.html',
-          'css': (
-              'monitoring/css/device-map.css',
-              'leaflet/leaflet.css',
-              'monitoring/css/leaflet.fullscreen.css',
-          ),
-          'js': (
-              'monitoring/js/device-map.js',
-              'leaflet/leaflet.js',
-              'leaflet/leaflet.extras.js',
-              'monitoring/js/leaflet.fullscreen.min.js'
-          )
-      },
-      extra_config={
-          'optional_variable': 'any_valid_value',
-      },
-  )
+    register_dashboard_template(
+        position=0,
+        config={
+            'template': 'admin/dashboard/device_map.html',
+            'css': (
+                'monitoring/css/device-map.css',
+                'leaflet/leaflet.css',
+                'monitoring/css/leaflet.fullscreen.css',
+            ),
+            'js': (
+                'monitoring/js/device-map.js',
+                'leaflet/leaflet.js',
+                'leaflet/leaflet.extras.js',
+                'monitoring/js/leaflet.fullscreen.min.js'
+            )
+        },
+        extra_config={
+            'optional_variable': 'any_valid_value',
+        },
+        after_charts=True,
+    )
 
 It is recommended to register dashboard templates from the ``ready``
 method of the AppConfig of the app where the templates are defined.

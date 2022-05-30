@@ -74,7 +74,9 @@ def _validate_template_config(config):
     return config
 
 
-def register_dashboard_template(position, config, extra_config=None):
+def register_dashboard_template(
+    position, config, extra_config=None, after_charts=False
+):
     """
     Registers a dashboard template
     register_dashboard_template(int, dict)
@@ -99,7 +101,9 @@ def register_dashboard_template(position, config, extra_config=None):
             f'{DASHBOARD_TEMPLATES[position][0]["template"]}'
         )
     validated_config = _validate_template_config(config)
-    DASHBOARD_TEMPLATES.update({position: [validated_config, extra_config]})
+    DASHBOARD_TEMPLATES.update(
+        {position: [validated_config, extra_config, after_charts]}
+    )
 
 
 def unregister_dashboard_template(path):
@@ -214,11 +218,15 @@ def get_dashboard_context(request):
 
     # dashboard templates
     extra_config = {}
-    templates = []
+    templates_before_charts = []
+    templates_after_charts = []
     css = []
     js = []
     for _, template_config in DASHBOARD_TEMPLATES.items():
-        templates.append(template_config[0]['template'])
+        if template_config[2]:
+            templates_after_charts.append(template_config[0]['template'])
+        else:
+            templates_before_charts.append(template_config[0]['template'])
         if 'css' in template_config[0]:
             css += list(template_config[0]['css'])
         if 'js' in template_config[0]:
@@ -229,7 +237,8 @@ def get_dashboard_context(request):
     context.update(
         {
             'dashboard_charts': dict(config),
-            'dashboard_templates': templates,
+            'dashboard_templates_before_charts': templates_before_charts,
+            'dashboard_templates_after_charts': templates_after_charts,
             'dashboard_css': css,
             'dashboard_js': js,
         }

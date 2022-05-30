@@ -12,9 +12,11 @@ from openwisp_utils.admin_theme import (
     unregister_dashboard_chart,
     unregister_dashboard_template,
 )
+from openwisp_utils.admin_theme.dashboard import get_dashboard_context
 
 from ..models import Project
 from . import AdminTestMixin
+from .utils import MockRequest, MockUser
 
 
 class TestDashboardSchema(UnitTestCase):
@@ -149,6 +151,30 @@ class TestDashboardSchema(UnitTestCase):
             dashboard_element = {'template': 'test.html'}
             with self.assertRaises(ImproperlyConfigured):
                 register_dashboard_template(1, dashboard_element, 'test')
+
+    @patch('openwisp_utils.admin_theme.dashboard.DASHBOARD_TEMPLATES', OrderedDict())
+    @patch('openwisp_utils.admin_theme.dashboard.DASHBOARD_CHARTS', OrderedDict())
+    def test_dashboard_after_charts(self):
+        register_dashboard_template(
+            position=0,
+            config={'template': 'password_change_done.html'},
+            after_charts=False,
+        )
+        register_dashboard_template(
+            position=1,
+            config={'template': 'password_change_redirect.html'},
+            after_charts=True,
+        )
+        mocked_user = MockUser(is_superuser=True)
+        mocked_request = MockRequest(user=mocked_user)
+        context = get_dashboard_context(mocked_request)
+        self.assertEqual(
+            context['dashboard_templates_before_charts'], ['password_change_done.html']
+        )
+        self.assertEqual(
+            context['dashboard_templates_after_charts'],
+            ['password_change_redirect.html'],
+        )
 
 
 class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
