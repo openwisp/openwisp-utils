@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from ..models import Book, Shelf
+from ..models import Book, Operator, Shelf
 from . import CreateMixin
 from .utils import SeleniumTestMixin
 
@@ -643,3 +643,32 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
             self.web_driver.find_element_by_css_selector('.field-clear').click()
             self.web_driver.find_element_by_xpath(admin_xpath)
             self.web_driver.find_element_by_xpath(user_xpath)
+
+
+class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+    def setUp(self):
+        self.admin = self._create_admin()
+        self.web_driver.set_window_size(1600, 768)
+
+    def test_pie_chart_annotation(self):
+        Operator.objects.all().delete()
+        self.login()
+        url = reverse('admin:index')
+        self.open(url)
+        try:
+            WebDriverWait(self.web_driver, 20).until(
+                EC.visibility_of_element_located(
+                    (By.CSS_SELECTOR, '.annotation-text tspan')
+                )
+            )
+        except TimeoutException:
+            self.fail('Failed to find annotation text element in the chart')
+        else:
+            annotation_text = self.web_driver.find_element_by_css_selector(
+                '.annotation-text tspan'
+            )
+            self.assertEqual(annotation_text.text, '0')
