@@ -1,5 +1,20 @@
 (function() {
+
   'use strict';
+
+  function slugify(str)
+    {
+        str = str.replace(/^\s+|\s+$/g, '');
+        // Make the string lowercase
+        str = str.toLowerCase();
+        // Remove invalid chars
+        str = str.replace(/[^a-z0-9 -]/g, '')
+          // Collapse whitespace and replace by -
+          .replace(/\s+/g, '-')
+          // Collapse dashes
+          .replace(/-+/g, '-');
+        return str;
+    }
 
   let elementsParam = Object.values(owDashboardCharts),
       container = document.getElementById('plot-container');
@@ -39,10 +54,11 @@
       hole: 0.6,
       showlegend: !elementsParam[i].hasOwnProperty('quick_link')
     },
-    element = document.createElement('div');
+    element = document.createElement('div'),
+    totalValues = 0;
 
     // Show a graph depicting disabled graph when there is insufficient data
-    if (elementsParam[i].query_params.values.length == 0) {
+    if (elementsParam[i].query_params.values.length === 0) {
       data.values = [1];
       data.labels = ['Not enough data'];
       data.marker = {
@@ -72,23 +88,22 @@
       data.filters = elementsParam[i].filters;
 
       // add total to pie chart
-      var total = 0;
       for (var c = 0; c < data.values.length; c++) {
-        total += data.values[c];
+        totalValues += data.values[c];
       }
-      layout.annotations = [
-        {
-          font: {
-            size: 20,
-            weight: 'bold'
-          },
-          showarrow: false,
-          text: `<b>${total}</b>`,
-          x: 0.5,
-          y: 0.5
-        }
-      ];
     }
+    layout.annotations = [
+      {
+        font: {
+          size: 20,
+          weight: 'bold'
+        },
+        showarrow: false,
+        text: `<b>${totalValues}</b>`,
+        x: 0.5,
+        y: 0.5
+      }
+    ];
 
     Plotly.newPlot(element, [data], layout, options);
 
@@ -126,6 +141,7 @@
         quickLinkContainer
       );
     }
+    element.classList.add(slugify(elementsParam[i].name));
     container.appendChild(element);
   }
 
