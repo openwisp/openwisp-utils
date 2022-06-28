@@ -654,21 +654,24 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
         self.admin = self._create_admin()
         self.web_driver.set_window_size(1600, 768)
 
-    def test_pie_chart_annotation(self):
+    def test_pie_chart_zero_annotation(self):
         Operator.objects.all().delete()
         self.login()
         url = reverse('admin:index')
         self.open(url)
         try:
-            WebDriverWait(self.web_driver, 20).until(
+            WebDriverWait(self.web_driver, 10).until(
                 EC.visibility_of_element_located(
-                    (By.CSS_SELECTOR, '.annotation-text tspan')
+                    (
+                        By.CSS_SELECTOR,
+                        '.operator-project-distribution .annotation-text tspan',
+                    )
                 )
             )
         except TimeoutException:
             self.fail('Failed to find annotation text element in the chart')
         else:
             annotation_text = self.web_driver.find_element_by_css_selector(
-                '.annotation-text tspan'
+                '.operator-project-distribution .annotation-text tspan'
             )
             self.assertEqual(annotation_text.text, '0')

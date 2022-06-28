@@ -1,5 +1,20 @@
 (function() {
+
   'use strict';
+
+  function slugify(str)
+    {
+        str = str.replace(/^\s+|\s+$/g, '');
+        // Make the string lowercase
+        str = str.toLowerCase();
+        // Remove invalid chars
+        str = str.replace(/[^a-z0-9 -]/g, '')
+          // Collapse whitespace and replace by -
+          .replace(/\s+/g, '-')
+          // Collapse dashes
+          .replace(/-+/g, '-');
+        return str;
+    }
 
   let elementsParam = Object.values(owDashboardCharts),
       container = document.getElementById('plot-container');
@@ -126,6 +141,7 @@
         quickLinkContainer
       );
     }
+    element.classList.add(slugify(elementsParam[i].name));
     container.appendChild(element);
   }
 
