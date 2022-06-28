@@ -1,5 +1,19 @@
 (function() {
+
   'use strict';
+
+  function slugify(str) {
+    str = str.replace(/^\s+|\s+$/g, '');
+    // Make the string lowercase
+    str = str.toLowerCase();
+    // Remove invalid chars
+    str = str.replace(/[^a-z0-9 -]/g, '')
+      // Collapse whitespace and replace by -
+      .replace(/\s+/g, '-')
+      // Collapse dashes
+      .replace(/-+/g, '-');
+    return str;
+  }
 
   let elementsParam = Object.values(owDashboardCharts),
       container = document.getElementById('plot-container');
@@ -38,10 +52,11 @@
       type: 'pie',
       hole: 0.6,
     },
-    element = document.createElement('div');
+    element = document.createElement('div'),
+    totalValues = 0;
 
     // Show a graph depicting disabled graph when there is insufficient data
-    if (elementsParam[i].query_params.values.length == 0) {
+    if (elementsParam[i].query_params.values.length === 0) {
       data.values = [1];
       data.labels = ['Not enough data'];
       data.marker = {
@@ -71,23 +86,22 @@
       data.filters = elementsParam[i].filters;
 
       // add total to pie chart
-      var total = 0;
       for (var c = 0; c < data.values.length; c++) {
-        total += data.values[c];
+        totalValues += data.values[c];
       }
-      layout.annotations = [
-        {
-          font: {
-            size: 20,
-            weight: 'bold'
-          },
-          showarrow: false,
-          text: `<b>${total}</b>`,
-          x: 0.5,
-          y: 0.5
-        }
-      ];
     }
+    layout.annotations = [
+      {
+        font: {
+          size: 20,
+          weight: 'bold'
+        },
+        showarrow: false,
+        text: `<b>${totalValues}</b>`,
+        x: 0.5,
+        y: 0.5
+      }
+    ];
 
     Plotly.newPlot(element, [data], layout, options);
 
@@ -104,6 +118,28 @@
         window.location = path;
       });
     }
+
+    // Add quick link button
+    if (elementsParam[i].hasOwnProperty('quick_link')) {
+      let quickLinkContainer = document.createElement('div');
+      quickLinkContainer.classList.add('quick-link-container');
+      let quickLink = document.createElement('a');
+      quickLink.href = elementsParam[i].quick_link.url;
+      quickLink.innerHTML = elementsParam[i].quick_link.label;
+      quickLink.title = elementsParam[i].quick_link.title || elementsParam[i].quick_link.label;
+      quickLink.classList.add('button', 'quick-link');
+      // Add custom css classes
+      if (elementsParam[i].quick_link.custom_css_classes) {
+        for(let j=0; j<elementsParam[i].quick_link.custom_css_classes.length; ++j){
+          quickLink.classList.add(elementsParam[i].quick_link.custom_css_classes[j]);
+        }
+      }
+      quickLinkContainer.appendChild(quickLink);
+      element.appendChild(
+        quickLinkContainer
+      );
+    }
+    element.classList.add(slugify(elementsParam[i].name));
     container.appendChild(element);
   }
 
