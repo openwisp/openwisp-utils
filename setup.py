@@ -58,6 +58,7 @@ setup(
             'djangorestframework~=3.13.0',
             'django-filter>=2.2.0<2.4.0',
             'drf-yasg~=1.20.0',
+            'django-admin-autocomplete-filter~=0.7.1',
         ],
         'celery': ['celery~=5.2.3'],
     },

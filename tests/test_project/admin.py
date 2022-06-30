@@ -10,11 +10,21 @@ from openwisp_utils.admin import (
     TimeReadonlyAdminMixin,
     UUIDAdmin,
 )
-from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
+from openwisp_utils.admin_theme.filters import (
+    AutocompleteFilter,
+    InputFilter,
+    SimpleInputFilter,
+)
 
 from .models import Book, Operator, Project, RadiusAccounting, Shelf
 
 admin.site.unregister(User)
+
+
+class AutoShelfFilter(AutocompleteFilter):
+    title = _('shelf')
+    field_name = 'shelf'
+    parameter_name = 'shelf__id'
 
 
 @admin.register(User)
@@ -31,7 +41,7 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_filter = ['name']
+    list_filter = [AutoShelfFilter, 'name']
 
 
 @admin.register(Operator)
@@ -88,3 +98,4 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
         'owner__username',
         'books_type',
     ]
+    search_fields = ['name']

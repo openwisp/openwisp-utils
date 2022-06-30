@@ -1,3 +1,4 @@
+from admin_auto_filters.filters import AutocompleteFilter as BaseAutocompleteFilter
 from django.contrib.admin.filters import FieldListFilter, SimpleListFilter
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
 from django.core.exceptions import ImproperlyConfigured
@@ -88,3 +89,13 @@ class InputFilter(InputFilterMixin, FieldListFilter):
 
     def expected_parameters(self):
         return [self.lookup_kwarg, self.lookup_kwarg_isnull]
+
+
+class AutocompleteFilter(BaseAutocompleteFilter):
+    template = 'admin/auto_filter.html'
+
+    class Media:
+        css = {
+            'screen': ('admin/css/ow-auto-filter.css',),
+        }
+        js = BaseAutocompleteFilter.Media.js + ('admin/js/ow-auto-filter.js',)

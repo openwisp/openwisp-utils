@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     # admin
     'django.contrib.admin',
+    'admin_auto_filters',
     # rest framework
     'rest_framework',
     'drf_yasg',
