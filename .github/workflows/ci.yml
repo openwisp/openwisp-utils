@@ -6,10 +6,12 @@ on:
   push:
     branches:
       - master
+      - "1.0"
   pull_request:
     branches:
       - master
       - dev
+      - "1.0"
 
 jobs:
 
@@ -48,7 +50,7 @@ jobs:
       run: |
         pip install -U pip wheel setuptools
         pip install -U -r requirements-test.txt
-      
+
     - name: Install npm dependencies
       run: sudo npm install -g jshint stylelint
 
