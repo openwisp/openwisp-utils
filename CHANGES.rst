@@ -6,6 +6,20 @@ Version 1.1.0 [unreleased]
 
 WIP.
 
+Version 1.0.2 [2022-07-01]
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed empty charts showing annotations from
+  the previous chart
+- Fixed dashboard template ``extra_config`` getting
+  over-written when multiple dashboard templates
+  are used
+- Fixed `empty dashboard charts not displaying total as "0"
+  <https://github.com/openwisp/openwisp-utils/issues/301>`_
+
 Version 1.0.1 [2022-04-07]
 --------------------------
 
