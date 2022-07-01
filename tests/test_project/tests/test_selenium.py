@@ -675,3 +675,52 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
                 '.operator-project-distribution .annotation-text tspan'
             )
             self.assertEqual(annotation_text.text, '0')
+
+
+class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
+    shelf_model = Shelf
+    book_model = Book
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+    def setUp(self):
+        super().setUp()
+        self.admin = self._create_admin()
+        self.login()
+
+    def test_auto_complete_filter(self):
+        url = reverse('admin:test_project_book_changelist')
+        user = self._create_user()
+        horror_shelf = self._create_shelf(
+            name='Horror', books_type='HORROR', owner=self.admin
+        )
+        factual_shelf = self._create_shelf(
+            name='Factual', books_type='FACTUAL', owner=user
+        )
+        book1 = self._create_book(name='Book 1', shelf=horror_shelf)
+        book2 = self._create_book(name='Book 2', shelf=factual_shelf)
+        select_id = 'id-shelf__id-dal-filter'
+        filter_css_selector = f'#select2-{select_id}-container'
+        filter_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[2]'
+        result_xpath = '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{}")]'
+        self.open(url)
+        self.assertIn(
+            f'<select name="shelf__id" id="{select_id}" class="admin-autocomplete',
+            self.web_driver.page_source,
+        )
+        self.web_driver.find_element_by_css_selector(filter_css_selector).click()
+        self.web_driver.find_element_by_css_selector('.select2-container--open')
+        self.assertIn(horror_shelf.name, self.web_driver.page_source)
+        self.assertIn(factual_shelf.name, self.web_driver.page_source)
+        self.web_driver.find_element_by_xpath(filter_option_xpath).click()
+        self.assertIn(str(factual_shelf.id), self.web_driver.current_url)
+        self.web_driver.find_element_by_css_selector(filter_css_selector)
+        self.assertNotIn(horror_shelf.name, self.web_driver.page_source)
+        self.assertIn(factual_shelf.name, self.web_driver.page_source)
+        with self.assertRaises(NoSuchElementException):
+            # Book 1 is absent
+            self.web_driver.find_element_by_xpath(result_xpath.format(book1.name))
+        # Book 2 is present
+        self.web_driver.find_element_by_xpath(result_xpath.format(book2.name))
