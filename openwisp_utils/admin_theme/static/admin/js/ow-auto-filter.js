@@ -21,14 +21,24 @@ django.jQuery(document).ready(function () {
   });
 
   function applyFilter(target) {
+    var applyFilterButton = django.jQuery("#ow-apply-filter"); 
     var filterElement = django.jQuery(target);
     var val = filterElement.val() || "";
     var class_name = filterElement.attr("class");
     var param = filterElement.attr("name");
-    if (class_name.includes("admin-autocomplete")) {
-      /* jshint -W117 */
-      window.location.search = search_replace(param, val);
-      /* jshint +W117 */
+    /* jshint -W117 */
+    var filterQuery = search_replace(param, val);
+    /* jshint +W117 */
+    if (applyFilterButton.length === 0) {
+      if (class_name.includes("admin-autocomplete")) {
+        window.location.search = filterQuery;
+      }
+    } else {
+      django.jQuery(target).append(
+        `<div class="filter-options">
+          <a class="selected" href="${filterQuery}"></a>
+        </div>`
+      );
     }
   }
 
