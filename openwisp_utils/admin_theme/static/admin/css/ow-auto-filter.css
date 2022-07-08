@@ -44,6 +44,9 @@
 .auto-filter .select2-selection[aria-expanded='true'] .select2-selection__rendered {
   color: #df5d43 !important;
 }
+.auto-filter .select2-selection__placeholder{
+  color: var(--body-fg) !important;
+}
 .auto-filter-choices {
   display: block;
   border: none;
