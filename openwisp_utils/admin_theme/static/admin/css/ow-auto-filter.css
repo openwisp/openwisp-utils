@@ -24,6 +24,12 @@
 .auto-filter li {
   list-style-type: none;
 }
+.select2-dropdown,
+.auto-filter span.select2-selection,
+.auto-filter .select2 {
+  min-width: 222px !important;
+  width: 222px !important;
+}
 .auto-filter .select2-container {
   border: none !important;
   padding: 0;
@@ -32,6 +38,7 @@
   line-height: 20px;
   margin-top: -16px !important;
   z-index: 2;
+  min-width: 222px !important;
 }
 .auto-filter .select2-selection {
   border: 1px solid #747272 !important;
@@ -44,7 +51,7 @@
 .auto-filter .select2-selection[aria-expanded='true'] .select2-selection__rendered {
   color: #df5d43 !important;
 }
-.auto-filter .select2-selection__placeholder{
+.auto-filter .select2-selection__placeholder {
   color: var(--body-fg) !important;
 }
 .auto-filter-choices {
