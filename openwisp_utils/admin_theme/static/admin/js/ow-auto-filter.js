@@ -2,23 +2,15 @@
 django.jQuery(document).ready(function () {
   // unbinding default event handlers of admin_auto_filters
   django.jQuery("#changelist-filter select, #grp-filters select").off("change");
-  function setAllPlaceholder(target = null) {
-    var allPlaceholder = gettext("All"),
-      placeholderSelector = ".select2-selection__placeholder";
-    if (target) {
-      // using setTimeout to execute this after internal select2 events
-      setTimeout(function () {
-        django
-          .jQuery(target)
-          .parent()
-          .find(placeholderSelector)
-          .text(allPlaceholder);
-      }, 100);
-    } else {
-      django.jQuery(`.auto-filter ${placeholderSelector}`).text(allPlaceholder);
-    }
+  django.jQuery("#changelist-filter select, #grp-filters select").off("clear");
+
+  function setAllPlaceholder(target) {
+    var allPlaceholder = gettext("All");
+    django.jQuery(target).text(allPlaceholder);
   }
-  setAllPlaceholder();
+
+  setAllPlaceholder(".auto-filter .select2-selection__placeholder");
+
   django.jQuery(".auto-filter").on("select2:open", function (event) {
     var optionsContainer = django
         .jQuery(event.target)
@@ -66,7 +58,15 @@ django.jQuery(document).ready(function () {
   });
 
   django.jQuery(".auto-filter").on("select2:clear", function (event) {
-    setAllPlaceholder(event.target);
     applyFilter(event.target);
+    // execute this after internal select2 events complete
+    Promise.resolve().then(function () {
+      setAllPlaceholder(
+        django
+          .jQuery(event.target)
+          .parent()
+          .find(".select2-selection__placeholder")
+      );
+    });
   });
 });
