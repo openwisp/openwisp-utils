@@ -979,11 +979,11 @@ The derived filter class should define the ``queryset`` method as shown in follo
 ``openwisp_utils.admin_theme.filters.AutocompleteFilter``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``admin_theme`` sub app of this package provides an auto complete filter that uses
-django autocomplete widget to load filter data asynchronously.
+The ``admin_theme`` sub app of this package provides an auto complete
+filter that uses django autocomplete widget to load filter data asynchronously.
 
-This filter can be helpful when the number of objects is too large to load all at once
-which may cause the slow loading of the page.
+This filter can be helpful when the number of objects is too large
+to load all at once which may cause the slow loading of the page.
 
 .. code-block:: python
 
@@ -1002,13 +1002,14 @@ which may cause the slow loading of the page.
             MyAutoCompleteFilter,
             ...
         ]
-    
+
     @admin.register(MyOtherModel)
     class MyOtherModelAdmin(admin.ModelAdmin):
         search_fields = ['id']
 
-To customize or know more about it, please refer `django-admin-autocomplete-filter <https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_
-docs.
+To customize or know more about it, please refer to the
+`django-admin-autocomplete-filter documentation
+<https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_.
 
 Code utilities
 --------------
