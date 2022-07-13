@@ -114,6 +114,8 @@ Add ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS`` in ``settings.py``:
         'django.contrib.staticfiles',
 
         'openwisp_utils.admin_theme',    # <----- add this
+        # add when using autocomplete filter
+        'admin_auto_filters',    # <----- add this
 
         'django.contrib.sites',
         # admin
@@ -973,6 +975,41 @@ The derived filter class should define the ``queryset`` method as shown in follo
             'other_field'
             ...
         ]
+
+``openwisp_utils.admin_theme.filters.AutocompleteFilter``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``admin_theme`` sub app of this package provides an auto complete
+filter that uses django autocomplete widget to load filter data asynchronously.
+
+This filter can be helpful when the number of objects is too large
+to load all at once which may cause the slow loading of the page.
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin_theme.filters import AutocompleteFilter
+    from my_app.models import MyModel, MyOtherModel
+
+    class MyAutoCompleteFilter(AutocompleteFilter):
+        field_name = 'field'
+        parameter_name = 'field_id'
+        title = _('My Field')
+
+    @admin.register(MyModel)
+    class MyModelAdmin(admin.ModelAdmin):
+        list_filter = [
+            MyAutoCompleteFilter,
+            ...
+        ]
+
+    @admin.register(MyOtherModel)
+    class MyOtherModelAdmin(admin.ModelAdmin):
+        search_fields = ['id']
+
+To customize or know more about it, please refer to the
+`django-admin-autocomplete-filter documentation
+<https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_.
 
 Code utilities
 --------------
