@@ -44,6 +44,7 @@ setup(
     install_requires=[
         'django-model-utils~=4.2.0',
         'django-compress-staticfiles~=1.0.1b',
+        'django-admin-autocomplete-filter~=0.7.1',
         'swapper~=1.3.0',
     ],
     extras_require={
@@ -58,7 +59,6 @@ setup(
             'djangorestframework~=3.13.0',
             'django-filter>=2.2.0<2.4.0',
             'drf-yasg~=1.20.0',
-            'django-admin-autocomplete-filter~=0.7.1',
         ],
         'celery': ['celery~=5.2.3'],
     },
