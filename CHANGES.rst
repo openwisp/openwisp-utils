@@ -6,6 +6,15 @@ Version 1.1.0 [unreleased]
 
 WIP.
 
+Version 1.0.3 [2022-08-03]
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed **django-fitler** dependency, pinned it to ``~=21.1``.
+  Earlier, it was installing the latest version of django-filter.
+
 Version 1.0.2 [2022-07-01]
 --------------------------
 
