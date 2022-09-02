@@ -11,13 +11,14 @@ from . import settings as app_settings
 logger = logging.getLogger(__name__)
 
 
-def send_email(subject, body_text, body_html, recipients, extra_context={}):
+def send_email(subject, body_text, body_html, recipients, extra_context={}, **kwargs):
 
     mail = EmailMultiAlternatives(
         subject=subject,
         body=strip_tags(body_text),
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=recipients,
+        **kwargs,
     )
 
     if app_settings.OPENWISP_HTML_EMAIL and body_html:

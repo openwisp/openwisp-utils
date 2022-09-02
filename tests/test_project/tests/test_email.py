@@ -1,3 +1,4 @@
+from email.mime.text import MIMEText
 from unittest.mock import patch
 
 from django.core import mail
@@ -9,11 +10,13 @@ from openwisp_utils.admin_theme.email import SMTPRecipientsRefused, send_email
 class TestEmail(TestCase):
     @override_settings(DEFAULT_FROM_EMAIL='test@openwisp.io')
     def test_email(self):
+        attachment = MIMEText('Test attachment')
         send_email(
             'Test mail',
             '',
             'This is a test email',
             ['devkapilbansal@gmail.com'],
+            attachments=[attachment],
         )
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox.pop()
@@ -27,6 +30,7 @@ class TestEmail(TestCase):
         )
         # test email doesn't contain link
         self.assertNotIn('<a href', email.alternatives[0][0])
+        self.assertEqual(email.attachments[0].get_payload(), 'Test attachment')
 
     def test_email_action_text_and_url(self):
         send_email(
