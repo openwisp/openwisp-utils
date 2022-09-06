@@ -1442,7 +1442,7 @@ Title shown to users in the index page of the admin site.
 ``OPENWISP_ADMIN_DASHBOARD_ENABLED``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**default**: ``False``
+**default**: ``True``
 
 When ``True``, enables the `OpenWISP Dashboard <#openwisp-dashboard>`_.
 Upon login, the user will be greeted with the dashboard instead of the default
