@@ -1628,6 +1628,8 @@ This setting allows to change the logo which is displayed in HTML version of the
 
 **Note**: Provide a URL which points to the logo on your own web server. Ensure that the URL provided is
 publicly accessible from the internet. Otherwise, the logo may not be displayed in the email.
+Please also note that SVG images do not get processed by some email clients
+like Gmail so it is recommended to use PNG images.
 
 ``OPENWISP_CELERY_SOFT_TIME_LIMIT``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
