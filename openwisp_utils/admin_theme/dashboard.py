@@ -138,7 +138,8 @@ def get_dashboard_context(request):
         group_by = query_params.get('group_by')
         annotate = query_params.get('annotate')
         aggregate = query_params.get('aggregate')
-        org_field = query_params.get('organization_field', 'organization_id')
+        org_field = query_params.get('organization_field')
+        default_org_field = 'organization_id'
         labels_i18n = value.get('labels')
 
         try:
@@ -153,8 +154,9 @@ def get_dashboard_context(request):
 
         # Filter query according to organization of user
         if not request.user.is_superuser and (
-            'organization_field' in query_params or hasattr(model, org_field)
+            org_field or hasattr(model, default_org_field)
         ):
+            org_field = org_field or default_org_field
             qs = qs.filter(**{f'{org_field}__in': request.user.organizations_managed})
 
         annotate_kwargs = {}
