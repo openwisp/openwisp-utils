@@ -3,6 +3,7 @@ from django.contrib.admin.filters import FieldListFilter, SimpleListFilter
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.fields import CharField, UUIDField
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 
@@ -99,3 +100,6 @@ class AutocompleteFilter(BaseAutocompleteFilter):
             'screen': ('admin/css/ow-auto-filter.css',),
         }
         js = BaseAutocompleteFilter.Media.js + ('admin/js/ow-auto-filter.js',)
+
+    def get_autocomplete_url(self, request, model_admin):
+        return reverse('admin:ow-auto-filter')

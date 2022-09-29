@@ -703,7 +703,9 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         book2 = self._create_book(name='Book 2', shelf=factual_shelf)
         select_id = 'id-shelf__id-dal-filter'
         filter_css_selector = f'#select2-{select_id}-container'
-        filter_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[2]'
+        filter_null_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[1]'
+        filter_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[3]'
+
         result_xpath = '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{}")]'
         self.open(url)
         self.assertIn(
@@ -724,3 +726,14 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             self.web_driver.find_element_by_xpath(result_xpath.format(book1.name))
         # Book 2 is present
         self.web_driver.find_element_by_xpath(result_xpath.format(book2.name))
+        # Test null filter
+        self.web_driver.find_element_by_css_selector(filter_css_selector).click()
+        self.web_driver.find_element_by_css_selector('.select2-container--open')
+        self.web_driver.find_element_by_xpath(filter_null_option_xpath).click()
+        self.assertIn('shelf__id__isnull=true', self.web_driver.current_url)
+        with self.assertRaises(NoSuchElementException):
+            # Book 1 is absent
+            self.web_driver.find_element_by_xpath(result_xpath.format(book1.name))
+        with self.assertRaises(NoSuchElementException):
+            # Book 2 is absent
+            self.web_driver.find_element_by_xpath(result_xpath.format(book2.name))

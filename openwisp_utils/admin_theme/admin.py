@@ -28,6 +28,19 @@ class OpenwispAdminSite(admin.AdminSite):
             context = {'dashboard_enabled': False}
         return super().index(request, extra_context=context)
 
+    def get_urls(self):
+        from django.urls import path
+
+        from .views import AutocompleteJsonView
+
+        return [
+            path(
+                'ow-auto-filter/',
+                self.admin_view(AutocompleteJsonView.as_view(admin_site=self)),
+                name='ow-auto-filter',
+            ),
+        ] + super().get_urls()
+
 
 def openwisp_admin(site_url=None):  # pragma: no cover
     """
