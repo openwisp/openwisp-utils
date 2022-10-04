@@ -2,10 +2,12 @@ import logging
 
 from django.conf import settings
 from django.contrib import admin
+from django.urls import path
 from django.utils.translation import gettext_lazy
 
 from . import settings as app_settings
 from .dashboard import get_dashboard_context
+from .views import AutocompleteJsonView
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +31,6 @@ class OpenwispAdminSite(admin.AdminSite):
         return super().index(request, extra_context=context)
 
     def get_urls(self):
-        from django.urls import path
-
-        from .views import AutocompleteJsonView
-
         return [
             path(
                 'ow-auto-filter/',
