@@ -59,7 +59,11 @@ django.jQuery(document).ready(function () {
       queryString = search_to_hash();
     // Use the "null" querystring if user chose to filter
     // for "null" values.
-    if (val === "null") {
+    if (val === ""){
+      delete queryString[param];
+      delete queryString[nullParam];
+    }
+    else if (val === "null") {
       delete queryString[param];
       queryString[nullParam] = ['true'];
     } else {
