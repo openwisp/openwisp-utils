@@ -9,7 +9,26 @@ django.jQuery(document).ready(function () {
     django.jQuery(target).text(allPlaceholder);
   }
 
+  function initSelect2NullOption() {
+    // If the "null" option is selected for an autocomplete filter,
+    // then the Django filter does not render option for the "null" option.
+    // This function adds the "null" option and selects it depending
+    // on the window.location.search (querystring).
+    var searchHash = search_to_hash(),
+      nullParam;
+    django.jQuery('.admin-autocomplete.select2-hidden-accessible').each(function (index, el) {
+      el = django.jQuery(el);
+      nullParam = el.attr("name") + "__isnull";
+      if (searchHash[nullParam] !== undefined) {
+        el.append(new Option("-", "null", false, false));
+        el.val("null");
+        el.trigger("change");
+      }
+    });
+  }
+
   setAllPlaceholder(".auto-filter .select2-selection__placeholder");
+  initSelect2NullOption();
 
   django.jQuery(".auto-filter").on("select2:open", function (event) {
     var optionsContainer = django
@@ -35,10 +54,23 @@ django.jQuery(document).ready(function () {
       filterElement = django.jQuery(target),
       val = filterElement.val() || "",
       param = filterElement.attr("name"),
-      class_name = filterElement.attr("class");
-    /* jshint -W117 */
-    var filterQuery = search_replace(param, val);
-    /* jshint +W117 */
+      class_name = filterElement.attr("class"),
+      nullParam = param + '__isnull',
+      queryString = search_to_hash();
+    // Use the "null" querystring if user chose to filter
+    // for "null" values.
+    if (val === ""){
+      delete queryString[param];
+      delete queryString[nullParam];
+    }
+    else if (val === "null") {
+      delete queryString[param];
+      queryString[nullParam] = ['true'];
+    } else {
+      delete queryString[nullParam];
+      queryString[param] = [val];
+    }
+    var filterQuery = hash_to_search(queryString);
     if (!applyFilterButton.length) {
       if (class_name.includes("admin-autocomplete")) {
         window.location.search = filterQuery;

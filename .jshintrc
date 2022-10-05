@@ -15,7 +15,9 @@
         "owNotifyModelName": true,
         "owIsChangeForm": true,
         "getAbsoluteUrl": true,
-        "dateTimeStampToDateTimeLocaleString": true
+        "dateTimeStampToDateTimeLocaleString": true,
+        "search_to_hash": true,
+        "hash_to_search": true
     },
     "browser": true
 }

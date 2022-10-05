@@ -395,3 +395,16 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
                 model_admin=ShelfAdmin,
                 field_path='created_at',
             )
+
+    def test_ow_auto_filter_view(self):
+        url = reverse('admin:ow-auto-filter')
+        user = User.objects.create(
+            username='operator',
+            password='pass',
+            email='email@email',
+            is_staff=True,
+            is_superuser=False,
+        )
+        self.client.force_login(user)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
