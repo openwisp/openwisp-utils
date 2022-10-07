@@ -6,6 +6,16 @@ Version 1.1.0 [unreleased]
 
 WIP.
 
+Version 1.0.4 [2022-10-07]
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed **importlib-metadata** dependency, pinned it to ``<5.0``.
+  The newer versions of **importlib-metadata** breaks openwisp-utils
+  on **Python 3.7**.
+
 Version 1.0.3 [2022-08-03]
 --------------------------
 
