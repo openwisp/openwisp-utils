@@ -183,7 +183,7 @@ Supplying custom CSS and JS for the admin theme
 Add ``openwisp_utils.admin_theme.context_processor.admin_theme_settings`` to
 template ``context_processors`` in ``settings.py`` as shown below.
 This will allow to set `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_
-and `OPENWISP_ADMIN_THEME_JS <openwisp_admin_theme_js>`_ settings
+and `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_js>`__ settings
 to provide CSS and JS files to customise admin theme.
 
 .. code-block:: python
@@ -211,6 +211,81 @@ to provide CSS and JS files to customise admin theme.
     you may want to use the ``STATICFILES_DIR`` setting in ``settings.py``.
 
     You can learn more in the `Django documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
+
+Adding admin theme programmatically
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``openwisp_utils.admin_theme.theme.register_theme_link``
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+
+**Syntax:**
+
+.. code-block:: python
+
+    register_theme_link(links)
+
++--------------------+-------------------------------------------------------------+
+| **Parameter**      | **Description**                                             |
++--------------------+-------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be added to              |
+|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_ |
++--------------------+-------------------------------------------------------------+
+
+``openwisp_utils.admin_theme.theme.unregister_theme_link``
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Allows removing items from `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+
+**Syntax:**
+
+.. code-block:: python
+
+    unregister_theme_link(links)
+
++--------------------+-------------------------------------------------------------+
+| **Parameter**      | **Description**                                             |
++--------------------+-------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be removed from          |
+|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_ |
++--------------------+-------------------------------------------------------------+
+
+``openwisp_utils.admin_theme.theme.register_theme_js``
+""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Allows adding items to `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_JS>`__.
+
+**Syntax:**
+
+.. code-block:: python
+
+    register_theme_js(js)
+
++--------------------+---------------------------------------------------------------+
+| **Parameter**      | **Description**                                               |
++--------------------+---------------------------------------------------------------+
+| ``js``             | (``list``) List of relative path of *js* files to be added to |
+|                    | `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_js>`__        |
++--------------------+---------------------------------------------------------------+
+
+``openwisp_utils.admin_theme.theme.unregister_theme_js``
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Allows removing items from `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_JS>`__.
+
+**Syntax:**
+
+.. code-block:: python
+
+    unregister_theme_js(js)
+
++--------------------+--------------------------------------------------------------------+
+| **Parameter**      | **Description**                                                    |
++--------------------+--------------------------------------------------------------------+
+| ``js``             | (``list``) List of relative path of *js* files to be removed from  |
+|                    | `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_js>`__             |
++--------------------+--------------------------------------------------------------------+
 
 OpenWISP Dashboard
 ------------------

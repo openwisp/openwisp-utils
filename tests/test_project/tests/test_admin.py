@@ -266,9 +266,14 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
                 str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
             )
         # test with desired configuration
-        with patch.object(
-            admin_theme_settings,
-            'OPENWISP_ADMIN_THEME_LINKS',
+        # Here openwisp_utils.admin_theme.theme.THEME_LINKS has been
+        # mocked instead of app_settings.OPENWISP_ADMIN_THEME_LINKS
+        # because openwisp_utils.admin_theme.theme.THEME_LINKS creates
+        # a copy of app_settings.OPENWISP_ADMIN_THEME_LINKS at project
+        # startup. Therefore, mocking app_settings.OPENWISP_ADMIN_THEME_LINKS
+        # will have no effect here.
+        with patch(
+            'openwisp_utils.admin_theme.theme.THEME_LINKS',
             [
                 {
                     'href': '/static/custom-admin-theme.css',
@@ -315,9 +320,14 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
                 str(admin_theme_settings_checks(OpenWispAdminThemeConfig)[0]),
             )
         # test with desired configuration
-        with patch.object(
-            admin_theme_settings,
-            'OPENWISP_ADMIN_THEME_JS',
+        # Here openwisp_utils.admin_theme.theme.THEME_JS has been
+        # mocked instead of app_settings.OPENWISP_ADMIN_THEME_JS
+        # because openwisp_utils.admin_theme.theme.THEME_JS creates
+        # a copy of app_settings.OPENWISP_ADMIN_THEME_JS at project
+        # startup. Therefore, mocking app_settings.OPENWISP_ADMIN_THEME_JS
+        # will have no effect here.
+        with patch(
+            'openwisp_utils.admin_theme.theme.THEME_JS',
             ['/static/openwisp-utils/js/uuid.js'],
         ):
             response = self.client.get(reverse('admin:index'))
