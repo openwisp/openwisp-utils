@@ -5,9 +5,9 @@ to add customization.
 {% endcomment %}
 {% load i18n admin_urls %}
 <div class="js-inline-admin-formset inline-group"
-  id="{{ inline_admin_formset.formset.prefix }}-group"
-  data-inline-type="stacked"
-  data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
+     id="{{ inline_admin_formset.formset.prefix }}-group"
+     data-inline-type="stacked"
+     data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
 
   <fieldset class="module {{ inline_admin_formset.classes }}">
     {% if inline_admin_formset.formset.max_num == 1 %}
