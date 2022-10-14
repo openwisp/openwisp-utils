@@ -29,7 +29,7 @@ class TestThemeHelpers(TestCase):
             self.assertEqual(
                 str(context.exception),
                 '"openwisp_utils.admin_theme.theme.register_theme_link"'
-                ' accepts "list" of links.',
+                ' accepts "list" of links',
             )
 
         with self.subTest('Test registering list of links'):
@@ -42,13 +42,12 @@ class TestThemeHelpers(TestCase):
             )
 
         with self.subTest('Test duplicate registration of links'):
-            register_theme_link(links)
-            admin_theme = admin_theme_settings(None)
-            count = 0
-            for link in admin_theme['OPENWISP_ADMIN_THEME_LINKS']:
-                if link == links[0]:
-                    count += 1
-            self.assertEqual(count, 1)
+            with self.assertRaises(ImproperlyConfigured) as error:
+                register_theme_link(links)
+            self.assertEqual(
+                str(error.exception),
+                f'{links[0]["href"]} is already present in OPENWISP_ADMIN_THEME_LINKS',
+            )
 
         with self.subTest('Test unregistering single link'):
             with self.assertRaises(ImproperlyConfigured) as context:
@@ -56,7 +55,7 @@ class TestThemeHelpers(TestCase):
             self.assertEqual(
                 str(context.exception),
                 '"openwisp_utils.admin_theme.theme.unregister_theme_link"'
-                ' accepts "list" of links.',
+                ' accepts "list" of links',
             )
 
         with self.subTest('Test unregistering non-existent link'):
@@ -91,7 +90,7 @@ class TestThemeHelpers(TestCase):
             self.assertEqual(
                 str(context.exception),
                 '"openwisp_utils.admin_theme.theme.register_theme_js"'
-                ' accepts "list" of JS.',
+                ' accepts "list" of JS',
             )
 
         with self.subTest('Test registering list of js'):
@@ -104,13 +103,12 @@ class TestThemeHelpers(TestCase):
             )
 
         with self.subTest('Test duplicate registration of js'):
-            register_theme_js(jss)
-            admin_theme = admin_theme_settings(None)
-            count = 0
-            for link in admin_theme['OPENWISP_ADMIN_THEME_JS']:
-                if link == jss[0]:
-                    count += 1
-            self.assertEqual(count, 1)
+            with self.assertRaises(ImproperlyConfigured) as error:
+                register_theme_js(jss)
+            self.assertEqual(
+                str(error.exception),
+                f'{jss[0]} is already present in OPENWISP_ADMIN_THEME_JS',
+            )
 
         with self.subTest('Test unregistering single js'):
             with self.assertRaises(ImproperlyConfigured) as context:
@@ -118,7 +116,7 @@ class TestThemeHelpers(TestCase):
             self.assertEqual(
                 str(context.exception),
                 '"openwisp_utils.admin_theme.theme.unregister_theme_js"'
-                ' accepts "list" of JS.',
+                ' accepts "list" of JS',
             )
 
         with self.subTest('Test unregistering non-existent link'):

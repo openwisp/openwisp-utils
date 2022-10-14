@@ -212,13 +212,16 @@ to provide CSS and JS files to customise admin theme.
 
     You can learn more in the `Django documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
 
-Adding admin theme programmatically
+Extend admin theme programmatically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``openwisp_utils.admin_theme.theme.register_theme_link``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+
+This function is meant to be used by third party apps or OpenWISP modules which
+aim to extend the core look and feel of the OpenWISP theme (eg: add new menu icons).
 
 **Syntax:**
 
@@ -237,6 +240,9 @@ Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Allows removing items from `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+
+This function is meant to be used by third party apps or OpenWISP modules which
+aim additional functionalities to UI of OpenWISP (eg: adding a support chatbot).
 
 **Syntax:**
 

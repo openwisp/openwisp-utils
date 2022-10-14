@@ -10,23 +10,21 @@ def register_theme_link(links):
     if not isinstance(links, list):
         raise ImproperlyConfigured(
             '"openwisp_utils.admin_theme.theme.register_theme_link"'
-            ' accepts "list" of links.'
+            ' accepts "list" of links'
         )
-    # We don't raise ImproperlyConfigured exception if
-    # link is already present in THEME_LINKS because
-    # user might specify a link in project settings which is
-    # already registered by an application.
-    # This would lead to time-consuming debugging for little returns.
     for link in links:
-        if link not in THEME_LINKS:
-            THEME_LINKS.append(link)
+        if link in THEME_LINKS:
+            raise ImproperlyConfigured(
+                f'{link["href"]} is already present in OPENWISP_ADMIN_THEME_LINKS'
+            )
+        THEME_LINKS.append(link)
 
 
 def unregister_theme_link(links):
     if not isinstance(links, list):
         raise ImproperlyConfigured(
             '"openwisp_utils.admin_theme.theme.unregister_theme_link"'
-            ' accepts "list" of links.'
+            ' accepts "list" of links'
         )
     for link in links:
         try:
@@ -41,23 +39,21 @@ def register_theme_js(jss):
     if not isinstance(jss, list):
         raise ImproperlyConfigured(
             '"openwisp_utils.admin_theme.theme.register_theme_js"'
-            ' accepts "list" of JS.'
+            ' accepts "list" of JS'
         )
-    # We don't raise ImproperlyConfigured exception if
-    # js is already present in THEME_JS because
-    # user might specify a js in project settings which is
-    # already registered by an application.
-    # This would lead to time-consuming debugging for little returns.
     for js in jss:
-        if js not in THEME_JS:
-            THEME_JS.append(js)
+        if js in THEME_JS:
+            raise ImproperlyConfigured(
+                f'{js} is already present in OPENWISP_ADMIN_THEME_JS'
+            )
+        THEME_JS.append(js)
 
 
 def unregister_theme_js(jss):
     if not isinstance(jss, list):
         raise ImproperlyConfigured(
             '"openwisp_utils.admin_theme.theme.unregister_theme_js"'
-            ' accepts "list" of JS.'
+            ' accepts "list" of JS'
         )
     for js in jss:
         try:
