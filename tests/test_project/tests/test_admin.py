@@ -237,6 +237,10 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             response, 'Only added operators will have permission to access the project.'
         )
         self.assertContains(response, 'https://github.com/openwisp/openwisp-utils/')
+        # Response should contain static in 'icon_url'
+        self.assertContains(
+            response, '<img src="/static/admin/img/icon-alert.svg">', html=True
+        )
 
     def test_admin_theme_css_setting(self):
         # test for improper configuration : not a list
