@@ -3,6 +3,7 @@ from django.templatetags.static import static
 from django.utils.translation import gettext_lazy as _
 
 from . import settings as app_settings
+from . import theme
 from .checks import admin_theme_settings_checks
 from .menu import register_menu_group
 
@@ -53,16 +54,16 @@ class OpenWispAdminThemeConfig(AppConfig):
 
     def modify_admin_theme_settings_links(self):
         link_files = []
-        for link_file in app_settings.OPENWISP_ADMIN_THEME_LINKS:
+        for link_file in theme.THEME_LINKS:
             href = link_file['href']
             href = href.replace('/static/', '')
             link_file['href'] = _staticfy(href)
             link_files.append(link_file)
 
         js_files = []
-        for js_file in app_settings.OPENWISP_ADMIN_THEME_JS:
+        for js_file in theme.THEME_JS:
             js_file = js_file.replace('/static/', '')
             js_files.append(_staticfy(js_file))
 
-        app_settings.OPENWISP_ADMIN_THEME_LINKS = link_files
-        app_settings.OPENWISP_ADMIN_THEME_JS = js_files
+        theme.THEME_LINKS = link_files
+        theme.THEME_JS = js_files

@@ -6,7 +6,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from ..admin_theme.menu import build_menu_groups
-from . import settings as app_settings
+from . import theme
 
 
 def menu_groups(request):
@@ -48,8 +48,8 @@ def build_menu(request):
 
 def admin_theme_settings(request):
     return {
-        'OPENWISP_ADMIN_THEME_LINKS': app_settings.OPENWISP_ADMIN_THEME_LINKS,
-        'OPENWISP_ADMIN_THEME_JS': app_settings.OPENWISP_ADMIN_THEME_JS,
+        'OPENWISP_ADMIN_THEME_LINKS': theme.THEME_LINKS,
+        'OPENWISP_ADMIN_THEME_JS': theme.THEME_JS,
     }
 
 
