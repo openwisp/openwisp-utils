@@ -500,13 +500,22 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
         with self.subTest('Test multiple filters'):
             # Select Fantasy book type
             books_type_title = self._get_filter_title('type-of-book')
-            username_title = self._get_filter_title('username')
+            owner_filter_xpath = '//*[@id="select2-id-owner_id-dal-filter-container"]'
+            owner_filter_option_xpath = (
+                '//*[@id="select2-id-owner_id-dal-filter-results"]/li[4]'
+            )
+            owner_filter = self.web_driver.find_element_by_xpath(owner_filter_xpath)
             books_type_title.click()
             fantasy_option = self._get_filter_anchor('books_type__exact=FANTASY')
             fantasy_option.click()
-            username_title.click()
-            username_option = self._get_filter_anchor('owner__username=tester2')
-            username_option.click()
+            owner_filter.click()
+            WebDriverWait(self.web_driver, 2).until(
+                EC.visibility_of_element_located((By.XPATH, owner_filter_option_xpath))
+            )
+            owner_option = self.web_driver.find_element_by_xpath(
+                owner_filter_option_xpath
+            )
+            owner_option.click()
             filter_button = self._get_filter_button()
             filter_button.click()
             WebDriverWait(self.web_driver, 2).until(
@@ -690,7 +699,7 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         self.admin = self._create_admin()
         self.login()
 
-    def test_auto_complete_filter(self):
+    def test_autocomplete_shelf_filter(self):
         url = reverse('admin:test_project_book_changelist')
         user = self._create_user()
         horror_shelf = self._create_shelf(
@@ -703,8 +712,8 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         book2 = self._create_book(name='Book 2', shelf=factual_shelf)
         select_id = 'id-shelf__id-dal-filter'
         filter_css_selector = f'#select2-{select_id}-container'
-        filter_null_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[1]'
-        filter_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[3]'
+        filter_options = f'//*[@id="select2-{select_id}-results"]/li'
+        filter_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[2]'
 
         result_xpath = '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{}")]'
         self.open(url)
@@ -726,14 +735,47 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             self.web_driver.find_element_by_xpath(result_xpath.format(book1.name))
         # Book 2 is present
         self.web_driver.find_element_by_xpath(result_xpath.format(book2.name))
-        # Test null filter
+        # "shelf" field is not nullable, therefore none option should be absent
         self.web_driver.find_element_by_css_selector(filter_css_selector).click()
         self.web_driver.find_element_by_css_selector('.select2-container--open')
+        for option in self.web_driver.find_elements_by_xpath(filter_options):
+            self.assertNotEqual(option.text, '-')
+
+    def test_autocomplete_owner_filter(self):
+        """
+        Tests the null option of the AutocompleteFilter
+        """
+        url = reverse('admin:test_project_shelf_changelist')
+        user = self._create_user()
+        horror_shelf = self._create_shelf(
+            name='Horror', books_type='HORROR', owner=self.admin
+        )
+        factual_shelf = self._create_shelf(
+            name='Factual', books_type='FACTUAL', owner=user
+        )
+        select_id = 'id-owner_id-dal-filter'
+        filter_css_selector = f'#select2-{select_id}-container'
+        filter_null_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[1]'
+        result_xpath = '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{}")]'
+        self.open(url)
+        self.assertIn(
+            f'<select name="owner_id" id="{select_id}" class="admin-autocomplete',
+            self.web_driver.page_source,
+        )
+        self.web_driver.find_element_by_css_selector(filter_css_selector).click()
+        self.web_driver.find_element_by_css_selector('.select2-container--open')
+        self.assertIn(self.admin.username, self.web_driver.page_source)
+        self.assertIn(user.username, self.web_driver.page_source)
         self.web_driver.find_element_by_xpath(filter_null_option_xpath).click()
-        self.assertIn('shelf__id__isnull=true', self.web_driver.current_url)
+        self._get_filter_button().click()
+        self.assertIn('owner_id__isnull=true', self.web_driver.current_url)
         with self.assertRaises(NoSuchElementException):
-            # Book 1 is absent
-            self.web_driver.find_element_by_xpath(result_xpath.format(book1.name))
+            # horror_shelf is absent
+            self.web_driver.find_element_by_xpath(
+                result_xpath.format(horror_shelf.name)
+            )
         with self.assertRaises(NoSuchElementException):
-            # Book 2 is absent
-            self.web_driver.find_element_by_xpath(result_xpath.format(book2.name))
+            # factual_shelf absent
+            self.web_driver.find_element_by_xpath(
+                result_xpath.format(factual_shelf.name)
+            )

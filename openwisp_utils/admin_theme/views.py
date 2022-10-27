@@ -22,7 +22,11 @@ class AutocompleteJsonView(BaseAutocompleteJsonView):
         context = self.get_context_data()
         # Add option for filtering objects with None field.
         results = []
-        if not self.term or self.term == '-':
+        if (
+            getattr(self.source_field, 'null', False)
+            and not self.term
+            or self.term == '-'
+        ):
             results += [{'id': 'null', 'text': '-'}]
         results += [
             {'id': str(obj.pk), 'text': self.display_text(obj)}
