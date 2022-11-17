@@ -17,6 +17,7 @@ class AutocompleteJsonView(BaseAutocompleteJsonView):
         if not self.has_perm(request):
             raise PermissionDenied
 
+        self.support_reverse_relation()
         self.object_list = self.get_queryset()
         context = self.get_context_data()
         # Add option for filtering objects with None field.
@@ -33,3 +34,11 @@ class AutocompleteJsonView(BaseAutocompleteJsonView):
                 'pagination': {'more': context['page_obj'].has_next()},
             }
         )
+
+    def support_reverse_relation(self):
+        if not hasattr(self.source_field, 'get_limit_choices_to'):
+
+            def get_choices_mock():
+                return {}
+
+            self.source_field.get_limit_choices_to = get_choices_mock
