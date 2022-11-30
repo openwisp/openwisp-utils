@@ -24,6 +24,7 @@ class AutocompleteJsonView(BaseAutocompleteJsonView):
         results = []
         if (
             getattr(self.source_field, 'null', False)
+            and not getattr(self.source_field, '_get_limit_choices_to_mocked', False)
             and not self.term
             or self.term == '-'
         ):
@@ -41,6 +42,7 @@ class AutocompleteJsonView(BaseAutocompleteJsonView):
 
     def support_reverse_relation(self):
         if not hasattr(self.source_field, 'get_limit_choices_to'):
+            self.source_field._get_limit_choices_to_mocked = True
 
             def get_choices_mock():
                 return {}
