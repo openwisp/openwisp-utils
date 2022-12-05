@@ -412,6 +412,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
 
     def test_ow_auto_filter_view(self):
         url = reverse('admin:ow-auto-filter')
+        url = f'{url}?app_label=test_project&model_name=shelf&field_name=book'
         user = User.objects.create(
             username='operator',
             password='pass',

@@ -24,3 +24,8 @@ OPENWISP_EMAIL_LOGO = getattr(
 )
 
 OPENWISP_HTML_EMAIL = getattr(settings, 'OPENWISP_HTML_EMAIL', True)
+AUTOCOMPLETE_FILTER_VIEW = getattr(
+    settings,
+    'OPENWISP_AUTOCOMPLETE_FILTER_VIEW',
+    'openwisp_utils.admin_theme.views.AutocompleteJsonView',
+)

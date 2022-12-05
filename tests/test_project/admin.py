@@ -37,6 +37,7 @@ class UserAdmin(admin.ModelAdmin):
         'is_superuser',
         'is_active',
     ]
+    search_fields = ('username',)
 
 
 @admin.register(Book)
@@ -95,6 +96,12 @@ class ReverseBookFilter(AutocompleteFilter):
     parameter_name = 'book'
 
 
+class AutoOwnerFilter(AutocompleteFilter):
+    title = _('owner')
+    field_name = 'owner'
+    parameter_name = 'owner_id'
+
+
 @admin.register(Shelf)
 class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
     # DO NOT CHANGE: used for testing filters
@@ -102,7 +109,7 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
         ShelfFilter,
         ['books_type', InputFilter],
         ['id', InputFilter],
-        'owner__username',
+        AutoOwnerFilter,
         'books_type',
         ReverseBookFilter,
     ]

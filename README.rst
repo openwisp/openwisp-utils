@@ -1811,6 +1811,17 @@ Sets the soft time limit for celery tasks using
 Sets the hard time limit for celery tasks using
 `OpenwispCeleryTask <#openwisp_utilstasksopenwispcelerytask>`_.
 
+``OPENWISP_AUTOCOMPLETE_FILTER_VIEW``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
++---------+-------------------------------------------------------------+
+| type    | ``str``                                                     |
++---------+-------------------------------------------------------------+
+| default | ``'openwisp_utils.admin_theme.views.AutocompleteJsonView'`` |
++---------+-------------------------------------------------------------+
+
+Dotted path to the ``AutocompleteJsonView`` used by the
+``openwisp_utils.admin_theme.filters.AutocompleteFilter``.
+
 Installing for development
 --------------------------
 
