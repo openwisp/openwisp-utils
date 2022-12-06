@@ -429,3 +429,10 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         url = f'{url}?app_label=test_project&model_name=shelf&field_name=book'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+    def test_ow_autocomplete_filter_uuid_exception(self):
+        url = reverse('admin:test_project_book_changelist')
+        url = f'{url}?shelf__id=invalid'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '“invalid” is not a valid UUID.')
