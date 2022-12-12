@@ -5,3 +5,4 @@ omit =
     /*/__init__.py
     /setup.py
     /*/migrations/*
+    openwisp_utils/api/mixins.py
