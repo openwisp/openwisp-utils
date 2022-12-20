@@ -718,7 +718,10 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         result_xpath = '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{}")]'
         self.open(url)
         self.assertIn(
-            f'<select name="shelf__id" id="{select_id}" class="admin-autocomplete',
+            (
+                '<select name="shelf__id" data-dropdown-css-class="ow2-autocomplete-dropdown"'
+                f' id="{select_id}" class="admin-autocomplete'
+            ),
             self.web_driver.page_source,
         )
         self.web_driver.find_element_by_css_selector(filter_css_selector).click()
@@ -759,7 +762,10 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         result_xpath = '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{}")]'
         self.open(url)
         self.assertIn(
-            f'<select name="owner_id" id="{select_id}" class="admin-autocomplete',
+            (
+                '<select name="owner_id" data-dropdown-css-class="ow2-autocomplete-dropdown"'
+                f' id="{select_id}" class="admin-autocomplete'
+            ),
             self.web_driver.page_source,
         )
         self.web_driver.find_element_by_css_selector(filter_css_selector).click()

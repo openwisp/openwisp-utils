@@ -24,7 +24,7 @@
 .auto-filter li {
   list-style-type: none;
 }
-.select2-dropdown,
+.ow2-autocomplete-dropdown.select2-dropdown,
 .auto-filter span.select2-selection,
 .auto-filter .select2 {
   min-width: 222px !important;
