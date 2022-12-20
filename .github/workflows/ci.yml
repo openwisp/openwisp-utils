@@ -55,8 +55,12 @@ jobs:
     - name: QA checks
       run: ./run-qa-checks
 
-    - name: Tests
-      run: coverage run --source=openwisp_utils runtests.py
+    - name: Tests & Coverage
+      run: |
+        NPROCS=$(/usr/bin/nproc)
+        coverage run --source=openwisp_utils runtests.py --parallel=$NPROCS --parallel-mode
+        coverage combine
+        coverage report
       env:
         SELENIUM_HEADLESS: 1
 
