@@ -57,6 +57,7 @@ setup(
             'isort~=5.0',
             'readme-renderer~=28.0',
             'coveralls~=3.0.0',  # depends on coverage as well
+            'tblib~=1.7',
         ],
         'rest': [
             'djangorestframework~=3.13.0',
