@@ -94,7 +94,10 @@ class InputFilter(InputFilterMixin, FieldListFilter):
 
 class AutocompleteFilter(BaseAutocompleteFilter):
     template = 'admin/auto_filter.html'
-    widget_attrs = {'data-dropdown-css-class': 'ow2-autocomplete-dropdown'}
+    widget_attrs = {
+        'data-dropdown-css-class': 'ow2-autocomplete-dropdown',
+        'data-empty-label': '-',
+    }
 
     class Media:
         css = {

@@ -20,7 +20,7 @@ django.jQuery(document).ready(function () {
       el = django.jQuery(el);
       nullParam = el.attr("name") + "__isnull";
       if (searchHash[nullParam] !== undefined) {
-        el.append(new Option("-", "null", false, false));
+        el.append(new Option(el.data('empty-label'), "null", false, false));
         el.val("null");
         el.trigger("change");
       }

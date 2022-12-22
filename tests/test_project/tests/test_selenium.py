@@ -720,7 +720,7 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         self.assertIn(
             (
                 '<select name="shelf__id" data-dropdown-css-class="ow2-autocomplete-dropdown"'
-                f' id="{select_id}" class="admin-autocomplete'
+                f' data-empty-label="-" id="{select_id}" class="admin-autocomplete'
             ),
             self.web_driver.page_source,
         )
@@ -764,7 +764,7 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         self.assertIn(
             (
                 '<select name="owner_id" data-dropdown-css-class="ow2-autocomplete-dropdown"'
-                f' id="{select_id}" class="admin-autocomplete'
+                f' data-empty-label="-" id="{select_id}" class="admin-autocomplete'
             ),
             self.web_driver.page_source,
         )
