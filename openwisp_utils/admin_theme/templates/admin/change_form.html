@@ -1,0 +1,24 @@
+{% extends "admin/change_form.html" %}
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+<script>
+(function ($) {
+    $(document).ready(function () {
+        var copyableFields = {{ copyable_fields | safe }} || [];
+        
+        copyableFields.forEach(copyableField => {
+            
+            var copyableFieldContainer = $(`.field-${copyableField} .readonly`).eq(0);
+            
+            copyableFieldContainer.html(`<input readonly id="id_${copyableField}" type="text" 
+            class="vTextField readonly" value="${copyableFieldContainer.text()}">`);
+            
+            var copyableFieldSelectedId = $(`#id_${copyableField}`);
+            copyableFieldSelectedId.click(function () {
+                $(this).select();
+            });
+        })
+    })
+}) (django.jQuery);
+</script>    
+{% endblock %}

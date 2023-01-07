@@ -1,4 +1,5 @@
 from django.contrib.admin import ModelAdmin, StackedInline
+from django.core.exceptions import FieldError
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -69,10 +70,10 @@ class AlwaysHasChangedMixin(object):
         return super().has_changed()
 
 
-class UUIDAdmin(ModelAdmin):
+class UUIDAdmin(ModelAdmin):  # pragma: no cover
     """
     Defines a field name uuid whose value is that
-    of the id of the object
+    of the id of the object (deprecated)
     """
 
     def uuid(self, obj):
@@ -96,6 +97,77 @@ class UUIDAdmin(ModelAdmin):
 
     class Media:
         js = ('admin/js/jquery.init.js', 'openwisp-utils/js/uuid.js')
+
+    uuid.short_description = _('UUID')
+
+
+class CopyableFieldError(FieldError):
+    pass
+
+
+class CopyableFieldsAdmin(ModelAdmin):
+    """
+    An admin class that allows us to set read-only input fields
+    which makes admin fields easier and quicker to copy and paste.
+    """
+
+    copyable_fields = ()
+    change_form_template = 'admin/change_form.html'
+
+    def uuid(self, obj):
+        return obj.pk
+
+    def _check_copyable_subset_fields(self, copyable_fields, fields):
+        if not set(copyable_fields).issubset(fields):
+            class_name = self.__class__.__name__
+            raise CopyableFieldError(
+                (
+                    f'{copyable_fields} not in {class_name}.fields {fields}, '
+                    f'Check copyable_fields attribute of class {class_name}.'
+                )
+            )
+
+    def _process_copyable_fields(self, fields, request, obj):
+        fields = list(fields)
+        copyable_fields = list(self.copyable_fields)
+        self._check_copyable_subset_fields(copyable_fields, fields)
+        # if `uuid`` is in `copyable_fields` and the
+        # instance doesn't exist (i.e. in the case of "add_view")
+        # then we need to exclude it from model admin fields
+        if 'uuid' in copyable_fields and not obj:
+            fields.remove('uuid')
+        return tuple(fields)
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        return self._process_copyable_fields(fields, request, obj)
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        # model instance doesn't exist (i.e. in the case of "add_view")
+        if not obj:
+            return fields
+        # make sure `copyable_fields` is included `read_only` fields
+        return tuple([*fields, *self.copyable_fields])
+
+    def add_view(self, request, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['copyable_fields'] = []
+        return super().add_view(
+            request,
+            form_url,
+            extra_context=extra_context,
+        )
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['copyable_fields'] = list(self.copyable_fields)
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
 
     uuid.short_description = _('UUID')
 

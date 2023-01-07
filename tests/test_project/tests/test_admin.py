@@ -6,7 +6,7 @@ from django.contrib.auth.models import Permission
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
-from openwisp_utils.admin import ReadOnlyAdmin
+from openwisp_utils.admin import CopyableFieldError, ReadOnlyAdmin
 from openwisp_utils.admin_theme import settings as admin_theme_settings
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig, _staticfy
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
@@ -203,6 +203,15 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'field-uuid')
         self.assertContains(response, 'field-receive_url')
+
+    def test_invalid_copyable_field_error(self):
+        project = Project.objects.create(name='test_invalid_copyable_field_error')
+        ma = ProjectAdmin(Project, self.site)
+        copyable_field_err = "['invalid_field'] not in ProjectAdmin.fields"
+        ma.copyable_fields = ('invalid_field',)
+        with self.assertRaises(CopyableFieldError) as err:
+            ma.get_fields(self.client.request, project)
+        self.assertIn(copyable_field_err, err.exception.args[0])
 
     def test_receive_url_admin(self):
         p = Project.objects.create(name='test_receive_url_admin_project')
