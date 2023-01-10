@@ -937,10 +937,10 @@ is created even if the default values are unchanged.
 Without this, when creating new objects, inline items won't be saved
 unless users change the default values.
 
-``openwisp_utils.admin.UUIDAdmin``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``openwisp_utils.admin.CopyableFieldsAdmin``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An admin class that provides the UUID of the object as a read-only input field
+An admin class that allows us to set read-only input fields
 (to make it easy and quick to copy/paste).
 
 ``openwisp_utils.admin.ReceiveUrlAdmin``

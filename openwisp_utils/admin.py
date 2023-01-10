@@ -73,7 +73,9 @@ class AlwaysHasChangedMixin(object):
 class UUIDAdmin(ModelAdmin):  # pragma: no cover
     """
     Defines a field name uuid whose value is that
-    of the id of the object (deprecated)
+    of the id of the object.
+    NOTE: This class is deprecated,
+    Use `CopyableFieldsAdmin` instead.
     """
 
     def uuid(self, obj):
@@ -108,7 +110,7 @@ class CopyableFieldError(FieldError):
 class CopyableFieldsAdmin(ModelAdmin):
     """
     An admin class that allows us to set read-only input fields
-    which makes admin fields easier and quicker to copy and paste.
+    (to make it easy and quick to copy/paste).
     """
 
     copyable_fields = ()

@@ -6,7 +6,7 @@ from django.contrib.auth.models import Permission
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
-from openwisp_utils.admin import CopyableFieldError, ReadOnlyAdmin
+from openwisp_utils.admin import CopyableFieldError, CopyableFieldsAdmin, ReadOnlyAdmin
 from openwisp_utils.admin_theme import settings as admin_theme_settings
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig, _staticfy
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
@@ -204,13 +204,35 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.assertNotContains(response, 'field-uuid')
         self.assertContains(response, 'field-receive_url')
 
-    def test_invalid_copyable_field_error(self):
-        project = Project.objects.create(name='test_invalid_copyable_field_error')
-        ma = ProjectAdmin(Project, self.site)
-        copyable_field_err = "['invalid_field'] not in ProjectAdmin.fields"
+    def test_copyablefields_admin(self):
+        class TestCopyableFieldAdmin(CopyableFieldsAdmin):
+            copyable_fields = ('session_id', 'username')
+
+        options = dict(username='bobby', session_id='1')
+        radius_acc = self._create_radius_accounting(**options)
+        ma = TestCopyableFieldAdmin(RadiusAccounting, AdminSite)
+        path = reverse(
+            'admin:test_project_radiusaccounting_change', args=[radius_acc.pk]
+        )
+        self.assertEqual(
+            ma.get_readonly_fields(self.client.request, radius_acc),
+            TestCopyableFieldAdmin.copyable_fields,
+        )
+        response = self.client.get(path)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'field-username')
+        self.assertContains(response, 'field-session_id')
+        self.assertContains(response, 'readonly id="id_${copyableField}"')
+
+    def test_invalid_copyablefields_admin_error(self):
+        class TestCopyableFieldAdmin(CopyableFieldsAdmin):
+            pass
+
+        ma = TestCopyableFieldAdmin(Project, AdminSite)
         ma.copyable_fields = ('invalid_field',)
+        copyable_field_err = "['invalid_field'] not in TestCopyableFieldAdmin.fields"
         with self.assertRaises(CopyableFieldError) as err:
-            ma.get_fields(self.client.request, project)
+            ma.get_fields(self.client.request)
         self.assertIn(copyable_field_err, err.exception.args[0])
 
     def test_receive_url_admin(self):
