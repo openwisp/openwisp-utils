@@ -1,7 +1,8 @@
 from admin_auto_filters.filters import AutocompleteFilter as BaseAutocompleteFilter
+from django.contrib import messages
 from django.contrib.admin.filters import FieldListFilter, SimpleListFilter
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db.models.fields import CharField, UUIDField
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -107,3 +108,17 @@ class AutocompleteFilter(BaseAutocompleteFilter):
 
     def get_autocomplete_url(self, request, model_admin):
         return reverse('admin:ow-auto-filter')
+
+    def __init__(self, *args, **kwargs):
+        try:
+            return super().__init__(*args, **kwargs)
+        except ValidationError:
+            None
+
+    def queryset(self, request, queryset):
+        try:
+            return super().queryset(request, queryset)
+        except ValidationError as e:
+            error_msg = ' '.join(e.messages)
+            messages.error(request, error_msg)
+            return queryset
