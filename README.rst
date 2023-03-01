@@ -940,8 +940,9 @@ unless users change the default values.
 ``openwisp_utils.admin.CopyableFieldsAdmin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An admin class that allows us to set read-only input fields
-(to make it easy and quick to copy/paste).
+An admin class that allows us to change admin fields to read-only fields
+and provides an improved user experience for copying and pasting the field content.
+Useful for auto-generated fields such as UUIDs, secret keys, tokens, etc.
 
 ``openwisp_utils.admin.ReceiveUrlAdmin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

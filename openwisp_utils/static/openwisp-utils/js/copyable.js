@@ -11,6 +11,6 @@ django.jQuery(function ($) {
             copyableFieldSelectedId.click(function () {
                 $(this).select();
             });
-        })
+        });
     }
 });

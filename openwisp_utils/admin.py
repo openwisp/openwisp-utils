@@ -106,8 +106,9 @@ class CopyableFieldError(FieldError):
 
 class CopyableFieldsAdmin(UUIDAdmin):
     """
-    An admin class that allows us to set read-only input fields
-    (to make it easy and quick to copy/paste).
+    An admin class that allows us to change admin fields to read-only fields
+    improves the user experience of copying and pasting the field content.
+    It is useful for auto-generated fields such as UUIDs, secret keys, tokens, etc.
     """
 
     copyable_fields = ()
