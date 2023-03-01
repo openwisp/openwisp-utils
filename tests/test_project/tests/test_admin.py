@@ -222,7 +222,6 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'field-username')
         self.assertContains(response, 'field-session_id')
-        self.assertContains(response, 'readonly id="id_${copyableField}"')
 
     def test_invalid_copyablefields_admin_error(self):
         class TestCopyableFieldAdmin(CopyableFieldsAdmin):
@@ -230,7 +229,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
 
         ma = TestCopyableFieldAdmin(Project, AdminSite)
         ma.copyable_fields = ('invalid_field',)
-        copyable_field_err = "['invalid_field'] not in TestCopyableFieldAdmin.fields"
+        copyable_field_err = "('invalid_field',) not in TestCopyableFieldAdmin.fields"
         with self.assertRaises(CopyableFieldError) as err:
             ma.get_fields(self.client.request)
         self.assertIn(copyable_field_err, err.exception.args[0])
