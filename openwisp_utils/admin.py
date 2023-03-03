@@ -70,41 +70,11 @@ class AlwaysHasChangedMixin(object):
         return super().has_changed()
 
 
-class UUIDAdmin(ModelAdmin):  # pragma: no cover
-    """
-    Defines a field name uuid whose value is that
-    of the id of the object.
-    NOTE: This class is deprecated,
-    Use `CopyableFieldsAdmin` instead.
-    """
-
-    def uuid(self, obj):
-        return obj.pk
-
-    def _process_fields(self, fields, request, obj):
-        fields = list(fields)
-        if 'uuid' in fields and not obj:
-            fields.remove('uuid')
-        if 'uuid' not in fields and obj:
-            fields.insert(0, 'uuid')
-        return tuple(fields)
-
-    def get_fields(self, request, obj=None):
-        fields = super().get_fields(request, obj)
-        return self._process_fields(fields, request, obj)
-
-    def get_readonly_fields(self, request, obj=None):
-        fields = super().get_readonly_fields(request, obj)
-        return self._process_fields(fields, request, obj)
-
-    uuid.short_description = _('UUID')
-
-
 class CopyableFieldError(FieldError):
     pass
 
 
-class CopyableFieldsAdmin(UUIDAdmin):
+class CopyableFieldsAdmin(ModelAdmin):
     """
     An admin class that allows us to change admin fields to read-only fields
     improves the user experience of copying and pasting the field content.
@@ -162,6 +132,20 @@ class CopyableFieldsAdmin(UUIDAdmin):
 
     class Media:
         js = ('admin/js/jquery.init.js', 'openwisp-utils/js/copyable.js')
+
+
+class UUIDAdmin(CopyableFieldsAdmin):
+    """
+    An admin subclass of CopyableFieldsAdmin with `uuid` as a copyable field
+    which is kept for backward compatibility and convenience.
+    """
+
+    copyable_fields = ('uuid',)
+
+    def uuid(self, obj):
+        return obj.pk
+
+    uuid.short_description = _('UUID')
 
 
 class ReceiveUrlAdmin(ModelAdmin):
