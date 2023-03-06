@@ -852,7 +852,7 @@ Example:
 
 .. code-block:: css
 
-    .icon-class-name:{
+    .icon-class-name {
         mask-image: url(imageurl);
         -webkit-mask-image: url(imageurl);
     }
