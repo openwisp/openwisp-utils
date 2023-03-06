@@ -1470,6 +1470,10 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/logout.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/logout.svg);
 }
+.ow-help {
+  mask-image: url(../../ui/openwisp/images/help.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/help.svg);
+}
 
 /* USERS ICONS */
 

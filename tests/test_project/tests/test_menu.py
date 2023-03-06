@@ -204,7 +204,7 @@ class TestMenuSchema(TestCase):
             menu_link = MenuLink(config=_config)
             context = menu_link.create_context()
             self.assertEqual(context.get('label'), _config['label'])
-            self.assertEqual(context.get('url'), _config['url'] + '/')
+            self.assertEqual(context.get('url'), _config['url'])
             self.assertEqual(context.get('icon'), _config['icon'])
 
         with self.subTest('Menu Link without icon'):
@@ -212,6 +212,13 @@ class TestMenuSchema(TestCase):
             menu_link = MenuLink(config=_config)
             context = menu_link.create_context()
             self.assertEqual(context.get('icon'), None)
+
+        with self.subTest('Menu Link test mailto'):
+            mailto = 'mailto:test@test.com'
+            _config = self._get_menu_link_config(url=mailto)
+            menu_link = MenuLink(config=_config)
+            context = menu_link.create_context()
+            self.assertEqual(context.get('url'), mailto)
 
     def test_model_link(self):
 
