@@ -940,15 +940,18 @@ unless users change the default values.
 ``openwisp_utils.admin.CopyableFieldsAdmin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An admin class that allows us to change admin fields to read-only fields
-and provides an improved user experience for copying and pasting the field content.
+An admin class that allows us to change admin fields to read-only
+fields and provides an improved user experience for copying and pasting
+the field content.
+
 Useful for auto-generated fields such as UUIDs, secret keys, tokens, etc.
 
 ``openwisp_utils.admin.UUIDAdmin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An admin subclass of ``CopyableFieldsAdmin`` with ``uuid`` as a copyable field, which is kept
-for backward compatibility and convenience, since many models show ``uuid`` as the only copyable field.
+An admin subclass of ``CopyableFieldsAdmin`` with ``uuid`` as a
+copyable field, which is kept for backward compatibility and convenience,
+since many models show ``uuid`` as the only copyable field.
 
 ``openwisp_utils.admin.ReceiveUrlAdmin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
