@@ -76,11 +76,11 @@ class CopyableFieldError(FieldError):
 
 class CopyableFieldsAdmin(ModelAdmin):
     """
-    An admin class that allows us to change
-    admin fields to read-only fields improves
-    the user experience of copying and pasting
-    the field content. It is useful for auto-generated
-    fields such as UUIDs, secret keys, tokens, etc.
+    An admin class that allows to set admin
+    fields to be read-only and makes it easy
+    to copy the fields contents.
+    Useful for auto-generated fields such as
+    UUIDs, secret keys, tokens, etc
     """
 
     copyable_fields = ()
@@ -139,9 +139,11 @@ class CopyableFieldsAdmin(ModelAdmin):
 
 class UUIDAdmin(CopyableFieldsAdmin):
     """
-    An admin subclass of CopyableFieldsAdmin with
-    `uuid` as a copyable field which is kept for
-    backward compatibility and convenience.
+    This class is a subclass of `CopyableFieldsAdmin`
+    which sets `uuid` as the only copyable field
+    This class is kept for backward compatibility
+    and convenience, since different models of various
+    OpenWISP modules show `uuid` as the only copyable field
     """
 
     copyable_fields = ('uuid',)
