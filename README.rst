@@ -937,11 +937,21 @@ is created even if the default values are unchanged.
 Without this, when creating new objects, inline items won't be saved
 unless users change the default values.
 
+``openwisp_utils.admin.CopyableFieldsAdmin``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An admin class that allows to set admin fields to be
+read-only and makes it easy to copy the fields contents.
+
+Useful for auto-generated fields such as UUIDs, secret keys, tokens, etc.
+
 ``openwisp_utils.admin.UUIDAdmin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-An admin class that provides the UUID of the object as a read-only input field
-(to make it easy and quick to copy/paste).
+This class is a subclass of ``CopyableFieldsAdmin`` which
+sets ``uuid`` as the only copyable field. This class is kept
+for backward compatibility and convenience, since different models
+of various OpenWISP modules show ``uuid`` as the only copyable field.
 
 ``openwisp_utils.admin.ReceiveUrlAdmin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
