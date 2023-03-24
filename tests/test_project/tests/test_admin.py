@@ -234,6 +234,18 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             ma.get_fields(self.client.request)
         self.assertIn(copyable_field_err, err.exception.args[0])
 
+    def test_copyablefields_admin_fields_order(self):
+        path = reverse('admin:test_project_project_add')
+        self.client.get(path)
+        ma = ProjectAdmin(Project, self.site)
+        # 'uuid' should be missing from ma.get_fields()
+        # because we're testing the project admin add form,
+        # and now we're adding it here again only to assert the admin field order
+        self.assertEqual(ma.fields, ('uuid', *ma.get_fields(self.client.request)))
+        self.assertEqual(
+            ma.readonly_fields, ma.get_readonly_fields(self.client.request)
+        )
+
     def test_receive_url_admin(self):
         p = Project.objects.create(name='test_receive_url_admin_project')
         ma = ProjectAdmin(Project, self.site)
