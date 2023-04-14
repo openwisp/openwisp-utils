@@ -60,7 +60,7 @@ setup(
             'tblib~=1.7',
         ],
         'rest': [
-            'djangorestframework~=3.13.0',
+            'djangorestframework~=3.14.0',
             'django-filter~=22.1',  # django-filter uses CalVer
             'drf-yasg~=1.21.0',
         ],
