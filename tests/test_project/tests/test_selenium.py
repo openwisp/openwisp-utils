@@ -222,7 +222,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         transition = 'none 0s ease 0s'
         # none because transition has been set to none during tests
         self.login()
-        menu = self.web_driver.find_element_by_id('menu')
+        menu = self.web_driver.find_element(By.ID, 'menu')
         main_content = self._get_main_content()
         menu_toggle = self._get_menu_toggle()
         self.assertEqual(menu.value_of_css_property('transition'), transition)
@@ -485,7 +485,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
                 EC.visibility_of_element_located((By.CSS_SELECTOR, '#site-name'))
             )
             self.assertEqual(self.check_exists_by_id('changelist-filter-clear'), True)
-            paginator = self.web_driver.find_element_by_css_selector('.paginator')
+            paginator = self.web_driver.find_element(By.CSS_SELECTOR, '.paginator')
             self.assertEqual(paginator.get_attribute('innerText'), '2 shelfs')
 
         with self.subTest('Test clear filter button'):
@@ -494,7 +494,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
             WebDriverWait(self.web_driver, 2).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, '#site-name'))
             )
-            paginator = self.web_driver.find_element_by_css_selector('.paginator')
+            paginator = self.web_driver.find_element(By.CSS_SELECTOR, '.paginator')
             self.assertEqual(paginator.get_attribute('innerText'), '4 shelfs')
 
         with self.subTest('Test multiple filters'):
@@ -512,7 +512,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
             WebDriverWait(self.web_driver, 2).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, '#site-name'))
             )
-            paginator = self.web_driver.find_element_by_css_selector('.paginator')
+            paginator = self.web_driver.find_element(By.CSS_SELECTOR, '.paginator')
             self.assertEqual(paginator.get_attribute('innerText'), '0 shelfs')
 
     def test_book_filter(self):
@@ -548,7 +548,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
             selected_option = self._get_filter_selected_option('name')
             self.assertNotEqual(old_value, selected_option.get_attribute('innerText'))
             self.assertEqual(selected_option.get_attribute('innerText'), 'horror book')
-            paginator = self.web_driver.find_element_by_css_selector('.paginator')
+            paginator = self.web_driver.find_element(By.CSS_SELECTOR, '.paginator')
             self.assertEqual(paginator.get_attribute('innerText'), '1 book')
 
 
@@ -584,14 +584,14 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
             input_field.send_keys('Horror')
             self._get_filter_button().click()
             # Horror shelf is present
-            self.web_driver.find_element_by_xpath(horror_result_xpath)
+            self.web_driver.find_element(By.XPATH, horror_result_xpath)
             with self.assertRaises(NoSuchElementException):
                 # Factual shelf is absent
-                self.web_driver.find_element_by_xpath(factual_result_xpath)
+                self.web_driver.find_element(By.XPATH, factual_result_xpath)
             # Both shelves should be present after clearing filter
-            self.web_driver.find_element_by_css_selector('.field-clear').click()
-            self.web_driver.find_element_by_xpath(horror_result_xpath)
-            self.web_driver.find_element_by_xpath(factual_result_xpath)
+            self.web_driver.find_element(By.CSS_SELECTOR, '.field-clear').click()
+            self.web_driver.find_element(By.XPATH, horror_result_xpath)
+            self.web_driver.find_element(By.XPATH, factual_result_xpath)
 
         with self.subTest('Test InputFilter'):
             self.open(url)
@@ -599,50 +599,51 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
             input_field.send_keys('HORROR')
             self._get_filter_button().click()
             # Horror shelf is present
-            self.web_driver.find_element_by_xpath(horror_result_xpath)
+            self.web_driver.find_element(By.XPATH, horror_result_xpath)
             with self.assertRaises(NoSuchElementException):
                 # Factual shelf is absent
-                self.web_driver.find_element_by_xpath(factual_result_xpath)
+                self.web_driver.find_element(By.XPATH, factual_result_xpath)
             # Both shelves should be present after clearing filter
-            self.web_driver.find_element_by_css_selector('.field-clear').click()
-            self.web_driver.find_element_by_xpath(horror_result_xpath)
-            self.web_driver.find_element_by_xpath(factual_result_xpath)
+            self.web_driver.find_element(By.CSS_SELECTOR, '.field-clear').click()
+            self.web_driver.find_element(By.XPATH, horror_result_xpath)
+            self.web_driver.find_element(By.XPATH, factual_result_xpath)
 
         with self.subTest('Test InputFilter: UUID'):
             self.open(url)
-            input_field = self.web_driver.find_element_by_css_selector(
-                'input[name=id__exact]'
+            input_field = self.web_driver.find_element(
+                By.CSS_SELECTOR, 'input[name=id__exact]'
             )
             input_field.send_keys(str(horror_shelf.id))
             self._get_filter_button().click()
             # Horror shelf is present
-            self.web_driver.find_element_by_xpath(horror_result_xpath)
+            self.web_driver.find_element(By.XPATH, horror_result_xpath)
             with self.assertRaises(NoSuchElementException):
                 # Factual shelf is absent
-                self.web_driver.find_element_by_xpath(factual_result_xpath)
+                self.web_driver.find_element(By.XPATH, factual_result_xpath)
             # Both shelves should be present after clearing filter
-            self.web_driver.find_element_by_css_selector('.field-clear').click()
-            self.web_driver.find_element_by_xpath(horror_result_xpath)
-            self.web_driver.find_element_by_xpath(factual_result_xpath)
+            self.web_driver.find_element(By.CSS_SELECTOR, '.field-clear').click()
+            self.web_driver.find_element(By.XPATH, horror_result_xpath)
+            self.web_driver.find_element(By.XPATH, factual_result_xpath)
 
         with self.subTest('Test InputFilter: Related field'):
             admin_xpath = f'//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{self.admin.username}")]'
             user_xpath = f'//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{user.username}")]'
             self.open(reverse('admin:auth_user_changelist'))
-            input_field = self.web_driver.find_element_by_xpath(
-                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/input'
+            input_field = self.web_driver.find_element(
+                By.XPATH,
+                '//*[@id="ow-changelist-filter"]/div[1]/div/div/div[2]/div[1]/form/input',
             )
             input_field.send_keys(str(horror_shelf.id))
             self._get_filter_button().click()
             # Admin user is present
-            self.web_driver.find_element_by_xpath(admin_xpath)
+            self.web_driver.find_element(By.XPATH, admin_xpath)
             with self.assertRaises(NoSuchElementException):
                 # User is absent
-                self.web_driver.find_element_by_xpath(user_xpath)
+                self.web_driver.find_element(By.XPATH, user_xpath)
             # Both users should be present after clearing filter
-            self.web_driver.find_element_by_css_selector('.field-clear').click()
-            self.web_driver.find_element_by_xpath(admin_xpath)
-            self.web_driver.find_element_by_xpath(user_xpath)
+            self.web_driver.find_element(By.CSS_SELECTOR, '.field-clear').click()
+            self.web_driver.find_element(By.XPATH, admin_xpath)
+            self.web_driver.find_element(By.XPATH, user_xpath)
 
 
 class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
@@ -671,7 +672,7 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
         except TimeoutException:
             self.fail('Failed to find annotation text element in the chart')
         else:
-            annotation_text = self.web_driver.find_element_by_css_selector(
-                '.operator-project-distribution .annotation-text tspan'
+            annotation_text = self.web_driver.find_element(
+                By.CSS_SELECTOR, '.operator-project-distribution .annotation-text tspan'
             )
             self.assertEqual(annotation_text.text, '0')
