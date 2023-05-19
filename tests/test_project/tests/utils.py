@@ -2,13 +2,13 @@ import json
 import os
 import uuid
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from selenium import webdriver
+from openwisp_utils.test_selenium_mixins import (
+    SeleniumTestMixin as BaseSeleniumTestMixin,
+)
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -26,44 +26,7 @@ class TestConfigMixin(object):
         config = json.load(json_file)
 
 
-class SeleniumTestMixin(TestConfigMixin):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        chrome_options = webdriver.ChromeOptions()
-        if getattr(settings, 'SELENIUM_HEADLESS', True):
-            chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--window-size=1366,768')
-        chrome_options.add_argument('--ignore-certificate-errors')
-        chrome_options.add_argument('--remote-debugging-port=9222')
-        capabilities = DesiredCapabilities.CHROME
-        capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
-        cls.web_driver = webdriver.Chrome(
-            options=chrome_options,
-            desired_capabilities=capabilities,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.web_driver.quit()
-        super().tearDownClass()
-
-    def open(self, url, driver=None):
-        """
-        Opens a URL
-        Argument:
-            url: URL to open
-            driver: selenium driver (default: cls.base_driver)
-        """
-        if not driver:
-            driver = self.web_driver
-        driver.get(f'{self.live_server_url}{url}')
-        WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, self.config['main_content_css_selector'])
-            )
-        )
-
+class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
     def _create_user(self, **kwargs):
         opts = dict(
             username=self.config['tester_username'],
@@ -87,27 +50,6 @@ class SeleniumTestMixin(TestConfigMixin):
         )
         opts.update(kwargs)
         return self._create_user(**opts)
-
-    def login(self, username=None, password=None, driver=None):
-        """
-        Log in to the admin dashboard
-        Argument:
-            driver: selenium driver (default: cls.web_driver)
-            username: username to be used for login (default: cls.admin.username)
-            password: password to be used for login (default: cls.admin.password)
-        """
-        if not driver:
-            driver = self.web_driver
-        if not username:
-            username = self.config['admin_username']
-        if not password:
-            password = self.config['admin_password']
-        url = self.live_server_url + self.config['login_url']
-        driver.get(url)
-        if 'admin/login' in driver.current_url:
-            driver.find_element(By.NAME, 'username').send_keys(username)
-            driver.find_element(By.NAME, 'password').send_keys(password)
-            driver.find_element(By.XPATH, '//input[@type="submit"]').click()
 
     def logout(self):
         account_button = self._get_account_button()
