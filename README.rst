@@ -1443,6 +1443,12 @@ Example usage:
             # the assertion above will fail but this line will be executed
             print('This will be printed anyway.')
 
+``openwisp_utils.test_selenium_mixins.SeleniumTestMixin``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This mixin provides basic setup for Selenium tests with method to
+open URL and login and logout a user.
+
 Quality Assurance Checks
 ------------------------
 

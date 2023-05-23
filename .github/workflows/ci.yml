@@ -51,7 +51,7 @@ jobs:
 
     - name: Install openwisp-utils
       run: |
-        pip install -e .[qa,rest]
+        pip install -e .[qa,rest,selenium]
         pip install ${{ matrix.django-version }}
 
     - name: QA checks
