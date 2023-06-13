@@ -165,3 +165,6 @@ class TestAppConfig(ApiAppConfig):
                 'icon': 'code',
             },
         )
+
+
+del ApiAppConfig
