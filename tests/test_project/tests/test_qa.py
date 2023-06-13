@@ -70,7 +70,7 @@ class TestQa(TestCase):
         with patch('argparse._sys.argv', bad_migration):
             try:
                 check_migration_name()
-            except (SystemExit):
+            except SystemExit:
                 message = 'must be renamed to something more descriptive'
                 self.assertIn(message, captured_output.getvalue())
             else:
@@ -204,7 +204,7 @@ class TestQa(TestCase):
         with patch('argparse._sys.argv', bad_commit):
             try:
                 check_commit_message()
-            except (SystemExit):
+            except SystemExit:
                 message = 'Your commit message does not follow our commit message style guidelines'
                 self.assertIn(message, captured_output.getvalue())
             else:
@@ -269,7 +269,7 @@ class TestQa(TestCase):
         except ValueError:
             message = 'Output Failed'
             self.assertIn(message, captured_output.getvalue())
-        except (SystemExit):
+        except SystemExit:
             pass
         else:
             self.fail('SystemExit not raised')
