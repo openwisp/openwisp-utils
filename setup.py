@@ -42,7 +42,7 @@ setup(
     scripts=['openwisp-qa-check', 'openwisp-qa-format', 'openwisp-pre-push-hook'],
     zip_safe=False,
     install_requires=[
-        'django-model-utils~=4.2.0',
+        'django-model-utils~=4.3.1',
         'django-compress-staticfiles~=1.0.1b',
         'django-admin-autocomplete-filter~=0.7.1',
         'swapper~=1.3.0',
@@ -60,12 +60,12 @@ setup(
             'tblib~=1.7',
         ],
         'rest': [
-            'djangorestframework~=3.13.0',
-            'django-filter~=22.1',  # django-filter uses CalVer
+            'djangorestframework~=3.14.0',
+            'django-filter~=23.2',  # django-filter uses CalVer
             'drf-yasg~=1.21.0',
         ],
-        'celery': ['celery~=5.2.3'],
-        'selenium': ['selenium~=4.9.1'],
+        'celery': ['celery~=5.3.0'],
+        'selenium': ['selenium~=4.10.0'],
     },
     classifiers=[
         'Development Status :: 3 - Alpha',

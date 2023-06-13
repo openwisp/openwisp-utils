@@ -26,9 +26,9 @@ class SeleniumTestMixin:
         chrome_options.add_argument('--remote-debugging-port=9222')
         capabilities = DesiredCapabilities.CHROME
         capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
+        chrome_options.set_capability('cloud:options', capabilities)
         cls.web_driver = webdriver.Chrome(
             options=chrome_options,
-            desired_capabilities=capabilities,
         )
 
     @classmethod
