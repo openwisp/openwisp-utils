@@ -1925,6 +1925,9 @@ See `LICENSE <https://github.com/openwisp/openwisp-utils/blob/master/LICENSE>`_.
 Attribution
 -----------
 
-`Wireless icon <https://github.com/openwisp/openwisp-utils/blob/master/openwisp_utils/admin_theme/static/ui/openwisp/images/monitoring-wifi.svg>`_
-is licensed by Gregbaker, under `CC BY-SA 4.0 <https://creativecommons.org/licenses/by-sa/4.0>`_ ,
-via `Wikimedia Commons <https://commons.wikimedia.org/wiki/File:Wireless-icon.svg>`_.
+- `Wireless icon <https://github.com/openwisp/openwisp-utils/blob/master/openwisp_utils/admin_theme/static/ui/openwisp/images/monitoring-wifi.svg>`_
+  is licensed by Gregbaker, under `CC BY-SA 4.0 <https://creativecommons.org/licenses/by-sa/4.0>`_ ,
+  via `Wikimedia Commons <https://commons.wikimedia.org/wiki/File:Wireless-icon.svg>`_.
+- `Roboto webfont <https://www.google.com/fonts/specimen/Roboto>`_ is licensed
+  under the `Apache License, Version 2.0 <https://www.apache.org/licenses/LICENSE-2.0>`_.
+  WOFF files extracted using `<https://github.com/majodev/google-webfonts-helper>`_.

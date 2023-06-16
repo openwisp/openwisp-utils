@@ -1,3 +1,27 @@
+/* Django 4.2.0 stopped shipping fonts.
+See https://code.djangoproject.com/ticket/33878 */
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/Roboto-Bold-webfont.woff');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/Roboto-Regular-webfont.woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../fonts/Roboto-Light-webfont.woff');
+  font-weight: 300;
+  font-style: normal;
+}
+
 /* VARIABLE DEFINITIONS TO PREVENT DARK MODE */
 :root {
   --primary: #79aec8 !important;
@@ -49,6 +73,7 @@
   --object-tools-fg: var(--button-fg) !important;
   --object-tools-bg: var(--close-button-bg) !important;
   --object-tools-hover-bg: var(--close-button-hover-bg) !important;
+  --font-family-primary: "Roboto","Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;
 }
 body {
   min-width: 320px;
@@ -149,6 +174,7 @@ a:focus {
 }
 #main .form-row label {
   color: #1b1818;
+  display: inline-block;
 }
 #main .form-row .help,
 #container #main-content .help {
@@ -260,6 +286,27 @@ ul.messagelist li {
 #main .submit-row:first-child .deletelink-box,
 .submit-row input[name='_addanother'] {
   display: none;
+}
+
+/* Django 4.2.0 changed the ordering of buttons in
+submit row of the form. See https://code.djangoproject.com/ticket/33728
+
+The following CSS reverts those changes*/
+#main .submit-row {
+  text-align: right;
+  display: block;
+}
+
+#main .submit-row input {
+    margin: 0 0 5px 5px;
+}
+#main .submit-row input.default {
+    margin: 0 0 5px 8px;
+    float: right;
+}
+.submit-row p.deletelink-box {
+    float: left;
+    margin: 0;
 }
 
 /* temporary frontend fix */
