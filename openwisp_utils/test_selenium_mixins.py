@@ -23,7 +23,17 @@ class SeleniumTestMixin:
             chrome_options.add_argument('--headless')
         chrome_options.add_argument('--window-size=1366,768')
         chrome_options.add_argument('--ignore-certificate-errors')
-        chrome_options.add_argument('--remote-debugging-port=9222')
+        # When running Selenium tests with the "--parallel" flag,
+        # each TestCase class requires its own browser instance.
+        # If the same "remote-debugging-port" is used for all
+        # TestCase classes, it leads to failed test cases.
+        # Therefore, it is necessary to utilize different remote
+        # debugging ports for each TestCase. To accomplish this,
+        # we can leverage the randomized live test server port to
+        # generate a unique port for each browser instance.
+        chrome_options.add_argument(
+            f'--remote-debugging-port={cls.server_thread.port + 100}'
+        )
         capabilities = DesiredCapabilities.CHROME
         capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
         chrome_options.set_capability('cloud:options', capabilities)
