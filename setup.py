@@ -46,9 +46,6 @@ setup(
         'django-compress-staticfiles~=1.0.1b',
         'django-admin-autocomplete-filter~=0.7.1',
         'swapper~=1.3.0',
-        # TODO: Remove when dropping support for Python 3.7
-        # For info, read https://stackoverflow.com/questions/73929564/
-        'importlib-metadata<5.0',
     ],
     extras_require={
         'qa': [

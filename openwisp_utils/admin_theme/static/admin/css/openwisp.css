@@ -296,17 +296,16 @@ The following CSS reverts those changes*/
   text-align: right;
   display: block;
 }
-
 #main .submit-row input {
-    margin: 0 0 5px 5px;
+  margin: 0 0 5px 5px;
 }
 #main .submit-row input.default {
-    margin: 0 0 5px 8px;
-    float: right;
+  margin: 0 0 5px 8px;
+  float: right;
 }
 .submit-row p.deletelink-box {
-    float: left;
-    margin: 0;
+  float: left;
+  margin: 0;
 }
 
 /* temporary frontend fix */
