@@ -13,7 +13,13 @@ from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
 from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
 
 from ..admin import ProjectAdmin, ShelfAdmin
-from ..models import Operator, Project, RadiusAccounting, Shelf
+from ..models import (
+    Operator,
+    OrganizationRadiusSettings,
+    Project,
+    RadiusAccounting,
+    Shelf,
+)
 from . import AdminTestMixin, CreateMixin
 
 User = get_user_model()
@@ -22,6 +28,7 @@ User = get_user_model()
 class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
     TEST_KEY = 'w1gwJxKaHcamUw62TQIPgYchwLKn3AA0'
     accounting_model = RadiusAccounting
+    org_radius_settings_model = OrganizationRadiusSettings
 
     def test_radiusaccounting_change(self):
         options = dict(username='bobby', session_id='1')
@@ -478,3 +485,81 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '“invalid” is not a valid UUID.')
+
+    def test_organization_radius_settings_admin(self):
+        org_rad_settings = self._create_org_radius_settings(
+            is_active=True,
+            is_first_name_required=None,
+            greeting_text=None,
+            password_reset_url='http://localhost:8000/reset-password/',
+        )
+        url = reverse(
+            'admin:test_project_organizationradiussettings_change',
+            args=[org_rad_settings.pk],
+        )
+
+        with self.subTest('Test default values are rendered'):
+            response = self.client.get(url)
+            # Overridden value is selected for BooleanChoiceField
+            self.assertContains(
+                response,
+                '<select name="is_active" id="id_is_active">'
+                '<option value="">Default (Disabled)</option>'
+                '<option value="True" selected>Enabled</option>'
+                '<option value="False">Disabled</option></select>',
+                html=True,
+            )
+            # Default value is selected for FallbackCharChoiceField
+            self.assertContains(
+                response,
+                '<select name="is_first_name_required" id="id_is_first_name_required">'
+                '<option value="" selected>Default (Disabled)</option>'
+                '<option value="disabled">Disabled</option>'
+                '<option value="allowed">Allowed</option>'
+                '<option value="mandatory">Mandatory</option></select>',
+                html=True,
+            )
+            # Default value is used for FallbackCharField
+            self.assertContains(
+                response,
+                '<input type="text" name="greeting_text" value="Welcome to OpenWISP!"'
+                ' class="vTextField" maxlength="200" id="id_greeting_text">',
+            )
+            # Overridden value is used for the FallbackURLField
+            self.assertContains(
+                response,
+                '<input type="url" name="password_reset_url"'
+                ' value="http://localhost:8000/reset-password/"'
+                ' class="vURLField" maxlength="200" id="id_password_reset_url">',
+            )
+
+        with self.subTest('Test overriding default values from admin'):
+            payload = {
+                # Setting the default value for FallbackBooleanChoiceField
+                'is_active': '',
+                # Overriding the default value for FallbackCharChoiceField
+                'is_first_name_required': 'allowed',
+                # Overriding the default value for FallbackCharField
+                'greeting_text': 'Greeting text',
+                # Setting the default value for FallbackURLField
+                'password_reset_url': '',
+                # Setting the default value for FallbackTextField
+                'extra_config': '',
+            }
+            response = self.client.post(url, payload, follow=True)
+            self.assertEqual(response.status_code, 200)
+            org_rad_settings.refresh_from_db()
+            self.assertEqual(org_rad_settings.get_field_value('is_active'), False)
+            self.assertEqual(
+                org_rad_settings.get_field_value('is_first_name_required'), 'allowed'
+            )
+            self.assertEqual(
+                org_rad_settings.get_field_value('greeting_text'), 'Greeting text'
+            )
+            self.assertEqual(
+                org_rad_settings.get_field_value('password_reset_url'),
+                'http://localhost:8000/admin/password_change/',
+            )
+            self.assertEqual(
+                org_rad_settings.get_field_value('extra_config'), 'no data'
+            )
