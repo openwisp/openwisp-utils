@@ -40,3 +40,9 @@ class CreateMixin(object):
         ra.full_clean()
         ra.save()
         return ra
+
+    def _create_org_radius_settings(self, **kwargs):
+        org_rad_settings = self.org_radius_settings_model(**kwargs)
+        org_rad_settings.full_clean()
+        org_rad_settings.save()
+        return org_rad_settings

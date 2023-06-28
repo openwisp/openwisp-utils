@@ -897,10 +897,138 @@ Model class inheriting ``UUIDModel`` which provides two additional fields:
 Which use respectively ``AutoCreatedField``, ``AutoLastModifiedField`` from ``model_utils.fields``
 (self-updating fields providing the creation date-time and the last modified date-time).
 
-``openwisp_utils.base.KeyField``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``openwisp_utils.base.FallBackModelMixin``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A model field whic provides a random key or token, widely used across openwisp modules.
+Model mixin that implements ``get_field_value`` method which can be used
+to get value of fallback fields.
+
+Custom Fields
+-------------
+
+This section describes custom fields defined in ``openwisp_utils.fields``
+that can be used in Django models:
+
+``openwisp_utils.fields.KeyField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A model field which provides a random key or token, widely used across openwisp modules.
+
+``openwisp_utils.fields.FallbackBooleanChoiceField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `BooleanField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#booleanfield>`_
+and provides additional functionality for handling choices with a fallback value.
+The field will use the **fallback value** whenever the field is set to ``None``.
+
+This field is particularly useful when you want to present a choice between enabled
+and disabled options, with an additional "Default" option that reflects the fallback value.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackBooleanChoiceField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        is_active = FallbackBooleanChoiceField(
+            null=True,
+            blank=True,
+            default=None,
+            fallback=app_settings.IS_ACTIVE_FALLBACK,
+        )
+
+``openwisp_utils.fields.FallbackCharChoiceField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `CharField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_
+and provides additional functionality for handling choices with a fallback value.
+The field will use the **fallback value** whenever the field is set to ``None``.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackCharChoiceField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        is_first_name_required = FallbackCharChoiceField(
+            null=True,
+            blank=True,
+            max_length=32,
+            choices=(
+                ('disabled', _('Disabled')),
+                ('allowed', _('Allowed')),
+                ('mandatory', _('Mandatory')),
+            ),
+            fallback=app_settings.IS_FIRST_NAME_REQUIRED,
+        )
+
+``openwisp_utils.fields.FallbackCharField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `CharField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_
+and provides additional functionality for handling text fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackCharField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        greeting_text = FallbackCharField(
+            null=True,
+            blank=True,
+            max_length=200,
+            fallback=app_settings.GREETING_TEXT,
+        )
+
+``openwisp_utils.fields.FallbackURLField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `URLField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#urlfield>`_
+and provides additional functionality for handling URL fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackURLField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        password_reset_url = FallbackURLField(
+            null=True,
+            blank=True,
+            max_length=200,
+            fallback=app_settings.DEFAULT_PASSWORD_RESET_URL,
+        )
+
+``openwisp_utils.fields.FallbackTextField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This extends Django's `TextField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#django.db.models.TextField>`_
+and provides additional functionality for handling text fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackTextField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        extra_config = FallbackTextField(
+            null=True,
+            blank=True,
+            max_length=200,
+            fallback=app_settings.EXTRA_CONFIG,
+        )
 
 Admin utilities
 ---------------

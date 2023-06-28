@@ -16,7 +16,14 @@ from openwisp_utils.admin_theme.filters import (
     SimpleInputFilter,
 )
 
-from .models import Book, Operator, Project, RadiusAccounting, Shelf
+from .models import (
+    Book,
+    Operator,
+    OrganizationRadiusSettings,
+    Project,
+    RadiusAccounting,
+    Shelf,
+)
 
 admin.site.unregister(User)
 
@@ -114,3 +121,8 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
         ReverseBookFilter,
     ]
     search_fields = ['name']
+
+
+@admin.register(OrganizationRadiusSettings)
+class OrganizationRadiusSettingsAdmin(admin.ModelAdmin):
+    pass
