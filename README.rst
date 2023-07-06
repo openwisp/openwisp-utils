@@ -1577,6 +1577,16 @@ Example usage:
 This mixin provides basic setup for Selenium tests with method to
 open URL and login and logout a user.
 
+Database backends
+-----------------
+
+``openwisp_utils.db.backends.spatialite``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This backend extends ``django.contrib.gis.db.backends.spatialite``
+database backend to implement a workaround for handling
+`issue with sqlite 3.36 and spatialite 5 <https://code.djangoproject.com/ticket/32935>`_.
+
 Quality Assurance Checks
 ------------------------
 
