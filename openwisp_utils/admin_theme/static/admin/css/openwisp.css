@@ -223,6 +223,9 @@ input[type=tel], textarea,
   padding: 8px 12px;
   box-sizing: border-box;
 }
+.aligned label {
+  float: left;
+}
 input.readonly {
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
   background-color: rgba(0, 0, 0, 0.07);
