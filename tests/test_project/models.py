@@ -11,12 +11,13 @@ from openwisp_utils.fields import (
     FallbackBooleanChoiceField,
     FallbackCharChoiceField,
     FallbackCharField,
+    FallbackPositiveIntegerField,
     FallbackTextField,
     FallbackURLField,
 )
 
 
-class Shelf(TimeStampedEditableModel):
+class Shelf(FallbackModelMixin, TimeStampedEditableModel):
     TYPES = (
         ('HORROR', 'HORROR'),
         ('FANTASY', 'FANTASY'),
@@ -34,7 +35,12 @@ class Shelf(TimeStampedEditableModel):
     books_type = models.CharField(
         _("Type of book"), choices=TYPES, null=True, blank=True, max_length=50
     )
-    books_count = models.PositiveIntegerField(_("Number of books"), default=0)
+    books_count = FallbackPositiveIntegerField(
+        blank=True,
+        null=True,
+        fallback=21,
+        verbose_name=_("Number of books"),
+    )
     locked = models.BooleanField(_("Is locked"), default=True)
     owner = models.ForeignKey(
         "auth.User",
