@@ -1,5 +1,11 @@
 from django import forms
-from django.db.models.fields import BooleanField, CharField, TextField, URLField
+from django.db.models.fields import (
+    BooleanField,
+    CharField,
+    PositiveIntegerField,
+    TextField,
+    URLField,
+)
 from django.utils.translation import gettext_lazy as _
 from openwisp_utils.utils import get_random_key
 from openwisp_utils.validators import key_validator
@@ -117,6 +123,12 @@ class FallbackCharChoiceField(FallbackMixin, CharField):
             }
         )
         return super().formfield(**kwargs)
+
+
+class FallbackPositiveIntegerField(
+    FallbackMixin, FallbackFromDbValueMixin, PositiveIntegerField
+):
+    pass
 
 
 class FallbackCharField(

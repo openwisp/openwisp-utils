@@ -1030,6 +1030,27 @@ It allows populating the form with the fallback value when the actual value is s
             fallback=app_settings.EXTRA_CONFIG,
         )
 
+``openwisp_utils.fields.FallbackPositiveIntegerField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This extends Django's `PositiveIntegerField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#positiveintegerfield>`_
+and provides additional functionality for handling positive integer fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackPositiveIntegerField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        count = FallbackPositiveIntegerField(
+            blank=True,
+            null=True,
+            fallback=app_settings.DEFAULT_COUNT,
+        )
+
 Admin utilities
 ---------------
 
