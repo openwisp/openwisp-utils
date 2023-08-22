@@ -59,13 +59,7 @@ setup(
         'rest': [
             'djangorestframework~=3.14.0',
             'django-filter~=23.2',  # django-filter uses CalVer
-            # The coreapi package is archived and all packages
-            # are moving away from coreapi (e.g. DRF, django-filter, drf-yasg).
-            # There's already an open PR in drf-yasg
-            # https://github.com/axnsan12/drf-yasg/pull/857.
-            # TODO: Before releasing, check if newer version
-            # of drf-yasg is available.
-            'drf-yasg[coreapi]~=1.21.0',
+            'drf-yasg~=1.21.7',
         ],
         'celery': ['celery~=5.3.0'],
         'selenium': ['selenium~=4.10.0'],
