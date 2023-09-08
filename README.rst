@@ -461,6 +461,8 @@ Following properties can be configured for each chart ``config``:
 |                  | +------------------------+---------------------------------------------------------------------------+  |
 |                  | | ``aggregate``          | Alternative to ``group_by``, ``dict`` used for more complex queries.      |  |
 |                  | +------------------------+---------------------------------------------------------------------------+  |
+|                  | | ``filter``             | ``dict`` used for filtering queryset.                                     |  |
+|                  | +------------------------+---------------------------------------------------------------------------+  |
 |                  | | ``organization_field`` | (``str``) If the model does not have a direct relation with the           |  |
 |                  | |                        | ``Organization`` model, then indirect relation can be specified using     |  |
 |                  | |                        | this property. E.g.: ``device__organization_id``.                         |  |

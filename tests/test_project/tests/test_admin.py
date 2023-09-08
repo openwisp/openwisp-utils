@@ -104,14 +104,18 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             exclude = ['id']
 
         modeladmin = TestReadOnlyAdmin(RadiusAccounting, AdminSite)
-        self.assertEqual(modeladmin.readonly_fields, ['session_id', 'username'])
+        self.assertEqual(
+            modeladmin.readonly_fields, ['session_id', 'username', 'stop_time']
+        )
 
     def test_readonlyadmin_fields(self):
         class TestReadOnlyAdmin(ReadOnlyAdmin):
             pass
 
         modeladmin = TestReadOnlyAdmin(RadiusAccounting, AdminSite)
-        self.assertEqual(modeladmin.readonly_fields, ['id', 'session_id', 'username'])
+        self.assertEqual(
+            modeladmin.readonly_fields, ['id', 'session_id', 'username', 'stop_time']
+        )
 
     def test_context_processor(self):
         url = reverse('admin:index')

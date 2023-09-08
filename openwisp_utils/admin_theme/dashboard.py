@@ -18,7 +18,11 @@ def _validate_chart_config(config):
     assert 'name' in config
     assert 'app_label' in query_params
     assert 'model' in query_params
-    assert 'group_by' in query_params or 'annotate' in query_params
+    assert (
+        'filter' in query_params
+        or 'group_by' in query_params
+        or 'annotate' in query_params
+    )
     assert not ('group_by' in query_params and 'annotate' in query_params)
     if 'annotate' in query_params:
         assert 'filters' in config, 'filters must be defined when using annotate'
@@ -135,6 +139,7 @@ def get_dashboard_context(request):
         query_params = value['query_params']
         app_label = query_params['app_label']
         model_name = query_params['model']
+        qs_filter = query_params.get('filter')
         group_by = query_params.get('group_by')
         annotate = query_params.get('annotate')
         aggregate = query_params.get('aggregate')
@@ -150,7 +155,9 @@ def get_dashboard_context(request):
                 f'REASON: {app_label}.{model_name} could not be loaded.'
             )
 
-        qs = model.objects.all()
+        qs = model.objects
+        if qs_filter:
+            qs = qs.filter(**qs_filter)
 
         # Filter query according to organization of user
         if not request.user.is_superuser and (

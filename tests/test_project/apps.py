@@ -98,6 +98,32 @@ class TestAppConfig(ApiAppConfig):
                 },
             },
         )
+        register_dashboard_chart(
+            position=3,
+            config={
+                'name': _('Open RADIUS Sessions'),
+                'query_params': {
+                    'app_label': 'test_project',
+                    'model': 'radiusaccounting',
+                    'filter': {
+                        'stop_time__isnull': True,
+                    },
+                    'aggregate': {
+                        'active__count': Count('id'),
+                    },
+                },
+                'colors': {
+                    'active__count': '#267126',
+                },
+                'labels': {
+                    'active__count': _('Active sessions'),
+                },
+                'filters': {
+                    'key': 'stop_time__isnull',
+                    'active__count': 'true',
+                },
+            },
+        )
         register_dashboard_template(
             position=0,
             config={
