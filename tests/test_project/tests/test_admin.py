@@ -105,7 +105,8 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
 
         modeladmin = TestReadOnlyAdmin(RadiusAccounting, AdminSite)
         self.assertEqual(
-            modeladmin.readonly_fields, ['session_id', 'username', 'stop_time']
+            modeladmin.readonly_fields,
+            ['session_id', 'username', 'start_time', 'stop_time'],
         )
 
     def test_readonlyadmin_fields(self):
@@ -114,7 +115,8 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
 
         modeladmin = TestReadOnlyAdmin(RadiusAccounting, AdminSite)
         self.assertEqual(
-            modeladmin.readonly_fields, ['id', 'session_id', 'username', 'stop_time']
+            modeladmin.readonly_fields,
+            ['id', 'session_id', 'username', 'start_time', 'stop_time'],
         )
 
     def test_context_processor(self):

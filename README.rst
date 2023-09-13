@@ -479,6 +479,11 @@ Following properties can be configured for each chart ``config``:
 |                  | ``query_params`` to define the link that will be generated to filter results (pie charts are            |
 |                  | clickable and clicking on a portion of it will show the filtered results).                              |
 +------------------+---------------------------------------------------------------------------------------------------------+
+| ``main_filters`` | An **optional** ``dict`` which can be used to add additional filtering on the target link.              |
++------------------+---------------------------------------------------------------------------------------------------------+
+| ``filtering``    | An **optional** ``str`` which can be set to ``'False'`` (str) to disable filtering on target links.     |
+|                  | This is useful when clicking on any section of the chart should take user to the same URL.              |
++------------------+---------------------------------------------------------------------------------------------------------+
 | ``quick_link``   | An **optional** ``dict`` which contains configuration for the quick link button rendered                |
 |                  | below the chart.                                                                                        |
 |                  |                                                                                                         |
