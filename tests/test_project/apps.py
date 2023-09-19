@@ -129,7 +129,7 @@ class TestAppConfig(ApiAppConfig):
         register_dashboard_chart(
             position=4,
             config={
-                'name': _('Shelf'),
+                'name': _('Shelf Books Type'),
                 'query_params': {
                     'app_label': 'test_project',
                     'model': 'shelf',
