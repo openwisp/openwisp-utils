@@ -88,6 +88,16 @@ class RadiusAccounting(models.Model):
     username = models.CharField(
         verbose_name=_('username'), max_length=64, db_index=True, null=True, blank=True
     )
+    start_time = models.DateTimeField(
+        verbose_name=_('start time'),
+        null=True,
+        blank=True,
+    )
+    stop_time = models.DateTimeField(
+        verbose_name=_('stop time'),
+        null=True,
+        blank=True,
+    )
 
 
 class OrganizationRadiusSettings(FallbackModelMixin, models.Model):

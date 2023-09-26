@@ -461,6 +461,8 @@ Following properties can be configured for each chart ``config``:
 |                  | +------------------------+---------------------------------------------------------------------------+  |
 |                  | | ``aggregate``          | Alternative to ``group_by``, ``dict`` used for more complex queries.      |  |
 |                  | +------------------------+---------------------------------------------------------------------------+  |
+|                  | | ``filter``             | ``dict`` used for filtering queryset.                                     |  |
+|                  | +------------------------+---------------------------------------------------------------------------+  |
 |                  | | ``organization_field`` | (``str``) If the model does not have a direct relation with the           |  |
 |                  | |                        | ``Organization`` model, then indirect relation can be specified using     |  |
 |                  | |                        | this property. E.g.: ``device__organization_id``.                         |  |
@@ -476,6 +478,11 @@ Following properties can be configured for each chart ``config``:
 | ``filters``      | An **optional** ``dict`` which can be used when using ``aggregate`` and ``annotate`` in                 |
 |                  | ``query_params`` to define the link that will be generated to filter results (pie charts are            |
 |                  | clickable and clicking on a portion of it will show the filtered results).                              |
++------------------+---------------------------------------------------------------------------------------------------------+
+| ``main_filters`` | An **optional** ``dict`` which can be used to add additional filtering on the target link.              |
++------------------+---------------------------------------------------------------------------------------------------------+
+| ``filtering``    | An **optional** ``str`` which can be set to ``'False'`` (str) to disable filtering on target links.     |
+|                  | This is useful when clicking on any section of the chart should take user to the same URL.              |
 +------------------+---------------------------------------------------------------------------------------------------------+
 | ``quick_link``   | An **optional** ``dict`` which contains configuration for the quick link button rendered                |
 |                  | below the chart.                                                                                        |

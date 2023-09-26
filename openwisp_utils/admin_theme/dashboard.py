@@ -18,7 +18,11 @@ def _validate_chart_config(config):
     assert 'name' in config
     assert 'app_label' in query_params
     assert 'model' in query_params
-    assert 'group_by' in query_params or 'annotate' in query_params
+    assert (
+        'filter' in query_params
+        or 'group_by' in query_params
+        or 'annotate' in query_params
+    )
     assert not ('group_by' in query_params and 'annotate' in query_params)
     if 'annotate' in query_params:
         assert 'filters' in config, 'filters must be defined when using annotate'
@@ -135,6 +139,7 @@ def get_dashboard_context(request):
         query_params = value['query_params']
         app_label = query_params['app_label']
         model_name = query_params['model']
+        qs_filter = query_params.get('filter')
         group_by = query_params.get('group_by')
         annotate = query_params.get('annotate')
         aggregate = query_params.get('aggregate')
@@ -150,7 +155,12 @@ def get_dashboard_context(request):
                 f'REASON: {app_label}.{model_name} could not be loaded.'
             )
 
-        qs = model.objects.all()
+        qs = model.objects
+        if qs_filter:
+            for field, lookup_value in qs_filter.items():
+                if callable(lookup_value):
+                    qs_filter[field] = lookup_value()
+            qs = qs.filter(**qs_filter)
 
         # Filter query according to organization of user
         if not request.user.is_superuser and (
@@ -179,6 +189,20 @@ def get_dashboard_context(request):
         labels = []
         colors = []
         filters = []
+        main_filters = []
+        url_operator = '?'
+        value['target_link'] = f'/admin/{app_label}/{model_name}/'
+        if value.get('main_filters'):
+            for main_filter_key, main_filter_value in value['main_filters'].items():
+                if callable(main_filter_value):
+                    main_filter_value = str(main_filter_value())
+                main_filters.append(f'{main_filter_key}={main_filter_value}')
+
+            value['target_link'] = '{path}?{main_filters}'.format(
+                path=value['target_link'], main_filters='&'.join(main_filters)
+            )
+            value.pop('main_filters', None)
+            url_operator = '&'
 
         if group_by:
             for obj in qs:
@@ -201,9 +225,9 @@ def get_dashboard_context(request):
                 if value.get('colors') and qs_key in value['colors']:
                     colors.append(value['colors'][qs_key])
                 values.append(obj['count'])
-            value[
-                'target_link'
-            ] = f'/admin/{app_label}/{model_name}/?{group_by}__exact='
+            value['target_link'] = '{path}{url_operator}{group_by}__exact='.format(
+                path=value['target_link'], url_operator=url_operator, group_by=group_by
+            )
 
         if aggregate:
             for qs_key, qs_value in qs.items():
@@ -212,9 +236,14 @@ def get_dashboard_context(request):
                 labels.append(labels_i18n[qs_key])
                 values.append(qs_value)
                 colors.append(value['colors'][qs_key])
-                filters.append(value['filters'][qs_key])
-            filter_key = value['filters']['key']
-            value['target_link'] = f'/admin/{app_label}/{model_name}/?{filter_key}='
+                if value.get('filters'):
+                    filters.append(value['filters'][qs_key])
+            if value.get('filters'):
+                value['target_link'] = '{path}{url_operator}{filter_key}='.format(
+                    url_operator=url_operator,
+                    path=value['target_link'],
+                    filter_key=value['filters']['key'],
+                )
 
         value['query_params'] = {'values': values, 'labels': labels}
         value['colors'] = colors

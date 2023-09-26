@@ -84,6 +84,7 @@
       data.texttemplate = '<b>%{value}</b><br>(%{percent})';
       data.targetLink = elementsParam[i].target_link;
       data.filters = elementsParam[i].filters;
+      data.filtering = elementsParam[i].filtering;
 
       // add total to pie chart
       for (var c = 0; c < data.values.length; c++) {
@@ -109,11 +110,14 @@
       element.on('plotly_click', function (data) {
         var path = data.points[0].data.targetLink,
             filters = data.points[0].data.filters,
+            filtering = data.points[0].data.filtering,
             i = data.points[0].i;
-        if (filters && typeof(filters[i]) !== 'undefined') {
-          path += filters[i];
-        } else {
-          path += encodeURIComponent(data.points[0].label);
+        if (filtering !== 'False'){
+          if (filters && typeof(filters[i]) !== 'undefined') {
+            path += filters[i];
+          } else {
+            path += encodeURIComponent(data.points[0].label);
+          }
         }
         window.location = path;
       });

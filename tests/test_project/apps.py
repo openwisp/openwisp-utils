@@ -1,5 +1,6 @@
 from django.db.models import Case, Count, Sum, When
 from django.urls import reverse_lazy
+from django.utils.timezone import localdate
 from django.utils.translation import gettext_lazy as _
 from openwisp_utils.admin_theme import (
     register_dashboard_chart,
@@ -95,6 +96,49 @@ class TestAppConfig(ApiAppConfig):
                     'key': 'with_operator',
                     'with_operator__sum': 'true',
                     'without_operator__sum': 'false',
+                },
+            },
+        )
+        register_dashboard_chart(
+            position=3,
+            config={
+                'name': _('Open RADIUS Sessions'),
+                'query_params': {
+                    'app_label': 'test_project',
+                    'model': 'radiusaccounting',
+                    'filter': {
+                        'stop_time__isnull': True,
+                        'start_time__date': localdate,
+                    },
+                    'aggregate': {
+                        'active__count': Count('id'),
+                    },
+                },
+                'colors': {
+                    'active__count': '#267126',
+                },
+                'labels': {
+                    'active__count': _('Active sessions'),
+                },
+                'filters': {
+                    'key': 'stop_time__isnull',
+                    'active__count': 'true',
+                },
+            },
+        )
+        register_dashboard_chart(
+            position=4,
+            config={
+                'name': _('Shelf Books Type'),
+                'query_params': {
+                    'app_label': 'test_project',
+                    'model': 'shelf',
+                    'group_by': 'books_type',
+                },
+                'colors': {'HORROR': 'red', 'FANTASY': 'orange'},
+                'labels': {'HORROR': _('Horror'), 'FANTASY': _('Fantasy')},
+                'main_filters': {
+                    'created_at__date': localdate,
                 },
             },
         )
