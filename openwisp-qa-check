@@ -44,6 +44,7 @@ show_help() {
   printf "  --csslinter\t\t\t: Runs stylelint check\n"
   printf "Jslinter check options:\n"
   printf "  --jslinter\t\t\t: Runs jshint check\n"
+  printf " --ignore\t\t\t: Ignores the file\n"
 }
 
 echoerr() { echo "$@" 1>&2; }
@@ -54,6 +55,9 @@ runcheckendline() {
     ! -path "./.*" \
     ! -path "*.min.*" \
     ! -path "*.svg" -exec grep -Iq . {} \; -and -print); do
+    if [[ "$i" == $IGNORE_PATTERN ]]; then
+      continue
+    fi
     if [ "$(tail -c 1 $i)" != "" ]; then
       echo "$i needs newline at the end"
       flag=1
@@ -195,6 +199,7 @@ MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
 FAILURE=0
 MODULE=""
+IGNORE_PATTERN=" "
 
 while [ "$1" != "" ]; do
   case "$1" in
@@ -243,6 +248,10 @@ while [ "$1" != "" ]; do
   --migration-module)
     shift
     MODULE="$1"
+    ;;
+  --ignore) 
+    shift
+    IGNORE_PATTERN="$1"
     ;;
   --help)
     show_help
