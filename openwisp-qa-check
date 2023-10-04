@@ -199,7 +199,7 @@ MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
 FAILURE=0
 MODULE=""
-IGNORE_PATTERN=" "
+IGNORE_PATTERN=""
 
 while [ "$1" != "" ]; do
   case "$1" in
