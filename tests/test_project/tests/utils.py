@@ -1,8 +1,10 @@
 import json
 import os
+import uuid
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
@@ -267,3 +269,17 @@ class SeleniumTestMixin(TestConfigMixin):
                 (By.CSS_SELECTOR, f'.{filter_class} .filter-options')
             )
         )
+
+
+class MockUser:
+    def __init__(self, is_superuser=False):
+        self.is_superuser = is_superuser
+        self.id = uuid.uuid4()
+
+
+class MockRequest:
+    def __init__(self, user=None):
+        if user:
+            self.user = user
+        else:
+            self.user = AnonymousUser()
