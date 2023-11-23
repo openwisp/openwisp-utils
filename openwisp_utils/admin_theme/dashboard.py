@@ -1,4 +1,5 @@
 import copy
+import html
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Count
@@ -126,7 +127,12 @@ def get_dashboard_context(request):
         group_by = query_params.get('group_by')
         annotate = query_params.get('annotate')
         aggregate = query_params.get('aggregate')
+
         labels_i18n = value.get('labels')
+        # HTML escape labels defined in configuration to prevent breaking the JS
+        if labels_i18n:
+            for label_key, label_value in labels_i18n.items():
+                labels_i18n[label_key] = html.escape(label_value)
 
         try:
             model = load_model(app_label, model_name)
@@ -175,9 +181,13 @@ def get_dashboard_context(request):
                 if labels_i18n and qs_key in labels_i18n:
                     # store original label as filter, but only
                     # if we have more than the empty default label defined
-                    # if len(labels_i18n.keys()) > 1
                     filters.append(label)
                     label = labels_i18n[qs_key]
+                else:
+                    # HTML escape labels coming from values in the DB
+                    # to avoid possible XSS attacks caused by
+                    # malicious DB values set by users
+                    label = html.escape(label)
                 labels.append(label)
                 # use predefined colors if available,
                 # otherwise the JS lib will choose automatically
