@@ -89,7 +89,9 @@ class TestAppConfig(ApiAppConfig):
                     'without_operator__sum': '#353c44',
                 },
                 'labels': {
-                    'with_operator__sum': _('Projects with operators'),
+                    # the <strong> is for testing purposes to
+                    # verify it's being HTML escaped correctly
+                    'with_operator__sum': _('<strong>Projects with operators</strong>'),
                     'without_operator__sum': _('Projects without operators'),
                 },
                 'filters': {

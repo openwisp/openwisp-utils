@@ -15,7 +15,7 @@ from openwisp_utils.admin_theme import (
 )
 from openwisp_utils.admin_theme.dashboard import get_dashboard_context
 
-from ..models import Project, RadiusAccounting
+from ..models import Operator, Project, RadiusAccounting
 from . import AdminTestMixin, CreateMixin
 from .utils import MockRequest, MockUser
 
@@ -271,3 +271,26 @@ class TestAdminDashboard(AdminTestMixin, CreateMixin, DjangoTestCase):
         with self.subTest('Test "Dashboard" is absent from menu items'):
             response = self.client.get(reverse('admin:index'))
             self.assertNotContains(response, 'Dashboard')
+
+    def test_get_dashboard_context_html_escape(self):
+        # craft malicious DB value which will be shown in labels
+        project = Project.objects.create(name='<script>alert(1)</script>')
+        Operator.objects.create(project=project, first_name='xss', last_name='xss')
+        # prepare mock request and get context
+        mocked_user = MockUser(is_superuser=True)
+        mocked_request = MockRequest(user=mocked_user)
+        context = get_dashboard_context(mocked_request)
+        # ensure DB value is escaped
+        self.assertEqual(
+            context['dashboard_charts'][0]['query_params']['labels'][0],
+            '&lt;script&gt;alert(1)&lt;/script&gt;',
+        )
+        # ensure configured labels are escaped
+        self.assertEqual(
+            context['dashboard_charts'][1]['labels']['with_operator__sum'],
+            '&lt;strong&gt;Projects with operators&lt;/strong&gt;',
+        )
+        self.assertEqual(
+            context['dashboard_charts'][1]['query_params']['labels'][0],
+            '&lt;strong&gt;Projects with operators&lt;/strong&gt;',
+        )
