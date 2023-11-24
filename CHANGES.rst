@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Version 1.0.5 [2023-11-24]
+--------------------------
+
+Security
+~~~~~~~~
+
+- (Medium risk) The labels displayed in the dashboard pie charts were
+  not being escaped and hence the code was vulnerable to XSS attempts.
+
 Version 1.0.4 [2022-10-07]
 --------------------------
 
