@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+{% if openwisp_version %}
+<h2>{% trans "OpenWISP Version" %}: {{ openwisp_version }}</h2>
+{% endif %}
+<h2>{% trans "Installed OpenWISP Modules" %}</h2>
+<ul>
+{% for name, version in enabled_openwisp_modules.items %}
+<li>{{ name }}: {{ version }}</li>
+{% endfor %}
+</ul>
+<h2>{% trans "OS Information" %}</h2>
+<p><strong>{% trans "OS version" %}:</strong> {{ system_info.os_version }}</p>
+<p><strong>{% trans "Kernel version" %}:</strong> {{ system_info.kernel_version }}</p>
+<p><strong>{% trans "Hardware platform" %}:</strong> {{ system_info.hardware_platform }}</p>
+{% endblock content %}

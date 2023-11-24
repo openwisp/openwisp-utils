@@ -46,7 +46,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'openwisp2.urls'
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'

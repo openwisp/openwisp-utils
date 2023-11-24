@@ -1511,6 +1511,10 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/dashboard.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/dashboard.svg);
 }
+.ow-info-icon {
+  mask-image: url(../../ui/openwisp/images/info.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/info.svg);
+}
 .password {
   mask-image: url(../../ui/openwisp/images/password.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/password.svg);
