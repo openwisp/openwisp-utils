@@ -32,7 +32,7 @@ def get_enabled_openwisp_modules():
         if package in EXTRA_OPENWISP_PACKAGES:
             extra_packages[package] = version
             continue
-        package_name = package.replace("-", "_")
+        package_name = package.replace('-', '_')
         if package_name in settings.INSTALLED_APPS:
             enabled_packages[package] = version
         else:

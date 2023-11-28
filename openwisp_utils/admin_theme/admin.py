@@ -56,7 +56,7 @@ class OpenwispAdminSite(admin.AdminSite):
                 name='ow-auto-filter',
             ),
             path(
-                'ow-info/',
+                'openwisp-system-info/',
                 self.admin_view(self.openwisp_info),
                 name='ow-info',
             ),
