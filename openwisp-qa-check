@@ -149,18 +149,14 @@ runblack() {
 
 runcheckcommit() {
   if [ -z "$COMMIT_MESSAGE" ]; then COMMIT_MESSAGE=$(git log -1 --pretty=%B); fi
-  if [ "$GITHUB_ACTIONS" = true ] && [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-    echo "SKIPPED: Commit message check skipped!"
-  else
-    checkcommit --message "$COMMIT_MESSAGE" &&
-      echo "SUCCESS: Commit message check successful!" ||
-      {
-        echo -e "Checked commit message:\n\n"
-        echo -e "$COMMIT_MESSAGE\n\n"
-        echoerr "ERROR: Commit message check failed!"
-        FAILURE=1
-      }
-  fi
+
+  checkcommit --message "$COMMIT_MESSAGE" &&
+    echo "SUCCESS: Commit message check successful!" ||
+    {
+      echo -e "Checked commit message:\n\n$COMMIT_MESSAGE\n\n"
+      echoerr "ERROR: Commit message check failed!"
+      FAILURE=1
+    }
 }
 
 runcheckpendingmigrations() {
