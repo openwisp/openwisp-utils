@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     # test project
     'test_project',
     'openwisp_utils.admin_theme',
+    'openwisp_utils.measurements',
     'django.contrib.sites',
     # admin
     'django.contrib.admin',
@@ -123,6 +124,10 @@ OPENWISP_ADMIN_THEME_LINKS = [
     },
 ]
 OPENWISP_ADMIN_THEME_JS = ['dummy.js']
+
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_URL = 'memory://'
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:
