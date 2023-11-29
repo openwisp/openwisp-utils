@@ -569,3 +569,33 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertEqual(
                 org_rad_settings.get_field_value('extra_config'), 'no data'
             )
+
+    @patch(
+        'openwisp_utils.admin_theme.system_info.settings.INSTALLED_APPS',
+        ['openwisp_users', 'openwisp_utils.admin_theme'],
+    )
+    def test_system_information(self, *args):
+        def _assert_system_information(response):
+            self.assertContains(response, '<li>openwisp-utils:')
+            self.assertContains(response, '<li>netjsonconfig:')
+            self.assertContains(response, '<h2>OS Information</h2>')
+            self.assertContains(response, '<strong>OS version:</strong>')
+            self.assertContains(response, '<strong>Kernel version:</strong>')
+            self.assertContains(response, '<strong>Hardware platform:</strong>')
+
+        with self.subTest('Test openwisp version is defined'):
+            with patch('openwisp2.__openwisp_version__', '23.0.0'):
+                response = self.client.get(reverse('admin:ow-info'))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, '<h2>OpenWISP Version: 23.0.0</h2>')
+            _assert_system_information(response)
+
+        with self.subTest('Test openwisp version is not defined'):
+            with patch(
+                'openwisp_utils.admin_theme.system_info.import_string',
+                side_effect=ImportError,
+            ):
+                response = self.client.get(reverse('admin:ow-info'))
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(response, '<h2>OpenWISP Version')
+            _assert_system_information(response)
