@@ -55,7 +55,7 @@ class OpenWispAdminThemeConfig(AppConfig):
             position=899,
             config={
                 'label': _('System info'),
-                'url': '/admin/ow-info',
+                'url': '/admin/openwisp-system-info/',
                 'icon': 'ow-info-icon',
             },
         )
