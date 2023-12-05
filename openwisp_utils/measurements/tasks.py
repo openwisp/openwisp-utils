@@ -3,8 +3,6 @@ import time
 
 import requests
 from celery import shared_task
-from django.utils.html import escape
-from django.utils.timezone import now
 from openwisp_utils.admin_theme.system_info import (
     get_enabled_openwisp_modules,
     get_openwisp_version,
@@ -12,6 +10,7 @@ from openwisp_utils.admin_theme.system_info import (
 )
 
 from .models import OpenwispVersion
+from .utils import _get_events, get_openwisp_module_events, get_os_detail_events
 
 CLEAN_INSIGHTS_URL = 'https://metrics.cleaninsights.org/cleaninsights.php'
 MAX_TRIES = 3
@@ -49,32 +48,6 @@ def post_clean_insights_events(events):
     logger.error(
         f'Maximum tries reach to upload Clean Insights measurements. Error: {message}'
     )
-
-
-def _get_events(category, data):
-    events = []
-    unix_time = int(now().timestamp())
-    for key, value in data.items():
-        events.append(
-            {
-                'category': category,
-                'action': escape(key),
-                'name': escape(value),
-                'value': 1,
-                'times': 1,
-                'period_start': unix_time,
-                'period_end': unix_time,
-            }
-        )
-    return events
-
-
-def get_openwisp_module_events(module_versions):
-    return _get_events('Openwisp Module', module_versions)
-
-
-def get_os_detail_events(os_detail):
-    return _get_events('OS Detail', os_detail)
 
 
 @shared_task

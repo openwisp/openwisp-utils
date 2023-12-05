@@ -1,7 +1,9 @@
 from unittest.mock import patch
 
 import requests
-from django.test import TestCase
+from django.apps import apps
+from django.db import migrations
+from django.test import TestCase, override_settings
 from freezegun import freeze_time
 
 from .. import tasks
@@ -36,7 +38,7 @@ class TestOpenwispVersion(TestCase):
     @patch.object(tasks, 'post_clean_insights_events')
     @freeze_time('2023-12-01 00:00:00')
     def test_new_installation(self, mocked_post, *args):
-        self.assertEqual(OpenwispVersion.objects.count(), 0)
+        OpenwispVersion.objects.all().delete()
         tasks.send_clean_insights_measurements.delay()
         mocked_post.assert_called_with(_NEW_INSTALLATION_EVENTS)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
@@ -65,7 +67,6 @@ class TestOpenwispVersion(TestCase):
             'OpenWISP Version': '23.0.0a',
             **_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
         }
-        OpenwispVersion.objects.create(module_version=expected_module_version)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         tasks.send_clean_insights_measurements.delay()
         mocked_post.assert_called_with(_HEARTBEAT_EVENTS)
@@ -87,14 +88,14 @@ class TestOpenwispVersion(TestCase):
     @patch.object(tasks, 'post_clean_insights_events')
     @freeze_time('2023-12-01 00:00:00')
     def test_modules_upgraded(self, mocked_post, *args):
-        OpenwispVersion.objects.create(
+        self.assertEqual(OpenwispVersion.objects.count(), 1)
+        OpenwispVersion.objects.update(
             module_version={
                 'OpenWISP Version': '22.10.0',
                 'openwisp-utils': '1.0.5',
                 'openwisp-users': '1.0.2',
             }
         )
-        self.assertEqual(OpenwispVersion.objects.count(), 1)
         tasks.send_clean_insights_measurements.delay()
         mocked_post.assert_called_with(_MODULES_UPGRADE_EXPECTED_EVENTS)
 
@@ -149,7 +150,9 @@ class TestOpenwispVersion(TestCase):
     ):
         bad_response = requests.Response()
         bad_response.status_code = 204
-        with patch.object(requests, 'post', return_value=bad_response) as mocked_post:
+        with patch.object(
+            tasks.requests, 'post', return_value=bad_response
+        ) as mocked_post:
             tasks.send_clean_insights_measurements.delay()
         self.assertEqual(len(mocked_post.mock_calls), 1)
         mocked_warning.assert_not_called()
@@ -174,3 +177,46 @@ class TestOpenwispVersion(TestCase):
         mocked_error.assert_called_with(
             'Maximum tries reach to upload Clean Insights measurements. Error: Error connecting to the server'
         )
+
+    @patch.object(tasks.send_clean_insights_measurements, 'delay')
+    def test_post_migrate_receiver(self, mocked_task, *args):
+        app = apps.get_app_config('measurements')
+
+        with self.subTest('Test task not called when plan is empty'):
+            app.post_migrate_receiver(plan=[])
+            mocked_task.assert_not_called()
+        mocked_task.reset_mock()
+
+        with self.subTest(
+            'Test task not called when first migration in plan is not for ContentTypes'
+        ):
+            app.post_migrate_receiver(
+                plan=[
+                    (
+                        migrations.Migration(
+                            name='0001_initial', app_label='openwisp_users'
+                        ),
+                        False,
+                    )
+                ]
+            )
+            mocked_task.assert_not_called()
+        mocked_task.reset_mock()
+        plan = [
+            (
+                migrations.Migration(name='0001_initial', app_label='contenttypes'),
+                False,
+            )
+        ]
+
+        with self.subTest(
+            'Test task called when first migration in plan is for ContentTypes'
+        ):
+            app.post_migrate_receiver(plan=plan)
+            mocked_task.assert_called()
+        mocked_task.reset_mock()
+
+        with self.subTest('Test task not called in development'):
+            with override_settings(DEBUG=True):
+                app.post_migrate_receiver(plan=plan)
+            mocked_task.assert_not_called()

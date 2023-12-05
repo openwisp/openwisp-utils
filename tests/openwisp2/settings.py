@@ -82,7 +82,7 @@ TEMPLATES = [
 DATABASES = {
     'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'openwisp_utils.db'}
 }
-
+TEST_RUNNER = 'openwisp_utils.measurements.tests.runner.MockRequestPostRunner'
 OPENWISP_ADMIN_SITE_CLASS = 'test_project.site.CustomAdminSite'
 
 SITE_ID = 1
