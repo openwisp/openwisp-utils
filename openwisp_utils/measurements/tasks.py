@@ -51,16 +51,17 @@ def post_clean_insights_events(events):
 
 
 @shared_task
-def send_clean_insights_measurements():
+def send_clean_insights_measurements(upgrade_only=False):
     current_versions = get_enabled_openwisp_modules()
     current_versions.update({'OpenWISP Version': get_openwisp_version()})
     events = []
     events.extend(get_os_detail_events(get_os_details()))
     if OpenwispVersion.is_new_installation():
-        events.extend(_get_events('New OpenWISP Installation', current_versions))
+        events.extend(_get_events('Install', current_versions))
         OpenwispVersion.objects.create(module_version=current_versions)
     else:
         upgraded_modules = OpenwispVersion.get_upgraded_modules(current_versions)
-        events.extend(_get_events('OpenWISP Upgraded', upgraded_modules))
-        events.extend(get_openwisp_module_events(current_versions))
+        events.extend(_get_events('Upgrade', upgraded_modules))
+        if not upgrade_only:
+            events.extend(get_openwisp_module_events(current_versions))
     post_clean_insights_events(events)

@@ -37,7 +37,7 @@ _MODULES_UPGRADE_EXPECTED_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'OpenWISP Upgraded',
+        'category': 'Upgrade',
         'action': 'openwisp-utils',
         'name': '1.1.0a',
         'value': 1,
@@ -46,7 +46,7 @@ _MODULES_UPGRADE_EXPECTED_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'OpenWISP Upgraded',
+        'category': 'Upgrade',
         'action': 'openwisp-users',
         'name': '1.1.0a',
         'value': 1,
@@ -55,7 +55,7 @@ _MODULES_UPGRADE_EXPECTED_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'OpenWISP Upgraded',
+        'category': 'Upgrade',
         'action': 'OpenWISP Version',
         'name': '23.0.0a',
         'value': 1,
@@ -64,7 +64,7 @@ _MODULES_UPGRADE_EXPECTED_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'Openwisp Module',
+        'category': 'Heartbeat',
         'action': 'openwisp-utils',
         'name': '1.1.0a',
         'value': 1,
@@ -73,7 +73,7 @@ _MODULES_UPGRADE_EXPECTED_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'Openwisp Module',
+        'category': 'Heartbeat',
         'action': 'openwisp-users',
         'name': '1.1.0a',
         'value': 1,
@@ -82,7 +82,7 @@ _MODULES_UPGRADE_EXPECTED_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'Openwisp Module',
+        'category': 'Heartbeat',
         'action': 'OpenWISP Version',
         'name': '23.0.0a',
         'value': 1,
@@ -121,7 +121,7 @@ _HEARTBEAT_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'Openwisp Module',
+        'category': 'Heartbeat',
         'action': 'openwisp-utils',
         'name': '1.1.0a',
         'value': 1,
@@ -130,7 +130,7 @@ _HEARTBEAT_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'Openwisp Module',
+        'category': 'Heartbeat',
         'action': 'openwisp-users',
         'name': '1.1.0a',
         'value': 1,
@@ -139,7 +139,7 @@ _HEARTBEAT_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'Openwisp Module',
+        'category': 'Heartbeat',
         'action': 'OpenWISP Version',
         'name': '23.0.0a',
         'value': 1,
@@ -177,7 +177,7 @@ _NEW_INSTALLATION_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'New OpenWISP Installation',
+        'category': 'Install',
         'action': 'openwisp-utils',
         'name': '1.1.0a',
         'value': 1,
@@ -186,7 +186,7 @@ _NEW_INSTALLATION_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'New OpenWISP Installation',
+        'category': 'Install',
         'action': 'openwisp-users',
         'name': '1.1.0a',
         'value': 1,
@@ -195,7 +195,7 @@ _NEW_INSTALLATION_EVENTS = [
         'period_end': 1701388800,
     },
     {
-        'category': 'New OpenWISP Installation',
+        'category': 'Install',
         'action': 'OpenWISP Version',
         'name': '23.0.0a',
         'value': 1,

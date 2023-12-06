@@ -21,15 +21,19 @@ class MeasurementsConfig(AppConfig):
             # Do not send clean insights measurements in debug mode
             # i.e. when running tests.
             return
-        if not kwargs.get('plan'):
-            # Migrations were up-to-date, i.e. an old installation
-            return
+
         from .tasks import send_clean_insights_measurements
 
-        migration, migration_rolled_back = kwargs['plan'][0]
-        if (
-            migration_rolled_back is False
-            and str(migration) == 'contenttypes.0001_initial'
-        ):
+        is_new_install = False
+        if kwargs.get('plan'):
+            migration, migration_rolled_back = kwargs['plan'][0]
+            is_new_install = (
+                migration_rolled_back is False
+                and str(migration) == 'contenttypes.0001_initial'
+            )
+
+        if is_new_install:
             # This is a new installation
             send_clean_insights_measurements.delay()
+        else:
+            send_clean_insights_measurements.delay(upgrade_only=True)

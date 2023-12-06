@@ -4,7 +4,11 @@ from packaging.version import parse as parse_version
 
 
 class OpenwispVersion(TimeStampedEditableModel):
+    modified = None
     module_version = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ('-created',)
 
     @classmethod
     def is_new_installation(cls):
@@ -35,5 +39,8 @@ class OpenwispVersion(TimeStampedEditableModel):
                 upgraded_modules[module] = version
             openwisp_version.module_version[module] = version
         if upgraded_modules:
-            openwisp_version.save()
+            # Save the new versions in a new object
+            OpenwispVersion.objects.create(
+                module_version=openwisp_version.module_version
+            )
         return upgraded_modules

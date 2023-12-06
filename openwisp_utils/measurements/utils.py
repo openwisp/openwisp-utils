@@ -21,7 +21,7 @@ def _get_events(category, data):
 
 
 def get_openwisp_module_events(module_versions):
-    return _get_events('Openwisp Module', module_versions)
+    return _get_events('Heartbeat', module_versions)
 
 
 def get_os_detail_events(os_detail):

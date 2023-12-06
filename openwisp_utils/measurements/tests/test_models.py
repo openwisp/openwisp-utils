@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 import requests
@@ -18,6 +19,21 @@ from . import (
 
 
 class TestOpenwispVersion(TestCase):
+    def setUp(self):
+        # The post_migrate signal creates the first OpenwispVersion object
+        # and uses the actual modules installed in the Python environment.
+        # This would cause tests to fail when other modules are also installed.
+        # import ipdb; ipdb.set_trace()
+        OpenwispVersion.objects.update(
+            module_version={
+                'OpenWISP Version': '23.0.0a',
+                **_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+            },
+            created=datetime.strptime(
+                '2023-11-01 00:00:00', '%Y-%m-%d %H:%M:%S'
+            ).replace(tzinfo=timezone.utc),
+        )
+
     def test_get_upgraded_models_on_new_installation(self):
         self.assertEqual(
             OpenwispVersion.get_upgraded_modules(tasks.get_enabled_openwisp_modules()),
@@ -99,7 +115,43 @@ class TestOpenwispVersion(TestCase):
         tasks.send_clean_insights_measurements.delay()
         mocked_post.assert_called_with(_MODULES_UPGRADE_EXPECTED_EVENTS)
 
+        self.assertEqual(OpenwispVersion.objects.count(), 2)
+        version = OpenwispVersion.objects.first()
+        expected_module_version = {
+            'OpenWISP Version': '23.0.0a',
+            **_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+        }
+        self.assertEqual(version.module_version, expected_module_version)
+
+    @freeze_time('2023-12-01 00:00:00')
+    @patch.object(tasks, 'get_openwisp_version', return_value='23.0.0a')
+    @patch.object(
+        tasks,
+        'get_enabled_openwisp_modules',
+        return_value=_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+    )
+    @patch.object(
+        tasks,
+        'get_os_details',
+        return_value=_OS_DETAILS_RETURN_VALUE,
+    )
+    @patch.object(tasks, 'post_clean_insights_events')
+    @patch.object(tasks, 'get_openwisp_module_events')
+    def test_send_clean_insights_measurements_upgrade_only_flag(
+        self, mocked_get_openwisp_module_events, *args
+    ):
         self.assertEqual(OpenwispVersion.objects.count(), 1)
+        # Store old versions of OpenWISP modules in OpenwispVersion object
+        OpenwispVersion.objects.update(
+            module_version={
+                'OpenWISP Version': '22.10.0',
+                'openwisp-utils': '1.0.5',
+                'openwisp-users': '1.0.2',
+            }
+        )
+        tasks.send_clean_insights_measurements.delay(upgrade_only=True)
+        mocked_get_openwisp_module_events.assert_not_called()
+        self.assertEqual(OpenwispVersion.objects.count(), 2)
         version = OpenwispVersion.objects.first()
         expected_module_version = {
             'OpenWISP Version': '23.0.0a',
@@ -182,13 +234,16 @@ class TestOpenwispVersion(TestCase):
     def test_post_migrate_receiver(self, mocked_task, *args):
         app = apps.get_app_config('measurements')
 
-        with self.subTest('Test task not called when plan is empty'):
+        with self.subTest(
+            'Test task is called for checking upgrades when plan is empty'
+        ):
             app.post_migrate_receiver(plan=[])
-            mocked_task.assert_not_called()
+            mocked_task.assert_called_with(upgrade_only=True)
         mocked_task.reset_mock()
 
         with self.subTest(
-            'Test task not called when first migration in plan is not for ContentTypes'
+            'Test task is called for checking upgrades '
+            'when first migration in plan is not for ContentTypes'
         ):
             app.post_migrate_receiver(
                 plan=[
@@ -200,7 +255,7 @@ class TestOpenwispVersion(TestCase):
                     )
                 ]
             )
-            mocked_task.assert_not_called()
+            mocked_task.assert_called_with(upgrade_only=True)
         mocked_task.reset_mock()
         plan = [
             (
@@ -213,7 +268,7 @@ class TestOpenwispVersion(TestCase):
             'Test task called when first migration in plan is for ContentTypes'
         ):
             app.post_migrate_receiver(plan=plan)
-            mocked_task.assert_called()
+            mocked_task.assert_called_with()
         mocked_task.reset_mock()
 
         with self.subTest('Test task not called in development'):
