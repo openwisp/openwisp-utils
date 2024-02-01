@@ -12,7 +12,7 @@ from openwisp_utils.admin_theme.system_info import (
 from .models import OpenwispVersion
 from .utils import _get_events, get_openwisp_module_events, get_os_detail_events
 
-CLEAN_INSIGHTS_URL = 'https://metrics.cleaninsights.org/cleaninsights.php'
+CLEAN_INSIGHTS_URL = 'https://analytics.openwisp.io/cleaninsights.php'
 MAX_TRIES = 3
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def post_clean_insights_events(events):
             response = requests.post(
                 CLEAN_INSIGHTS_URL,
                 json={
-                    'idsite': 33,
+                    'idsite': 1,
                     'events': events,
                 },
             )
