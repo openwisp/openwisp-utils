@@ -1,7 +1,5 @@
 import logging
-import time
 
-import requests
 from celery import shared_task
 from openwisp_utils.admin_theme.system_info import (
     get_enabled_openwisp_modules,
@@ -9,6 +7,7 @@ from openwisp_utils.admin_theme.system_info import (
     get_os_details,
 )
 
+from ..utils import retryable_request
 from .models import OpenwispVersion
 from .utils import _get_events, get_openwisp_module_events, get_os_detail_events
 
@@ -19,35 +18,24 @@ logger = logging.getLogger(__name__)
 
 
 def post_clean_insights_events(events):
-    tries = 0
-    while tries < MAX_TRIES:
-        try:
-            response = requests.post(
-                CLEAN_INSIGHTS_URL,
-                json={
-                    'idsite': 1,
-                    'events': events,
-                },
-            )
-            assert response.status_code == 204
-            return
-        except Exception as error:
-            tries += 1
-            if isinstance(error, AssertionError):
-                message = f'HTTP {response.status_code} Response'
-                if response.status_code in (400, 404):
-                    # Retrying sending data would result in the
-                    # same error.
-                    break
-            else:
-                message = str(error)
-            logger.warning(
-                f'Error posting clean insights events: {message}. Retrying in 5 seconds.'
-            )
-            time.sleep(5)
-    logger.error(
-        f'Maximum tries reach to upload Clean Insights measurements. Error: {message}'
-    )
+    try:
+        response = retryable_request(
+            'post',
+            url=CLEAN_INSIGHTS_URL,
+            json={
+                'idsite': 5,
+                'events': events,
+            },
+        )
+        assert response.status_code == 204
+    except Exception as error:
+        if isinstance(error, AssertionError):
+            message = f'HTTP {response.status_code} Response'
+        else:
+            message = str(error)
+        logger.error(
+            f'Maximum tries reached to upload Clean Insights measurements. Error: {message}'
+        )
 
 
 @shared_task

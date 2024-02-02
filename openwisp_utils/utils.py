@@ -1,8 +1,11 @@
 from collections import OrderedDict
 from copy import deepcopy
 
+import requests
 from django.conf import settings
 from django.utils.crypto import get_random_string
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 class SortedOrderedDict(OrderedDict):
@@ -62,3 +65,17 @@ def print_color(string, color_name, end='\n'):
     }
     color = color_dict.get(color_name, '0')
     print(f'\033[{color}m{string}\033[0m', end=end)
+
+
+def retryable_request(method, timeout=(4, 8), max_retries=3, **kwargs):
+    request_session = requests.Session()
+    retries = Retry(
+        total=max_retries,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT', 'TRACE', 'POST'],
+    )
+    request_session.mount('https://', HTTPAdapter(max_retries=retries))
+    request_session.mount('http://', HTTPAdapter(max_retries=retries))
+    request_method = getattr(request_session, method)
+    return request_method(timeout=timeout, **kwargs)

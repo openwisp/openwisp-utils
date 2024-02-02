@@ -6,6 +6,7 @@ from django.apps import apps
 from django.db import migrations
 from django.test import TestCase, override_settings
 from freezegun import freeze_time
+from urllib3.response import HTTPResponse
 
 from .. import tasks
 from ..models import OpenwispVersion
@@ -167,31 +168,33 @@ class TestOpenwispVersion(TestCase):
     ):
         bad_response = requests.Response()
         bad_response.status_code = 400
-        with patch.object(requests, 'post', return_value=bad_response) as mocked_post:
+        with patch.object(
+            requests.Session, 'post', return_value=bad_response
+        ) as mocked_post:
             tasks.send_clean_insights_measurements.delay()
         mocked_post.assert_called_once()
         mocked_warning.assert_not_called()
         mocked_error.assert_called_with(
-            'Maximum tries reach to upload Clean Insights measurements. Error: HTTP 400 Response'
+            'Maximum tries reached to upload Clean Insights measurements.'
+            ' Error: HTTP 400 Response'
         )
 
-    @patch('time.sleep')
-    @patch('logging.Logger.warning')
+    @patch('urllib3.util.retry.Retry.sleep')
+    @patch(
+        'urllib3.connectionpool.HTTPConnection.getresponse',
+        return_value=HTTPResponse(status=500, version='1.1'),
+    )
     @patch('logging.Logger.error')
     def test_post_clean_insights_events_500_response(
-        self, mocked_error, mocked_warning, *args
+        self, mocked_error, mocked_getResponse, *args
     ):
-        bad_response = requests.Response()
-        bad_response.status_code = 500
-        with patch.object(requests, 'post', return_value=bad_response) as mocked_post:
-            tasks.send_clean_insights_measurements.delay()
-        self.assertEqual(len(mocked_post.mock_calls), 3)
-        self.assertEqual(len(mocked_warning.mock_calls), 3)
-        mocked_warning.assert_called_with(
-            'Error posting clean insights events: HTTP 500 Response. Retrying in 5 seconds.'
-        )
+        tasks.send_clean_insights_measurements.delay()
+        self.assertEqual(len(mocked_getResponse.mock_calls), 4)
         mocked_error.assert_called_with(
-            'Maximum tries reach to upload Clean Insights measurements. Error: HTTP 500 Response'
+            'Maximum tries reached to upload Clean Insights measurements.'
+            ' Error: HTTPSConnectionPool(host=\'analytics.openwisp.io\', port=443):'
+            ' Max retries exceeded with url: /cleaninsights.php (Caused by ResponseError'
+            '(\'too many 500 error responses\'))'
         )
 
     @patch('time.sleep')
@@ -203,32 +206,30 @@ class TestOpenwispVersion(TestCase):
         bad_response = requests.Response()
         bad_response.status_code = 204
         with patch.object(
-            tasks.requests, 'post', return_value=bad_response
+            requests.Session, 'post', return_value=bad_response
         ) as mocked_post:
             tasks.send_clean_insights_measurements.delay()
         self.assertEqual(len(mocked_post.mock_calls), 1)
         mocked_warning.assert_not_called()
         mocked_error.assert_not_called()
 
-    @patch('time.sleep')
-    @patch('logging.Logger.warning')
-    @patch('logging.Logger.error')
+    @patch('urllib3.util.retry.Retry.sleep')
     @patch(
-        'requests.post',
-        side_effect=requests.ConnectionError('Error connecting to the server'),
+        'urllib3.connectionpool.HTTPConnectionPool._get_conn',
+        side_effect=OSError,
     )
+    @patch('logging.Logger.error')
     def test_post_clean_insights_events_connection_error(
-        self, mocked_post, mocked_error, mocked_warning, *args
+        self, mocked_error, mocked_get_conn, *args
     ):
         tasks.send_clean_insights_measurements.delay()
-        self.assertEqual(len(mocked_post.mock_calls), 3)
-        self.assertEqual(len(mocked_warning.mock_calls), 3)
-        mocked_warning.assert_called_with(
-            'Error posting clean insights events: Error connecting to the server. Retrying in 5 seconds.'
-        )
         mocked_error.assert_called_with(
-            'Maximum tries reach to upload Clean Insights measurements. Error: Error connecting to the server'
+            'Maximum tries reached to upload Clean Insights measurements.'
+            ' Error: HTTPSConnectionPool(host=\'analytics.openwisp.io\', port=443):'
+            ' Max retries exceeded with url: /cleaninsights.php'
+            ' (Caused by ProtocolError(\'Connection aborted.\', OSError()))'
         )
+        self.assertEqual(mocked_get_conn.call_count, 4)
 
     @patch.object(tasks.send_clean_insights_measurements, 'delay')
     def test_post_migrate_receiver(self, mocked_task, *args):

@@ -1625,6 +1625,7 @@ This sub-app enables collection of following measurements:
 - OpenWISP Version
 - Enabled OpenWISP modules and their versions
 - OS details
+- Whether the event is related to a new installation or an upgrade
 
 We collect data on OpenWISP usage to gauge user engagement, satisfaction,
 and upgrade patterns. This informs our development decisions, ensuring
