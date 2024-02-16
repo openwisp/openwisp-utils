@@ -20,9 +20,8 @@ body::-webkit-scrollbar {
   background: #333;
 }
 
-
 /* LOGO */
-#swagger-ui > section > div.topbar > div > div > a > img{
+#swagger-ui > section > div.topbar > div > div > a > img {
   content: url(../ui/openwisp/images/openwisp-logo-black.svg);
   width: 165px;
   height: 95px;
@@ -34,34 +33,34 @@ body::-webkit-scrollbar {
   background-color: #f9f9f9;
   border-bottom: 1px solid #eee;
 }
-.swagger-ui .topbar .download-url-wrapper input[type=text] {
+.swagger-ui .topbar .download-url-wrapper input[type="text"] {
   border-color: rgb(0, 0, 0);
 }
-.swagger-ui .topbar .download-url-wrapper input[type=text]:focus{
+.swagger-ui .topbar .download-url-wrapper input[type="text"]:focus {
   border: 3px solid rgb(0, 0, 0);
 }
 
 /* EXPLORE BTN */
-.swagger-ui .topbar .download-url-wrapper .download-url-button{
+.swagger-ui .topbar .download-url-wrapper .download-url-button {
   background: #333;
   font-size: 15px;
   font-weight: normal;
   text-transform: uppercase;
 }
-.swagger-ui .topbar .download-url-wrapper .download-url-button:hover{
+.swagger-ui .topbar .download-url-wrapper .download-url-button:hover {
   background: #999;
 }
 
 /* SCHEMES */
-.swagger-ui select{
+.swagger-ui select {
   border-color: #ccc;
 }
 .swagger-ui .info a {
   color: #df5d43;
 }
 .swagger-ui .info a:hover,
-.swagger-ui .info a:visited{
-  color: #D32F2F;
+.swagger-ui .info a:visited {
+  color: #d32f2f;
 }
 
 /* AUTH LABEL */
@@ -77,11 +76,11 @@ body::-webkit-scrollbar {
 }
 
 /* LOGOUT BTN */
-#django-session-auth > div.btn.authorize{
+#django-session-auth > div.btn.authorize {
   background-color: #333;
   border: 0;
 }
-#django-session-auth > div.btn.authorize:hover{
+#django-session-auth > div.btn.authorize:hover {
   background-color: #999;
 }
 .swagger-ui .btn.authorize svg {
@@ -102,7 +101,7 @@ body::-webkit-scrollbar {
 }
 
 /* LOGOUT & CLOSE BTN */
-.swagger-ui .btn{
+.swagger-ui .btn {
   color: #fff;
   border: 0;
   background-color: #333;
@@ -111,27 +110,28 @@ body::-webkit-scrollbar {
   text-transform: uppercase;
   font-weight: normal;
   margin: 0 5px;
-  font-family: "Roboto","Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-seri;
+  font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans",
+    Verdana, Arial, sans-seri;
 }
-.swagger-ui .btn:hover{
+.swagger-ui .btn:hover {
   background-color: #999;
 }
 
 /* OPBLOCK */
 
-.swagger-ui .opblock-tag.no-desc{
+.swagger-ui .opblock-tag.no-desc {
   border: 1px solid rgba(0, 0, 0, 0.1);
   padding-left: 26px;
 }
-.swagger-ui .opblock-tag.no-desc span:hover{
+.swagger-ui .opblock-tag.no-desc span:hover {
   background: #fdf2f2f2;
   color: #df5d43;
 }
-.swagger-ui .opblock-tag:hover .nostyle > span{
+.swagger-ui .opblock-tag:hover .nostyle > span {
   background-color: #fdf2f2f2;
   color: #df5d43;
 }
-.swagger-ui .opblock-tag:hover{
+.swagger-ui .opblock-tag:hover {
   background-color: #fdf2f2f2;
 }
 .swagger-ui .download-contents {
@@ -151,7 +151,7 @@ body::-webkit-scrollbar {
   color: #fff;
   background-color: #333;
 }
-.swagger-ui .btn.cancel:hover{
+.swagger-ui .btn.cancel:hover {
   background-color: #999;
 }
 .swagger-ui .btn.execute {
@@ -159,7 +159,7 @@ body::-webkit-scrollbar {
   color: #fff;
   background-color: #333;
 }
-.swagger-ui .btn.execute:hover{
+.swagger-ui .btn.execute:hover {
   background-color: #999;
 }
 
@@ -168,27 +168,46 @@ body::-webkit-scrollbar {
 .swagger-ui section.models .model-container {
   background: #f6f6f9;
 }
-.swagger-ui section.models .model-container:hover{
+.swagger-ui section.models .model-container:hover {
   background: #fdf2f2f2;
   color: #df5d43;
 }
-.swagger-ui .model-title:hover{
+.swagger-ui .model-title:hover {
   color: #df5d43;
 }
-.swagger-ui section.models .model-container.is-open:hover{
+.swagger-ui section.models .model-container.is-open:hover {
   background: #fdf2f2f2;
   color: #df5d43;
 }
 .swagger-ui .prop-type {
   color: #df5d43;
 }
-.swagger-ui section.models .model-container:hover .model-box>.pointer>.model-box>.model-title{
+.swagger-ui
+  section.models
+  .model-container:hover
+  .model-box
+  > .pointer
+  > .model-box
+  > .model-title {
   color: #df5d43;
 }
-.swagger-ui section.models .model-container:hover .model-box>.pointer>.model-toggle .collapsed{
+.swagger-ui
+  section.models
+  .model-container:hover
+  .model-box
+  > .pointer
+  > .model-toggle
+  .collapsed {
   color: #df5d43;
 }
-#swagger-ui > section > div.swagger-ui > div > div > section > section > h4:hover{
+#swagger-ui
+  > section
+  > div.swagger-ui
+  > div
+  > div
+  > section
+  > section
+  > h4:hover {
   background: #fdf2f2f2;
   color: #df5d43;
 }

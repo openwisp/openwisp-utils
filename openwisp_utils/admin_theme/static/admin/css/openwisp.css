@@ -2,22 +2,22 @@
 See https://code.djangoproject.com/ticket/33878 */
 
 @font-face {
-  font-family: 'Roboto';
-  src: url('../fonts/Roboto-Bold-webfont.woff');
+  font-family: "Roboto";
+  src: url("../fonts/Roboto-Bold-webfont.woff");
   font-weight: 700;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Roboto';
-  src: url('../fonts/Roboto-Regular-webfont.woff');
+  font-family: "Roboto";
+  src: url("../fonts/Roboto-Regular-webfont.woff");
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Roboto';
-  src: url('../fonts/Roboto-Light-webfont.woff');
+  font-family: "Roboto";
+  src: url("../fonts/Roboto-Light-webfont.woff");
   font-weight: 300;
   font-style: normal;
 }
@@ -73,7 +73,8 @@ See https://code.djangoproject.com/ticket/33878 */
   --object-tools-fg: var(--button-fg) !important;
   --object-tools-bg: var(--close-button-bg) !important;
   --object-tools-hover-bg: var(--close-button-hover-bg) !important;
-  --font-family-primary: "Roboto","Lucida Grande","DejaVu Sans","Bitstream Vera Sans",Verdana,Arial,sans-serif;
+  --font-family-primary: "Roboto", "Lucida Grande", "DejaVu Sans",
+    "Bitstream Vera Sans", Verdana, Arial, sans-serif;
 }
 body {
   min-width: 320px;
@@ -84,7 +85,7 @@ body {
   width: 100%;
   top: 0;
   left: 0;
-  background: rgba(0, 0, 0, 0.10);
+  background: rgba(0, 0, 0, 0.1);
   z-index: 9999;
   display: none;
 }
@@ -94,16 +95,20 @@ body {
 }
 #main-content .breadcrumbs,
 .module caption,
-div[class^="app-"].module th, div[class^="app-"].module td {
+div[class^="app-"].module th,
+div[class^="app-"].module td {
   padding: 1rem 1.3rem;
 }
-div[class^="app-"].module td { padding-left: 0; }
+div[class^="app-"].module td {
+  padding-left: 0;
+}
 #main-content .results thead th .text a,
-#main-content thead th  {
+#main-content thead th {
   padding: 15px 10px;
   font-size: 13.5px;
 }
-#main-content .results tbody td, #main-content .results tbody th,
+#main-content .results tbody td,
+#main-content .results tbody th,
 div#main-content table tbody th,
 div#main-content table tbody td {
   padding: 1rem 10px;
@@ -111,15 +116,16 @@ div#main-content table tbody td {
   font-size: 14px;
 }
 
-#main-content .breadcrumbs { font-size: 15px; }
+#main-content .breadcrumbs {
+  font-size: 15px;
+}
 #main-content .breadcrumbs a,
 a.section:link,
 a.section:visited,
 .module th a,
 #main .help a,
 fieldset.collapsed a.collapse-toggle,
-fieldset a.collapse-toggle
- {
+fieldset a.collapse-toggle {
   color: #df5d43;
   text-decoration: none;
 }
@@ -182,17 +188,22 @@ a:focus {
   line-height: 20px;
   color: rgba(0, 0, 0, 0.45);
 }
-.addlink, .changelink {
+.addlink,
+.changelink {
   font-weight: bold;
 }
-.changelink { padding-left: 17px; }
-.addlink:hover, .changelink:hover {
+.changelink {
+  padding-left: 17px;
+}
+.addlink:hover,
+.changelink:hover {
   color: #000;
 }
 
 /* increase font size and spacing */
 
-.module caption, .inline-group h2,
+.module caption,
+.inline-group h2,
 #content-related h3,
 fieldset.module h2 {
   font-size: 16px;
@@ -202,23 +213,38 @@ fieldset.module h2 {
   font-size: 15px;
   background: #f9f9f9;
 }
-td, th, li {
+td,
+th,
+li {
   font-size: 14px;
 }
-.mini { font-size: 12px; }
+.mini {
+  font-size: 12px;
+}
 #main .actionlist li {
   line-height: 20px;
   background-position: 0px 4px;
 }
 #main .aligned label,
-input, textarea, select, .form-row p, form .button,
+input,
+textarea,
+select,
+.form-row p,
+form .button,
 .readonly,
-#main .form-row { font-size: 15px; }
-select:not([disabled]):not(.readonly) { background: #fff; }
-input[type=text],
-input[type=password], input[type=email],
-input[type=url], input[type=number],
-input[type=tel], textarea,
+#main .form-row {
+  font-size: 15px;
+}
+select:not([disabled]):not(.readonly) {
+  background: #fff;
+}
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="number"],
+input[type="tel"],
+textarea,
 #main .vTextField {
   padding: 8px 12px;
   box-sizing: border-box;
@@ -230,7 +256,10 @@ input.readonly {
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
   background-color: rgba(0, 0, 0, 0.07);
 }
-select { height: 36px; padding: 0 12px; }
+select {
+  height: 36px;
+  padding: 0 12px;
+}
 #main span.select2-selection {
   min-height: 36px;
   min-width: 320px;
@@ -264,22 +293,35 @@ select { height: 36px; padding: 0 12px; }
 .select2-selection__clear {
   left: -27px;
 }
-.related-widget-wrapper .change-related { margin-left: 7px; }
-#main .form-row { padding: 15px; box-sizing: border-box; }
-#main .inline-group .tabular td.original p { height: auto; }
+.related-widget-wrapper .change-related {
+  margin-left: 7px;
+}
+#main .form-row {
+  padding: 15px;
+  box-sizing: border-box;
+}
+#main .inline-group .tabular td.original p {
+  height: auto;
+}
 #main .inline-group thead th {
   background: transparent;
 }
 #main .inline-group thead th:not(.original),
-#main .add-row td ,
+#main .add-row td,
 #main div.add-row {
   padding-top: 15px;
   padding-bottom: 15px;
 }
 #main .add-row td a,
-#main div.add-row a { font-size: 15px !important; }
-#main .delete input { vertical-align: -1px; }
-#main .delete label { font-size: 14px; }
+#main div.add-row a {
+  font-size: 15px !important;
+}
+#main .delete input {
+  vertical-align: -1px;
+}
+#main .delete label {
+  font-size: 14px;
+}
 ul.messagelist li {
   padding: 15px 10px 15px 65px;
   background-position: 40px 17px;
@@ -287,7 +329,7 @@ ul.messagelist li {
 
 /* hide first delete link, hide save and add anoher */
 #main .submit-row:first-child .deletelink-box,
-.submit-row input[name='_addanother'] {
+.submit-row input[name="_addanother"] {
   display: none;
 }
 
@@ -435,7 +477,7 @@ span.datetimeshortcuts .clock-icon:hover {
 /* For danger,error, red button [ class="danger-btn" ] */
 .danger-btn,
 div.submit-row a.deletelink,
-.delete-confirmation form input[type='submit'] {
+.delete-confirmation form input[type="submit"] {
   display: inline-block;
   text-align: center;
   border-radius: 4px;
@@ -455,25 +497,27 @@ div.submit-row a.deletelink {
 div.submit-row a.deletelink:hover,
 div.submit-row a.deletelink:focus,
 div.submit-row a.deletelink:active,
-.delete-confirmation form input[type='submit']:hover,
-.delete-confirmation form input[type='submit']:active,
-.delete-confirmation form input[type='submit']:focus {
+.delete-confirmation form input[type="submit"]:hover,
+.delete-confirmation form input[type="submit"]:active,
+.delete-confirmation form input[type="submit"]:focus {
   background: #b31e00;
   outline: 0 none;
 }
-#content .submit-row p.deletelink-box { margin: 0; }
+#content .submit-row p.deletelink-box {
+  margin: 0;
+}
 
 /* For any normal, default, dark button [ class="default-btn" ] */
 
 .default-btn,
 .button.default,
-input[type='submit'].default,
+input[type="submit"].default,
 .object-tools a,
 .object-tools a:link,
 .object-tools a:visited,
 .button,
-input[type='submit'],
-input[type='button'],
+input[type="submit"],
+input[type="button"],
 .submit-row input,
 .delete-confirmation form .cancel-link,
 a.button,
@@ -492,7 +536,7 @@ a.button,
 div#toolbar {
   padding: 0.8rem 1.2rem;
 }
-div#toolbar form input[type='submit'] {
+div#toolbar form input[type="submit"] {
   margin: 0 10px 0 3px;
   padding: 0.47rem 1rem;
   background: #333;
@@ -520,7 +564,7 @@ div#changelist .actions .button {
   height: unset;
 }
 div#changelist .actions .button:hover,
-div#toolbar form input[type='submit']:hover {
+div#toolbar form input[type="submit"]:hover {
   opacity: 0.7;
   border-color: #333;
 }
@@ -545,9 +589,9 @@ div#toolbar form input[type='submit']:hover {
 .button.default:hover,
 .button.default:active,
 .button.default:focus,
-input[type='submit'].default:hover,
-input[type='submit'].default:active,
-input[type='submit'].default:focus,
+input[type="submit"].default:hover,
+input[type="submit"].default:active,
+input[type="submit"].default:focus,
 .default-btn:focus,
 .object-tools a:hover,
 .object-tools a:active,
@@ -555,26 +599,31 @@ input[type='submit'].default:focus,
 .object-tools button:hover,
 .object-tools button:focus,
 .button:active,
-input[type='submit']:active,
-input[type='button']:active,
+input[type="submit"]:active,
+input[type="button"]:active,
 .button:focus,
-input[type='submit']:focus,
-input[type='button']:focus,
+input[type="submit"]:focus,
+input[type="button"]:focus,
 .button:hover,
-input[type='submit']:hover,
-input[type='button']:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
 .delete-confirmation form .cancel-link:hover {
   outline: 0 none;
   background: rgba(51, 51, 51, 0.7);
 }
-#main .related-lookup { padding-left: 20px; width: auto; }
+#main .related-lookup {
+  padding-left: 20px;
+  width: auto;
+}
 .form-row .item-label {
   position: relative;
   bottom: -2px;
   margin-left: 2px;
   font-weight: bold;
 }
-#main label.vCheckboxLabel { width: auto; }
+#main label.vCheckboxLabel {
+  width: auto;
+}
 
 /* For success, green button [ class="success-btn" ] */
 .success-btn,
@@ -758,7 +807,7 @@ input[type='button']:hover,
   width: 150px;
   height: 86px;
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-  no-repeat scroll 0 50%/100%;
+    no-repeat scroll 0 50%/100%;
 }
 
 /* Fix for object tools */
@@ -768,11 +817,12 @@ input[type='button']:hover,
 #content-main .form-row a:link {
   text-decoration: underline;
 }
-#content-main .form-row a:link:hover, #content-main a:link:focus {
+#content-main .form-row a:link:hover,
+#content-main a:link:focus {
   text-decoration: none;
 }
 .title-wrapper h1,
-.title-wrapper h2{
+.title-wrapper h2 {
   display: inline-block;
   margin: 0px;
   margin-bottom: 20px;
@@ -787,14 +837,14 @@ input[type='button']:hover,
 .title-wrapper h2::after {
   content: ")";
 }
-.title-wrapper .object-tools{
+.title-wrapper .object-tools {
   margin-top: -4px;
   margin-bottom: 20px;
 }
 .title-wrapper .object-tools li {
   height: auto;
 }
-#changelist .paginator{
+#changelist .paginator {
   box-sizing: border-box;
   font-size: 14px;
 }
@@ -868,51 +918,53 @@ p.calendar-cancel {
   font-size: 14px;
   line-height: 20px;
 }
-div.calendar caption, div.calendarbox h2{
+div.calendar caption,
+div.calendarbox h2 {
   background: #df5d43;
   color: #fff;
 }
-div.calendar caption{
+div.calendar caption {
   padding: 0.9rem 10px;
 }
 .calendarbox a.calendarnav-previous,
-.calendarbox a.calendarnav-next{
+.calendarbox a.calendarnav-next {
   background: rgb(255 255 255 / 75%);
   mask-size: contain !important;
   -webkit-mask-size: contain !important;
   top: 15px;
 }
-div.calendarbox, div.clockbox{
+div.calendarbox,
+div.clockbox {
   width: auto;
   background-color: #efefef;
   border-radius: 8px;
   box-shadow: 0px 1px 3px #00000040;
 }
-div.calendar th{
+div.calendar th {
   padding: 10px;
 }
-div.calendar td a{
+div.calendar td a {
   padding: 10px;
 }
-ul.timelist a{
+ul.timelist a {
   padding: 8px 0px;
 }
 div.calendar td a:hover,
 div.calendar td.selected a,
-ul.timelist a:hover{
+ul.timelist a:hover {
   background: #ffe5e5;
   color: #df5d43;
 }
-.calendarbox a.calendarnav-previous{
+.calendarbox a.calendarnav-previous {
   mask: url(../../ui/openwisp/images/calender-prev.svg) no-repeat center;
   -webkit-mask: url(../../ui/openwisp/images/calender-prev.svg) no-repeat center;
 }
-.calendarbox a.calendarnav-next{
+.calendarbox a.calendarnav-next {
   mask: url(../../ui/openwisp/images/calender-next.svg) no-repeat center;
   -webkit-mask: url(../../ui/openwisp/images/calender-next.svg) no-repeat center;
 }
 .calendarbox a.calendarnav-previous,
-.calendarbox a.calendarnav-next{
+.calendarbox a.calendarnav-next {
   padding: 4px;
   top: 13px;
   margin: 0 3px;
@@ -923,16 +975,16 @@ ul.timelist,
 div.calendarbox .calendarnav-next:focus,
 div.calendarbox .calendarnav-next:hover,
 .calendarbox .calendarnav-previous:focus,
-.calendarbox .calendarnav-previous:hover{
+.calendarbox .calendarnav-previous:hover {
   background: #fff;
 }
-div.calendar-shortcuts{
+div.calendar-shortcuts {
   padding: 10px;
 }
 p.calendar-cancel {
   padding: 10px;
 }
-div.calendar-shortcuts a:hover{
+div.calendar-shortcuts a:hover {
   color: #df5d43;
 }
 
@@ -974,7 +1026,7 @@ div.calendar-shortcuts a:hover{
     text-align: center;
   }
   .title-wrapper h1,
-  .title-wrapper h2{
+  .title-wrapper h2 {
     margin-bottom: 15px;
     display: block;
   }
@@ -989,13 +1041,16 @@ div.calendar-shortcuts a:hover{
 }
 
 @media (max-width: 1226px) and (min-width: 1024px) {
-
   /*********** Selector fix ***********/
   .related-widget-wrapper > a {
     order: 2;
   }
-  div.selector{display: flex;flex-direction: column;align-items: center;}
-  div.related-widget-wrapper{
+  div.selector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  div.related-widget-wrapper {
     display: flex;
     align-items: flex-start;
     width: 100%;
@@ -1010,7 +1065,8 @@ div.calendar-shortcuts a:hover{
 #container.toggle-menu.no-auth {
   flex-direction: column;
 }
-div#container.no-auth, .popup div#container{
+div#container.no-auth,
+.popup div#container {
   display: flex;
 }
 #container.no-auth #menu {
@@ -1021,7 +1077,6 @@ div#container.no-auth, .popup div#container{
   min-height: unset;
 }
 #container.no-auth #main-content {
-
   /* width: auto; */
   margin-left: 0;
 }
@@ -1079,7 +1134,7 @@ a.menu-item,
 .mg-head:focus,
 #menu .mg-link:focus,
 .select2-results__option--highlighted[aria-selected],
-.select2-results__option[aria-selected='true'] {
+.select2-results__option[aria-selected="true"] {
   background: #ffe5e5 !important;
   color: #df5d43 !important;
 }
@@ -1178,7 +1233,7 @@ h1#site-name {
   height: 95px;
   margin: auto;
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-  no-repeat scroll 0 50%/100%;
+    no-repeat scroll 0 50%/100%;
   text-indent: -2000px;
 }
 #main-content.m-0 {
@@ -1339,7 +1394,6 @@ h1#site-name {
     pointer-events: all;
     transition: top 0.3s ease;
   }
-
 }
 
 /****************** MENU(screen-size > 1024px) ******************/
@@ -1391,7 +1445,7 @@ h1#site-name {
     width: 2.5rem;
     height: 2.5rem;
     background: url(../../../static/ui/openwisp/images/openwisp-logo-small.svg)
-    no-repeat center;
+      no-repeat center;
   }
   .hamburger {
     padding: 0.813rem 1rem;
@@ -1424,7 +1478,7 @@ h1#site-name {
   .toggle-menu #menu {
     height: 3rem;
   }
-  .toggle-menu .nav{
+  .toggle-menu .nav {
     display: none;
   }
 }
@@ -1460,7 +1514,7 @@ body.login {
 }
 .login #site-name a {
   background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-  no-repeat scroll 0 50%/100%;
+    no-repeat scroll 0 50%/100%;
   text-indent: -2000px;
   width: 150px;
   height: 86px;
@@ -1527,7 +1581,8 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/help.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/help.svg);
 }
-#menu .icon.None, #menu .icon.None:hover {
+#menu .icon.None,
+#menu .icon.None:hover {
   background: transparent;
 }
 
@@ -1702,23 +1757,22 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/network-topology.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/network-topology.svg);
 }
-.ow-link{
+.ow-link {
   mask-image: url(../../ui/openwisp/images/link.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/link.svg);
 }
-.ow-topology{
+.ow-topology {
   mask-image: url(../../ui/openwisp/images/topology.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/topology.svg);
 }
-.ow-node{
+.ow-node {
   mask-image: url(../../ui/openwisp/images/node.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/node.svg);
 }
 
 /* LOGIN SCREEN */
 @media only screen and (max-width: 576px) {
-
-  .login #container  {
+  .login #container {
     width: auto !important;
   }
 }

@@ -41,17 +41,17 @@
 .filter {
   margin-right: 0.625rem;
 }
-.ow-input-filter .filter-options{
+.ow-input-filter .filter-options {
   display: none !important;
 }
-.ow-input-filter .filter-title{
+.ow-input-filter .filter-title {
   padding: 0.4rem 0rem 0.3125rem 0rem;
   min-width: 13.5rem;
 }
-.ow-input-filter .filter-title h3{
+.ow-input-filter .filter-title h3 {
   margin-left: 8px;
 }
-.ow-input-filter .ow-input-filter-field{
+.ow-input-filter .ow-input-filter-field {
   padding: 0.4rem 2.25rem 0.3125rem 1rem;
   position: absolute;
   height: 100%;
@@ -87,11 +87,11 @@
   display: none;
   overflow-y: auto;
 }
-.filter-options ul{
+.filter-options ul {
   margin: 0px;
   padding: 0px;
 }
-.filter-options ul li{
+.filter-options ul li {
   list-style: none;
   margin: 0px;
   padding: 0px;
@@ -158,7 +158,8 @@
   opacity: 1;
   margin-top: 3px;
 }
-.filter-options .selected,.filter-options .selected:hover,
+.filter-options .selected,
+.filter-options .selected:hover,
 .filter-options .selected:focus {
   background: #df5d43;
   color: #ffff;
@@ -219,7 +220,7 @@
 .right-arrow.down {
   background: rgb(185 185 185 / 20%) !important;
 }
-.disabled-click{
+.disabled-click {
   pointer-events: none;
 }
 a.field-clear {
@@ -235,7 +236,7 @@ a.field-clear {
   #ow-changelist-filter {
     padding: 1.25rem 1.875rem;
   }
-  .filters-bottom{
+  .filters-bottom {
     margin: auto 30px;
     margin-top: 1.25rem;
   }
