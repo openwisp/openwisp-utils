@@ -115,7 +115,6 @@ div#main-content table tbody td {
   vertical-align: middle;
   font-size: 14px;
 }
-
 #main-content .breadcrumbs {
   font-size: 15px;
 }
@@ -1040,8 +1039,8 @@ div.calendar-shortcuts a:hover {
   }
 }
 
+/*********** Selector fix ***********/
 @media (max-width: 1226px) and (min-width: 1024px) {
-  /*********** Selector fix ***********/
   .related-widget-wrapper > a {
     order: 2;
   }
@@ -1077,7 +1076,6 @@ div#container.no-auth,
   min-height: unset;
 }
 #container.no-auth #main-content {
-  /* width: auto; */
   margin-left: 0;
 }
 #container.no-auth #site-name {
