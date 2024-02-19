@@ -18,7 +18,7 @@ class OpenwispVersion(TimeStampedEditableModel):
     def get_upgraded_modules(cls, current_versions):
         """
         Retrieves a dictionary of upgraded modules based on current versions.
-        Also updates the OpenwispVersion model with the new versions.
+        Also updates the OpenwispVersion object with the new versions.
 
         Args:
             current_versions (dict): A dictionary containing the current versions of modules.

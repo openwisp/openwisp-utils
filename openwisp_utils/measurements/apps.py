@@ -18,11 +18,11 @@ class MeasurementsConfig(AppConfig):
     @classmethod
     def post_migrate_receiver(cls, **kwargs):
         if getattr(settings, 'DEBUG', False):
-            # Do not send clean insights measurements in debug mode
+            # Do not send usage metrics in debug mode
             # i.e. when running tests.
             return
 
-        from .tasks import send_clean_insights_measurements
+        from .tasks import send_usage_metrics
 
         is_new_install = False
         if kwargs.get('plan'):
@@ -32,8 +32,11 @@ class MeasurementsConfig(AppConfig):
                 and str(migration) == 'contenttypes.0001_initial'
             )
 
+        # If the migration plan includes creating table
+        # for the ContentType model, then the installation is
+        # treated as a new installation.
         if is_new_install:
             # This is a new installation
-            send_clean_insights_measurements.delay()
+            send_usage_metrics.delay()
         else:
-            send_clean_insights_measurements.delay(upgrade_only=True)
+            send_usage_metrics.delay(upgrade_only=True)

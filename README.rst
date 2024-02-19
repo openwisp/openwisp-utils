@@ -54,7 +54,7 @@ Current features
 * `Admin Theme utilities <#admin-theme-utilities>`_
 * `REST API utilities <#rest-api-utilities>`_
 * `Test utilities <#test-utilities>`_
-* `Clean Insights Measurements <#clean-insights-measurements>`_
+* `Collection of Usage Metrics <#collection-of-usage-metrics>`_
 * `Quality assurance checks <#quality-assurance-checks>`_
 
 ------------
@@ -1616,10 +1616,10 @@ This backend extends ``django.contrib.gis.db.backends.spatialite``
 database backend to implement a workaround for handling
 `issue with sqlite 3.36 and spatialite 5 <https://code.djangoproject.com/ticket/32935>`_.
 
-Clean Insights Measurements
+Collection of Usage Metrics
 ---------------------------
 
-openwisp-utils includes an optional sub-app ``openwisp_utils.measurements``.
+The openwisp-utils module includes an optional sub-app ``openwisp_utils.measurements``.
 This sub-app enables collection of following measurements:
 
 - OpenWISP Version
@@ -1630,6 +1630,12 @@ This sub-app enables collection of following measurements:
 We collect data on OpenWISP usage to gauge user engagement, satisfaction,
 and upgrade patterns. This informs our development decisions, ensuring
 continuous improvement aligned with user needs.
+
+To enhance our understanding and management of this data, we have
+integrated `Clean Insights <https://cleaninsights.org/>`_, a privacy-preserving
+analytics tool. Clean Insights allows us to responsibly gather and analyze
+usage metrics without compromising user privacy. It provides us with the
+means to make data-driven decisions while respecting our users' rights and trust.
 
 Quality Assurance Checks
 ------------------------

@@ -3,6 +3,14 @@ from django.utils.timezone import now
 
 
 def _get_events(category, data):
+    """
+    This function takes a category and data representing usage metrics,
+    and returns a list of events in a format accepted by the
+    Clean Insights Matomo Proxy (CIMP) API.
+
+    Read the "Event Measurement Schema" in the CIMP documentation:
+    https://cutt.ly/SwBkC40A
+    """
     events = []
     unix_time = int(now().timestamp())
     for key, value in data.items():
@@ -20,9 +28,9 @@ def _get_events(category, data):
     return events
 
 
-def get_openwisp_module_events(module_versions):
+def get_openwisp_module_metrics(module_versions):
     return _get_events('Heartbeat', module_versions)
 
 
-def get_os_detail_events(os_detail):
+def get_os_detail_metrics(os_detail):
     return _get_events('OS Detail', os_detail)

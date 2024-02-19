@@ -10,7 +10,7 @@ success_response.status_code = 204
 
 class MockRequestPostRunner(DiscoverRunner):
     """
-    This runner ensures that Clean Insights events are
+    This runner ensures that usage metrics are
     not sent in development when running tests.
     """
 

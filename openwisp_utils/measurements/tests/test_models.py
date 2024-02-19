@@ -52,11 +52,11 @@ class TestOpenwispVersion(TestCase):
         'get_os_details',
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(tasks, 'post_clean_insights_events')
+    @patch.object(tasks, 'post_usage_metrics')
     @freeze_time('2023-12-01 00:00:00')
     def test_new_installation(self, mocked_post, *args):
         OpenwispVersion.objects.all().delete()
-        tasks.send_clean_insights_measurements.delay()
+        tasks.send_usage_metrics.delay()
         mocked_post.assert_called_with(_NEW_INSTALLATION_EVENTS)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         version = OpenwispVersion.objects.first()
@@ -77,7 +77,7 @@ class TestOpenwispVersion(TestCase):
         'get_os_details',
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(tasks, 'post_clean_insights_events')
+    @patch.object(tasks, 'post_usage_metrics')
     @freeze_time('2023-12-01 00:00:00')
     def test_heartbeat(self, mocked_post, *args):
         expected_module_version = {
@@ -85,7 +85,7 @@ class TestOpenwispVersion(TestCase):
             **_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
         }
         self.assertEqual(OpenwispVersion.objects.count(), 1)
-        tasks.send_clean_insights_measurements.delay()
+        tasks.send_usage_metrics.delay()
         mocked_post.assert_called_with(_HEARTBEAT_EVENTS)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         version = OpenwispVersion.objects.first()
@@ -102,7 +102,7 @@ class TestOpenwispVersion(TestCase):
         'get_os_details',
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(tasks, 'post_clean_insights_events')
+    @patch.object(tasks, 'post_usage_metrics')
     @freeze_time('2023-12-01 00:00:00')
     def test_modules_upgraded(self, mocked_post, *args):
         self.assertEqual(OpenwispVersion.objects.count(), 1)
@@ -113,7 +113,7 @@ class TestOpenwispVersion(TestCase):
                 'openwisp-users': '1.0.2',
             }
         )
-        tasks.send_clean_insights_measurements.delay()
+        tasks.send_usage_metrics.delay()
         mocked_post.assert_called_with(_MODULES_UPGRADE_EXPECTED_EVENTS)
 
         self.assertEqual(OpenwispVersion.objects.count(), 2)
@@ -136,10 +136,10 @@ class TestOpenwispVersion(TestCase):
         'get_os_details',
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(tasks, 'post_clean_insights_events')
-    @patch.object(tasks, 'get_openwisp_module_events')
-    def test_send_clean_insights_measurements_upgrade_only_flag(
-        self, mocked_get_openwisp_module_events, *args
+    @patch.object(tasks, 'post_usage_metrics')
+    @patch.object(tasks, 'get_openwisp_module_metrics')
+    def test_send_usage_metrics_upgrade_only_flag(
+        self, mocked_get_openwisp_module_metrics, *args
     ):
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         # Store old versions of OpenWISP modules in OpenwispVersion object
@@ -150,8 +150,8 @@ class TestOpenwispVersion(TestCase):
                 'openwisp-users': '1.0.2',
             }
         )
-        tasks.send_clean_insights_measurements.delay(upgrade_only=True)
-        mocked_get_openwisp_module_events.assert_not_called()
+        tasks.send_usage_metrics.delay(upgrade_only=True)
+        mocked_get_openwisp_module_metrics.assert_not_called()
         self.assertEqual(OpenwispVersion.objects.count(), 2)
         version = OpenwispVersion.objects.first()
         expected_module_version = {
@@ -163,19 +163,17 @@ class TestOpenwispVersion(TestCase):
     @patch('time.sleep')
     @patch('logging.Logger.warning')
     @patch('logging.Logger.error')
-    def test_post_clean_insights_events_400_response(
-        self, mocked_error, mocked_warning, *args
-    ):
+    def test_post_usage_metrics_400_response(self, mocked_error, mocked_warning, *args):
         bad_response = requests.Response()
         bad_response.status_code = 400
         with patch.object(
             requests.Session, 'post', return_value=bad_response
         ) as mocked_post:
-            tasks.send_clean_insights_measurements.delay()
+            tasks.send_usage_metrics.delay()
         mocked_post.assert_called_once()
         mocked_warning.assert_not_called()
         mocked_error.assert_called_with(
-            'Maximum tries reached to upload Clean Insights measurements.'
+            'Collection of usage metrics failed, max retries exceeded.'
             ' Error: HTTP 400 Response'
         )
 
@@ -185,13 +183,13 @@ class TestOpenwispVersion(TestCase):
         return_value=HTTPResponse(status=500, version='1.1'),
     )
     @patch('logging.Logger.error')
-    def test_post_clean_insights_events_500_response(
+    def test_post_usage_metrics_500_response(
         self, mocked_error, mocked_getResponse, *args
     ):
-        tasks.send_clean_insights_measurements.delay()
-        self.assertEqual(len(mocked_getResponse.mock_calls), 4)
+        tasks.send_usage_metrics.delay()
+        self.assertEqual(len(mocked_getResponse.mock_calls), 11)
         mocked_error.assert_called_with(
-            'Maximum tries reached to upload Clean Insights measurements.'
+            'Collection of usage metrics failed, max retries exceeded.'
             ' Error: HTTPSConnectionPool(host=\'analytics.openwisp.io\', port=443):'
             ' Max retries exceeded with url: /cleaninsights.php (Caused by ResponseError'
             '(\'too many 500 error responses\'))'
@@ -200,15 +198,13 @@ class TestOpenwispVersion(TestCase):
     @patch('time.sleep')
     @patch('logging.Logger.warning')
     @patch('logging.Logger.error')
-    def test_post_clean_insights_events_204_response(
-        self, mocked_error, mocked_warning, *args
-    ):
+    def test_post_usage_metrics_204_response(self, mocked_error, mocked_warning, *args):
         bad_response = requests.Response()
         bad_response.status_code = 204
         with patch.object(
             requests.Session, 'post', return_value=bad_response
         ) as mocked_post:
-            tasks.send_clean_insights_measurements.delay()
+            tasks.send_usage_metrics.delay()
         self.assertEqual(len(mocked_post.mock_calls), 1)
         mocked_warning.assert_not_called()
         mocked_error.assert_not_called()
@@ -219,19 +215,19 @@ class TestOpenwispVersion(TestCase):
         side_effect=OSError,
     )
     @patch('logging.Logger.error')
-    def test_post_clean_insights_events_connection_error(
+    def test_post_usage_metrics_connection_error(
         self, mocked_error, mocked_get_conn, *args
     ):
-        tasks.send_clean_insights_measurements.delay()
+        tasks.send_usage_metrics.delay()
         mocked_error.assert_called_with(
-            'Maximum tries reached to upload Clean Insights measurements.'
+            'Collection of usage metrics failed, max retries exceeded.'
             ' Error: HTTPSConnectionPool(host=\'analytics.openwisp.io\', port=443):'
             ' Max retries exceeded with url: /cleaninsights.php'
             ' (Caused by ProtocolError(\'Connection aborted.\', OSError()))'
         )
-        self.assertEqual(mocked_get_conn.call_count, 4)
+        self.assertEqual(mocked_get_conn.call_count, 11)
 
-    @patch.object(tasks.send_clean_insights_measurements, 'delay')
+    @patch.object(tasks.send_usage_metrics, 'delay')
     def test_post_migrate_receiver(self, mocked_task, *args):
         app = apps.get_app_config('measurements')
 
