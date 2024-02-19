@@ -1622,9 +1622,11 @@ Collection of Usage Metrics
 The openwisp-utils module includes an optional sub-app ``openwisp_utils.measurements``.
 This sub-app enables collection of following measurements:
 
-- OpenWISP Version
-- Enabled OpenWISP modules and their versions
-- OS details
+- Installed OpenWISP Version
+- Enabled OpenWISP modules: A list of the enabled OpenWISP modules
+  along with their respective versions
+- OS details: Information on the operating system, including its
+  version, kernel version, and platform
 - Whether the event is related to a new installation or an upgrade
 
 We collect data on OpenWISP usage to gauge user engagement, satisfaction,
