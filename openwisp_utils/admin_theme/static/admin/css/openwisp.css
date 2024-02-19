@@ -321,7 +321,7 @@ select {
 #main .delete label {
   font-size: 14px;
 }
-ul.messagelist li {
+#main ul.messagelist li {
   padding: 15px 10px 15px 65px;
   background-position: 40px 17px;
 }
