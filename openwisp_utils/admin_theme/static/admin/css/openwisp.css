@@ -532,6 +532,11 @@ a.button,
   font-weight: 500;
   font-size: 15px;
 }
+.delete-confirmation form .cancel-link,
+.delete-confirmation input[type="submit"] {
+  height: auto !important;
+  line-height: inherit !important;
+}
 div#toolbar {
   padding: 0.8rem 1.2rem;
 }
