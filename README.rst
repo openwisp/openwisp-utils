@@ -218,7 +218,7 @@ Extend admin theme programmatically
 ``openwisp_utils.admin_theme.theme.register_theme_link``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__.
 
 This function is meant to be used by third party apps or OpenWISP modules which
 aim to extend the core look and feel of the OpenWISP theme (eg: add new menu icons).
@@ -229,17 +229,17 @@ aim to extend the core look and feel of the OpenWISP theme (eg: add new menu ico
 
     register_theme_link(links)
 
-+--------------------+-------------------------------------------------------------+
-| **Parameter**      | **Description**                                             |
-+--------------------+-------------------------------------------------------------+
-| ``links``          | (``list``) List of *link* items to be added to              |
-|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_ |
-+--------------------+-------------------------------------------------------------+
++--------------------+--------------------------------------------------------------+
+| **Parameter**      | **Description**                                              |
++--------------------+--------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be added to               |
+|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__ |
++--------------------+--------------------------------------------------------------+
 
 ``openwisp_utils.admin_theme.theme.unregister_theme_link``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows removing items from `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+Allows removing items from `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__.
 
 This function is meant to be used by third party apps or OpenWISP modules which
 aim additional functionalities to UI of OpenWISP (eg: adding a support chatbot).
@@ -250,12 +250,12 @@ aim additional functionalities to UI of OpenWISP (eg: adding a support chatbot).
 
     unregister_theme_link(links)
 
-+--------------------+-------------------------------------------------------------+
-| **Parameter**      | **Description**                                             |
-+--------------------+-------------------------------------------------------------+
-| ``links``          | (``list``) List of *link* items to be removed from          |
-|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_ |
-+--------------------+-------------------------------------------------------------+
++--------------------+--------------------------------------------------------------+
+| **Parameter**      | **Description**                                              |
++--------------------+--------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be removed from           |
+|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__ |
++--------------------+--------------------------------------------------------------+
 
 ``openwisp_utils.admin_theme.theme.register_theme_js``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -506,7 +506,7 @@ Code example:
 
 .. code-block:: python
 
-	from openwisp_utils.admin_theme import register_dashboard_chart
+    from openwisp_utils.admin_theme import register_dashboard_chart
 
     register_dashboard_chart(
         position=1,
@@ -1143,7 +1143,7 @@ inline object. Following is an example:
             # (optional) You can provide a link to documentation for user reference
             'documentation_url': (
                 'https://github.com/openwisp/openwisp-utils'
-            )
+            ),
             # (optional) Icon to be shown along with help text. By default it uses
             # "/static/admin/img/icon-alert.svg"
             'image_url': '/static/admin/img/icon-alert.svg'
@@ -1167,8 +1167,8 @@ Code example:
     class MyModelAdmin(admin.ModelAdmin):
         list_filter = [
             ('my_field', InputFilter),
-            'other_field'
-            ...
+            'other_field',
+            # ...
         ]
 
 By default ``InputFilter`` use exact lookup to filter items which matches to the value being
@@ -1188,8 +1188,8 @@ searched by the user. But this behavior can be changed by modifying ``InputFilte
     class MyModelAdmin(admin.ModelAdmin):
         list_filter = [
             ('my_field', MyInputFilter),
-            'other_field'
-            ...
+            'other_field',
+            # ...
         ]
 
 To know about other lookups that can be used please check
@@ -1223,8 +1223,8 @@ The derived filter class should define the ``queryset`` method as shown in follo
     class MyModelAdmin(admin.ModelAdmin):
         list_filter = [
             MyInputFilter,
-            'other_field'
-            ...
+            'other_field',
+            # ...
         ]
 
 ``openwisp_utils.admin_theme.filters.AutocompleteFilter``
