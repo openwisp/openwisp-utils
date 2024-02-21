@@ -12,9 +12,9 @@ from .. import tasks
 from ..models import OpenwispVersion
 from . import (
     _ENABLED_OPENWISP_MODULES_RETURN_VALUE,
-    _HEARTBEAT_EVENTS,
-    _MODULES_UPGRADE_EXPECTED_EVENTS,
-    _NEW_INSTALLATION_EVENTS,
+    _HEARTBEAT_METRICS,
+    _MODULES_UPGRADE_EXPECTED_METRICS,
+    _NEW_INSTALLATION_METRICS,
     _OS_DETAILS_RETURN_VALUE,
 )
 
@@ -35,7 +35,14 @@ class TestOpenwispVersion(TestCase):
             ).replace(tzinfo=timezone.utc),
         )
 
-    def test_get_upgraded_models_on_new_installation(self):
+    def test_get_upgraded_modules_when_openwispversion_object_does_not_exist(self):
+        OpenwispVersion.objects.all().delete()
+        self.assertEqual(
+            OpenwispVersion.get_upgraded_modules(tasks.get_enabled_openwisp_modules()),
+            {},
+        )
+
+    def test_get_upgraded_modules_on_new_installation(self):
         self.assertEqual(
             OpenwispVersion.get_upgraded_modules(tasks.get_enabled_openwisp_modules()),
             {},
@@ -57,7 +64,7 @@ class TestOpenwispVersion(TestCase):
     def test_new_installation(self, mocked_post, *args):
         OpenwispVersion.objects.all().delete()
         tasks.send_usage_metrics.delay()
-        mocked_post.assert_called_with(_NEW_INSTALLATION_EVENTS)
+        mocked_post.assert_called_with(_NEW_INSTALLATION_METRICS)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         version = OpenwispVersion.objects.first()
         expected_module_version = {
@@ -86,7 +93,7 @@ class TestOpenwispVersion(TestCase):
         }
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         tasks.send_usage_metrics.delay()
-        mocked_post.assert_called_with(_HEARTBEAT_EVENTS)
+        mocked_post.assert_called_with(_HEARTBEAT_METRICS)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         version = OpenwispVersion.objects.first()
         self.assertEqual(version.module_version, expected_module_version)
@@ -114,7 +121,7 @@ class TestOpenwispVersion(TestCase):
             }
         )
         tasks.send_usage_metrics.delay()
-        mocked_post.assert_called_with(_MODULES_UPGRADE_EXPECTED_EVENTS)
+        mocked_post.assert_called_with(_MODULES_UPGRADE_EXPECTED_METRICS)
 
         self.assertEqual(OpenwispVersion.objects.count(), 2)
         version = OpenwispVersion.objects.first()

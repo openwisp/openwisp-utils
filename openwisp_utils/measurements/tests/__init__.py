@@ -8,7 +8,7 @@ _OS_DETAILS_RETURN_VALUE = {
     'hardware_platform': 'x86_64',
 }
 
-_MODULES_UPGRADE_EXPECTED_EVENTS = [
+_MODULES_UPGRADE_EXPECTED_METRICS = [
     {
         'category': 'OS Detail',
         'action': 'kernel_version',
@@ -92,7 +92,7 @@ _MODULES_UPGRADE_EXPECTED_EVENTS = [
     },
 ]
 
-_HEARTBEAT_EVENTS = [
+_HEARTBEAT_METRICS = [
     {
         'category': 'OS Detail',
         'action': 'kernel_version',
@@ -148,7 +148,7 @@ _HEARTBEAT_EVENTS = [
         'period_end': 1701388800,
     },
 ]
-_NEW_INSTALLATION_EVENTS = [
+_NEW_INSTALLATION_METRICS = [
     {
         'category': 'OS Detail',
         'action': 'kernel_version',
