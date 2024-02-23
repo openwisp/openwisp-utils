@@ -67,14 +67,39 @@ def print_color(string, color_name, end='\n'):
     print(f'\033[{color}m{string}\033[0m', end=end)
 
 
-def retryable_request(method, timeout=(4, 8), max_retries=3, **kwargs):
-    request_session = requests.Session()
-    retries = Retry(
-        total=max_retries,
-        backoff_factor=1,
-        status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT', 'TRACE', 'POST'],
+def retryable_request(
+    method,
+    timeout=(4, 8),
+    max_retries=3,
+    backoff_factor=1,
+    backoff_jitter=0.0,
+    status_forcelist=(429, 500, 502, 503, 504),
+    allowed_methods=('HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST'),
+    retry_kwargs=None,
+    **kwargs,
+):
+    retry_kwargs = retry_kwargs or {}
+    retry_kwargs.update(
+        dict(
+            total=max_retries,
+            backoff_factor=backoff_factor,
+            status_forcelist=status_forcelist,
+            allowed_methods=allowed_methods,
+            backoff_jitter=backoff_jitter,
+        )
     )
+    retry_kwargs = retry_kwargs or {}
+    retry_kwargs.update(
+        dict(
+            total=max_retries,
+            backoff_factor=backoff_factor,
+            backoff_jitter=backoff_jitter,
+            status_forcelist=status_forcelist,
+            allowed_methods=allowed_methods,
+        )
+    )
+    request_session = requests.Session()
+    retries = Retry(**retry_kwargs)
     request_session.mount('https://', HTTPAdapter(max_retries=retries))
     request_session.mount('http://', HTTPAdapter(max_retries=retries))
     request_method = getattr(request_session, method)

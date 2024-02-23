@@ -1348,6 +1348,60 @@ Usage:
 but not for complex background tasks which can take a long time to execute
 (eg: firmware upgrades, network operations with retry mechanisms).
 
+``openwisp_utils.tasks.retryable_requests``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A utility function for making HTTP requests with built-in retry logic.
+This function is useful for handling transient errors encountered during HTTP
+requests by automatically retrying failed requests with exponential backoff.
+It provides flexibility in configuring various retry parameters to suit
+different use cases.
+
+Usage:
+
+.. code-block:: python
+
+    from your_module import retryable_request
+
+    response = retryable_request(
+        method='GET',
+        url='https://openwisp.org',
+        timeout=(4, 8),
+        max_retries=3,
+        backoff_factor=1,
+        backoff_jitter=0.0,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=('HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST'),
+        retry_kwargs=None,
+        headers={'Authorization': 'Bearer token'}
+    )
+
+**Paramters:**
+
+- ``method`` (str): The HTTP method to be used for the request in lower
+  case (e.g., 'get', 'post', etc.).
+- ``timeout`` (tuple): A tuple containing two elements: connection timeout
+  and read timeout in seconds (default: (4, 8)).
+- ``max_retries`` (int): The maximum number of retry attempts in case of
+  request failure (default: 3).
+- ``backoff_factor`` (float): A factor by which the retry delay increases
+  after each retry (default: 1).
+- ``backoff_jitter`` (float): A jitter to apply to the backoff factor to prevent
+  retry storms (default: 0.0).
+- ``status_forcelist`` (tuple): A tuple of HTTP status codes for which retries
+  should be attempted (default: (429, 500, 502, 503, 504)).
+- ``allowed_methods`` (tuple): A tuple of HTTP methods that are allowed for
+  the request (default: ('HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST')).
+- ``retry_kwargs`` (dict): Additional keyword arguments to be passed to the
+  retry mechanism (default: None).
+- ``**kwargs``: Additional keyword arguments to be passed to the underlying request
+  method (e.g. 'headers', etc.).
+
+Note: This method will raise a requests.exceptions.RetryError if the request
+remains unsuccessful even after all retry attempts have been exhausted.
+This exception indicates that the operation could not be completed successfully
+despite the retry mechanism.
+
 Storage utilities
 -----------------
 
