@@ -54,6 +54,7 @@ Current features
 * `Admin Theme utilities <#admin-theme-utilities>`_
 * `REST API utilities <#rest-api-utilities>`_
 * `Test utilities <#test-utilities>`_
+* `Collection of Usage Metrics <#collection-of-usage-metrics>`_
 * `Quality assurance checks <#quality-assurance-checks>`_
 
 ------------
@@ -1347,6 +1348,60 @@ Usage:
 but not for complex background tasks which can take a long time to execute
 (eg: firmware upgrades, network operations with retry mechanisms).
 
+``openwisp_utils.tasks.retryable_requests``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A utility function for making HTTP requests with built-in retry logic.
+This function is useful for handling transient errors encountered during HTTP
+requests by automatically retrying failed requests with exponential backoff.
+It provides flexibility in configuring various retry parameters to suit
+different use cases.
+
+Usage:
+
+.. code-block:: python
+
+    from your_module import retryable_request
+
+    response = retryable_request(
+        method='GET',
+        url='https://openwisp.org',
+        timeout=(4, 8),
+        max_retries=3,
+        backoff_factor=1,
+        backoff_jitter=0.0,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=('HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST'),
+        retry_kwargs=None,
+        headers={'Authorization': 'Bearer token'}
+    )
+
+**Paramters:**
+
+- ``method`` (str): The HTTP method to be used for the request in lower
+  case (e.g., 'get', 'post', etc.).
+- ``timeout`` (tuple): A tuple containing two elements: connection timeout
+  and read timeout in seconds (default: (4, 8)).
+- ``max_retries`` (int): The maximum number of retry attempts in case of
+  request failure (default: 3).
+- ``backoff_factor`` (float): A factor by which the retry delay increases
+  after each retry (default: 1).
+- ``backoff_jitter`` (float): A jitter to apply to the backoff factor to prevent
+  retry storms (default: 0.0).
+- ``status_forcelist`` (tuple): A tuple of HTTP status codes for which retries
+  should be attempted (default: (429, 500, 502, 503, 504)).
+- ``allowed_methods`` (tuple): A tuple of HTTP methods that are allowed for
+  the request (default: ('HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST')).
+- ``retry_kwargs`` (dict): Additional keyword arguments to be passed to the
+  retry mechanism (default: None).
+- ``**kwargs``: Additional keyword arguments to be passed to the underlying request
+  method (e.g. 'headers', etc.).
+
+Note: This method will raise a requests.exceptions.RetryError if the request
+remains unsuccessful even after all retry attempts have been exhausted.
+This exception indicates that the operation could not be completed successfully
+despite the retry mechanism.
+
 Storage utilities
 -----------------
 
@@ -1614,6 +1669,29 @@ Database backends
 This backend extends ``django.contrib.gis.db.backends.spatialite``
 database backend to implement a workaround for handling
 `issue with sqlite 3.36 and spatialite 5 <https://code.djangoproject.com/ticket/32935>`_.
+
+Collection of Usage Metrics
+---------------------------
+
+The openwisp-utils module includes an optional sub-app ``openwisp_utils.measurements``.
+This sub-app enables collection of following measurements:
+
+- Installed OpenWISP Version
+- Enabled OpenWISP modules: A list of the enabled OpenWISP modules
+  along with their respective versions
+- OS details: Information on the operating system, including its
+  version, kernel version, and platform
+- Whether the event is related to a new installation or an upgrade
+
+We collect data on OpenWISP usage to gauge user engagement, satisfaction,
+and upgrade patterns. This informs our development decisions, ensuring
+continuous improvement aligned with user needs.
+
+To enhance our understanding and management of this data, we have
+integrated `Clean Insights <https://cleaninsights.org/>`_, a privacy-preserving
+analytics tool. Clean Insights allows us to responsibly gather and analyze
+usage metrics without compromising user privacy. It provides us with the
+means to make data-driven decisions while respecting our users' rights and trust.
 
 Quality Assurance Checks
 ------------------------
