@@ -16,10 +16,15 @@ def _get_events(category, data):
     for key, value in data.items():
         events.append(
             {
+                # OS Details, Install, Hearthbeat, Upgrade
                 'category': category,
+                # Name of OW module or OS parameter
                 'action': escape(key),
+                # Actual version of OW module, OS or general OW version
                 'name': escape(value),
+                # Value is always 1
                 'value': 1,
+                # Event happened only 1 time, we do not aggregate
                 'times': 1,
                 'period_start': unix_time,
                 'period_end': unix_time,
