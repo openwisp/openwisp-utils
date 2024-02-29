@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 def send_email(subject, body_text, body_html, recipients, extra_context={}, **kwargs):
-
     mail = EmailMultiAlternatives(
         subject=subject,
         body=strip_tags(body_text),

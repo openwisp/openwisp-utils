@@ -5,7 +5,6 @@ import openwisp_utils.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('test_project', '0004_sheft_data'),
     ]

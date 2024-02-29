@@ -47,7 +47,6 @@ class TestMenuSchema(TestCase):
 
     @patch('openwisp_utils.admin_theme.menu.MENU', SortedOrderedDict())
     def test_register_menu_groups(self):
-
         from openwisp_utils.admin_theme.menu import MENU
 
         # create a menu
@@ -179,7 +178,6 @@ class TestMenuSchema(TestCase):
             self.assertEqual(model_link_context, registered_model_context)
 
     def test_menu_link(self):
-
         with self.subTest('Menu Link with invalid config'):
             with self.assertRaises(ImproperlyConfigured):
                 MenuLink(config=[])
@@ -221,7 +219,6 @@ class TestMenuSchema(TestCase):
             self.assertEqual(context.get('url'), mailto)
 
     def test_model_link(self):
-
         with self.subTest('Model Link without name'):
             _config = self._get_model_link_config(name=None)
             with self.assertRaises(ImproperlyConfigured):
@@ -285,7 +282,6 @@ class TestMenuSchema(TestCase):
             self.assertEqual(context, None)
 
     def test_menu_group(self):
-
         with self.subTest('Menu Group with invalid config'):
             with self.assertRaises(ImproperlyConfigured):
                 MenuGroup(config=[])

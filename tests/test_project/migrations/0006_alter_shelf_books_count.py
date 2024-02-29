@@ -5,7 +5,6 @@ import openwisp_utils.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("test_project", "0005_organizationradiussettings"),
     ]
