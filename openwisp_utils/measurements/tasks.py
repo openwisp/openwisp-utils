@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 def post_usage_metrics(events):
     try:
+        print('retrying request')
         response = retryable_request(
             'post',
             url=USER_METRIC_COLLECTION_URL,
@@ -28,6 +29,7 @@ def post_usage_metrics(events):
             },
             max_retries=10,
         )
+        print(response.status_code, ' response code from measurement tasks')
         assert response.status_code == 204
     except Exception as error:
         if isinstance(error, AssertionError):

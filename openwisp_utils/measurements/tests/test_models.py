@@ -6,6 +6,7 @@ from django.apps import apps
 from django.db import migrations
 from django.test import TestCase, override_settings
 from freezegun import freeze_time
+from openwisp_utils import utils
 from urllib3.response import HTTPResponse
 
 from .. import tasks
@@ -174,10 +175,10 @@ class TestOpenwispVersion(TestCase):
         bad_response = requests.Response()
         bad_response.status_code = 400
         with patch.object(
-            requests.Session, 'post', return_value=bad_response
-        ) as mocked_post:
+            tasks, 'retryable_request', return_value=bad_response
+        ) as mocked_retryable_request:
             tasks.send_usage_metrics.delay()
-        mocked_post.assert_called_once()
+        mocked_retryable_request.assert_called_once()
         mocked_warning.assert_not_called()
         mocked_error.assert_called_with(
             'Collection of usage metrics failed, max retries exceeded.'
@@ -186,6 +187,9 @@ class TestOpenwispVersion(TestCase):
 
     @patch('urllib3.util.retry.Retry.sleep')
     @patch(
+        'urllib3.connectionpool.HTTPConnection.request',
+    )
+    @patch(
         'urllib3.connectionpool.HTTPConnection.getresponse',
         return_value=HTTPResponse(status=500, version='1.1'),
     )
@@ -193,7 +197,12 @@ class TestOpenwispVersion(TestCase):
     def test_post_usage_metrics_500_response(
         self, mocked_error, mocked_getResponse, *args
     ):
-        tasks.send_usage_metrics.delay()
+        with patch.object(
+            utils.requests.Session, 'post', new=utils.requests.Session._original_post
+        ):
+            # The requests.Session.post is mocked at the test runner level
+            # in openwisp_utils.measurements.runner.MockedRequestPostRunner
+            tasks.send_usage_metrics.delay()
         self.assertEqual(len(mocked_getResponse.mock_calls), 11)
         mocked_error.assert_called_with(
             'Collection of usage metrics failed, max retries exceeded.'
@@ -206,17 +215,20 @@ class TestOpenwispVersion(TestCase):
     @patch('logging.Logger.warning')
     @patch('logging.Logger.error')
     def test_post_usage_metrics_204_response(self, mocked_error, mocked_warning, *args):
-        bad_response = requests.Response()
-        bad_response.status_code = 204
+        success_response = requests.Response()
+        success_response.status_code = 204
         with patch.object(
-            requests.Session, 'post', return_value=bad_response
-        ) as mocked_post:
+            tasks, 'retryable_request', return_value=success_response
+        ) as mocked_retryable_request:
             tasks.send_usage_metrics.delay()
-        self.assertEqual(len(mocked_post.mock_calls), 1)
+        self.assertEqual(len(mocked_retryable_request.mock_calls), 1)
         mocked_warning.assert_not_called()
         mocked_error.assert_not_called()
 
     @patch('urllib3.util.retry.Retry.sleep')
+    @patch(
+        'urllib3.connectionpool.HTTPConnection.request',
+    )
     @patch(
         'urllib3.connectionpool.HTTPConnectionPool._get_conn',
         side_effect=OSError,
@@ -225,7 +237,12 @@ class TestOpenwispVersion(TestCase):
     def test_post_usage_metrics_connection_error(
         self, mocked_error, mocked_get_conn, *args
     ):
-        tasks.send_usage_metrics.delay()
+        with patch.object(
+            utils.requests.Session, 'post', new=utils.requests.Session._original_post
+        ):
+            # The requests.Session.post is mocked at the test runner level
+            # in openwisp_utils.measurements.runner.MockedRequestPostRunner
+            tasks.send_usage_metrics.delay()
         mocked_error.assert_called_with(
             'Collection of usage metrics failed, max retries exceeded.'
             ' Error: HTTPSConnectionPool(host=\'analytics.openwisp.io\', port=443):'
