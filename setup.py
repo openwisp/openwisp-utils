@@ -54,12 +54,12 @@ setup(
             'isort~=5.0',
             'readme-renderer~=37.3.0',
             'coveralls~=3.3.0',  # depends on coverage as well
-            'tblib~=1.7',
+            'tblib~=3.0.0',
         ],
         'rest': [
             'djangorestframework~=3.14.0',
             'django-filter~=23.2',  # django-filter uses CalVer
-            'drf-yasg~=1.21.0',
+            'drf-yasg~=1.21.7',
         ],
         'celery': ['celery~=5.3.0'],
         'selenium': ['selenium~=4.10.0'],

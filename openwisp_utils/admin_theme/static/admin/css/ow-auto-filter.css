@@ -45,10 +45,12 @@
   border-radius: 0.2rem !important;
   padding: 0.4rem 1.25rem 0.3125rem 1rem;
 }
-.auto-filter .select2-selection[aria-expanded='true'] {
+.auto-filter .select2-selection[aria-expanded="true"] {
   border-color: #df5d43 !important;
 }
-.auto-filter .select2-selection[aria-expanded='true'] .select2-selection__rendered {
+.auto-filter
+  .select2-selection[aria-expanded="true"]
+  .select2-selection__rendered {
   color: #df5d43 !important;
 }
 .auto-filter .select2-selection__placeholder {
@@ -88,9 +90,11 @@
   font-size: 14px;
   border-radius: 4px;
   font-weight: 500;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
-.auto-filter-choices .select2-results__option[aria-selected='true'] {
+.auto-filter-choices .select2-results__option[aria-selected="true"] {
   background: #df5d43 !important;
   color: #ffff !important;
 }

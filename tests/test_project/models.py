@@ -1,10 +1,23 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from openwisp_utils.base import KeyField, TimeStampedEditableModel, UUIDModel
+from openwisp_utils.base import (
+    FallbackModelMixin,
+    KeyField,
+    TimeStampedEditableModel,
+    UUIDModel,
+)
+from openwisp_utils.fields import (
+    FallbackBooleanChoiceField,
+    FallbackCharChoiceField,
+    FallbackCharField,
+    FallbackPositiveIntegerField,
+    FallbackTextField,
+    FallbackURLField,
+)
 
 
-class Shelf(TimeStampedEditableModel):
+class Shelf(FallbackModelMixin, TimeStampedEditableModel):
     TYPES = (
         ('HORROR', 'HORROR'),
         ('FANTASY', 'FANTASY'),
@@ -22,7 +35,12 @@ class Shelf(TimeStampedEditableModel):
     books_type = models.CharField(
         _("Type of book"), choices=TYPES, null=True, blank=True, max_length=50
     )
-    books_count = models.PositiveIntegerField(_("Number of books"), default=0)
+    books_count = FallbackPositiveIntegerField(
+        blank=True,
+        null=True,
+        fallback=21,
+        verbose_name=_("Number of books"),
+    )
     locked = models.BooleanField(_("Is locked"), default=True)
     owner = models.ForeignKey(
         "auth.User",
@@ -69,6 +87,54 @@ class RadiusAccounting(models.Model):
     )
     username = models.CharField(
         verbose_name=_('username'), max_length=64, db_index=True, null=True, blank=True
+    )
+    start_time = models.DateTimeField(
+        verbose_name=_('start time'),
+        null=True,
+        blank=True,
+    )
+    stop_time = models.DateTimeField(
+        verbose_name=_('stop time'),
+        null=True,
+        blank=True,
+    )
+
+
+class OrganizationRadiusSettings(FallbackModelMixin, models.Model):
+    is_active = FallbackBooleanChoiceField(
+        null=True,
+        blank=True,
+        default=None,
+        fallback=False,
+    )
+    is_first_name_required = FallbackCharChoiceField(
+        null=True,
+        blank=True,
+        max_length=32,
+        choices=(
+            ('disabled', _('Disabled')),
+            ('allowed', _('Allowed')),
+            ('mandatory', _('Mandatory')),
+        ),
+        fallback='disabled',
+    )
+    greeting_text = FallbackCharField(
+        null=True,
+        blank=True,
+        max_length=200,
+        fallback='Welcome to OpenWISP!',
+    )
+    password_reset_url = FallbackURLField(
+        null=True,
+        blank=True,
+        max_length=200,
+        fallback='http://localhost:8000/admin/password_change/',
+    )
+    extra_config = FallbackTextField(
+        null=True,
+        blank=True,
+        max_length=200,
+        fallback='no data',
     )
 
 

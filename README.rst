@@ -54,6 +54,7 @@ Current features
 * `Admin Theme utilities <#admin-theme-utilities>`_
 * `REST API utilities <#rest-api-utilities>`_
 * `Test utilities <#test-utilities>`_
+* `Collection of Usage Metrics <#collection-of-usage-metrics>`_
 * `Quality assurance checks <#quality-assurance-checks>`_
 
 ------------
@@ -218,7 +219,7 @@ Extend admin theme programmatically
 ``openwisp_utils.admin_theme.theme.register_theme_link``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__.
 
 This function is meant to be used by third party apps or OpenWISP modules which
 aim to extend the core look and feel of the OpenWISP theme (eg: add new menu icons).
@@ -229,17 +230,17 @@ aim to extend the core look and feel of the OpenWISP theme (eg: add new menu ico
 
     register_theme_link(links)
 
-+--------------------+-------------------------------------------------------------+
-| **Parameter**      | **Description**                                             |
-+--------------------+-------------------------------------------------------------+
-| ``links``          | (``list``) List of *link* items to be added to              |
-|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_ |
-+--------------------+-------------------------------------------------------------+
++--------------------+--------------------------------------------------------------+
+| **Parameter**      | **Description**                                              |
++--------------------+--------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be added to               |
+|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__ |
++--------------------+--------------------------------------------------------------+
 
 ``openwisp_utils.admin_theme.theme.unregister_theme_link``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows removing items from `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_.
+Allows removing items from `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__.
 
 This function is meant to be used by third party apps or OpenWISP modules which
 aim additional functionalities to UI of OpenWISP (eg: adding a support chatbot).
@@ -250,12 +251,12 @@ aim additional functionalities to UI of OpenWISP (eg: adding a support chatbot).
 
     unregister_theme_link(links)
 
-+--------------------+-------------------------------------------------------------+
-| **Parameter**      | **Description**                                             |
-+--------------------+-------------------------------------------------------------+
-| ``links``          | (``list``) List of *link* items to be removed from          |
-|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_ |
-+--------------------+-------------------------------------------------------------+
++--------------------+--------------------------------------------------------------+
+| **Parameter**      | **Description**                                              |
++--------------------+--------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be removed from           |
+|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__ |
++--------------------+--------------------------------------------------------------+
 
 ``openwisp_utils.admin_theme.theme.register_theme_js``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -461,6 +462,8 @@ Following properties can be configured for each chart ``config``:
 |                  | +------------------------+---------------------------------------------------------------------------+  |
 |                  | | ``aggregate``          | Alternative to ``group_by``, ``dict`` used for more complex queries.      |  |
 |                  | +------------------------+---------------------------------------------------------------------------+  |
+|                  | | ``filter``             | ``dict`` used for filtering queryset.                                     |  |
+|                  | +------------------------+---------------------------------------------------------------------------+  |
 |                  | | ``organization_field`` | (``str``) If the model does not have a direct relation with the           |  |
 |                  | |                        | ``Organization`` model, then indirect relation can be specified using     |  |
 |                  | |                        | this property. E.g.: ``device__organization_id``.                         |  |
@@ -476,6 +479,11 @@ Following properties can be configured for each chart ``config``:
 | ``filters``      | An **optional** ``dict`` which can be used when using ``aggregate`` and ``annotate`` in                 |
 |                  | ``query_params`` to define the link that will be generated to filter results (pie charts are            |
 |                  | clickable and clicking on a portion of it will show the filtered results).                              |
++------------------+---------------------------------------------------------------------------------------------------------+
+| ``main_filters`` | An **optional** ``dict`` which can be used to add additional filtering on the target link.              |
++------------------+---------------------------------------------------------------------------------------------------------+
+| ``filtering``    | An **optional** ``str`` which can be set to ``'False'`` (str) to disable filtering on target links.     |
+|                  | This is useful when clicking on any section of the chart should take user to the same URL.              |
 +------------------+---------------------------------------------------------------------------------------------------------+
 | ``quick_link``   | An **optional** ``dict`` which contains configuration for the quick link button rendered                |
 |                  | below the chart.                                                                                        |
@@ -499,7 +507,7 @@ Code example:
 
 .. code-block:: python
 
-	from openwisp_utils.admin_theme import register_dashboard_chart
+    from openwisp_utils.admin_theme import register_dashboard_chart
 
     register_dashboard_chart(
         position=1,
@@ -897,10 +905,159 @@ Model class inheriting ``UUIDModel`` which provides two additional fields:
 Which use respectively ``AutoCreatedField``, ``AutoLastModifiedField`` from ``model_utils.fields``
 (self-updating fields providing the creation date-time and the last modified date-time).
 
-``openwisp_utils.base.KeyField``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``openwisp_utils.base.FallBackModelMixin``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A model field whic provides a random key or token, widely used across openwisp modules.
+Model mixin that implements ``get_field_value`` method which can be used
+to get value of fallback fields.
+
+Custom Fields
+-------------
+
+This section describes custom fields defined in ``openwisp_utils.fields``
+that can be used in Django models:
+
+``openwisp_utils.fields.KeyField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A model field which provides a random key or token, widely used across openwisp modules.
+
+``openwisp_utils.fields.FallbackBooleanChoiceField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `BooleanField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#booleanfield>`_
+and provides additional functionality for handling choices with a fallback value.
+The field will use the **fallback value** whenever the field is set to ``None``.
+
+This field is particularly useful when you want to present a choice between enabled
+and disabled options, with an additional "Default" option that reflects the fallback value.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackBooleanChoiceField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        is_active = FallbackBooleanChoiceField(
+            null=True,
+            blank=True,
+            default=None,
+            fallback=app_settings.IS_ACTIVE_FALLBACK,
+        )
+
+``openwisp_utils.fields.FallbackCharChoiceField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `CharField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_
+and provides additional functionality for handling choices with a fallback value.
+The field will use the **fallback value** whenever the field is set to ``None``.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackCharChoiceField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        is_first_name_required = FallbackCharChoiceField(
+            null=True,
+            blank=True,
+            max_length=32,
+            choices=(
+                ('disabled', _('Disabled')),
+                ('allowed', _('Allowed')),
+                ('mandatory', _('Mandatory')),
+            ),
+            fallback=app_settings.IS_FIRST_NAME_REQUIRED,
+        )
+
+``openwisp_utils.fields.FallbackCharField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `CharField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_
+and provides additional functionality for handling text fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackCharField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        greeting_text = FallbackCharField(
+            null=True,
+            blank=True,
+            max_length=200,
+            fallback=app_settings.GREETING_TEXT,
+        )
+
+``openwisp_utils.fields.FallbackURLField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This field extends Django's `URLField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#urlfield>`_
+and provides additional functionality for handling URL fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackURLField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        password_reset_url = FallbackURLField(
+            null=True,
+            blank=True,
+            max_length=200,
+            fallback=app_settings.DEFAULT_PASSWORD_RESET_URL,
+        )
+
+``openwisp_utils.fields.FallbackTextField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This extends Django's `TextField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#django.db.models.TextField>`_
+and provides additional functionality for handling text fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackTextField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        extra_config = FallbackTextField(
+            null=True,
+            blank=True,
+            max_length=200,
+            fallback=app_settings.EXTRA_CONFIG,
+        )
+
+``openwisp_utils.fields.FallbackPositiveIntegerField``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This extends Django's `PositiveIntegerField <https://docs.djangoproject.com/en/4.2/ref/models/fields/#positiveintegerfield>`_
+and provides additional functionality for handling positive integer fields with a fallback value.
+
+It allows populating the form with the fallback value when the actual value is set to ``null`` in the database.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackPositiveIntegerField
+    from myapp import settings as app_settings
+
+    class MyModel(models.Model):
+        count = FallbackPositiveIntegerField(
+            blank=True,
+            null=True,
+            fallback=app_settings.DEFAULT_COUNT,
+        )
 
 Admin utilities
 ---------------
@@ -987,7 +1144,7 @@ inline object. Following is an example:
             # (optional) You can provide a link to documentation for user reference
             'documentation_url': (
                 'https://github.com/openwisp/openwisp-utils'
-            )
+            ),
             # (optional) Icon to be shown along with help text. By default it uses
             # "/static/admin/img/icon-alert.svg"
             'image_url': '/static/admin/img/icon-alert.svg'
@@ -1011,8 +1168,8 @@ Code example:
     class MyModelAdmin(admin.ModelAdmin):
         list_filter = [
             ('my_field', InputFilter),
-            'other_field'
-            ...
+            'other_field',
+            # ...
         ]
 
 By default ``InputFilter`` use exact lookup to filter items which matches to the value being
@@ -1032,8 +1189,8 @@ searched by the user. But this behavior can be changed by modifying ``InputFilte
     class MyModelAdmin(admin.ModelAdmin):
         list_filter = [
             ('my_field', MyInputFilter),
-            'other_field'
-            ...
+            'other_field',
+            # ...
         ]
 
 To know about other lookups that can be used please check
@@ -1067,8 +1224,8 @@ The derived filter class should define the ``queryset`` method as shown in follo
     class MyModelAdmin(admin.ModelAdmin):
         list_filter = [
             MyInputFilter,
-            'other_field'
-            ...
+            'other_field',
+            # ...
         ]
 
 ``openwisp_utils.admin_theme.filters.AutocompleteFilter``
@@ -1190,6 +1347,60 @@ Usage:
 **Note:** This task class should be used for regular background tasks
 but not for complex background tasks which can take a long time to execute
 (eg: firmware upgrades, network operations with retry mechanisms).
+
+``openwisp_utils.tasks.retryable_requests``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A utility function for making HTTP requests with built-in retry logic.
+This function is useful for handling transient errors encountered during HTTP
+requests by automatically retrying failed requests with exponential backoff.
+It provides flexibility in configuring various retry parameters to suit
+different use cases.
+
+Usage:
+
+.. code-block:: python
+
+    from your_module import retryable_request
+
+    response = retryable_request(
+        method='GET',
+        url='https://openwisp.org',
+        timeout=(4, 8),
+        max_retries=3,
+        backoff_factor=1,
+        backoff_jitter=0.0,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=('HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST'),
+        retry_kwargs=None,
+        headers={'Authorization': 'Bearer token'}
+    )
+
+**Paramters:**
+
+- ``method`` (str): The HTTP method to be used for the request in lower
+  case (e.g., 'get', 'post', etc.).
+- ``timeout`` (tuple): A tuple containing two elements: connection timeout
+  and read timeout in seconds (default: (4, 8)).
+- ``max_retries`` (int): The maximum number of retry attempts in case of
+  request failure (default: 3).
+- ``backoff_factor`` (float): A factor by which the retry delay increases
+  after each retry (default: 1).
+- ``backoff_jitter`` (float): A jitter to apply to the backoff factor to prevent
+  retry storms (default: 0.0).
+- ``status_forcelist`` (tuple): A tuple of HTTP status codes for which retries
+  should be attempted (default: (429, 500, 502, 503, 504)).
+- ``allowed_methods`` (tuple): A tuple of HTTP methods that are allowed for
+  the request (default: ('HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE', 'POST')).
+- ``retry_kwargs`` (dict): Additional keyword arguments to be passed to the
+  retry mechanism (default: None).
+- ``**kwargs``: Additional keyword arguments to be passed to the underlying request
+  method (e.g. 'headers', etc.).
+
+Note: This method will raise a requests.exceptions.RetryError if the request
+remains unsuccessful even after all retry attempts have been exhausted.
+This exception indicates that the operation could not be completed successfully
+despite the retry mechanism.
 
 Storage utilities
 -----------------
@@ -1448,6 +1659,39 @@ Example usage:
 
 This mixin provides basic setup for Selenium tests with method to
 open URL and login and logout a user.
+
+Database backends
+-----------------
+
+``openwisp_utils.db.backends.spatialite``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This backend extends ``django.contrib.gis.db.backends.spatialite``
+database backend to implement a workaround for handling
+`issue with sqlite 3.36 and spatialite 5 <https://code.djangoproject.com/ticket/32935>`_.
+
+Collection of Usage Metrics
+---------------------------
+
+The openwisp-utils module includes an optional sub-app ``openwisp_utils.measurements``.
+This sub-app enables collection of following measurements:
+
+- Installed OpenWISP Version
+- Enabled OpenWISP modules: A list of the enabled OpenWISP modules
+  along with their respective versions
+- OS details: Information on the operating system, including its
+  version, kernel version, and platform
+- Whether the event is related to a new installation or an upgrade
+
+We collect data on OpenWISP usage to gauge user engagement, satisfaction,
+and upgrade patterns. This informs our development decisions, ensuring
+continuous improvement aligned with user needs.
+
+To enhance our understanding and management of this data, we have
+integrated `Clean Insights <https://cleaninsights.org/>`_, a privacy-preserving
+analytics tool. Clean Insights allows us to responsibly gather and analyze
+usage metrics without compromising user privacy. It provides us with the
+means to make data-driven decisions while respecting our users' rights and trust.
 
 Quality Assurance Checks
 ------------------------

@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     # test project
     'test_project',
     'openwisp_utils.admin_theme',
+    'openwisp_utils.measurements',
     'django.contrib.sites',
     # admin
     'django.contrib.admin',
@@ -46,7 +47,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'openwisp2.urls'
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -81,7 +82,7 @@ TEMPLATES = [
 DATABASES = {
     'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'openwisp_utils.db'}
 }
-
+TEST_RUNNER = 'openwisp_utils.measurements.tests.runner.MockRequestPostRunner'
 OPENWISP_ADMIN_SITE_CLASS = 'test_project.site.CustomAdminSite'
 
 SITE_ID = 1
@@ -123,6 +124,10 @@ OPENWISP_ADMIN_THEME_LINKS = [
     },
 ]
 OPENWISP_ADMIN_THEME_JS = ['dummy.js']
+
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_BROKER_URL = 'memory://'
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:

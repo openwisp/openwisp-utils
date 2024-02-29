@@ -51,6 +51,14 @@ class OpenWispAdminThemeConfig(AppConfig):
             position=10,
             config={'label': _('Home'), 'url': '/admin', 'icon': 'ow-dashboard-icon'},
         )
+        register_menu_group(
+            position=899,
+            config={
+                'label': _('System info'),
+                'url': '/admin/openwisp-system-info/',
+                'icon': 'ow-info-icon',
+            },
+        )
 
     def modify_admin_theme_settings_links(self):
         link_files = []

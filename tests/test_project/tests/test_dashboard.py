@@ -6,6 +6,7 @@ from unittest.mock import patch
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase as DjangoTestCase
 from django.urls import reverse
+from django.utils.timezone import localdate, now, timedelta
 from openwisp_utils.admin_theme import (
     register_dashboard_chart,
     register_dashboard_template,
@@ -14,8 +15,8 @@ from openwisp_utils.admin_theme import (
 )
 from openwisp_utils.admin_theme.dashboard import get_dashboard_context
 
-from ..models import Project
-from . import AdminTestMixin
+from ..models import Operator, Project, RadiusAccounting
+from . import AdminTestMixin, CreateMixin
 from .utils import MockRequest, MockUser
 
 
@@ -177,8 +178,25 @@ class TestDashboardSchema(UnitTestCase):
         )
 
 
-class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
+class TestAdminDashboard(AdminTestMixin, CreateMixin, DjangoTestCase):
+    accounting_model = RadiusAccounting
+
     def test_index_content(self):
+        self._create_radius_accounting(
+            session_id='1',
+            start_time=now(),
+            stop_time=now(),
+        )
+        self._create_radius_accounting(
+            session_id='2',
+            start_time=now() - timedelta(days=1),
+            stop_time=None,
+        )
+        self._create_radius_accounting(
+            session_id='2',
+            start_time=now(),
+            stop_time=None,
+        )
         response = self.client.get(reverse('admin:index'))
         self.assertContains(response, 'Operator Project Distribution')
         self.assertContains(response, '\'values\': [1, 1]')
@@ -205,6 +223,22 @@ class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
         self.assertContains(response, 'with_operator')
         self.assertContains(response, 'without_operator')
         self.assertContains(response, 'project__name__exact')
+        # Assertion for main_filter
+        # "created_at__date=" is the main filter
+        self.assertContains(
+            response,
+            '/admin/test_project/shelf/?'
+            f'created_at__date={localdate()}'
+            '&books_type__exact=',
+        )
+        # Assertion for queryset filtering
+        self.assertContains(
+            response,
+            '{'
+            '\'name\': \'Open RADIUS Sessions\', '
+            '\'query_params\': {\'values\': [1], '
+            '\'labels\': [\'Active sessions\']}',
+        )
 
         with self.subTest('Test no data'):
             Project.objects.all().delete()
@@ -237,3 +271,26 @@ class TestAdminDashboard(AdminTestMixin, DjangoTestCase):
         with self.subTest('Test "Dashboard" is absent from menu items'):
             response = self.client.get(reverse('admin:index'))
             self.assertNotContains(response, 'Dashboard')
+
+    def test_get_dashboard_context_html_escape(self):
+        # craft malicious DB value which will be shown in labels
+        project = Project.objects.create(name='<script>alert(1)</script>')
+        Operator.objects.create(project=project, first_name='xss', last_name='xss')
+        # prepare mock request and get context
+        mocked_user = MockUser(is_superuser=True)
+        mocked_request = MockRequest(user=mocked_user)
+        context = get_dashboard_context(mocked_request)
+        # ensure DB value is escaped
+        self.assertEqual(
+            context['dashboard_charts'][0]['query_params']['labels'][0],
+            '&lt;script&gt;alert(1)&lt;/script&gt;',
+        )
+        # ensure configured labels are escaped
+        self.assertEqual(
+            context['dashboard_charts'][1]['labels']['with_operator__sum'],
+            '&lt;strong&gt;Projects with operators&lt;/strong&gt;',
+        )
+        self.assertEqual(
+            context['dashboard_charts'][1]['query_params']['labels'][0],
+            '&lt;strong&gt;Projects with operators&lt;/strong&gt;',
+        )

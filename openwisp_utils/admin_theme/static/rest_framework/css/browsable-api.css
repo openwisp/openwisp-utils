@@ -35,7 +35,7 @@ body::-webkit-scrollbar {
 ::-webkit-scrollbar-thumb:hover {
   background: #333;
 }
-body{
+body {
   background: none;
   background-attachment: initial;
 }
@@ -48,7 +48,8 @@ body{
   position: static;
   border-bottom: 1px solid #eee;
 }
-.navbar .nav li, .navbar .nav li a{
+.navbar .nav li,
+.navbar .nav li a {
   margin-top: 30px;
   color: #000;
   background-color: rgba(0, 0, 0, 0.1);
@@ -57,13 +58,13 @@ body{
   text-align: center;
   border-radius: 0.25em;
 }
-.navbar-brand>img{
+.navbar-brand > img {
   width: 165px;
   height: 95px;
   margin-left: 15px;
   margin-bottom: 100px;
 }
-.navbar-brand{
+.navbar-brand {
   width: 185px;
   height: 105px;
   margin: 0;
@@ -72,16 +73,20 @@ body{
 ul.breadcrumb {
   margin: 90px 0 0 0;
 }
-ul.breadcrumb{
+ul.breadcrumb {
   display: none;
 }
-.kwd, .prettyprint .tag {
+.kwd,
+.prettyprint .tag {
   color: #333;
 }
 .lit {
   color: #000;
 }
-.pun, .opn, .clo, .pln  {
+.pun,
+.opn,
+.clo,
+.pln {
   color: #333;
 }
 .prettyprint {
@@ -98,16 +103,19 @@ ul.breadcrumb{
   background-color: #999;
   border: 0;
 }
-.btn-primary.active, .btn-primary:active, .open>.dropdown-toggle.btn-primary {
+.btn-primary.active,
+.btn-primary:active,
+.open > .dropdown-toggle.btn-primary {
   color: #fff;
   background-color: #333 !important;
   background-image: none;
   border: 0;
 }
-.dropdown-menu>li>a {
+.dropdown-menu > li > a {
   color: #777;
 }
-.dropdown-menu>li:hover, .dropdown-menu>li>a:hover{
+.dropdown-menu > li:hover,
+.dropdown-menu > li > a:hover {
   color: #df5d43;
   background: #fdf2f2f2;
 }
@@ -116,14 +124,16 @@ ul.breadcrumb{
   color: #777;
   font-weight: bold;
 }
-.nav-tabs li a:visited{
+.nav-tabs li a:visited {
   color: #777;
 }
-.nav-tabs li a:hover{
+.nav-tabs li a:hover {
   color: #df5d43;
   background-color: #f9f9f9;
 }
-.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover {
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:focus,
+.nav-tabs > li.active > a:hover {
   color: #df5d43;
   cursor: default;
   font-weight: bold;
@@ -135,20 +145,26 @@ ul.breadcrumb{
   border: 2px solid rgb(0, 0, 0);
   box-shadow: none;
 }
-.form-group label{
+.form-group label {
   font-weight: normal;
   color: #000;
 }
-.pagination>li>a, .pagination>li>span{
+.pagination > li > a,
+.pagination > li > span {
   color: #777;
 }
-.pagination>li>a:hover, .pagination>li>span:hover{
+.pagination > li > a:hover,
+.pagination > li > span:hover {
   color: #df5d43;
   background-color: #ffe5e5;
   border-color: #ffd2c9;
 }
-.pagination>.active>a, .pagination>.active>a:focus, .pagination>.active>a:hover, 
-.pagination>.active>span, .pagination>.active>span:focus, .pagination>.active>span:hover {
+.pagination > .active > a,
+.pagination > .active > a:focus,
+.pagination > .active > a:hover,
+.pagination > .active > span,
+.pagination > .active > span:focus,
+.pagination > .active > span:hover {
   color: #df5d43;
   background-color: #ffe5e5;
   border-color: #ffd2c9;
