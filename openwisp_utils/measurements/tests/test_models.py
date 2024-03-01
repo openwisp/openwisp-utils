@@ -168,6 +168,33 @@ class TestOpenwispVersion(TestCase):
         }
         self.assertEqual(version.module_version, expected_module_version)
 
+    @freeze_time('2023-12-01 00:00:00')
+    @patch.object(tasks, 'get_openwisp_version', return_value='23.0.0a')
+    @patch.object(
+        tasks,
+        'get_enabled_openwisp_modules',
+        return_value=_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+    )
+    @patch.object(
+        tasks,
+        'get_os_details',
+        return_value=_OS_DETAILS_RETURN_VALUE,
+    )
+    @patch.object(tasks, 'post_usage_metrics')
+    @patch.object(tasks, 'get_openwisp_module_metrics')
+    def test_send_usage_metrics_upgrade_only_without_upgrades(
+        self, mocked_get_openwisp_module_metrics, mocked_post_usage_metrics, *args
+    ):
+        """
+        This test checks that no usage metrics are sent when
+        there are no OpenWISP modules upgrades and upgrade_only
+        is set to True.
+        """
+        self.assertEqual(OpenwispVersion.objects.count(), 1)
+        tasks.send_usage_metrics.delay(upgrade_only=True)
+        mocked_get_openwisp_module_metrics.assert_not_called()
+        mocked_post_usage_metrics.assert_not_called()
+
     @patch('time.sleep')
     @patch('logging.Logger.warning')
     @patch('logging.Logger.error')

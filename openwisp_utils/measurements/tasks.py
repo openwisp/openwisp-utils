@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 def post_usage_metrics(events):
     try:
-        print('retrying request')
         response = retryable_request(
             'post',
             url=USER_METRIC_COLLECTION_URL,
@@ -29,7 +28,6 @@ def post_usage_metrics(events):
             },
             max_retries=10,
         )
-        print(response.status_code, ' response code from measurement tasks')
         assert response.status_code == 204
     except Exception as error:
         if isinstance(error, AssertionError):
@@ -52,6 +50,8 @@ def send_usage_metrics(upgrade_only=False):
         OpenwispVersion.objects.create(module_version=current_versions)
     else:
         upgraded_modules = OpenwispVersion.get_upgraded_modules(current_versions)
+        if upgrade_only and not upgraded_modules:
+            return
         metrics.extend(_get_events('Upgrade', upgraded_modules))
         if not upgrade_only:
             metrics.extend(get_openwisp_module_metrics(current_versions))
