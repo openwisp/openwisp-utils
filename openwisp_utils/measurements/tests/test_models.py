@@ -224,11 +224,10 @@ class TestOpenwispVersion(TestCase):
     def test_post_usage_metrics_500_response(
         self, mocked_error, mocked_getResponse, *args
     ):
+        # Unmock post request from MockedRequestPostRunner
         with patch.object(
             utils.requests.Session, 'post', new=utils.requests.Session._original_post
         ):
-            # The requests.Session.post is mocked at the test runner level
-            # in openwisp_utils.measurements.runner.MockedRequestPostRunner
             tasks.send_usage_metrics.delay()
         self.assertEqual(len(mocked_getResponse.mock_calls), 11)
         mocked_error.assert_called_with(
@@ -264,11 +263,10 @@ class TestOpenwispVersion(TestCase):
     def test_post_usage_metrics_connection_error(
         self, mocked_error, mocked_get_conn, *args
     ):
+        # Unmock post request from MockedRequestPostRunner
         with patch.object(
             utils.requests.Session, 'post', new=utils.requests.Session._original_post
         ):
-            # The requests.Session.post is mocked at the test runner level
-            # in openwisp_utils.measurements.runner.MockedRequestPostRunner
             tasks.send_usage_metrics.delay()
         mocked_error.assert_called_with(
             'Collection of usage metrics failed, max retries exceeded.'
