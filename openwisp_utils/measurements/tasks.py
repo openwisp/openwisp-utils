@@ -40,19 +40,28 @@ def post_usage_metrics(events):
 
 
 @shared_task(base=OpenwispCeleryTask)
-def send_usage_metrics(upgrade_only=False):
+def send_usage_metrics(category=None):
+    assert category in ['hearthbeat', 'install', 'upgrade']
     current_versions = get_enabled_openwisp_modules()
     current_versions.update({'OpenWISP Version': get_openwisp_version()})
+    os_version = get_os_details()
     metrics = []
     metrics.extend(get_os_detail_metrics(get_os_details()))
-    if OpenwispVersion.is_new_installation():
+    modules, new_install = OpenwispVersion.log_module_version_changes(current_versions)
+    if category == 'install':
         metrics.extend(_get_events('Install', current_versions))
-        OpenwispVersion.objects.create(module_version=current_versions)
-    else:
-        upgraded_modules = OpenwispVersion.get_upgraded_modules(current_versions)
-        if upgrade_only and not upgraded_modules:
-            return
-        metrics.extend(_get_events('Upgrade', upgraded_modules))
-        if not upgrade_only:
-            metrics.extend(get_openwisp_module_metrics(current_versions))
+    if category == 'upgrade' and modules:
+        pass
+    if category == 'hearthbeat':
+        pass
+    # if category == 'install':
+    #     metrics.extend(_get_events('Install', current_versions))
+    #     OpenwispVersion.objects.create(module_version=current_versions)
+    # else:
+    #
+    #     if upgrade_only and not upgraded_modules:
+    #         return
+    #     metrics.extend(_get_events('Upgrade', upgraded_modules))
+    #     if not upgrade_only:
+    #         metrics.extend(get_openwisp_module_metrics(current_versions))
     post_usage_metrics(metrics)
