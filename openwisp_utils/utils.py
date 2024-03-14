@@ -88,16 +88,6 @@ def retryable_request(
             backoff_jitter=backoff_jitter,
         )
     )
-    retry_kwargs = retry_kwargs or {}
-    retry_kwargs.update(
-        dict(
-            total=max_retries,
-            backoff_factor=backoff_factor,
-            backoff_jitter=backoff_jitter,
-            status_forcelist=status_forcelist,
-            allowed_methods=allowed_methods,
-        )
-    )
     request_session = requests.Session()
     retries = Retry(**retry_kwargs)
     request_session.mount('https://', HTTPAdapter(max_retries=retries))

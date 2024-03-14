@@ -46,6 +46,8 @@ setup(
         'django-compress-staticfiles~=1.0.1b',
         'django-admin-autocomplete-filter~=0.7.1',
         'swapper~=1.3.0',
+        # allow wider range here to avoid interfering with other modules
+        'requests>=2.31.0,<3.0.0',
     ],
     extras_require={
         'qa': [

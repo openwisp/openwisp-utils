@@ -1348,8 +1348,8 @@ Usage:
 but not for complex background tasks which can take a long time to execute
 (eg: firmware upgrades, network operations with retry mechanisms).
 
-``openwisp_utils.tasks.retryable_requests``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``openwisp_utils.utils.retryable_request``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A utility function for making HTTP requests with built-in retry logic.
 This function is useful for handling transient errors encountered during HTTP
@@ -1361,7 +1361,7 @@ Usage:
 
 .. code-block:: python
 
-    from your_module import retryable_request
+    from openwisp_utils.utils import retryable_request
 
     response = retryable_request(
         method='GET',
