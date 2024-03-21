@@ -654,6 +654,10 @@ input[type="button"]:hover,
 #main .submit-row input {
   font-size: 14px;
 }
+.inline-quick-link-container {
+  text-align: center;
+  margin: 20px 0 40px;
+}
 
 /*
   NOTE:
