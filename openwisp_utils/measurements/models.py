@@ -11,36 +11,45 @@ class OpenwispVersion(TimeStampedEditableModel):
         ordering = ('-created',)
 
     @classmethod
-    def is_new_installation(cls):
-        return not cls.objects.exists()
-
-    @classmethod
-    def get_upgraded_modules(cls, current_versions):
+    def log_module_version_changes(cls, current_versions):
         """
-        Retrieves a dictionary of upgraded modules based on current versions.
-        Also updates the OpenwispVersion object with the new versions.
-
-        Args:
-            current_versions (dict): A dictionary containing the current versions of modules.
-
-        Returns:
-            dict: A dictionary containing the upgraded modules and their versions.
+        Returns a tuple indicating with two boolean fields representing
+            - whether this is a new installation,
+            - whether any OpenWISP modules has been upgraded.
         """
         openwisp_version = cls.objects.first()
         if not openwisp_version:
+            # Since any OpenwispVersion object is not present,
+            # it means that this is a new installation and
+            # we don't need to check for upgraded modules.
             cls.objects.create(module_version=current_versions)
-            return {}
+            return True, False
+        # Check which installed modules have been upgraded by comparing
+        # the currently installed versions in current_versions with the
+        # versions stored in the OpenwispVersion object. The return value
+        # is a dictionary of module:version pairs that have been upgraded.
         old_versions = openwisp_version.module_version
         upgraded_modules = {}
         for module, version in current_versions.items():
-            if module in old_versions and parse_version(
-                old_versions[module]
-            ) < parse_version(version):
+            # The OS version do not follow semver, hence they
+            # are handled separately.
+            if module in ['kernel_version', 'os_version', 'hardware_platform']:
+                if old_versions.get(module) != version:
+                    upgraded_modules[module] = version
+            elif (
+                # Check if a new OpenWISP module was enabled
+                # on a existing installation
+                module not in old_versions
+                or (
+                    # Check if an OpenWISP module was upgraded
+                    module in old_versions
+                    and parse_version(old_versions[module]) < parse_version(version)
+                )
+            ):
                 upgraded_modules[module] = version
             openwisp_version.module_version[module] = version
+        # Log version changes
         if upgraded_modules:
-            # Save the new versions in a new object
-            OpenwispVersion.objects.create(
-                module_version=openwisp_version.module_version
-            )
-        return upgraded_modules
+            OpenwispVersion.objects.create(module_version=current_versions)
+            return False, True
+        return False, False

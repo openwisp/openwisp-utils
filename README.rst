@@ -1682,6 +1682,9 @@ This sub-app enables collection of following measurements:
 - OS details: Information on the operating system, including its
   version, kernel version, and platform
 - Whether the event is related to a new installation or an upgrade
+- Whether OpenWISP was installed with `ansible-openwisp2
+  <https://github.com/openwisp/ansible-openwisp2>`_
+  or `docker-openwisp <https://github.com/openwisp/docker-openwisp>`_
 
 We collect data on OpenWISP usage to gauge user engagement, satisfaction,
 and upgrade patterns. This informs our development decisions, ensuring
@@ -1692,6 +1695,46 @@ integrated `Clean Insights <https://cleaninsights.org/>`_, a privacy-preserving
 analytics tool. Clean Insights allows us to responsibly gather and analyze
 usage metrics without compromising user privacy. It provides us with the
 means to make data-driven decisions while respecting our users' rights and trust.
+
+Implementation Details
+^^^^^^^^^^^^^^^^^^^^^^
+
+The ``openwisp_utils.measurements`` app adds a ``OpenwispVersion`` model to store
+information about the current installation of OpenWISP, including a list of
+the installed OpenWISP modules along with their respective versions. This
+allows to detect new installations of OpenWISP and also track upgrades of
+OpenWISP modules.
+
+The metric collection tracks three categories of events:
+
+1. Install
+~~~~~~~~~~
+
+This event category is used to track new installations of OpenWISP.
+It is triggered in one of the following ways:
+
+    1. When the ``migrate`` command is executed for the first time on a Django project
+       to create database tables. This event is triggered when the first
+       migration is applied and creates the initial schema.
+    2. When the first ``OpenwispVersion`` object is created. This is useful for
+       old installations which already have database tables created.
+
+2. Heartbeat
+~~~~~~~~~~~~
+
+This event category is triggered periodically and tracks the usage of OpenWISP
+installation. It helps to analyze active installations of OpenWISP by
+periodically reporting the list of enabled OpenWISP modules.
+
+3. Upgrade
+~~~~~~~~~~
+
+This event category is used to track the upgrades of OpenWISP modules
+and OS details. It compares the current installed version of OpenWISP
+modules with the value of last created ``OpenwispVersion``.
+
+It is triggered after the execution of ``migrate`` command. It only
+sends the metrics if there's a change in version of OpenWISP modules or OS.
 
 Quality Assurance Checks
 ------------------------

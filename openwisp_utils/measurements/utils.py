@@ -31,11 +31,3 @@ def _get_events(category, data):
             }
         )
     return events
-
-
-def get_openwisp_module_metrics(module_versions):
-    return _get_events('Heartbeat', module_versions)
-
-
-def get_os_detail_metrics(os_detail):
-    return _get_events('OS Detail', os_detail)
