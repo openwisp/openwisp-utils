@@ -36,18 +36,18 @@ class TestOpenwispVersion(TestCase):
             ).replace(tzinfo=timezone.utc),
         )
 
-    def test_get_upgraded_modules_when_openwispversion_object_does_not_exist(self):
+    def test_log_module_version_changes_on_new_installation(
+        self,
+    ):
         OpenwispVersion.objects.all().delete()
-        self.assertEqual(
-            OpenwispVersion.get_upgraded_modules(tasks.get_enabled_openwisp_modules()),
-            {},
+        is_install, is_upgrade = OpenwispVersion.log_module_version_changes(
+            tasks.get_enabled_openwisp_modules()
         )
-
-    def test_get_upgraded_modules_on_new_installation(self):
         self.assertEqual(
-            OpenwispVersion.get_upgraded_modules(tasks.get_enabled_openwisp_modules()),
-            {},
+            is_install,
+            True,
         )
+        self.assertEqual(is_upgrade, False)
 
     @patch.object(tasks, 'get_openwisp_version', return_value='23.0.0a')
     @patch.object(
@@ -64,7 +64,7 @@ class TestOpenwispVersion(TestCase):
     @freeze_time('2023-12-01 00:00:00')
     def test_new_installation(self, mocked_post, *args):
         OpenwispVersion.objects.all().delete()
-        tasks.send_usage_metrics.delay()
+        tasks.send_usage_metrics.delay(category='Install')
         mocked_post.assert_called_with(_NEW_INSTALLATION_METRICS)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         version = OpenwispVersion.objects.first()
@@ -87,11 +87,60 @@ class TestOpenwispVersion(TestCase):
     )
     @patch.object(tasks, 'post_usage_metrics')
     @freeze_time('2023-12-01 00:00:00')
-    def test_heartbeat(self, mocked_post, *args):
+    def test_install_detected_on_heartbeat_event(self, mocked_post, *args):
+        OpenwispVersion.objects.all().delete()
+        tasks.send_usage_metrics.delay(category='Heartbeat')
+        mocked_post.assert_called_with(_NEW_INSTALLATION_METRICS)
+        self.assertEqual(OpenwispVersion.objects.count(), 1)
+        version = OpenwispVersion.objects.first()
         expected_module_version = {
             'OpenWISP Version': '23.0.0a',
             **_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
         }
+        self.assertEqual(version.module_version, expected_module_version)
+
+    @patch.object(tasks, 'get_openwisp_version', return_value='23.0.0a')
+    @patch.object(
+        tasks,
+        'get_enabled_openwisp_modules',
+        return_value=_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+    )
+    @patch.object(
+        tasks,
+        'get_os_details',
+        return_value=_OS_DETAILS_RETURN_VALUE,
+    )
+    @patch.object(tasks, 'post_usage_metrics')
+    @freeze_time('2023-12-01 00:00:00')
+    def test_install_not_detected_on_install_event(self, mocked_post, *args):
+        """
+        Checks when the send_usage_metrics is triggered with "Install" category,
+        but there's no actual upgrade.
+        """
+        self.assertEqual(OpenwispVersion.objects.count(), 1)
+        tasks.send_usage_metrics(category='Install')
+        mocked_post.assert_not_called()
+
+    @patch.object(tasks, 'get_openwisp_version', return_value='23.0.0a')
+    @patch.object(
+        tasks,
+        'get_enabled_openwisp_modules',
+        return_value=_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+    )
+    @patch.object(
+        tasks,
+        'get_os_details',
+        return_value=_OS_DETAILS_RETURN_VALUE,
+    )
+    @patch.object(tasks, 'post_usage_metrics')
+    @freeze_time('2023-12-01 00:00:00')
+    def test_heartbeat(self, mocked_post, *args):
+        expected_module_version = {
+            'OpenWISP Version': '23.0.0a',
+            **_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+            **_OS_DETAILS_RETURN_VALUE,
+        }
+        OpenwispVersion.objects.update(module_version=expected_module_version)
         self.assertEqual(OpenwispVersion.objects.count(), 1)
         tasks.send_usage_metrics.delay()
         mocked_post.assert_called_with(_HEARTBEAT_METRICS)
@@ -121,7 +170,7 @@ class TestOpenwispVersion(TestCase):
                 'openwisp-users': '1.0.2',
             }
         )
-        tasks.send_usage_metrics.delay()
+        tasks.send_usage_metrics.delay(category='Upgrade')
         mocked_post.assert_called_with(_MODULES_UPGRADE_EXPECTED_METRICS)
 
         self.assertEqual(OpenwispVersion.objects.count(), 2)
@@ -132,7 +181,6 @@ class TestOpenwispVersion(TestCase):
         }
         self.assertEqual(version.module_version, expected_module_version)
 
-    @freeze_time('2023-12-01 00:00:00')
     @patch.object(tasks, 'get_openwisp_version', return_value='23.0.0a')
     @patch.object(
         tasks,
@@ -145,12 +193,9 @@ class TestOpenwispVersion(TestCase):
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
     @patch.object(tasks, 'post_usage_metrics')
-    @patch.object(tasks, 'get_openwisp_module_metrics')
-    def test_send_usage_metrics_upgrade_only_flag(
-        self, mocked_get_openwisp_module_metrics, *args
-    ):
+    @freeze_time('2023-12-01 00:00:00')
+    def test_upgrade_detected_on_heartbeat_event(self, mocked_post, *args):
         self.assertEqual(OpenwispVersion.objects.count(), 1)
-        # Store old versions of OpenWISP modules in OpenwispVersion object
         OpenwispVersion.objects.update(
             module_version={
                 'OpenWISP Version': '22.10.0',
@@ -158,8 +203,9 @@ class TestOpenwispVersion(TestCase):
                 'openwisp-users': '1.0.2',
             }
         )
-        tasks.send_usage_metrics.delay(upgrade_only=True)
-        mocked_get_openwisp_module_metrics.assert_not_called()
+        tasks.send_usage_metrics.delay(category='Heartbeat')
+        mocked_post.assert_called_with(_MODULES_UPGRADE_EXPECTED_METRICS)
+
         self.assertEqual(OpenwispVersion.objects.count(), 2)
         version = OpenwispVersion.objects.first()
         expected_module_version = {
@@ -168,7 +214,6 @@ class TestOpenwispVersion(TestCase):
         }
         self.assertEqual(version.module_version, expected_module_version)
 
-    @freeze_time('2023-12-01 00:00:00')
     @patch.object(tasks, 'get_openwisp_version', return_value='23.0.0a')
     @patch.object(
         tasks,
@@ -181,19 +226,15 @@ class TestOpenwispVersion(TestCase):
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
     @patch.object(tasks, 'post_usage_metrics')
-    @patch.object(tasks, 'get_openwisp_module_metrics')
-    def test_send_usage_metrics_upgrade_only_without_upgrades(
-        self, mocked_get_openwisp_module_metrics, mocked_post_usage_metrics, *args
-    ):
+    @freeze_time('2023-12-01 00:00:00')
+    def test_upgrade_not_detected_on_upgrade_event(self, mocked_post, *args):
         """
-        This test checks that no usage metrics are sent when
-        there are no OpenWISP modules upgrades and upgrade_only
-        is set to True.
+        Tests send_usage_metrics is triggered with "Upgrade" category
+        but no modules were upgraded.
         """
         self.assertEqual(OpenwispVersion.objects.count(), 1)
-        tasks.send_usage_metrics.delay(upgrade_only=True)
-        mocked_get_openwisp_module_metrics.assert_not_called()
-        mocked_post_usage_metrics.assert_not_called()
+        tasks.send_usage_metrics.delay(category='Upgrade')
+        mocked_post.assert_not_called()
 
     @patch('time.sleep')
     @patch('logging.Logger.warning')
@@ -284,7 +325,7 @@ class TestOpenwispVersion(TestCase):
             'Test task is called for checking upgrades when plan is empty'
         ):
             app.post_migrate_receiver(plan=[])
-            mocked_task.assert_called_with(upgrade_only=True)
+            mocked_task.assert_called_with(category='Upgrade')
         mocked_task.reset_mock()
 
         with self.subTest(
@@ -301,7 +342,7 @@ class TestOpenwispVersion(TestCase):
                     )
                 ]
             )
-            mocked_task.assert_called_with(upgrade_only=True)
+            mocked_task.assert_called_with(category='Upgrade')
         mocked_task.reset_mock()
         plan = [
             (
@@ -314,7 +355,7 @@ class TestOpenwispVersion(TestCase):
             'Test task called when first migration in plan is for ContentTypes'
         ):
             app.post_migrate_receiver(plan=plan)
-            mocked_task.assert_called_with()
+            mocked_task.assert_called_with(category='Install')
         mocked_task.reset_mock()
 
         with self.subTest('Test task not called in development'):
