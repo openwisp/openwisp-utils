@@ -7,6 +7,7 @@ from django.db import migrations
 from django.test import TestCase, override_settings
 from freezegun import freeze_time
 from openwisp_utils import utils
+from openwisp_utils.admin_theme import system_info
 from urllib3.response import HTTPResponse
 
 from .. import tasks
@@ -35,6 +36,10 @@ class TestOpenwispVersion(TestCase):
                 '2023-11-01 00:00:00', '%Y-%m-%d %H:%M:%S'
             ).replace(tzinfo=timezone.utc),
         )
+
+    @patch.object(system_info, 'import_string', side_effect=ImportError)
+    def test_installation_method_not_defined(self, *args):
+        self.assertEqual(system_info.get_openwisp_installation_method(), 'unspecified')
 
     def test_log_module_version_changes_on_new_installation(
         self,

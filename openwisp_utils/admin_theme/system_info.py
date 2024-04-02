@@ -17,11 +17,11 @@ def get_installed_openwisp_packages():
     }
 
 
-def _get_openwisp2_detail(attribute_name):
+def _get_openwisp2_detail(attribute_name, fallback=None):
     try:
         return import_string(f'openwisp2.{attribute_name}')
     except ImportError:
-        return None
+        return fallback
 
 
 def get_openwisp_version():
@@ -29,7 +29,7 @@ def get_openwisp_version():
 
 
 def get_openwisp_installation_method():
-    return _get_openwisp2_detail('__openwisp_installation_method__')
+    return _get_openwisp2_detail('__openwisp_installation_method__', 'unspecified')
 
 
 def get_enabled_openwisp_modules():
