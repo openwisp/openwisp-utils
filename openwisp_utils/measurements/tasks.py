@@ -50,8 +50,8 @@ def send_usage_metrics(category='Heartbeat'):
         current_versions
     )
     # Handle special conditions when the user forgot to execute the migrate
-    # command, and an install or upgrade operation is detected in the Heartbeat
-    # event. In such situation, we override the category.
+    # command, and an install or upgrade operation is detected in the
+    # Heartbeat event. In this situation, we override the category.
     if category == 'Heartbeat':
         if is_install:
             category = 'Install'
@@ -60,10 +60,9 @@ def send_usage_metrics(category='Heartbeat'):
     elif category == 'Upgrade' and not is_upgrade:
         # The task was triggered with "Upgrade" category, but no
         # upgrades were detected in the OpenWISP module versions.
-        # This can occur when a user execute the migrate command without
-        # upgrading the modules. We don't want to send upgrade
-        # events in this scenario as it would lead to false
-        # positives.
+        # This occurs when the migrate command is executed but
+        # no OpenWISP python module was upgraded.
+        # We don't count these as upgrades.
         return
     elif category == 'Install' and not is_install:
         # Similar to above, but for "Install" category

@@ -13,13 +13,13 @@ class OpenwispVersion(TimeStampedEditableModel):
     @classmethod
     def log_module_version_changes(cls, current_versions):
         """
-        Returns a tuple indicating with two boolean fields representing
-            - whether this is a new installation,
-            - whether any OpenWISP modules has been upgraded.
+        Returns a tuple of booleans indicating:
+         - whether this is a new installation,
+         - whether any OpenWISP modules has been upgraded.
         """
         openwisp_version = cls.objects.first()
         if not openwisp_version:
-            # Since any OpenwispVersion object is not present,
+            # If no OpenwispVersion object is present,
             # it means that this is a new installation and
             # we don't need to check for upgraded modules.
             cls.objects.create(module_version=current_versions)
@@ -31,14 +31,14 @@ class OpenwispVersion(TimeStampedEditableModel):
         old_versions = openwisp_version.module_version
         upgraded_modules = {}
         for module, version in current_versions.items():
-            # The OS version do not follow semver, hence they
-            # are handled separately.
+            # The OS version does not follow semver,
+            # therefore it's handled differently.
             if module in ['kernel_version', 'os_version', 'hardware_platform']:
                 if old_versions.get(module) != version:
                     upgraded_modules[module] = version
             elif (
                 # Check if a new OpenWISP module was enabled
-                # on a existing installation
+                # on an existing installation
                 module not in old_versions
                 or (
                     # Check if an OpenWISP module was upgraded
