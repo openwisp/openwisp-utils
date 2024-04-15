@@ -1676,7 +1676,8 @@ Collection of Usage Metrics
 The ``openwisp-utils`` module includes an optional
 sub-app ``openwisp_utils.measurements``.
 
-This sub-app allows the collection of the following information:
+This sub-app allows us to collect of the following information
+from OpenWISP instances:
 
 - OpenWISP Version
 - List of enabled OpenWISP modules and their version
@@ -1704,6 +1705,9 @@ means to make data-driven decisions while respecting our users' rights and trust
 
 We have taken great care to ensure no
 sensitive or personal data is being tracked.
+
+The collection of this data can be disabled at any time by removing
+the ``openwisp_utils.measurements`` app from ``INSTALLED_APPS``.
 
 Quality Assurance Checks
 ------------------------
