@@ -11,7 +11,7 @@ from openwisp_utils.admin_theme import system_info
 from urllib3.response import HTTPResponse
 
 from .. import tasks
-from ..models import OpenwispVersion
+from ..models import MetricCollectionConsent, OpenwispVersion
 from . import (
     _ENABLED_OPENWISP_MODULES_RETURN_VALUE,
     _HEARTBEAT_METRICS,
@@ -327,7 +327,7 @@ class TestOpenwispVersion(TestCase):
         app = apps.get_app_config('measurements')
 
         with self.subTest(
-            'Test task is called for checking upgrades when plan is empty'
+            'Test task iRs called for checking upgrades when plan is empty'
         ):
             app.post_migrate_receiver(plan=[])
             mocked_task.assert_called_with(category='Upgrade')
@@ -367,3 +367,9 @@ class TestOpenwispVersion(TestCase):
             with override_settings(DEBUG=True):
                 app.post_migrate_receiver(plan=plan)
             mocked_task.assert_not_called()
+
+    @patch.object(tasks, 'post_usage_metrics')
+    def test_send_usage_metrics_user_opted_out(self, mocked_post_usage_metrics):
+        MetricCollectionConsent.objects.create(user_consented=False)
+        tasks.send_usage_metrics.delay()
+        mocked_post_usage_metrics.assert_not_called()

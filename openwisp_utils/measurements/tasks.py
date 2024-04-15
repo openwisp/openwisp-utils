@@ -10,7 +10,7 @@ from openwisp_utils.admin_theme.system_info import (
 
 from ..tasks import OpenwispCeleryTask
 from ..utils import retryable_request
-from .models import OpenwispVersion
+from .models import MetricCollectionConsent, OpenwispVersion
 from .utils import _get_events
 
 USER_METRIC_COLLECTION_URL = 'https://analytics.openwisp.io/cleaninsights.php'
@@ -42,6 +42,9 @@ def post_usage_metrics(events):
 
 @shared_task(base=OpenwispCeleryTask)
 def send_usage_metrics(category='Heartbeat'):
+    consent_obj = MetricCollectionConsent.objects.first()
+    if consent_obj and not consent_obj.user_consented:
+        return
     assert category in ['Install', 'Heartbeat', 'Upgrade']
     current_versions = get_enabled_openwisp_modules()
     current_versions.update({'OpenWISP Version': get_openwisp_version()})

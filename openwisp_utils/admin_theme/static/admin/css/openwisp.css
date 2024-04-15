@@ -123,6 +123,7 @@ a.section:link,
 a.section:visited,
 .module th a,
 #main .help a,
+#main .helptext a,
 fieldset.collapsed a.collapse-toggle,
 fieldset a.collapse-toggle {
   color: #df5d43;
@@ -137,7 +138,9 @@ a.section:link:focus,
 a.section:visited:focus,
 .module th a:focus,
 #main .help a:hover,
-#main .help a:focus {
+#main .help a:focus,
+#main .helptext a:focus,
+#main .helptext a:focus {
   text-decoration: underline;
 }
 #main-content .module caption a {
@@ -182,7 +185,9 @@ a:focus {
   display: inline-block;
 }
 #main .form-row .help,
-#container #main-content .help {
+#main .form-row .helptext,
+#container #main-content .help,
+#container #main-content .helptext {
   font-size: 14px !important;
   line-height: 20px;
   color: rgba(0, 0, 0, 0.45);
