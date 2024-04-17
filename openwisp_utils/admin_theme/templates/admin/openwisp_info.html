@@ -1,6 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load i18n static %}
 
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/openwisp-info.css' %}" />
+{% endblock extrastyle %}
+
 {% block content %}
 {% if openwisp_version %}
 <h2>{% trans "OpenWISP Version" %}: {{ openwisp_version }}</h2>
@@ -18,7 +23,7 @@
 
 {% block metric_collect_consent %}
     {% if metric_collection_installed %}
-    <h2>Metric collection</h2>
+        <h2>Metric collection</h2>
         <form method="POST" id="id_metric_collection_consent_form">
             {% csrf_token %}
             {{ metric_consent_form }}

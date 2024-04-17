@@ -79,7 +79,7 @@ class MetricCollectionConsent(TimeStampedEditableModel):
         help_text=_(
             'Allow OpenWISP to collect and share anonymous usage metrics to improve'
             ' the software. Before opting-out kindly consider reading'
-            ' <a href="https://github.com/openwisp/openwisp-utils?tab=readme-ov-file'
-            '#collection-of-usage-metrics" target="_blank">why we collect metrics</a>.'
+            ' <a href="https://openwisp.io/docs/user/usage-metric-collection.html"'
+            ' target="_blank">why we collect metrics</a>.'
         ),
     )

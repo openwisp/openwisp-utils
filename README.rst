@@ -1706,8 +1706,9 @@ means to make data-driven decisions while respecting our users' rights and trust
 We have taken great care to ensure no
 sensitive or personal data is being tracked.
 
-The collection of this data can be disabled at any time by removing
-the ``openwisp_utils.measurements`` app from ``INSTALLED_APPS``.
+You can opt-out from sharing this data any time from the "System Info" page.
+Alternatively, you can also remove the ``openwisp_utils.measurements`` app
+from ``INSTALLED_APPS``.
 
 Quality Assurance Checks
 ------------------------
