@@ -27,6 +27,7 @@
         <form method="POST" id="id_metric_collection_consent_form">
             {% csrf_token %}
             {{ metric_consent_form }}
+            <p><input type="submit" style="display:none;"></p>
         </form>
     {% endif %}
 {% endblock metric_collect_consent %}
