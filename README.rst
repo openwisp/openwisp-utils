@@ -1674,7 +1674,7 @@ Collection of Usage Metrics
 ---------------------------
 
 The ``openwisp-utils`` module includes an optional
-sub-app ``openwisp_utils.measurements``.
+sub-app ``openwisp_utils.metrics_collection``.
 
 This sub-app allows us to collect of the following information
 from OpenWISP instances:
@@ -1707,7 +1707,7 @@ We have taken great care to ensure no
 sensitive or personal data is being tracked.
 
 You can opt-out from sharing this data any time from the "System Info" page.
-Alternatively, you can also remove the ``openwisp_utils.measurements`` app
+Alternatively, you can also remove the ``openwisp_utils.metrics_collection`` app
 from ``INSTALLED_APPS``.
 
 Quality Assurance Checks

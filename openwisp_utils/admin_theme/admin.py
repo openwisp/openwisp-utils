@@ -37,7 +37,7 @@ class OpenwispAdminSite(admin.AdminSite):
         else:
             context = {'dashboard_enabled': False}
         if self.is_metric_collection_installed() and request.user.is_superuser:
-            from ..measurements.models import MetricCollectionConsent
+            from ..metrics_collection.models import MetricCollectionConsent
 
             consent_obj = self.get_metric_collection_consent_obj()
             if not consent_obj.has_shown_disclaimer:
@@ -66,7 +66,7 @@ class OpenwispAdminSite(admin.AdminSite):
         }
 
         if self.is_metric_collection_installed() and request.user.is_superuser:
-            from ..measurements.admin import MetricCollectionConsentForm
+            from ..metrics_collection.admin import MetricCollectionConsentForm
 
             consent_obj = self.get_metric_collection_consent_obj()
             if request.POST:
@@ -84,12 +84,14 @@ class OpenwispAdminSite(admin.AdminSite):
         return render(request, 'admin/openwisp_info.html', context)
 
     def is_metric_collection_installed(self):
-        return 'openwisp_utils.measurements' in getattr(settings, 'INSTALLED_APPS', [])
+        return 'openwisp_utils.metrics_collection' in getattr(
+            settings, 'INSTALLED_APPS', []
+        )
 
     def get_metric_collection_consent_obj(self):
         if not self.is_metric_collection_installed():
             return None
-        from ..measurements.models import MetricCollectionConsent
+        from ..metrics_collection.models import MetricCollectionConsent
 
         consent_obj = MetricCollectionConsent.objects.first()
         if not consent_obj:

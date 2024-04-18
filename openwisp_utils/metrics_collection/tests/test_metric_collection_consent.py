@@ -84,8 +84,10 @@ class TestMetricCollectionConsent(TestCase):
     @patch(
         'openwisp_utils.admin_theme.apps.OpenWispAdminThemeConfig.register_menu_groups'
     )
-    @modify_settings(INSTALLED_APPS={'remove': ['openwisp_utils.measurements']})
-    def test_metric_collection_disclaimer_measurement_apps_not_installed(self, *args):
+    @modify_settings(INSTALLED_APPS={'remove': ['openwisp_utils.metrics_collection']})
+    def test_metric_collection_disclaimer_metrics_collection_app_not_installed(
+        self, *args
+    ):
         superuser = self._get_user(is_staff=True, is_superuser=True)
         self.client.force_login(superuser)
         response = self.client.get(reverse('admin:index'))

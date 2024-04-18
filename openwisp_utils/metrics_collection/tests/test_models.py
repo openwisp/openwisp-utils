@@ -324,7 +324,7 @@ class TestOpenwispVersion(TestCase):
 
     @patch.object(tasks.send_usage_metrics, 'delay')
     def test_post_migrate_receiver(self, mocked_task, *args):
-        app = apps.get_app_config('measurements')
+        app = apps.get_app_config('metrics_collection')
 
         with self.subTest(
             'Test task iRs called for checking upgrades when plan is empty'
