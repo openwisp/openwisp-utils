@@ -1,10 +1,10 @@
 from django import forms
 from django.forms.utils import ErrorList
 
-from .models import MetricCollectionConsent
+from .models import Consent
 
 
-class MetricCollectionConsentForm(forms.ModelForm):
+class ConsentForm(forms.ModelForm):
     # This required to override the default label_suffix.
     # Otherwise, it will show a trailing colon (:) which we
     # don't want here due to formatting of the form.
@@ -37,6 +37,6 @@ class MetricCollectionConsentForm(forms.ModelForm):
         )
 
     class Meta:
-        model = MetricCollectionConsent
+        model = Consent
         widgets = {'user_consented': forms.CheckboxInput(attrs={'class': 'bold'})}
         fields = ['user_consented']

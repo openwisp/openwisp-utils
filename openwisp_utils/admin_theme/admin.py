@@ -1,14 +1,13 @@
 import logging
 
 from django.conf import settings
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.shortcuts import render
-from django.urls import path, reverse
+from django.urls import path
 from django.utils.module_loading import import_string
-from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy
 from django.utils.translation import gettext_lazy as _
 
+from ..metric_collection.helper import MetricCollectionAdminSiteHelper
 from . import settings as app_settings
 from .dashboard import get_dashboard_context
 from .system_info import (
@@ -26,34 +25,18 @@ class OpenwispAdminSite(admin.AdminSite):
     # h1 text
     site_header = getattr(settings, 'OPENWISP_ADMIN_SITE_HEADER', 'OpenWISP')
     # text at the top of the admin index page
-    index_title = gettext_lazy(
+    index_title = _(
         getattr(settings, 'OPENWISP_ADMIN_INDEX_TITLE', 'Network Administration')
     )
     enable_nav_sidebar = False
+    metric_collection = MetricCollectionAdminSiteHelper
 
     def index(self, request, extra_context=None):
         if app_settings.ADMIN_DASHBOARD_ENABLED:
             context = get_dashboard_context(request)
         else:
             context = {'dashboard_enabled': False}
-        if self.is_metric_collection_installed() and request.user.is_superuser:
-            from ..metrics_collection.models import MetricCollectionConsent
-
-            consent_obj = self.get_metric_collection_consent_obj()
-            if not consent_obj.has_shown_disclaimer:
-                messages.warning(
-                    request,
-                    mark_safe(
-                        _(
-                            'We collect anonymous usage metrics that helps to improve OpenWISP.'
-                            ' You can opt-out from sharing these metrics from the '
-                            '<a href="{url}">System Information page</a>.'
-                        ).format(url=reverse('admin:ow-info'))
-                    ),
-                )
-                # Update the field in DB after showing the message for the
-                # first time.
-                MetricCollectionConsent.objects.update(has_shown_disclaimer=True)
+        self.metric_collection.show_consent_info(request)
         return super().index(request, extra_context=context)
 
     def openwisp_info(self, request, *args, **kwargs):
@@ -64,39 +47,8 @@ class OpenwispAdminSite(admin.AdminSite):
             'title': _('System Information'),
             'site_title': self.site_title,
         }
-
-        if self.is_metric_collection_installed() and request.user.is_superuser:
-            from ..metrics_collection.admin import MetricCollectionConsentForm
-
-            consent_obj = self.get_metric_collection_consent_obj()
-            if request.POST:
-                form = MetricCollectionConsentForm(request.POST, instance=consent_obj)
-                form.full_clean()
-                form.save()
-            else:
-                form = MetricCollectionConsentForm(instance=consent_obj)
-            context.update(
-                {
-                    'metric_collection_installed': self.is_metric_collection_installed(),
-                    'metric_consent_form': form,
-                }
-            )
+        self.metric_collection.manage_form(request, context)
         return render(request, 'admin/openwisp_info.html', context)
-
-    def is_metric_collection_installed(self):
-        return 'openwisp_utils.metrics_collection' in getattr(
-            settings, 'INSTALLED_APPS', []
-        )
-
-    def get_metric_collection_consent_obj(self):
-        if not self.is_metric_collection_installed():
-            return None
-        from ..metrics_collection.models import MetricCollectionConsent
-
-        consent_obj = MetricCollectionConsent.objects.first()
-        if not consent_obj:
-            consent_obj = MetricCollectionConsent.objects.create()
-        return consent_obj
 
     def get_urls(self):
         autocomplete_view = import_string(app_settings.AUTOCOMPLETE_FILTER_VIEW)

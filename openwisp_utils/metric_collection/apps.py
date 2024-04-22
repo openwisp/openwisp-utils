@@ -5,8 +5,8 @@ from django.db.models.signals import post_migrate
 
 class MetricsCollectionConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'openwisp_utils.metrics_collection'
-    app_label = 'openwisp_metrics_collection'
+    name = 'openwisp_utils.metric_collection'
+    app_label = 'openwisp_metric_collection'
 
     def ready(self):
         super().ready()

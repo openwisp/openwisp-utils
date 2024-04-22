@@ -4,12 +4,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, modify_settings
 from django.urls import reverse
 
-from ..models import MetricCollectionConsent
+from ..models import Consent
 
 User = get_user_model()
 
 
-class TestMetricCollectionConsent(TestCase):
+class TestConsent(TestCase):
     def _get_user(self, **kwargs):
         opts = dict(
             username='tester',
@@ -19,12 +19,12 @@ class TestMetricCollectionConsent(TestCase):
         opts.update(kwargs)
         return User.objects.create(**opts)
 
-    def test_metric_collection_disclaimer(self):
+    def test_info_message(self):
         expected_message = (
-            '<li class="warning">We collect anonymous usage metrics that'
-            ' helps to improve OpenWISP. You can opt-out from sharing these'
-            ' metrics from the <a href="/admin/openwisp-system-info/">'
-            'System Information page</a>.</li>'
+            '<li class="warning">We gather anonymous usage metrics '
+            'to enhance OpenWISP. You can opt out from the '
+            '<a href="/admin/openwisp-system-info/">System '
+            'Information page</a>.</li>'
         )
         non_superuser = self._get_user(is_staff=True, is_superuser=False)
         superuser1 = self._get_user(
@@ -45,38 +45,38 @@ class TestMetricCollectionConsent(TestCase):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, expected_message)
-            # MetricCollectionConsent object is only created when
+            # Consent object is only created when
             # superuser access the index page for the first time
-            self.assertEqual(MetricCollectionConsent.objects.count(), 0)
+            self.assertEqual(Consent.objects.count(), 0)
 
         with self.subTest('Test message shown once to superuser'):
             self.client.force_login(superuser1)
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, expected_message)
-            self.assertEqual(MetricCollectionConsent.objects.count(), 1)
-            consent_obj = MetricCollectionConsent.objects.first()
-            self.assertEqual(consent_obj.has_shown_disclaimer, True)
+            self.assertEqual(Consent.objects.count(), 1)
+            consent_obj = Consent.objects.first()
+            self.assertEqual(consent_obj.shown_once, True)
 
         with self.subTest('Test message not shown again to superuser'):
             self.client.force_login(superuser1)
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, expected_message)
-            # THere can be only atmost 1 object of MetricCollectionConsent
-            self.assertEqual(MetricCollectionConsent.objects.count(), 1)
+            # THere can be only atmost 1 object of Consent
+            self.assertEqual(Consent.objects.count(), 1)
             consent_obj.refresh_from_db()
-            self.assertEqual(consent_obj.has_shown_disclaimer, True)
+            self.assertEqual(consent_obj.shown_once, True)
 
         with self.subTest('Test message not shown to another superuser'):
             self.client.force_login(superuser2)
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, expected_message)
-            # THere can be only atmost 1 object of MetricCollectionConsent
-            self.assertEqual(MetricCollectionConsent.objects.count(), 1)
+            # THere can be only atmost 1 object of Consent
+            self.assertEqual(Consent.objects.count(), 1)
             consent_obj.refresh_from_db()
-            self.assertEqual(consent_obj.has_shown_disclaimer, True)
+            self.assertEqual(consent_obj.shown_once, True)
 
     @patch('test_project.apps.TestAppConfig.register_default_menu_items')
     @patch('test_project.apps.TestAppConfig.register_dashboard_charts')
@@ -84,17 +84,15 @@ class TestMetricCollectionConsent(TestCase):
     @patch(
         'openwisp_utils.admin_theme.apps.OpenWispAdminThemeConfig.register_menu_groups'
     )
-    @modify_settings(INSTALLED_APPS={'remove': ['openwisp_utils.metrics_collection']})
-    def test_metric_collection_disclaimer_metrics_collection_app_not_installed(
-        self, *args
-    ):
+    @modify_settings(INSTALLED_APPS={'remove': ['openwisp_utils.metric_collection']})
+    def test_info_message_app_not_installed(self, *args):
         superuser = self._get_user(is_staff=True, is_superuser=True)
         self.client.force_login(superuser)
         response = self.client.get(reverse('admin:index'))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'messagelist')
 
-    def test_metric_collection_consent_change(self):
+    def test_consent_change(self):
         non_superuser = self._get_user(is_staff=True, is_superuser=False)
         superuser = self._get_user(
             username='superuser',
@@ -102,7 +100,7 @@ class TestMetricCollectionConsent(TestCase):
             is_staff=True,
             is_superuser=True,
         )
-        consent_obj = MetricCollectionConsent.objects.create()
+        consent_obj = Consent.objects.create()
         path = reverse('admin:ow-info')
         with self.subTest('Test unauthenticated user makes post request'):
             response = self.client.post(path, {'user_consented': False})
@@ -140,11 +138,11 @@ class TestMetricCollectionConsent(TestCase):
             consent_obj.refresh_from_db()
             self.assertEqual(consent_obj.user_consented, True)
 
-        with self.subTest('Test changing "has_shown_disclaimer" field'):
-            self.assertEqual(consent_obj.has_shown_disclaimer, False)
-            response = self.client.post(path, {'has_shown_disclaimer': True})
+        with self.subTest('Test changing "shown_once" field'):
+            self.assertEqual(consent_obj.shown_once, False)
+            response = self.client.post(path, {'shown_once': True})
             self.assertEqual(response.status_code, 200)
             consent_obj.refresh_from_db()
             # There should be no change to the field because it is
             # not part of the form.
-            self.assertEqual(consent_obj.has_shown_disclaimer, False)
+            self.assertEqual(consent_obj.shown_once, False)

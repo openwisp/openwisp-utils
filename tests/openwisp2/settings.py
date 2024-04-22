@@ -19,7 +19,7 @@ INSTALLED_APPS = [
     # test project
     'test_project',
     'openwisp_utils.admin_theme',
-    'openwisp_utils.metrics_collection',
+    'openwisp_utils.metric_collection',
     'django.contrib.sites',
     # admin
     'django.contrib.admin',
@@ -82,7 +82,7 @@ TEMPLATES = [
 DATABASES = {
     'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'openwisp_utils.db'}
 }
-TEST_RUNNER = 'openwisp_utils.metrics_collection.tests.runner.MockRequestPostRunner'
+TEST_RUNNER = 'openwisp_utils.metric_collection.tests.runner.MockRequestPostRunner'
 OPENWISP_ADMIN_SITE_CLASS = 'test_project.site.CustomAdminSite'
 
 SITE_ID = 1

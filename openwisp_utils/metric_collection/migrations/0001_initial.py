@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="MetricCollectionConsent",
+            name="Consent",
             fields=[
                 (
                     "id",
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                         verbose_name="modified",
                     ),
                 ),
-                ("has_shown_disclaimer", models.BooleanField(default=False)),
+                ("shown_once", models.BooleanField(default=False)),
                 (
                     "user_consented",
                     models.BooleanField(
