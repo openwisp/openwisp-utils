@@ -3,10 +3,10 @@ from django.conf import settings
 from django.db.models.signals import post_migrate
 
 
-class MeasurementsConfig(AppConfig):
+class MetricsCollectionConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'openwisp_utils.measurements'
-    app_label = 'openwisp_measurements'
+    name = 'openwisp_utils.metric_collection'
+    app_label = 'openwisp_metric_collection'
 
     def ready(self):
         super().ready()
