@@ -110,7 +110,10 @@ class OpenwispVersion(TimeStampedEditableModel):
                 category, {'Installation Method': get_openwisp_installation_method()}
             )
         )
+        logger.info(f'Sending metrics, category={category}')
         cls._post_metrics(metrics)
+        logger.info(f'Metrics sent successfully, category={category}')
+        logger.info(f'Metrics: {metrics}')
 
     @classmethod
     def _post_metrics(cls, events):
