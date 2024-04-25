@@ -1674,9 +1674,8 @@ Collection of Usage Metrics
 ---------------------------
 
 The ``openwisp-utils`` module includes an optional
-sub-app ``openwisp_utils.metric_collection``.
-
-This sub-app allows us to collect of the following information
+sub-app ``openwisp_utils.metric_collection``,
+which allows us to collect of the following information
 from OpenWISP instances:
 
 - OpenWISP Version
@@ -1687,7 +1686,7 @@ from OpenWISP instances:
   <https://github.com/openwisp/ansible-openwisp2>`_
   or `docker-openwisp <https://github.com/openwisp/docker-openwisp>`_
 
-The data above is collected in the following events:
+The data above is collected during the following events:
 
 - **Install**: when OpenWISP is installed the first time
 - **Upgrade**: when any OpenWISP module is upgraded
@@ -1706,9 +1705,24 @@ means to make data-driven decisions while respecting our users' rights and trust
 We have taken great care to ensure no
 sensitive or personal data is being tracked.
 
+Opting out from metric collection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 You can opt-out from sharing this data any time from the "System Info" page.
-Alternatively, you can also remove the ``openwisp_utils.metric_collection`` app
-from ``INSTALLED_APPS``.
+Alternatively, you can also remove the ``openwisp_utils.metric_collection``
+app from ``INSTALLED_APPS`` in one of the following ways:
+
+- If you are using the `ansible-openwisp2
+  <https://github.com/openwisp/ansible-openwisp2>`_ role, you can set the
+  variable ``openwisp2_usage_metric_collection`` to ``false`` in your playbook.
+
+- If you are using `docker-openwisp
+  <https://github.com/openwisp/docker-openwisp>`_, you can set set the
+  environment variable ``METRIC_COLLECTION`` to ``False`` in the ``.env`` file.
+
+However, it would be very helpful to the project if you keep the
+colection of these metrics enabled, because the feedback we get from
+this data is useful to guide the project in the right direction.
 
 Quality Assurance Checks
 ------------------------
