@@ -3,15 +3,17 @@ Admin Theme utilities
 
 .. include:: /partials/developers-docs-warning.rst
 
+.. _openwisp_utilsadmin_themeemailsend_email:
+
 ``openwisp_utils.admin_theme.email.send_email``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This function allows sending email in both plain text and HTML version (using the template
-and logo that can be customised using `OPENWISP_EMAIL_TEMPLATE <#openwisp_email_template>`_
-and `OPENWISP_EMAIL_LOGO <#openwisp_email_logo>`_ respectively).
+and logo that can be customised using :ref:`OPENWISP_EMAIL_TEMPLATE <openwisp_email_template>`
+and :ref:`OPENWISP_EMAIL_LOGO <openwisp_email_logo>`_ respectively).
 
 In case the HTML version if not needed it may be disabled by
-setting `OPENWISP_HTML_EMAIL <#openwisp_html_email>`_ to ``False``.
+setting :ref:`OPENWISP_HTML_EMAIL <openwisp_html_email>`_ to ``False``.
 
 **Syntax:**
 

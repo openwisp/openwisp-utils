@@ -24,6 +24,8 @@ Usage example as a context-manager:
             signal=openwisp_signal,
         )
 
+.. _openwisp_utilsteststimeloggingtestrunner:
+
 ``openwisp_utils.tests.TimeLoggingTestRunner``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -35,7 +37,7 @@ and logs the time spent by each test, making it easier to spot slow tests by hig
 time taken by it in yellow (time shall be highlighted in red if it crosses the second threshold).
 
 By default tests are considered slow if they take more than 0.3 seconds but you can control
-this with `OPENWISP_SLOW_TEST_THRESHOLD <#openwisp_slow_test_threshold>`_.
+this with :ref:`OPENWISP_SLOW_TEST_THRESHOLD <openwisp_slow_test_threshold>`.
 
 In order to switch to this test runner you have set the following in your `settings.py`:
 

@@ -38,6 +38,8 @@ When ``True``, enables the `OpenWISP Dashboard <#openwisp-dashboard>`_.
 Upon login, the user will be greeted with the dashboard instead of the default
 Django admin index page.
 
+.. _openwisp_admin_theme_links:
+
 ``OPENWISP_ADMIN_THEME_LINKS``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -128,20 +130,24 @@ NOTE: This setting requires ``OPENWISP_API_DOCS = True`` to take effect.
 For more information about optional parameters check the
 `drf-yasg documentation <https://drf-yasg.readthedocs.io/en/stable/readme.html#quickstart>`_.
 
+.. _openwisp_slow_test_threshold:
+
 ``OPENWISP_SLOW_TEST_THRESHOLD``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default**: ``[0.3, 1]`` (seconds)
 
-It can be used to change the thresholds used by `TimeLoggingTestRunner <#openwisp_utilsteststimeloggingtestrunner>`_
+It can be used to change the thresholds used by :ref:`TimeLoggingTestRunner <openwisp_utilsteststimeloggingtestrunner>`
 to detect slow tests (0.3s by default) and highlight the slowest ones (1s by default) amongst them.
+
+.. _openwisp_staticfiles_versioned_exclude:
 
 ``OPENWISP_STATICFILES_VERSIONED_EXCLUDE``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **default**: ``['leaflet/*/*.png']``
 
-Allows to pass a list of **Unix shell-style wildcards** for files to be excluded by `CompressStaticFilesStorage <#openwisp_utilsstorageCompressStaticFilesStorage>`_.
+Allows to pass a list of **Unix shell-style wildcards** for files to be excluded by :ref:`CompressStaticFilesStorage <openwisp_utilsstorageCompressStaticFilesStorage>`.
 
 By default Leaflet PNGs have been excluded to avoid bugs like `openwisp/ansible-openwisp2#232 <https://github.com/openwisp/ansible-openwisp2/issues/232>`_.
 
@@ -153,6 +159,8 @@ Example usage:
         '*png',
     ]
 
+.. _openwisp_html_email:
+
 ``OPENWISP_HTML_EMAIL``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -163,7 +171,9 @@ Example usage:
 +---------+----------+
 
 If ``True``, an HTML themed version of the email can be sent using
-the `send_email <#openwisp_utilsadmin_themeemailsend_email>`_ function.
+the :ref:`send_email <openwisp_utilsadmin_themeemailsend_email>`_ function.
+
+.. _openwisp_email_template:
 
 ``OPENWISP_EMAIL_TEMPLATE``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -175,7 +185,7 @@ the `send_email <#openwisp_utilsadmin_themeemailsend_email>`_ function.
 +---------+----------------------------------------+
 
 This setting allows to change the django template used for sending emails with
-the `send_email <#openwisp_utilsadmin_themeemailsend_email>`_ function.
+the :ref:`send_email <openwisp_utilsadmin_themeemailsend_email>`_ function.
 It is recommended to extend the default email template as in the example below.
 
 .. code-block:: django
@@ -204,6 +214,8 @@ See `email_template.html <https://github.com/openwisp/openwisp-utils/blob/
 master/openwisp_utils/admin_theme/templates/openwisp_utils/email_template.html>`_
 for reference implementation.
 
+.. _openwisp_email_template:
+
 ``OPENWISP_EMAIL_LOGO``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -221,6 +233,8 @@ publicly accessible from the internet. Otherwise, the logo may not be displayed 
 Please also note that SVG images do not get processed by some email clients
 like Gmail so it is recommended to use PNG images.
 
+.. _openwisp_celery_soft_time_limit:
+
 ``OPENWISP_CELERY_SOFT_TIME_LIMIT``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -231,7 +245,9 @@ like Gmail so it is recommended to use PNG images.
 +---------+---------------------+
 
 Sets the soft time limit for celery tasks using
-`OpenwispCeleryTask <#openwisp_utilstasksopenwispcelerytask>`_.
+:ref:`OpenwispCeleryTask <openwisp_utilstasksopenwispcelerytask>`_.
+
+.. _openwisp_celery_hard_time_limit:
 
 ``OPENWISP_CELERY_HARD_TIME_LIMIT``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -243,7 +259,7 @@ Sets the soft time limit for celery tasks using
 +---------+----------------------+
 
 Sets the hard time limit for celery tasks using
-`OpenwispCeleryTask <#openwisp_utilstasksopenwispcelerytask>`_.
+:ref:`OpenwispCeleryTask <openwisp_utilstasksopenwispcelerytask>`_.
 
 ``OPENWISP_AUTOCOMPLETE_FILTER_VIEW``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

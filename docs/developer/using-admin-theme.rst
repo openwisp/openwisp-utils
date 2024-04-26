@@ -85,8 +85,8 @@ Supplying custom CSS and JS for the admin theme
 
 Add ``openwisp_utils.admin_theme.context_processor.admin_theme_settings`` to
 template ``context_processors`` in ``settings.py`` as shown below.
-This will allow to set `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`_
-and `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_js>`__ settings
+This will allow to set :ref:`OPENWISP_ADMIN_THEME_LINKS <openwisp_admin_theme_links>`_
+and :ref:`OPENWISP_ADMIN_THEME_JS <openwisp_admin_theme_js>`__ settings
 to provide CSS and JS files to customise admin theme.
 
 .. code-block:: python
@@ -121,7 +121,7 @@ Extend admin theme programmatically
 ``openwisp_utils.admin_theme.theme.register_theme_link``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows adding items to `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__.
+Allows adding items to :ref:`OPENWISP_ADMIN_THEME_LINKS <openwisp_admin_theme_links>`__.
 
 This function is meant to be used by third party apps or OpenWISP modules which
 aim to extend the core look and feel of the OpenWISP theme (eg: add new menu icons).
@@ -132,17 +132,17 @@ aim to extend the core look and feel of the OpenWISP theme (eg: add new menu ico
 
     register_theme_link(links)
 
-+--------------------+--------------------------------------------------------------+
-| **Parameter**      | **Description**                                              |
-+--------------------+--------------------------------------------------------------+
-| ``links``          | (``list``) List of *link* items to be added to               |
-|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__ |
-+--------------------+--------------------------------------------------------------+
++--------------------+----------------------------------------------------------------+
+| **Parameter**      | **Description**                                                |
++--------------------+----------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be added to                 |
+|                    | :ref:`OPENWISP_ADMIN_THEME_LINKS <openwisp_admin_theme_links>` |
++--------------------+----------------------------------------------------------------+
 
 ``openwisp_utils.admin_theme.theme.unregister_theme_link``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows removing items from `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__.
+Allows removing items from :ref:`OPENWISP_ADMIN_THEME_LINKS <openwisp_admin_theme_links>`.
 
 This function is meant to be used by third party apps or OpenWISP modules which
 aim additional functionalities to UI of OpenWISP (eg: adding a support chatbot).
@@ -153,17 +153,17 @@ aim additional functionalities to UI of OpenWISP (eg: adding a support chatbot).
 
     unregister_theme_link(links)
 
-+--------------------+--------------------------------------------------------------+
-| **Parameter**      | **Description**                                              |
-+--------------------+--------------------------------------------------------------+
-| ``links``          | (``list``) List of *link* items to be removed from           |
-|                    | `OPENWISP_ADMIN_THEME_LINKS <#openwisp_admin_theme_links>`__ |
-+--------------------+--------------------------------------------------------------+
++--------------------+----------------------------------------------------------------+
+| **Parameter**      | **Description**                                                |
++--------------------+----------------------------------------------------------------+
+| ``links``          | (``list``) List of *link* items to be removed from             |
+|                    | :ref:`OPENWISP_ADMIN_THEME_LINKS <openwisp_admin_theme_links>` |
++--------------------+----------------------------------------------------------------+
 
 ``openwisp_utils.admin_theme.theme.register_theme_js``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows adding items to `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_JS>`__.
+Allows adding items to :ref:`OPENWISP_ADMIN_THEME_JS <openwisp_admin_theme_JS>`.
 
 **Syntax:**
 
@@ -175,13 +175,13 @@ Allows adding items to `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_JS>`__.
 | **Parameter**      | **Description**                                               |
 +--------------------+---------------------------------------------------------------+
 | ``js``             | (``list``) List of relative path of *js* files to be added to |
-|                    | `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_js>`__        |
+|                    | :ref:`OPENWISP_ADMIN_THEME_JS <openwisp_admin_theme_js>`      |
 +--------------------+---------------------------------------------------------------+
 
 ``openwisp_utils.admin_theme.theme.unregister_theme_js``
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Allows removing items from `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_JS>`__.
+Allows removing items from :ref:`OPENWISP_ADMIN_THEME_JS <openwisp_admin_theme_JS>`.
 
 **Syntax:**
 
@@ -193,5 +193,5 @@ Allows removing items from `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_JS>`_
 | **Parameter**      | **Description**                                                    |
 +--------------------+--------------------------------------------------------------------+
 | ``js``             | (``list``) List of relative path of *js* files to be removed from  |
-|                    | `OPENWISP_ADMIN_THEME_JS <#openwisp_admin_theme_js>`__             |
+|                    | :ref:`OPENWISP_ADMIN_THEME_JS <openwisp_admin_theme_js>`           |
 +--------------------+--------------------------------------------------------------------+

@@ -61,12 +61,14 @@ Extends ``collections.SortedDict`` and implements logic to sort inserted
 items based on ``key`` value. Sorting is done at insert operation which
 incurs memory space overhead.
 
+.. _openwisp_utilstasksopenwispcelerytask:
+
 ``openwisp_utils.tasks.OpenwispCeleryTask``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A custom celery task class that sets hard and soft time limits of celery tasks
-using `OPENWISP_CELERY_HARD_TIME_LIMIT <#openwisp_celery_hard_time_limit>`_
-and `OPENWISP_CELERY_SOFT_TIME_LIMIT <#openwisp_celery_soft_time_limit>`_
+using :ref:`OPENWISP_CELERY_HARD_TIME_LIMIT <openwisp_celery_hard_time_limit>`_
+and :ref:`OPENWISP_CELERY_SOFT_TIME_LIMIT <openwisp_celery_soft_time_limit>`_
 settings respectively.
 
 Usage:
