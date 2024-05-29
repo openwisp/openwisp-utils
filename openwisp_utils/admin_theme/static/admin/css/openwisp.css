@@ -640,7 +640,7 @@ input[type="button"]:hover,
   display: inline-block;
   text-align: center;
   border-radius: 4px;
-  background: #498b26;
+  background: #498b26 !important;
   cursor: pointer;
   border: 0;
   padding: 0.625rem 1rem;
