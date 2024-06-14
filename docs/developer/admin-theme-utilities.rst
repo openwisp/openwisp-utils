@@ -1,7 +1,7 @@
-Admin Theme utilities
+Admin Theme Utilities
 ---------------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 .. _openwisp_utilsadmin_themeemailsend_email:
 

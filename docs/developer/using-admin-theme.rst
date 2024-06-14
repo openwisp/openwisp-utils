@@ -1,7 +1,7 @@
 Using the ``admin_theme``
 -------------------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 **The admin theme requires Django >= 2.2.**.
 
@@ -80,7 +80,7 @@ template ``loaders`` in ``settings.py`` as shown below.
         },
     ]
 
-Supplying custom CSS and JS for the admin theme
+Supplying Custom CSS and JS for the Admin Theme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Add ``openwisp_utils.admin_theme.context_processor.admin_theme_settings`` to
@@ -115,7 +115,7 @@ to provide CSS and JS files to customise admin theme.
 
     You can learn more in the `Django documentation <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
 
-Extend admin theme programmatically
+Extend Admin Theme Programmatically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``openwisp_utils.admin_theme.theme.register_theme_link``

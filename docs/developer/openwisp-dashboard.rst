@@ -1,7 +1,7 @@
 OpenWISP Dashboard
 ------------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 The ``admin_theme`` sub app of this package provides an admin dashboard
 for OpenWISP which can be manipulated with the functions described in

@@ -1,7 +1,7 @@
-Database backends
+Database Backends
 -----------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.db.backends.spatialite``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

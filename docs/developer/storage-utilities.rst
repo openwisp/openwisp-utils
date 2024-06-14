@@ -1,7 +1,7 @@
-Storage utilities
+Storage Utilities
 -----------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 .. _openwisp_utilsstorageCompressStaticFilesStorage:
 

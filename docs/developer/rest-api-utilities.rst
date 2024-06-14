@@ -1,7 +1,7 @@
-REST API utilities
+REST API Utilities
 ------------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.api.serializers.ValidatedModelSerializer``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

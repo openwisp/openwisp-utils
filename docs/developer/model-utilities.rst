@@ -1,7 +1,7 @@
-Model utilities
+Model Utilities
 ---------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.base.UUIDModel``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

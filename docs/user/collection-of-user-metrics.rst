@@ -33,7 +33,7 @@ means to make data-driven decisions while respecting our users' rights and trust
 We have taken great care to ensure no
 sensitive or personal data is being tracked.
 
-Opting out from metric collection
+Opting Out from Metric Collection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can opt-out from sharing this data any time from the "System Info" page.

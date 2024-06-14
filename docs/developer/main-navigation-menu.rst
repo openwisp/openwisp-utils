@@ -1,7 +1,7 @@
-Main navigation menu
+Main Navigation Menu
 --------------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 The ``admin_theme`` sub app of this package provides a navigation menu that can be
 manipulated with the functions described in the next sections.
@@ -99,7 +99,7 @@ Code example:
     future versions. Links added using ``register_menu_items`` will be shown at the top
     of navigation menu and above any ``register_menu_group`` items.
 
-Adding a custom link
+Adding a Custom Link
 ~~~~~~~~~~~~~~~~~~~~~
 
 To add a link that contains a custom URL the following syntax can be used.
@@ -127,7 +127,7 @@ Following is the description of the configuration:
 |                  | is displayed if not provided.                                |
 +------------------+--------------------------------------------------------------+
 
-Adding a model link
+Adding a Model Link
 ~~~~~~~~~~~~~~~~~~~
 
 To add a link that contains URL of add form or change list page of a model
@@ -176,7 +176,7 @@ Following is the description of the configuration:
 |                  | is displayed if not provided.                                |
 +------------------+--------------------------------------------------------------+
 
-Adding a menu group
+Adding a Menu Group
 ~~~~~~~~~~~~~~~~~~~
 
 To add a nested group of links in the menu the following syntax can be used.
@@ -279,7 +279,7 @@ Code example:
     It is recommended to use ``register_menu_subitem`` in the ``ready``
     method of the ``AppConfig``.
 
-How to use custom icons in the menu
+How to Use Custom Icons in the Menu
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create a CSS file and use the following syntax to provide the image for each

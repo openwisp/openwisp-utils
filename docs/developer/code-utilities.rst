@@ -1,7 +1,7 @@
-Code utilities
+Code Utilities
 --------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.utils.get_random_key``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

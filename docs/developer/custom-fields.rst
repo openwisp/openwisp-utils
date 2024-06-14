@@ -1,7 +1,7 @@
 Custom Fields
 -------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 This section describes custom fields defined in ``openwisp_utils.fields``
 that can be used in Django models:

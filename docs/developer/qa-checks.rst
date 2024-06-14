@@ -1,7 +1,7 @@
 Quality Assurance Checks
 ------------------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 This package contains some common QA checks that are used in the
 automated builds of different OpenWISP modules.

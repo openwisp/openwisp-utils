@@ -1,7 +1,7 @@
-Test utilities
+Test Utilities
 --------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.tests.catch_signal``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

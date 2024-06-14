@@ -1,7 +1,7 @@
-Admin utilities
+Admin Utilities
 ---------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.admin.TimeReadonlyAdminMixin``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

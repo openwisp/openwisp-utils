@@ -1,9 +1,9 @@
-Developer installation instructions
+Developer Installation Instructions
 -----------------------------------
 
-.. include:: /partials/developers-docs-warning.rst
+.. include:: ../partials/developer-docs.rst
 
-Install stable version from pypi
+Install Stable Version from Pypi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install from pypi:
@@ -21,7 +21,7 @@ Install from pypi:
     # or install everything
     pip install openwisp-utils[rest,qa]
 
-Install development version
+Install Development Version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install tarball:
@@ -36,7 +36,7 @@ Alternatively you can install via pip using git:
 
     pip install -e git+git://github.com/openwisp/openwisp-utils#egg=openwisp-utils
 
-Installing for development
+Installing for Development
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Install the system dependencies:

@@ -1,4 +1,4 @@
-Admin filters
+Admin Filters
 -------------
 
 .. figure:: https://github.com/openwisp/openwisp-utils/raw/media/docs/filter.gif
