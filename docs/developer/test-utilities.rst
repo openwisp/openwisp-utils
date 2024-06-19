@@ -33,7 +33,7 @@ Usage example as a context-manager:
     :align: center
 
 This class extends the `default test runner provided by Django
-<https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-TEST_RUNNER>`_
+<https://docs.djangoproject.com/en/4.2/ref/settings/#std:setting-TEST_RUNNER>`_
 and logs the time spent by each test, making it easier to spot slow tests
 by highlighting time taken by it in yellow (time shall be highlighted in
 red if it crosses the second threshold).
@@ -148,7 +148,7 @@ Example usage:
 -----------------------------------------------------
 
 This mixin overrides the `assertNumQueries
-<https://docs.djangoproject.com/en/dev/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries>`_
+<https://docs.djangoproject.com/en/4.2/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries>`_
 assertion from the django test case to run in a ``subTest`` so that the
 query check does not block the whole test if it fails.
 
