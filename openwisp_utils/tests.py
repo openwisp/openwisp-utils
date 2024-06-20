@@ -214,13 +214,21 @@ class AdminActionPermTestMixin:
             # Verify action cannot be performed using forced request
             response = self.client.post(path, data=payload, follow=True)
             self.assertEqual(response.status_code, 200)
-            self.assertContains(
-                response,
-                '<ul class="messagelist">\n'
-                '<li class="warning">No action selected.</li>\n'
-                '</ul>',
-                html=True,
-            )
+            try:
+                self.assertContains(
+                    response,
+                    '<ul class="messagelist">\n'
+                    '<li class="warning">No action selected.</li>\n'
+                    '</ul>',
+                    html=True,
+                )
+            except AssertionError:
+                # If there is only one admin action available for the user,
+                # and the user lacks permission for that action, then the
+                # admin action form will not be displayed on the changelist.
+                self.assertNotContains(
+                    response, '<label>Action: <select name="action" required>'
+                )
 
         # Add required permissions to the user
         user.user_permissions.add(
