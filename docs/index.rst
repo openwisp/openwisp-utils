@@ -9,7 +9,7 @@ and ease maintenance.
     :caption: User Docs
     :maxdepth: 1
 
-    ./user/metrics-collection.rst
+    ./user/metric-collection.rst
     ./user/admin-filters.rst
     ./user/settings.rst
 

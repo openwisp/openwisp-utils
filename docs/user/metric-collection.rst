@@ -47,6 +47,6 @@ the following ways:
   the environment variable ``METRIC_COLLECTION`` to ``False`` in the
   ``.env`` file.
 
-However, it would be very helpful to the project if you keep the colection
-of these metrics enabled, because the feedback we get from this data is
+However, **it would be very helpful to the project if you keep the colection
+of these metrics enabled**, because the feedback we get from this data is
 useful to guide the project in the right direction.
