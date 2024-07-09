@@ -5,7 +5,6 @@ from time import time
 from unittest import TextTestResult, mock
 
 from django.conf import settings
-from django.contrib.auth.models import Permission
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.test.runner import DiscoverRunner
 from django.test.utils import CaptureQueriesContext
@@ -185,6 +184,10 @@ class AdminActionPermTestMixin:
         required_perms=None,
         extra_payload=None,
     ):
+        # importing at the top breaks non-django python packages
+        # using some of the functions in this file (eg: netjsonconfig)
+        from django.contrib.auth.models import Permission
+
         all_perms = {'add', 'change', 'delete', 'view'}
         required_perms = required_perms or all_perms
         extra_payload = extra_payload or {}
