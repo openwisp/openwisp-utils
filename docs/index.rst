@@ -1,6 +1,9 @@
 Utils
 =====
 
+**Source code**: `github.com/openwisp/openwisp-utils
+<https://github.com/openwisp/openwisp-utils>`_.
+
 Python and Django functions, classes and settings re-used across different
 OpenWISP modules, stored here with the aim of avoiding code duplication
 and ease maintenance.
