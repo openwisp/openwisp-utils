@@ -41,15 +41,15 @@ and ease maintenance.
     :target: http://openwisp.org
 
 For a complete overview of features, refer to the `Utils: Features
-<https://openwisp.io/docs/__new__/dev/utils/>`_ section of the OpenWISP
+<https://openwisp.io/docs/dev/utils/>`_ section of the OpenWISP
 documentation.
 
 Documentation
 -------------
 
 - `Developer documentation
-  <https://openwisp.io/docs/__new__/dev/utils/developer/>`_
-- `User documentation <https://openwisp.io/docs/__new__/dev/utils/>`_
+  <https://openwisp.io/docs/dev/utils/developer/>`_
+- `User documentation <https://openwisp.io/docs/dev/utils/>`_
 
 Contributing
 ------------
