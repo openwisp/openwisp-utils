@@ -31,6 +31,8 @@ site.
 
 Title shown to users in the index page of the admin site.
 
+.. _utils_admin_dashboard_enabled:
+
 ``OPENWISP_ADMIN_DASHBOARD_ENABLED``
 ------------------------------------
 
