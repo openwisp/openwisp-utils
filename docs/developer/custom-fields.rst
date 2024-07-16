@@ -4,7 +4,11 @@ Custom Fields
 .. include:: ../partials/developer-docs.rst
 
 This section describes custom fields defined in ``openwisp_utils.fields``
-that can be used in Django models:
+that can be used in Django models.
+
+.. contents:: **Table of Contents**:
+    :depth: 2
+    :local:
 
 ``openwisp_utils.fields.KeyField``
 ----------------------------------

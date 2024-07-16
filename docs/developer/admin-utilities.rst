@@ -3,6 +3,10 @@ Admin Utilities
 
 .. include:: ../partials/developer-docs.rst
 
+.. contents:: **Table of Contents**:
+    :depth: 2
+    :local:
+
 ``openwisp_utils.admin.TimeReadonlyAdminMixin``
 -----------------------------------------------
 

@@ -3,14 +3,12 @@ Other Utilities
 
 .. include:: ../partials/developer-docs.rst
 
-.. contents::
+.. contents:: **Table of Contents**:
     :depth: 2
     :local:
 
 Model Utilities
 ---------------
-
-.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.base.UUIDModel``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,8 +78,6 @@ other modules.
 Storage Utilities
 -----------------
 
-.. include:: ../partials/developer-docs.rst
-
 .. _utils_compress_static_files_storage:
 
 ``openwisp_utils.storage.CompressStaticFilesStorage``
@@ -105,8 +101,6 @@ To use point ``STATICFILES_STORAGE`` to
 
 Other Utilities
 ---------------
-
-.. include:: ../partials/developer-docs.rst
 
 ``openwisp_utils.utils.get_random_key``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

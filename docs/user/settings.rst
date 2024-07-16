@@ -1,6 +1,8 @@
 Settings
 ========
 
+.. include:: /partials/settings-note.rst
+
 ``OPENWISP_ADMIN_SITE_CLASS``
 -----------------------------
 
@@ -110,7 +112,7 @@ Example usage:
 
 **Default**: ``False``
 
-When True, enables Django user links on the admin site.
+When set to ``True``, enables Django user links on the admin site.
 
 i.e. (USER NAME/ VIEW SITE / CHANGE PASSWORD / LOG OUT).
 

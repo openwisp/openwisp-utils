@@ -3,14 +3,14 @@ Using the ``admin_theme``
 
 .. include:: ../partials/developer-docs.rst
 
-.. contents::
+.. contents:: **Table of Contents**:
     :depth: 2
     :local:
 
 **The admin theme requires Django >= 2.2.**.
 
-Add ``openwisp_utils.admin_theme`` to ``INSTALLED_APPS`` in
-``settings.py``:
+Make sure ``openwisp_utils.admin_theme`` is listed in ``INSTALLED_APPS``
+(``settings.py``):
 
 .. code-block:: python
 

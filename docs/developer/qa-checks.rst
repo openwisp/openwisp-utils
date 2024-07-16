@@ -6,6 +6,10 @@ Quality Assurance Checks
 This package contains some common QA checks that are used in the automated
 builds of different OpenWISP modules.
 
+.. contents:: **Table of Contents**:
+    :depth: 2
+    :local:
+
 ``openwisp-qa-format``
 ----------------------
 

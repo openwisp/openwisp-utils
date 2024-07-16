@@ -3,11 +3,20 @@ Main Navigation Menu
 
 .. include:: ../partials/developer-docs.rst
 
+.. contents:: **Table of Contents**:
+    :depth: 2
+    :local:
+
 The ``admin_theme`` sub app of this package provides a navigation menu
 that can be manipulated with the functions described in the next sections.
 
-Add ``openwisp_utils.admin_theme.context_processor.menu_groups`` to
-template ``context_processors`` in ``settings.py`` as shown below.
+Context Processor
+-----------------
+
+For this feature to work, we must make sure that
+the context processor
+``openwisp_utils.admin_theme.context_processor.menu_groups`` is enabled
+in ``settings.py`` as shown below.
 
 .. code-block:: python
 
@@ -27,8 +36,11 @@ template ``context_processors`` in ``settings.py`` as shown below.
         },
     ]
 
-``register_menu_group``
------------------------
+This context processor is enabled by default in any OpenWISP installer
+and in the test project of this module.
+
+The ``register_menu_group`` function
+------------------------------------
 
 Allows registering a new menu item or group at the specified position in
 the Main Navigation Menu.
@@ -218,8 +230,8 @@ Following is the description of the configuration:
               is displayed if not provided.
 ============= ============================================================
 
-``register_menu_subitem``
--------------------------
+The ``register_menu_subitem`` function
+--------------------------------------
 
 Allows adding an item to a registered group.
 

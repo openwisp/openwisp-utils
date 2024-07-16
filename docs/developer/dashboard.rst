@@ -7,17 +7,15 @@ The ``admin_theme`` sub app of this package provides an admin dashboard
 for OpenWISP which can be manipulated with the functions described in the
 next sections.
 
-Example 1, monitoring:
-
-.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/dashboard1.png
-    :target: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/dashboard1.png
-    :align: center
-
-Example 2, controller:
+Example taken from the :doc:`Controller Module </controller/index>`:
 
 .. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/dashboard2.png
     :target: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/dashboard2.png
     :align: center
+
+.. contents:: **Table of Contents**:
+    :depth: 2
+    :local:
 
 ``register_dashboard_template``
 -------------------------------
