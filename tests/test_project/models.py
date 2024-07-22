@@ -36,8 +36,6 @@ class Shelf(FallbackModelMixin, TimeStampedEditableModel):
         _("Type of book"), choices=TYPES, null=True, blank=True, max_length=50
     )
     books_count = FallbackPositiveIntegerField(
-        blank=True,
-        null=True,
         fallback=21,
         verbose_name=_("Number of books"),
     )
@@ -102,14 +100,9 @@ class RadiusAccounting(models.Model):
 
 class OrganizationRadiusSettings(FallbackModelMixin, models.Model):
     is_active = FallbackBooleanChoiceField(
-        null=True,
-        blank=True,
-        default=None,
         fallback=False,
     )
     is_first_name_required = FallbackCharChoiceField(
-        null=True,
-        blank=True,
         max_length=32,
         choices=(
             ('disabled', _('Disabled')),
@@ -119,20 +112,14 @@ class OrganizationRadiusSettings(FallbackModelMixin, models.Model):
         fallback='disabled',
     )
     greeting_text = FallbackCharField(
-        null=True,
-        blank=True,
         max_length=200,
         fallback='Welcome to OpenWISP!',
     )
     password_reset_url = FallbackURLField(
-        null=True,
-        blank=True,
         max_length=200,
         fallback='http://localhost:8000/admin/password_change/',
     )
     extra_config = FallbackTextField(
-        null=True,
-        blank=True,
         max_length=200,
         fallback='no data',
     )

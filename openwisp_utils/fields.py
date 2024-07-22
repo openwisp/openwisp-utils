@@ -39,9 +39,11 @@ class KeyField(CharField):
 
 
 class FallbackMixin(object):
-    def __init__(self, *args, **kwargs):
-        self.fallback = kwargs.pop('fallback', None)
-        super().__init__(*args, **kwargs)
+    def __init__(self, fallback, *args, **kwargs):
+        self.fallback = fallback
+        opts = dict(blank=True, null=True, default=None)
+        opts.update(kwargs)
+        super().__init__(*args, **opts)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
