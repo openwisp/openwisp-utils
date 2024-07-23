@@ -39,16 +39,12 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install python dependencies
+    - name: Install Dependencies
+      id: deps
       run: |
         pip install -U pip wheel setuptools
         pip install -U -r requirements-test.txt
-
-    - name: Install npm dependencies
-      run: sudo npm install -g jshint stylelint
-
-    - name: Install openwisp-utils
-      run: |
+        sudo npm install -g jshint stylelint
         pip install -e .[qa,rest,selenium]
         pip install ${{ matrix.django-version }}
 
@@ -56,11 +52,13 @@ jobs:
       run: ./run-qa-checks
 
     - name: Tests
+      if: ${{ !cancelled() && steps.deps.conclusion == 'success' }}
       run: coverage run --source=openwisp_utils runtests.py
       env:
         SELENIUM_HEADLESS: 1
 
     - name: Upload Coverage
+      if: ${{ success() }}
       run: coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
