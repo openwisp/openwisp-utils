@@ -48,8 +48,8 @@ class FallbackMixin(object):
     knows that the default will get changed.
     """
 
-    def __init__(self, fallback, *args, **kwargs):
-        self.fallback = fallback
+    def __init__(self, *args, **kwargs):
+        self.fallback = kwargs.pop('fallback')
         opts = dict(blank=True, null=True, default=None)
         opts.update(kwargs)
         super().__init__(*args, **opts)
