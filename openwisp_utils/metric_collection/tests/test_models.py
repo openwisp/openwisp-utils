@@ -26,7 +26,6 @@ class TestOpenwispVersion(TestCase):
         # The post_migrate signal creates the first OpenwispVersion object
         # and uses the actual modules installed in the Python environment.
         # This would cause tests to fail when other modules are also installed.
-        # import ipdb; ipdb.set_trace()
         OpenwispVersion.objects.update(
             module_version={
                 'OpenWISP Version': '23.0.0a',

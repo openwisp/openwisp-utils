@@ -1,23 +1,19 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from openwisp_utils.base import (
-    FallbackModelMixin,
-    KeyField,
-    TimeStampedEditableModel,
-    UUIDModel,
-)
+from openwisp_utils.base import KeyField, TimeStampedEditableModel, UUIDModel
 from openwisp_utils.fields import (
     FallbackBooleanChoiceField,
     FallbackCharChoiceField,
     FallbackCharField,
+    FallbackDecimalField,
     FallbackPositiveIntegerField,
     FallbackTextField,
     FallbackURLField,
 )
 
 
-class Shelf(FallbackModelMixin, TimeStampedEditableModel):
+class Shelf(TimeStampedEditableModel):
     TYPES = (
         ('HORROR', 'HORROR'),
         ('FANTASY', 'FANTASY'),
@@ -67,6 +63,7 @@ class Book(TimeStampedEditableModel):
     name = models.CharField(_('name'), max_length=64)
     author = models.CharField(_('author'), max_length=64)
     shelf = models.ForeignKey('test_project.Shelf', on_delete=models.CASCADE)
+    price = FallbackDecimalField(max_digits=4, decimal_places=2, fallback=20.0)
 
     def __str__(self):
         return self.name
@@ -98,7 +95,7 @@ class RadiusAccounting(models.Model):
     )
 
 
-class OrganizationRadiusSettings(FallbackModelMixin, models.Model):
+class OrganizationRadiusSettings(models.Model):
     is_active = FallbackBooleanChoiceField(
         fallback=False,
     )
