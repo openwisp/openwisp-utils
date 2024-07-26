@@ -67,9 +67,7 @@ class OpenwispAdminSite(admin.AdminSite):
 
 
 def openwisp_admin(site_url=None):  # pragma: no cover
-    """
-    openwisp_admin function is deprecated
-    """
+    """openwisp_admin function is deprecated"""
     logger.warning(
         'WARNING! Calling openwisp_utils.admin_theme.admin.openwisp_admin() '
         'is not necessary anymore and is therefore deprecated.\nThis function '

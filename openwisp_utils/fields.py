@@ -50,13 +50,12 @@ class FallbackMixin(object):
 
 
 class FallbackFromDbValueMixin:
-    """
-    Returns the fallback value when the value of the field
-    is falsy (None or '').
+    """Returns the fallback value when empty.
 
-    It does not set the field's value to "None" when the value
-    is equal to the fallback value. This allows overriding of
-    the value when a user knows that the default will get changed.
+    Returns the fallback value when the value of the field is falsy (None
+    or ''). It does not set the field's value to "None" when the value is
+    equal to the fallback value. This allows overriding of the value when
+    a user knows that the default will get changed.
     """
 
     def from_db_value(self, value, expression, connection):
@@ -66,10 +65,10 @@ class FallbackFromDbValueMixin:
 
 
 class FalsyValueNoneMixin:
-    """
-    If the field contains an empty string, then
-    stores "None" in the database if the field is
-    nullable.
+    """Stores None instead of empty strings.
+
+    If the field contains an empty string and the field can be NULL, this
+    mixin will prefer to store "None" in the database.
     """
 
     # Django convention is to use the empty string, not NULL
@@ -134,9 +133,10 @@ class FallbackPositiveIntegerField(
 class FallbackCharField(
     FallbackMixin, FalsyValueNoneMixin, FallbackFromDbValueMixin, CharField
 ):
-    """
-    Populates the form with the fallback value
-    if the value is set to null in the database.
+    """Implements fallback logic.
+
+    Populates the form with the fallback value if the value is set to NULL
+    in the database.
     """
 
     pass
@@ -145,9 +145,10 @@ class FallbackCharField(
 class FallbackURLField(
     FallbackMixin, FalsyValueNoneMixin, FallbackFromDbValueMixin, URLField
 ):
-    """
-    Populates the form with the fallback value
-    if the value is set to null in the database.
+    """Implements fallback logic.
+
+    Populates the form with the fallback value if the value is set to NULL
+    in the database.
     """
 
     pass
@@ -156,9 +157,10 @@ class FallbackURLField(
 class FallbackTextField(
     FallbackMixin, FalsyValueNoneMixin, FallbackFromDbValueMixin, TextField
 ):
-    """
-    Populates the form with the fallback value
-    if the value is set to null in the database.
+    """Implements fallback logic.
+
+    Populates the form with the fallback value if the value is set to NULL
+    in the database.
     """
 
     def formfield(self, **kwargs):

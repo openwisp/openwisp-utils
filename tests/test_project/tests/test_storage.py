@@ -9,10 +9,11 @@ from openwisp_utils.tests import capture_stdout
 
 
 def create_dir(*paths: str):
-    """Returns Joined path
+    """Returns joined path from input arguments.
 
-    joins two or more pathname using os.path.join and creates leaf directory
-    and all the intermidiate ones according to the joined path using os.makedirs
+    joins two or more pathname using os.path.join and creates leaf
+    directory and all the intermidiate ones according to the joined path
+    using os.makedirs.
     """
     joined_path = os.path.join(*paths)
     os.makedirs(joined_path, exist_ok=True)

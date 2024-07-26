@@ -6,11 +6,10 @@ from django.utils.translation import gettext_lazy as _
 
 
 class MetricCollectionAdminSiteHelper:
-    """
-    Collection of helper methods designed
-    to be used in the admin_theme to show
-    the constent info message and allow
-    superusers to opt out.
+    """Collection of helper methods for the OpenWISP Admin Theme
+
+    Designed to be used in the admin_theme to show the constent info
+    message and allow superusers to opt out.
     """
 
     @classmethod
@@ -25,13 +24,12 @@ class MetricCollectionAdminSiteHelper:
 
     @classmethod
     def show_consent_info(cls, request):
-        """
-        Unless already shown, this method adds a
-        message (using the Django Message Framework)
-        to the request passed in as argument
-        to inform the super user about the OpenWISP
-        metric collection feature and the possibility
-        to opt out.
+        """Consent screen logic
+
+        Unless already shown, this method adds a message (using the Django
+        Message Framework) to the request passed in as argument to inform
+        the super user about the OpenWISP metric collection feature and
+        the possibility to opt out.
         """
         if not cls.is_enabled_and_superuser(request.user):
             return

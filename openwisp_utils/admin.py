@@ -5,10 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class TimeReadonlyAdminMixin(object):
-    """
-    mixin that automatically flags
-    `created` and `modified` as readonly
-    """
+    """A mixin that automatically flags `created` and `modified` as readonly."""
 
     def __init__(self, *args, **kwargs):
         self.readonly_fields += ('created', 'modified')
@@ -16,9 +13,7 @@ class TimeReadonlyAdminMixin(object):
 
 
 class ReadOnlyAdmin(ModelAdmin):
-    """
-    Disables all editing capabilities
-    """
+    """Disables all editing capabilities."""
 
     exclude = tuple()
 
@@ -59,11 +54,11 @@ class ReadOnlyAdmin(ModelAdmin):
 
 class AlwaysHasChangedMixin(object):
     def has_changed(self):
-        """
-        This django-admin trick ensures the inline item
-        is saved even if default values are unchanged
-        (without this trick new objects won't be
-        created unless users change the default values)
+        """Returns true for new objects.
+
+        This django-admin trick ensures the inline item is saved even if
+        default values are unchanged (without this trick new objects won't
+        be created unless users change the default values).
         """
         if self.instance._state.adding:
             return True
@@ -75,12 +70,10 @@ class CopyableFieldError(FieldError):
 
 
 class CopyableFieldsAdmin(ModelAdmin):
-    """
-    An admin class that allows to set admin
-    fields to be read-only and makes it easy
-    to copy the fields contents.
-    Useful for auto-generated fields such as
-    UUIDs, secret keys, tokens, etc
+    """Allows to set fields as read-only and easy to copy.
+
+    Useful for auto-generated fields such as UUIDs, secret keys, tokens,
+    etc.
     """
 
     copyable_fields = ()
@@ -142,12 +135,11 @@ class CopyableFieldsAdmin(ModelAdmin):
 
 
 class UUIDAdmin(CopyableFieldsAdmin):
-    """
-    This class is a subclass of `CopyableFieldsAdmin`
-    which sets `uuid` as the only copyable field
-    This class is kept for backward compatibility
-    and convenience, since different models of various
-    OpenWISP modules show `uuid` as the only copyable field
+    """Sets `uuid` as copyable field.
+
+    Subclass of `CopyableFieldsAdmin`. This class is kept for backward
+    compatibility and convenience, since different models of various
+    OpenWISP modules show `uuid` as the only copyable field.
     """
 
     copyable_fields = ('uuid',)
@@ -159,10 +151,13 @@ class UUIDAdmin(CopyableFieldsAdmin):
 
 
 class ReceiveUrlAdmin(ModelAdmin):
-    """
-    Return a receive_url field whose value is that of
-    a view_name concatenated with the obj id and/or
-    with the key of the obj
+    """Adds a receive_url field.
+
+    The receive_url method will build the URL using the parameters:
+
+    - receive_url_name
+    - receive_url_object_arg
+    - receive_url_object_arg
     """
 
     receive_url_querystring_arg = 'key'
@@ -180,9 +175,7 @@ class ReceiveUrlAdmin(ModelAdmin):
         return super().change_view(request, *args, **kwargs)
 
     def receive_url(self, obj):
-        """
-        :param obj: Object for which the url is generated
-        """
+        """:param obj: Object for which the url is generated"""
         if self.receive_url_name is None:
             raise ValueError('receive_url_name is not set up')
         reverse_kwargs = {}

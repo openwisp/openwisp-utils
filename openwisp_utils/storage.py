@@ -24,11 +24,6 @@ class CompressStaticFilesStorage(
     FileHashedNameMixin,
     BaseCompressStaticFilesStorage,
 ):
-    """
-    A static files storage backend for compression that inherits from
-    django-compress-staticfiles's CompressStaticFilesStorage class;
-    also adds support for excluding file types using
-    "OPENWISP_STATICFILES_VERSIONED_EXCLUDE" setting.
-    """
+    """Like CompressStaticFilesStorage, but allows excluding some files."""
 
     pass

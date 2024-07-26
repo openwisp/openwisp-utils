@@ -16,10 +16,7 @@ class UUIDModel(models.Model):
 
 
 class TimeStampedEditableModel(UUIDModel):
-    """
-    An abstract base class model that provides self-updating
-    ``created`` and ``modified`` fields.
-    """
+    """An abstract base class model that provides self-updating ``created`` and ``modified`` fields."""
 
     created = AutoCreatedField(_('created'), editable=True)
     modified = AutoLastModifiedField(_('modified'), editable=True)
