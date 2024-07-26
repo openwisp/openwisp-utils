@@ -1,18 +1,20 @@
-#### Changes
+## Checklist
 
-> #Please explain changes made in your PR#
+- [ ] I have read the [OpenWISP Contributing Guidelines](http://openwisp.io/docs/developer/contributing.html).
+- [ ] I have manually tested the changes proposed in this pull request.
+- [ ] I have written new test cases for new code and/or updated existing tests for changes to existing code.
+- [ ] I have updated the documentation.
 
-#### Screenshots
+## Reference to Existing Issue
 
-> #For UI changes, please share a screenshot#
+Closes #<issue-number>.
 
-#### Checklist
+Please [open a new issue](https://github.com/openwisp/openwisp-utils/issues/new/choose) if there isn't an existing issue yet.
 
-- [ ] I have read the [contributing guidelines](http://openwisp.io/docs/developer/contributing.html#how-to-commit-your-changes-properly).
-- [ ] I have manually tested the proposed changes.
-- [ ] I have written new test cases to avoid regressions. (if necessary)
-- [ ] I have updated the documentation. (e.g. README.rst)
-- [ ] I have added [change!] to commit title to indicate a backward incompatible change. (if required)
-- [ ] I have checked the links added / modified in the documentation.
+## Description of Changes
 
-> #Closes #(issue-number)#
+Please describe these changes.
+
+## Screenshot
+
+Please include any relevant screenshots.
