@@ -51,11 +51,11 @@ setup(
     ],
     extras_require={
         'qa': [
-            'black~=22.3.0',
-            'flake8<=3.9',
-            'isort~=5.0',
-            'readme-renderer~=28.0',
-            'coveralls~=3.0.0',  # depends on coverage as well
+            'black~=23.3.0',
+            'flake8~=6.0.0',
+            'isort~=5.10.1',
+            'readme-renderer~=37.3.0',
+            'coveralls~=4.0.1',  # depends on coverage as well
             'tblib~=3.0.0',
             'docstrfmt~=1.7.0',
         ],
