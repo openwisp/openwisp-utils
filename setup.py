@@ -61,7 +61,7 @@ setup(
         ],
         'rest': [
             'djangorestframework~=3.14.0',
-            'django-filter~=23.2',  # django-filter uses CalVer
+            'django-filter>=23.2,<25.0',  # django-filter uses CalVer
             'drf-yasg~=1.21.7',
         ],
         'celery': ['celery~=5.3.0'],
