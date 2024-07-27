@@ -13,10 +13,9 @@ that can be manipulated with the functions described in the next sections.
 Context Processor
 -----------------
 
-For this feature to work, we must make sure that
-the context processor
-``openwisp_utils.admin_theme.context_processor.menu_groups`` is enabled
-in ``settings.py`` as shown below.
+For this feature to work, we must make sure that the context processor
+``openwisp_utils.admin_theme.context_processor.menu_groups`` is enabled in
+``settings.py`` as shown below.
 
 .. code-block:: python
 
@@ -36,8 +35,8 @@ in ``settings.py`` as shown below.
         },
     ]
 
-This context processor is enabled by default in any OpenWISP installer
-and in the test project of this module.
+This context processor is enabled by default in any OpenWISP installer and
+in the test project of this module.
 
 The ``register_menu_group`` function
 ------------------------------------
