@@ -50,9 +50,9 @@ setup(
     ],
     extras_require={
         'qa': [
-            'flake8~=6.0.0',
-            'isort~=5.10.1',
             'black~=23.12.1',
+            'flake8~=7.1.0',
+            'isort~=5.13.2',
             'coveralls~=4.0.1',  # depends on coverage as well
             'tblib~=3.0.0',
             'docstrfmt~=1.8.0',
