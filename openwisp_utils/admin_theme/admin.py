@@ -64,13 +64,3 @@ class OpenwispAdminSite(admin.AdminSite):
                 name='ow-info',
             ),
         ] + super().get_urls()
-
-
-def openwisp_admin(site_url=None):  # pragma: no cover
-    """openwisp_admin function is deprecated"""
-    logger.warning(
-        'WARNING! Calling openwisp_utils.admin_theme.admin.openwisp_admin() '
-        'is not necessary anymore and is therefore deprecated.\nThis function '
-        'will be removed in future versions of openwisp-utils and therefore '
-        'it is recommended to remove any reference to it.\n'
-    )
