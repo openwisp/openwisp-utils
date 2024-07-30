@@ -43,9 +43,8 @@ class KeyField(CharField):
 class FallbackMixin(object):
     """Returns the fallback value when the value of the field is falsy (None or '').
 
-    It does not set the field's value to "None" when the value is equal to
-    the fallback value. This allows overriding of the value when a user
-    knows that the default will get changed.
+    If the value of the field is equal to the fallback value,
+    then the field will save `None` in the database.
     """
 
     def __init__(self, *args, **kwargs):
@@ -62,6 +61,12 @@ class FallbackMixin(object):
     def from_db_value(self, value, expression, connection):
         if value is None:
             return self.fallback
+        return value
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        value = super().get_db_prep_value(value, connection, prepared)
+        if value == self.fallback:
+            return None
         return value
 
 
