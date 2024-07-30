@@ -5,7 +5,6 @@ import openwisp_utils.fields
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("test_project", "0007_radiusaccounting_start_time_and_more"),
     ]

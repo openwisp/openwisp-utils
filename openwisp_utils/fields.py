@@ -43,8 +43,8 @@ class KeyField(CharField):
 class FallbackMixin(object):
     """Returns the fallback value when the value of the field is falsy (None or '').
 
-    If the value of the field is equal to the fallback value,
-    then the field will save `None` in the database.
+    If the value of the field is equal to the fallback value, then the
+    field will save `None` in the database.
     """
 
     def __init__(self, *args, **kwargs):
