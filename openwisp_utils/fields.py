@@ -59,15 +59,29 @@ class FallbackMixin(object):
         return (name, path, args, kwargs)
 
     def from_db_value(self, value, expression, connection):
+        """Called when fetching value from the database."""
         if value is None:
             return self.fallback
         return value
 
     def get_db_prep_value(self, value, connection, prepared=False):
+        """Called when saving value in the database."""
         value = super().get_db_prep_value(value, connection, prepared)
         if value == self.fallback:
             return None
         return value
+
+    def get_default(self):
+        """Returns the fallback value for the default.
+
+        The default is set to `None` on field initialization to ensure
+        that the default value in the database schema is `NULL` instead of
+        a non-null value (fallback value). Returning the fallback value
+        here also sets the initial value of the field to the fallback
+        value in admin add forms, similar to how Django handles default
+        values.
+        """
+        return self.fallback
 
 
 class FalsyValueNoneMixin:
