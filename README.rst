@@ -40,10 +40,6 @@ and ease maintenance.
 .. image:: https://raw.githubusercontent.com/openwisp/openwisp2-docs/master/assets/design/openwisp-logo-black.svg
     :target: http://openwisp.org
 
-For a complete overview of features, refer to the `Utils: Features
-<https://openwisp.io/docs/dev/utils/>`_ section of the OpenWISP
-documentation.
-
 Documentation
 -------------
 

@@ -271,11 +271,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         self._test_login_and_logout_page()
 
     def test_active_menu_group(self):
-        """
-        Test active menu group:
-        - Active group should close only when clicked on menu else
-          it should remain open.
-        """
+        """The active group should close only when the menu, is clicked, otherwise it should remain open."""
         self.login()
         url = reverse('admin:auth_user_changelist')
         self.open(url)
@@ -746,9 +742,7 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             self.assertNotEqual(option.text, '-')
 
     def test_autocomplete_owner_filter(self):
-        """
-        Tests the null option of the AutocompleteFilter
-        """
+        """Tests the null option of the AutocompleteFilter."""
         url = reverse('admin:test_project_shelf_changelist')
         user = self._create_user()
         horror_shelf = self._create_shelf(

@@ -6,10 +6,10 @@ from ..models import Project
 
 
 class ReceiveProjectView(View):
-    """
-    This test view allows to check the validity of the pk and the key, and receive project name
-    Required query string parameters:
-        * key
+    """Test View.
+
+    Test view is used to check the validity of the pk and the key. It
+    returns the project name.
     """
 
     def get(self, request, pk):

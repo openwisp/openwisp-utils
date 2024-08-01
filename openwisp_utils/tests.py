@@ -14,9 +14,7 @@ from .utils import print_color
 
 @contextmanager
 def catch_signal(signal):
-    """
-    Catches django signal and returns mock call for the same
-    """
+    """Catches django signal and returns mock call for the same."""
     handler = mock.Mock()
     signal.connect(handler)
     yield handler
@@ -130,9 +128,7 @@ class capture_any_output(CaptureOutput):
 
 
 class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
-    """
-    Needed to execute assertNumQueries in a subTest
-    """
+    """Needed to execute assertNumQueries in a subTest."""
 
     def __init__(self, test_case, num, connection):
         self.test_case = test_case
@@ -170,3 +166,90 @@ class AssertNumQueriesSubTestMixin:
 
         with context:
             func(*args, **kwargs)
+
+
+class AdminActionPermTestMixin:
+    def _test_action_permission(
+        self,
+        path,
+        action,
+        user,
+        obj,
+        message,
+        message_level='success',
+        required_perms=None,
+        extra_payload=None,
+    ):
+        # importing at the top breaks non-django python packages
+        # using some of the functions in this file (eg: netjsonconfig)
+        from django.contrib.auth.models import Permission
+
+        all_perms = {'add', 'change', 'delete', 'view'}
+        required_perms = required_perms or all_perms
+        extra_payload = extra_payload or {}
+        self.client.force_login(user)
+        payload = {
+            '_selected_action': [obj.pk],
+            'action': action,
+            'post': 'yes',
+            **extra_payload,
+        }
+        admin_action_option = f'<option value="{action}">'
+        # Add all permissions to the user except the required permissions
+        user.user_permissions.add(
+            *Permission.objects.filter(
+                codename__in=[
+                    f'{perm}_{obj._meta.model_name}'
+                    for perm in all_perms - set(required_perms)
+                ]
+            )
+        )
+
+        with self.subTest('Test user lacks necessary permission for action'):
+            # Verify admin action option is not present on the changelist
+            response = self.client.get(path)
+            self.assertNotContains(response, admin_action_option)
+
+            # Verify action cannot be performed using forced request
+            response = self.client.post(path, data=payload, follow=True)
+            self.assertEqual(response.status_code, 200)
+            try:
+                self.assertContains(
+                    response,
+                    '<ul class="messagelist">\n'
+                    '<li class="warning">No action selected.</li>\n'
+                    '</ul>',
+                    html=True,
+                )
+            except AssertionError:
+                # If there is only one admin action available for the user,
+                # and the user lacks permission for that action, then the
+                # admin action form will not be displayed on the changelist.
+                self.assertNotContains(
+                    response, '<label>Action: <select name="action" required>'
+                )
+
+        # Add required permissions to the user
+        user.user_permissions.add(
+            *Permission.objects.filter(
+                codename__in=[
+                    f'{perm}_{obj._meta.model_name}' for perm in required_perms
+                ]
+            )
+        )
+
+        with self.subTest('Test user has necessary permission for action'):
+            # Verify admin action option is present on the changelist
+            response = self.client.get(path, follow=True)
+            self.assertContains(response, admin_action_option)
+
+            # Verify action can be performed
+            response = self.client.post(path, data=payload, follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(
+                response,
+                '<ul class="messagelist">\n'
+                f'<li class="{message_level}">{message}</li>'
+                '</ul>',
+                html=True,
+            )

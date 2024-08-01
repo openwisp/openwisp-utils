@@ -1,7 +1,8 @@
 [run]
+source = openwisp_utils
+parallel = true
+concurrency = multiprocessing
 omit =
     /*/test*
-    /tests
     /*/__init__.py
-    /setup.py
     /*/migrations/*

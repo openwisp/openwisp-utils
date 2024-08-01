@@ -28,10 +28,9 @@ class InputFilterMixin:
         yield all_choice
 
     def value(self):
-        """
-        Return the value (in string format) provided in the request's
-        query string for this filter, if any, or None if the value wasn't
-        provided.
+        """Returns the querystring for this filter
+
+        If no querystring was supllied, will return None.
         """
         return self.used_parameters.get(self.parameter_name)
 

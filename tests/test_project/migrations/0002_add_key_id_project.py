@@ -9,7 +9,6 @@ import uuid
 
 
 class Migration(migrations.Migration):
-
     dependencies = [('test_project', '0001_initial')]
 
     operations = [

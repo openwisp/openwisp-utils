@@ -7,9 +7,10 @@ from .settings import EXTENDED_APPS
 
 
 class DependencyLoader(FilesystemLoader):
-    """
-    A template loader that looks in templates dir of
-    django-apps listed in dependencies. Default values is []
+    """Allows loading templates of apps listed in settings.EXTENDED_APPS.
+
+    Looks in the "templates/"" directory of apps listed in
+    settings.EXTENDED_APPS. Defaults to [].
     """
 
     dependencies = EXTENDED_APPS

@@ -7,9 +7,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 
 class SeleniumTestMixin:
-    """
-    A base test case for Selenium, providing helped methods for generating
-    clients and logging in profiles.
+    """A base Mixin Class for Selenium Browser Tests.
+
+    Provides common initialization logic and helper methods like login()
+    and open().
     """
 
     admin_username = 'admin'
@@ -47,11 +48,12 @@ class SeleniumTestMixin:
         super().tearDownClass()
 
     def open(self, url, driver=None):
-        """
-        Opens a URL
-        Argument:
-            url: URL to open
-            driver: selenium driver (default: cls.base_driver)
+        """Opens a URL.
+
+        Input Arguments:
+
+        - url: URL to open
+        - driver: selenium driver (default: cls.base_driver).
         """
         if not driver:
             driver = self.web_driver
@@ -61,12 +63,15 @@ class SeleniumTestMixin:
         )
 
     def login(self, username=None, password=None, driver=None):
-        """
-        Log in to the admin dashboard
-        Argument:
-            driver: selenium driver (default: cls.web_driver)
-            username: username to be used for login (default: cls.admin.username)
-            password: password to be used for login (default: cls.admin.password)
+        """Log in to the admin dashboard.
+
+        Input Arguments:
+
+        - username: username to be used for login (default:
+          cls.admin_username)
+        - password: password to be used for login (default:
+          cls.admin_password)
+        - driver: selenium driver (default: cls.web_driver).
         """
         if not driver:
             driver = self.web_driver

@@ -22,8 +22,8 @@ setup(
     name='openwisp-utils',
     version=get_version(),
     license='BSD-3-Clause',
-    author='Rohith Asrk',
-    author_email='rohith.asrk@gmail.com',
+    author='Various',
+    author_email='support@openwisp.io',
     description='OpenWISP 2 Utilities',
     long_description=open('README.rst').read(),
     url='http://openwisp.org',
@@ -36,7 +36,6 @@ setup(
         'console_scripts': [
             'checkmigrations = openwisp_utils.qa:check_migration_name',
             'checkcommit = openwisp_utils.qa:check_commit_message',
-            'checkrst = openwisp_utils.qa:check_rst_files',
         ]
     },
     scripts=['openwisp-qa-check', 'openwisp-qa-format', 'openwisp-pre-push-hook'],
@@ -51,12 +50,12 @@ setup(
     ],
     extras_require={
         'qa': [
-            'black~=22.3.0',
-            'flake8<=3.9',
-            'isort~=5.0',
-            'readme-renderer~=28.0',
-            'coveralls~=3.0.0',  # depends on coverage as well
+            'black~=23.12.1',
+            'flake8~=7.1.0',
+            'isort~=5.13.2',
+            'coveralls~=4.0.1',  # depends on coverage as well
             'tblib~=3.0.0',
+            'docstrfmt~=1.8.0',
         ],
         'rest': [
             'djangorestframework~=3.14.0',
@@ -64,10 +63,10 @@ setup(
             'drf-yasg~=1.21.7',
         ],
         'celery': ['celery~=5.3.0'],
-        'selenium': ['selenium~=4.10.0'],
+        'selenium': ['selenium>=4.10,<4.23'],
     },
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable ',
         'Environment :: Web Environment',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: System :: Networking',
