@@ -8,11 +8,15 @@
 {% endif %}
 {% if additional_buttons %}
     {% for button in additional_buttons %}
+        {% if button.html %}
+        {{ button.html }}
+        {% else %}
         <input type="{{ button.type }}"
                data-url="{{ button.url }}"
                class="{{ button.class }}"
                value="{{ button.value }}"
                title="{{ button.title }}">
+        {% endif %}
     {% endfor %}
 {% endif %}
 {% if show_save_and_continue %}<input type="submit" value="{% trans 'Save and continue editing' %}" name="_continue" />{% endif %}
