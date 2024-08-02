@@ -18,9 +18,7 @@ class SortedOrderedDict(OrderedDict):
 
 
 def get_random_key():
-    """
-    generates a random string of 32 characters
-    """
+    """generates a random string of 32 characters."""
     return get_random_string(length=32)
 
 
@@ -33,9 +31,11 @@ def register_menu_items(items, name_menu='OPENWISP_DEFAULT_ADMIN_MENU_ITEMS'):
 
 
 def deep_merge_dicts(dict1, dict2):
-    """
-    returns a new dict which is the result of the merge of the two dicts,
-    all elements are deepcopied to avoid modifying the original data structures
+    """Performs a deep merge of two dictionaries dict1 and dict2.
+
+    Returns a new dict which is the result of the merge of the two dicts,
+    all elements are deepcopied to avoid modifying the original data
+    structures.
     """
     result = deepcopy(dict1)
     for key, value in dict2.items():
@@ -52,8 +52,8 @@ def default_or_test(value, test):
 
 
 def print_color(string, color_name, end='\n'):
-    """
-    Prints colored output on terminal from a selected range of colors.
+    """Prints colored output on terminal from a selected range of colors.
+
     If color_name is not present then output won't be colored.
     """
     color_dict = {

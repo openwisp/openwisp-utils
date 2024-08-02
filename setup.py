@@ -36,7 +36,6 @@ setup(
         'console_scripts': [
             'checkmigrations = openwisp_utils.qa:check_migration_name',
             'checkcommit = openwisp_utils.qa:check_commit_message',
-            'checkrst = openwisp_utils.qa:check_rst_files',
         ]
     },
     scripts=['openwisp-qa-check', 'openwisp-qa-format', 'openwisp-pre-push-hook'],
@@ -51,13 +50,12 @@ setup(
     ],
     extras_require={
         'qa': [
-            'black~=23.3.0',
-            'flake8~=6.0.0',
-            'isort~=5.10.1',
-            'readme-renderer~=37.3.0',
+            'black~=23.12.1',
+            'flake8~=7.1.0',
+            'isort~=5.13.2',
             'coveralls~=4.0.1',  # depends on coverage as well
             'tblib~=3.0.0',
-            'docstrfmt~=1.7.0',
+            'docstrfmt~=1.8.0',
         ],
         'rest': [
             'djangorestframework~=3.14.0',
@@ -65,7 +63,7 @@ setup(
             'drf-yasg~=1.21.7',
         ],
         'celery': ['celery~=5.3.0'],
-        'selenium': ['selenium>=4.10,<4.23'],
+        'selenium': ['selenium>=4.10,<4.24'],
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable ',

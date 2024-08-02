@@ -38,9 +38,10 @@ def _validate_chart_config(config):
 
 
 def register_dashboard_chart(position, config):
-    """
-    Registers a dashboard chart
-    register_dashboard_chart(int, dict)
+    """Registers a dashboard chart:
+
+    The position argument indicates the order. The config argument
+    indicates the chart configuration details.
     """
     if not isinstance(position, int):
         raise ImproperlyConfigured('Dashboard chart position should be of type `int`.')
@@ -57,10 +58,7 @@ def register_dashboard_chart(position, config):
 
 
 def unregister_dashboard_chart(name):
-    """
-    Un-registers a dashboard chart
-    unregister_dashboard_chart(str)
-    """
+    """Un-registers a dashboard chart."""
     if not isinstance(name, str):
         raise ImproperlyConfigured('Dashboard chart name should be type `str`')
 
@@ -82,10 +80,7 @@ def _validate_template_config(config):
 def register_dashboard_template(
     position, config, extra_config=None, after_charts=False
 ):
-    """
-    Registers a dashboard template
-    register_dashboard_template(int, dict)
-    """
+    """Registers a dashboard HTML template."""
     if not isinstance(position, int):
         raise ImproperlyConfigured(
             'Dashboard template position should be of type `int`.'
@@ -112,10 +107,7 @@ def register_dashboard_template(
 
 
 def unregister_dashboard_template(path):
-    """
-    Un-registers a dashboard template
-    unregister_dashboard_template(str)
-    """
+    """Un-registers a dashboard template."""
     if not isinstance(path, str):
         raise ImproperlyConfigured('Dashboard template path should be type `str`')
 
@@ -130,9 +122,7 @@ def unregister_dashboard_template(path):
 
 
 def get_dashboard_context(request):
-    """
-    Loads dashboard context for the admin index view
-    """
+    """Loads dashboard context for the admin index view."""
     context = {'is_popup': False, 'has_permission': True, 'dashboard_enabled': True}
     config = copy.deepcopy(DASHBOARD_CHARTS)
 

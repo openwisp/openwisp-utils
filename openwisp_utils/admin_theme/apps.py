@@ -9,18 +9,22 @@ from .menu import register_menu_group
 
 
 def _staticfy(value):
-    """
+    """Backard compatible call to static().
+
     Allows to keep backward compatibility with instances of OpenWISP which
     were using the previous implementation of OPENWISP_ADMIN_THEME_LINKS
     and OPENWISP_ADMIN_THEME_JS which didn't automatically pre-process
     those lists of static files with django.templatetags.static.static()
-    and hence were not configured to allow those files to be found
-    by the staticfile loaders, if static() raises ValueError, we assume
-    one of either cases:
-    1. An old instance has upgraded and we keep returning the old value
-       so the file will continue being found although unprocessed by
-       django's static file machinery.
-    2. The value passed is wrong, instead of failing loudly we fail silently.
+    and hence were not configured to allow those files to be found by the
+    staticfile loaders, if static() raises ValueError, we assume one of
+    either cases:
+
+    1. An old instance has upgraded and we keep returning the old value so
+    the file will continue being found although unprocessed by django's
+    static file machinery.
+
+    2. The value passed is wrong, instead of failing loudly we fail
+    silently.
     """
     try:
         return static(value)

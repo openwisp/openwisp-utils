@@ -9,10 +9,7 @@ from .settings import EXTENDED_APPS
 
 
 class DependencyFinder(FileSystemFinder):
-    """
-    A static files finder that finds static files of
-    django-apps listed in dependencies
-    """
+    """Finds static files of apps listed in settings.EXTENDED_APPS."""
 
     dependencies = list(EXTENDED_APPS) + ['openwisp_utils']
 

@@ -9,10 +9,7 @@ success_response.status_code = 204
 
 
 class MockRequestPostRunner(TimeLoggingTestRunner):
-    """
-    This runner ensures that usage metrics are
-    not sent in development when running tests.
-    """
+    """This runner ensures that usage metrics are not sent in development when running tests."""
 
     pass
 

@@ -3,6 +3,7 @@ set -e
 
 isort .
 black -S .
+docstrfmt --no-docstring-trailing-line --ignore-cache --line-length 74 .
 
 if which stylelint > /dev/null; then
   stylelint $(find . -type f -name "*.css") --fix
