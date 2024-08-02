@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -19,9 +21,14 @@ class SeleniumTestMixin:
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+
         chrome_options = webdriver.ChromeOptions()
+        chrome_options.page_load_strategy = 'eager'
         if getattr(settings, 'SELENIUM_HEADLESS', True):
             chrome_options.add_argument('--headless')
+        CHROME_BIN = os.environ.get('CHROME_BIN', None)
+        if CHROME_BIN:
+            chrome_options.binary_location = CHROME_BIN
         chrome_options.add_argument('--window-size=1366,768')
         chrome_options.add_argument('--ignore-certificate-errors')
         # When running Selenium tests with the "--parallel" flag,
