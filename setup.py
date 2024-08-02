@@ -63,7 +63,7 @@ setup(
             'drf-yasg~=1.21.7',
         ],
         'celery': ['celery~=5.3.0'],
-        'selenium': ['selenium>=4.10,<4.23'],
+        'selenium': ['selenium>=4.10,<4.24'],
     },
     classifiers=[
         'Development Status :: 5 - Production/Stable ',
