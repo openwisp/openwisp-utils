@@ -62,7 +62,7 @@ setup(
             'django-filter~=23.2',  # django-filter uses CalVer
             'drf-yasg~=1.21.7',
         ],
-        'celery': ['celery~=5.3.0'],
+        'celery': ['celery>=5.3,<5.5'],
         'selenium': ['selenium>=4.10,<4.24'],
     },
     classifiers=[
