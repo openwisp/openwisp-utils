@@ -219,15 +219,16 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         self.open(reverse('admin:index'))
 
     def test_addition_of_transition_effect(self):
-        transition = 'none 0s ease 0s'
+        # On Github Actions CI is resulting in a slightly different value
+        transitions = ['none 0s ease 0s', 'none']
         # none because transition has been set to none during tests
         self.login()
         menu = self.web_driver.find_element(By.ID, 'menu')
         main_content = self._get_main_content()
         menu_toggle = self._get_menu_toggle()
-        self.assertEqual(menu.value_of_css_property('transition'), transition)
-        self.assertEqual(main_content.value_of_css_property('transition'), transition)
-        self.assertEqual(menu_toggle.value_of_css_property('transition'), transition)
+        self.assertIn(menu.value_of_css_property('transition'), transitions)
+        self.assertIn(main_content.value_of_css_property('transition'), transitions)
+        self.assertIn(menu_toggle.value_of_css_property('transition'), transitions)
 
     def test_menu_on_wide_screen(self):
         self.login()
@@ -271,11 +272,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         self._test_login_and_logout_page()
 
     def test_active_menu_group(self):
-        """
-        Test active menu group:
-        - Active group should close only when clicked on menu else
-          it should remain open.
-        """
+        """The active group should close only when the menu, is clicked, otherwise it should remain open."""
         self.login()
         url = reverse('admin:auth_user_changelist')
         self.open(url)
@@ -746,9 +743,7 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             self.assertNotEqual(option.text, '-')
 
     def test_autocomplete_owner_filter(self):
-        """
-        Tests the null option of the AutocompleteFilter
-        """
+        """Tests the null option of the AutocompleteFilter."""
         url = reverse('admin:test_project_shelf_changelist')
         user = self._create_user()
         horror_shelf = self._create_shelf(

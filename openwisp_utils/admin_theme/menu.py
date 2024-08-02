@@ -9,9 +9,9 @@ MENU = SortedOrderedDict()
 
 
 class BaseMenuItem:
-    """
-    It is a base class for all types of menu items.
-    It is used to handle some common functions.
+    """Base class for all menu items.
+
+    Used to implement common functionality for menu items.
     """
 
     def __init__(self, config):
@@ -34,9 +34,9 @@ class BaseMenuItem:
 
 
 class ModelLink(BaseMenuItem):
-    """
-    It is to used create a link for a model, like "list view" and "add view".
-    Parameters for the config: name, model, label, icon
+    """Implements links to model objects.
+
+    Input Parameters: name, model, label, icon.
     """
 
     def __init__(self, config):
@@ -88,9 +88,9 @@ class ModelLink(BaseMenuItem):
 
 
 class MenuLink(BaseMenuItem):
-    """
-    It is used to create any general link by supplying a custom url.
-    Parameters of config: label, url and icon.
+    """Generic Links.
+
+    Creates a link from a custom url Input parameters: label, url, icon.
     """
 
     def __init__(self, config):
@@ -108,10 +108,11 @@ class MenuLink(BaseMenuItem):
 
 
 class MenuGroup(BaseMenuItem):
-    """
-    It is used to create a dropdown in the menu.
-    Parameters of config: label, items and icon.
-    each item in items should repesent a config for MenuLink or ModelLink
+    """Implements Menu Groups (dropdown).
+
+    Input parameters: label, items and icon. The items is a dict in which
+    keys are positions and values must repesent a config for MenuLink or
+    ModelLink objects.
     """
 
     def __init__(self, config):
@@ -141,7 +142,8 @@ class MenuGroup(BaseMenuItem):
 
             if not isinstance(item, dict):
                 raise ImproperlyConfigured(
-                    f'Each value of "items" should be a type of "dict". Error for "items" of config- {config}'
+                    f'Each value of "items" should be a type of "dict". '
+                    f'Error for "items" of config- {config}'
                 )
             if item.get('url'):
                 # It is a menu link

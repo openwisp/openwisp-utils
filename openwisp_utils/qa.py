@@ -1,21 +1,11 @@
-"""
-Common Quality Assurance checks for OpenWISP modules
-"""
+"""Common Quality Assurance checks for OpenWISP modules."""
 import argparse
-import io
 import os
 import re
 import sys
-from glob import iglob
-
-import docutils
-import readme_renderer.rst as readme_rst
 
 
 def _parse_migration_check_args():
-    """
-    Parse and return CLI arguments
-    """
     parser = argparse.ArgumentParser(
         description='Ensures migration files '
         'created have a descriptive name. If '
@@ -38,9 +28,9 @@ def _parse_migration_check_args():
 
 
 def check_migration_name():
-    """
-    Ensure migration files created have a descriptive
-    name; if default name pattern is found, raise exception
+    """Ensure migration files created have a descriptive name.
+
+    If the default name pattern is found, it will raise an exception.
     """
     args = _parse_migration_check_args()
     if args.migrations_to_ignore is None:
@@ -68,9 +58,6 @@ def check_migration_name():
 
 
 def _parse_commit_check_args():
-    """
-    Parse and return CLI arguments
-    """
     parser = argparse.ArgumentParser(
         description='Ensures the commit message '
         'follows the OpenWISP commit guidelines.'
@@ -187,46 +174,14 @@ def check_commit_message():
         sys.exit(1)
 
 
-def check_rst_files():
-    string_io = io.StringIO()
-    settings_overrides = {}
-    settings_overrides.update(readme_rst.SETTINGS)
-    settings_overrides['report_level'] = 2
-    settings_overrides['warning_stream'] = string_io
-    files = [_ for _ in iglob('*.rst', recursive=True)]
-    for file in files:
-        data = read_rst_file(file)
-        try:
-            docutils.core.publish_string(data, settings_overrides=settings_overrides)
-            clean_body = readme_rst.clean(''.join(data))
-            if clean_body is None:
-                # Raised sometimes when rendered failed to generate html
-                string_io.write("Failed to generate output for rendering")
-                raise ValueError("Output Failed")
-        except Exception:
-            pass
-        errors = string_io.getvalue().strip()
-        if errors:
-            body = 'There are some Errors in your RST file syntax \n\n'
-            for error in errors.splitlines():
-                body += '- {}\n'.format(error)
-            print(body)
-            sys.exit(1)
-
-
-def read_rst_file(filename):
-    with open(filename, 'r') as f:
-        data = f.read()
-        return data
-
-
 def _find_issue_mentions(message):
-    """
-    Looks for issue mentions in ``message``
-    returns a dict which contains:
-     - list of mentioned issues
-     - count of mentions performed correctly
-       (using one of the common github keywords)
+    """Looks for issue mentions in ``message``.
+
+    Returns a dict which contains:
+
+    - List of mentioned issues.
+    - Count of mentions performed correctly (using one of the common
+      github keywords).
     """
     words = message.split()
     issues = []

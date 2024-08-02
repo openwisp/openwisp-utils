@@ -125,8 +125,14 @@ runflake8() {
 }
 
 runrstcheck() {
-  checkrst && echo "SUCCESS: ReStructuredText check successful!" \
-    || { echoerr "ERROR: ReStructuredText check failed!"; FAILURE=1; }
+  cmd="docstrfmt --no-docstring-trailing-line --ignore-cache --check --line-length 74 ."
+  $($cmd --quiet) &&
+    echo "SUCCESS: ReStructuredText check successful!" ||
+    {
+      echoerr "ERROR: ReStructuredText check failed!"
+      $($cmd)
+      FAILURE=1
+    }
 }
 
 runisort() {

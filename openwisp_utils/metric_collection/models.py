@@ -29,10 +29,14 @@ class OpenwispVersion(TimeStampedEditableModel):
 
     @classmethod
     def log_module_version_changes(cls, current_versions):
-        """
+        """Logs changes to the version of installed OpenWISP modules.
+
         Returns a tuple of booleans indicating:
-         - whether this is a new installation,
-         - whether any OpenWISP modules has been upgraded.
+
+        - whether this is a new installation
+        - whether any OpenWISP modules has been upgraded.
+
+        If no module has been upgraded, it won't store anything in the DB.
         """
         openwisp_version = cls.objects.first()
         if not openwisp_version:
@@ -139,10 +143,11 @@ class OpenwispVersion(TimeStampedEditableModel):
 
     @classmethod
     def _get_events(cls, category, data):
-        """
-        This method takes a category and data representing usage metrics,
-        and returns a list of events in a format accepted by the
-        Clean Insights Matomo Proxy (CIMP) API.
+        """Returns a list of events that will be sent to CleanInsights.
+
+        This method requires two input parameters, category and data,
+        which represent usage metrics, and returns a list of events in a
+        format accepted by the Clean Insights Matomo Proxy (CIMP) API.
 
         Read the "Event Measurement Schema" in the CIMP documentation:
         https://cutt.ly/SwBkC40A
@@ -170,12 +175,11 @@ class OpenwispVersion(TimeStampedEditableModel):
 
 
 class Consent(TimeStampedEditableModel):
-    """
-    This model stores information about the superuser's consent to collect
-    anonymous usage metrics. The ``shown_once`` field is used to
-    track whether the info message about the metric collection has been
-    shown to the superuser on their first login.
-    The ``user_consented`` field stores whether the superuser
+    """Stores consent to collect anonymous usage metrics.
+
+    The ``shown_once`` field is used to track whether the info message
+    about the metric collection has been shown to the superuser on their
+    first login. The ``user_consented`` field stores whether the superuser
     has opted-out of collecting anonymous usage metrics.
     """
 

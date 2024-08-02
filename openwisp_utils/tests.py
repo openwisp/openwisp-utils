@@ -14,9 +14,7 @@ from .utils import print_color
 
 @contextmanager
 def catch_signal(signal):
-    """
-    Catches django signal and returns mock call for the same
-    """
+    """Catches django signal and returns mock call for the same."""
     handler = mock.Mock()
     signal.connect(handler)
     yield handler
@@ -130,9 +128,7 @@ class capture_any_output(CaptureOutput):
 
 
 class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
-    """
-    Needed to execute assertNumQueries in a subTest
-    """
+    """Needed to execute assertNumQueries in a subTest."""
 
     def __init__(self, test_case, num, connection):
         self.test_case = test_case

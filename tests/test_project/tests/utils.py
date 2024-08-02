@@ -16,9 +16,7 @@ User = get_user_model()
 
 
 class TestConfigMixin(object):
-    """
-    Get the configurations that are to be used for all the tests.
-    """
+    """Loads test configuration from a config.json file."""
 
     config_file = os.path.join(os.path.dirname(__file__), 'config.json')
     root_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
