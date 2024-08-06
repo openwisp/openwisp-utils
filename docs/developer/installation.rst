@@ -54,9 +54,9 @@ Install development dependencies:
     pip install -r requirements-test.txt
     sudo npm install -g jshint stylelint
 
-Set up the pre-push hook to run tests and QA checks automatically right
-before the git push action, so that if anything fails the push operation
-will be aborted:
+Set up the git *pre-push* hook to run tests and QA checks automatically
+right before the git push action, so that if anything fails the push
+operation will be aborted:
 
 .. code-block:: shell
 
@@ -96,7 +96,7 @@ Alternative Sources
 Pypi
 ~~~~
 
-To install the latest stable version from pypi:
+To install the latest Pypi:
 
 .. code-block:: shell
 

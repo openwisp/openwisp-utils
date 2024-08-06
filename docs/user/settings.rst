@@ -129,7 +129,7 @@ Whether the OpenAPI documentation is enabled.
 When enabled, you can view the available documentation using the Swagger
 endpoint at ``/api/v1/docs/``.
 
-You also need to add the following url to your project urls.py:
+You also need to add the following URL to your project ``urls.py``:
 
 .. code-block:: python
 
@@ -167,7 +167,7 @@ documentation
 It can be used to change the thresholds used by
 :ref:`TimeLoggingTestRunner <utils_time_logging_test_runner>` to detect
 slow tests (0.3s by default) and highlight the slowest ones (1s by
-default) amongst them.
+default) among them.
 
 .. _openwisp_staticfiles_versioned_exclude:
 

@@ -10,7 +10,7 @@ Admin Utilities
 ``openwisp_utils.admin.TimeReadonlyAdminMixin``
 -----------------------------------------------
 
-Admin mixin which adds two readonly fields ``created`` and ``modified``.
+Admin mixin which adds two read only fields ``created`` and ``modified``.
 
 This is an admin mixin for models inheriting ``TimeStampedEditableModel``
 which adds the fields ``created`` and ``modified`` to the database.
@@ -21,7 +21,7 @@ which adds the fields ``created`` and ``modified`` to the database.
 A read-only ``ModelAdmin`` base class.
 
 Will include the ``id`` field by default, which can be excluded by
-supplying the ``exclude`` attribute, eg:
+supplying the ``exclude`` attribute, e.g.:
 
 .. code-block:: python
 
@@ -101,7 +101,8 @@ object. Following is an example:
 --------------------------------------------------
 
 The ``admin_theme`` sub app of this package provides an input filter that
-can be used in changelist page to filter ``UUIDField`` or ``CharField``.
+can be used in the *changelist* page to filter ``UUIDField`` or
+``CharField``.
 
 Code example:
 
@@ -186,7 +187,7 @@ following example:
 ---------------------------------------------------------
 
 The ``admin_theme`` sub app of this package provides an auto complete
-filter that uses django autocomplete widget to load filter data
+filter that uses the *django-autocomplete* widget to load filter data
 asynchronously.
 
 This filter can be helpful when the number of objects is too large to load

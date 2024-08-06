@@ -143,7 +143,7 @@ Features
 - [utils] Added `register_menu_items
   <https://github.com/openwisp/openwisp-utils#openwisp-utils-utils-register-menu-items>`_
   to easily register menu items
-- [tests] Added test utilities to capture output (eg: to make assertions
+- [tests] Added test utilities to capture output (e.g.: to make assertions
   on it): `capture_stdout
   <https://github.com/openwisp/openwisp-utils#openwisp-utils-tests-capture-stdout>`_,
   `capture_stderr

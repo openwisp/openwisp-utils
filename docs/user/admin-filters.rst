@@ -4,7 +4,7 @@ Admin Filters
 .. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/filter.gif
     :align: center
 
-The ``admin_theme`` sub app provides an improved UI for the changelist
+The ``admin_theme`` sub app provides an improved UI for the *changelist*
 filter which occupies less space compared to the original implementation
 in django: filters are displayed horizontally on the top (instead of
 vertically on the side) and filter options are hidden in dropdown menus

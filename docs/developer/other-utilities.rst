@@ -153,7 +153,7 @@ If you want to print a string in ``Red Bold``, you can do it as below.
 
     print_color("This is the printed in Red Bold", color_name="red_bold")
 
-You may also provide the ``end`` arguement similar to built-in print
+You may also provide the ``end`` argument similar to built-in print
 method.
 
 ``openwisp_utils.utils.SorrtedOrderedDict``
@@ -189,7 +189,7 @@ Usage:
 
 **Note:** This task class should be used for regular background tasks but
 not for complex background tasks which can take a long time to execute
-(eg: firmware upgrades, network operations with retry mechanisms).
+(e.g.: firmware upgrades, network operations with retry mechanisms).
 
 ``openwisp_utils.utils.retryable_request``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -249,7 +249,7 @@ Usage:
 - ``**kwargs``: Additional keyword arguments to be passed to the
   underlying request method (e.g. 'headers', etc.).
 
-This method will raise a requests.exceptions.RetryError if the request
+This method will raise a ``requests.exceptions.RetryError`` if the request
 remains unsuccessful even after all retry attempts have been exhausted.
 This exception indicates that the operation could not be completed
 successfully despite the retry mechanism.

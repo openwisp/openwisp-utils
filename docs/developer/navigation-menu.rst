@@ -50,11 +50,11 @@ the Main Navigation Menu.
 
     register_menu_group(position, config)
 
-============= =============================================
+============= ==============================================
 **Parameter** **Description**
 ``position``  (``int``) Position of the group or item.
-``config``    (``dict``) Configuration of the goup or item.
-============= =============================================
+``config``    (``dict``) Configuration of the group or item.
+============= ==============================================
 
 Code example:
 
@@ -136,7 +136,7 @@ Following is the description of the configuration:
 ============= ============================================================
 **Parameter** **Description**
 ``label``     (``str``) Display text for the link.
-``url``       (``str``) url for the link.
+``url``       (``str``) URL for the link.
 ``icon``      An **optional** ``str`` CSS class name for the icon. No icon
               is displayed if not provided.
 ============= ============================================================
@@ -179,7 +179,7 @@ Following is the description of the configuration:
 ============= ============================================================
 **Parameter** **Description**
 ``model``     (``str``) Model of the app for which you to add link.
-``name``      (``str``) url name. eg. changelist or add.
+``name``      (``str``) argument name, e.g.: *changelist* or *add*.
 ``label``     An **optional** ``str`` display text for the link. It is
               automatically generated if not provided.
 ``icon``      An **optional** ``str`` CSS class name for the icon. No icon

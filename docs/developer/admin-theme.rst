@@ -134,8 +134,8 @@ Allows adding items to :ref:`OPENWISP_ADMIN_THEME_LINKS
 <openwisp_admin_theme_links>`.
 
 This function is meant to be used by third party apps or OpenWISP modules
-which aim to extend the core look and feel of the OpenWISP theme (eg: add
-new menu icons).
+which aim to extend the core look and feel of the OpenWISP theme (e.g.:
+add new menu icons).
 
 **Syntax:**
 
@@ -157,8 +157,8 @@ Allows removing items from :ref:`OPENWISP_ADMIN_THEME_LINKS
 <openwisp_admin_theme_links>`.
 
 This function is meant to be used by third party apps or OpenWISP modules
-which aim additional functionalities to UI of OpenWISP (eg: adding a
-support chatbot).
+which aim additional functionalities to UI of OpenWISP (e.g.: adding a
+support chat bot).
 
 **Syntax:**
 
@@ -219,7 +219,7 @@ Sending emails
 +++++++++++++++++++++++++++++++++++++++++++++++
 
 This function allows sending email in both plain text and HTML version
-(using the template and logo that can be customised using
+(using the template and logo that can be customized using
 :ref:`OPENWISP_EMAIL_TEMPLATE <openwisp_email_template>` and
 :ref:`OPENWISP_EMAIL_LOGO <openwisp_email_logo>` respectively).
 

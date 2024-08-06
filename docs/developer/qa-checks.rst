@@ -35,7 +35,7 @@ Shell script to run the following quality assurance checks:
 - :ref:`checkpendingmigrations <utils_checkpendingmigrations>`
 - :ref:`checkrst <utils_checkrst>`
 - ``flake8`` - Python code linter
-- ``isort`` - Sorts python imports alphabetically, and seperated into
+- ``isort`` - Sorts python imports alphabetically, and separated into
   sections
 - ``black`` - Formats python code using a common standard
 - ``csslinter`` - Formats and checks CSS code using stylelint common
@@ -59,7 +59,7 @@ Usage example:
     openwisp-qa-check --skip-isort
 
 For backward compatibility ``csslinter`` and ``jslinter`` are skipped by
-default. To run them in checks pass arguements in this way.
+default. To run them during QA checks pass arguments as follows.
 
 Usage example:
 
@@ -156,7 +156,7 @@ Ensures there django migrations are up to date and no new migrations need
 to be created.
 
 It accepts an optional ``--migration-module`` flag indicating the django
-app name that should be passed to ``./manage.py makemigrations``, eg:
+app name that should be passed to ``./manage.py makemigrations``, e.g.:
 ``./manage.py makemigrations $MIGRATION_MODULE``.
 
 .. _utils_checkrst:
@@ -165,4 +165,4 @@ app name that should be passed to ``./manage.py makemigrations``, eg:
 ------------
 
 Checks the syntax of all ReStructuredText files to ensure they can be
-published on pypi or using python-sphinx.
+published on Pypi or using python-sphinx.

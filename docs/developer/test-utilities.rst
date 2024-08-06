@@ -10,7 +10,7 @@ Test Utilities
 ``openwisp_utils.tests.catch_signal``
 -------------------------------------
 
-This method can be used to mock a signal call inorder to easily verify
+This method can be used to mock a signal call in order to easily verify
 that the signal has been called.
 
 Usage example as a context-manager:
