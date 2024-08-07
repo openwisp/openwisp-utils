@@ -16,18 +16,22 @@ that can be used in Django models.
 A model field which provides a random key or token, widely used across
 openwisp modules.
 
+.. important::
+
+    If the value of the **fallback field** is equal to the fallback value,
+    then the field will store ``None`` in the database.
+
 ``openwisp_utils.fields.FallbackBooleanChoiceField``
 ----------------------------------------------------
 
 This field extends Django's `BooleanField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#booleanfield>`_
 and provides additional functionality for handling choices with a fallback
-value. The field will use the **fallback value** whenever the field is set
-to ``None``.
+value. The field will return the **fallback value** whenever the field is
+set to ``None``.
 
 This field is particularly useful when you want to present a choice
-between enabled and disabled options, with an additional "Default" option
-that reflects the fallback value.
+between enabled and disabled options.
 
 .. code-block:: python
 
@@ -38,9 +42,6 @@ that reflects the fallback value.
 
     class MyModel(models.Model):
         is_active = FallbackBooleanChoiceField(
-            null=True,
-            blank=True,
-            default=None,
             fallback=app_settings.IS_ACTIVE_FALLBACK,
         )
 
@@ -50,8 +51,10 @@ that reflects the fallback value.
 This field extends Django's `CharField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_ and
 provides additional functionality for handling choices with a fallback
-value. The field will use the **fallback value** whenever the field is set
-to ``None``.
+value.
+
+The field will return the **fallback value** whenever the field is set to
+``None``.
 
 .. code-block:: python
 
@@ -62,8 +65,6 @@ to ``None``.
 
     class MyModel(models.Model):
         is_first_name_required = FallbackCharChoiceField(
-            null=True,
-            blank=True,
             max_length=32,
             choices=(
                 ("disabled", _("Disabled")),
@@ -81,8 +82,8 @@ This field extends Django's `CharField
 provides additional functionality for handling text fields with a fallback
 value.
 
-It allows populating the form with the fallback value when the actual
-value is set to ``null`` in the database.
+The field will return the **fallback value** whenever the field is set to
+``None``.
 
 .. code-block:: python
 
@@ -93,8 +94,6 @@ value is set to ``null`` in the database.
 
     class MyModel(models.Model):
         greeting_text = FallbackCharField(
-            null=True,
-            blank=True,
             max_length=200,
             fallback=app_settings.GREETING_TEXT,
         )
@@ -107,8 +106,8 @@ This field extends Django's `URLField
 provides additional functionality for handling URL fields with a fallback
 value.
 
-It allows populating the form with the fallback value when the actual
-value is set to ``null`` in the database.
+The field will return the **fallback value** whenever the field is set to
+``None``.
 
 .. code-block:: python
 
@@ -119,8 +118,6 @@ value is set to ``null`` in the database.
 
     class MyModel(models.Model):
         password_reset_url = FallbackURLField(
-            null=True,
-            blank=True,
             max_length=200,
             fallback=app_settings.DEFAULT_PASSWORD_RESET_URL,
         )
@@ -133,8 +130,8 @@ This extends Django's `TextField
 and provides additional functionality for handling text fields with a
 fallback value.
 
-It allows populating the form with the fallback value when the actual
-value is set to ``null`` in the database.
+The field will returned the **fallback value** whenever the field is set
+to ``None``.
 
 .. code-block:: python
 
@@ -145,8 +142,6 @@ value is set to ``null`` in the database.
 
     class MyModel(models.Model):
         extra_config = FallbackTextField(
-            null=True,
-            blank=True,
             max_length=200,
             fallback=app_settings.EXTRA_CONFIG,
         )
@@ -159,8 +154,8 @@ This extends Django's `PositiveIntegerField
 and provides additional functionality for handling positive integer fields
 with a fallback value.
 
-It allows populating the form with the fallback value when the actual
-value is set to ``null`` in the database.
+The field will returned the **fallback value** whenever the field is set
+to ``None``.
 
 .. code-block:: python
 
@@ -171,7 +166,30 @@ value is set to ``null`` in the database.
 
     class MyModel(models.Model):
         count = FallbackPositiveIntegerField(
-            blank=True,
-            null=True,
             fallback=app_settings.DEFAULT_COUNT,
+        )
+
+``openwisp_utils.fields.FallbackDecimalField``
+----------------------------------------------
+
+This extends Django's `DecimalField
+<https://docs.djangoproject.com/en/4.2/ref/models/fields/#decimalfield>`_
+and provides additional functionality for handling positive integer fields
+with a fallback value.
+
+The field will returned the **fallback value** whenever the field is set
+to ``None``.
+
+.. code-block:: python
+
+    from django.db import models
+    from openwisp_utils.fields import FallbackDecimalField
+    from myapp import settings as app_settings
+
+
+    class MyModel(models.Model):
+        price = FallbackDecimalField(
+            max_digits=4,
+            decimal_places=2,
+            fallback=app_settings.DEFAULT_price,
         )
