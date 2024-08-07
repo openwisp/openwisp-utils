@@ -51,10 +51,8 @@ between enabled and disabled options.
 This field extends Django's `CharField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_ and
 provides additional functionality for handling choices with a fallback
-value.
-
-The field will return the **fallback value** whenever the field is set to
-``None``.
+value. The field will return the **fallback value** whenever the field is
+set to ``None``.
 
 .. code-block:: python
 
@@ -80,10 +78,8 @@ The field will return the **fallback value** whenever the field is set to
 This field extends Django's `CharField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_ and
 provides additional functionality for handling text fields with a fallback
-value.
-
-The field will return the **fallback value** whenever the field is set to
-``None``.
+value. The field will return the **fallback value** whenever the field is
+set to ``None``.
 
 .. code-block:: python
 
@@ -104,10 +100,8 @@ The field will return the **fallback value** whenever the field is set to
 This field extends Django's `URLField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#urlfield>`_ and
 provides additional functionality for handling URL fields with a fallback
-value.
-
-The field will return the **fallback value** whenever the field is set to
-``None``.
+value. The field will return the **fallback value** whenever the field is
+set to ``None``.
 
 .. code-block:: python
 
@@ -128,10 +122,8 @@ The field will return the **fallback value** whenever the field is set to
 This extends Django's `TextField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#django.db.models.TextField>`_
 and provides additional functionality for handling text fields with a
-fallback value.
-
-The field will returned the **fallback value** whenever the field is set
-to ``None``.
+fallback value. The field will return the **fallback value** whenever the
+field is set to ``None``.
 
 .. code-block:: python
 
@@ -152,10 +144,8 @@ to ``None``.
 This extends Django's `PositiveIntegerField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#positiveintegerfield>`_
 and provides additional functionality for handling positive integer fields
-with a fallback value.
-
-The field will returned the **fallback value** whenever the field is set
-to ``None``.
+with a fallback value. The field will return the **fallback value**
+whenever the field is set to ``None``.
 
 .. code-block:: python
 
@@ -174,11 +164,9 @@ to ``None``.
 
 This extends Django's `DecimalField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#decimalfield>`_
-and provides additional functionality for handling positive integer fields
-with a fallback value.
-
-The field will returned the **fallback value** whenever the field is set
-to ``None``.
+and provides additional functionality for handling decimal fields with a
+fallback value. The field will return the **fallback value** whenever the
+field is set to ``None``.
 
 .. code-block:: python
 
@@ -191,5 +179,5 @@ to ``None``.
         price = FallbackDecimalField(
             max_digits=4,
             decimal_places=2,
-            fallback=app_settings.DEFAULT_price,
+            fallback=app_settings.DEFAULT_PRICE,
         )
