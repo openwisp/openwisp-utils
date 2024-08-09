@@ -16,19 +16,15 @@ that can be used in Django models.
 A model field which provides a random key or token, widely used across
 openwisp modules.
 
-.. important::
-
-    If the value of the **fallback field** is equal to the fallback value,
-    then the field will store ``None`` in the database.
-
 ``openwisp_utils.fields.FallbackBooleanChoiceField``
 ----------------------------------------------------
 
 This field extends Django's `BooleanField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#booleanfield>`_
 and provides additional functionality for handling choices with a fallback
-value. The field will return the **fallback value** whenever the field is
-set to ``None``.
+value.
+
+.. include:: ../partials/fallback-fields.rst
 
 This field is particularly useful when you want to present a choice
 between enabled and disabled options.
@@ -51,8 +47,9 @@ between enabled and disabled options.
 This field extends Django's `CharField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_ and
 provides additional functionality for handling choices with a fallback
-value. The field will return the **fallback value** whenever the field is
-set to ``None``.
+value.
+
+.. include:: ../partials/fallback-fields.rst
 
 .. code-block:: python
 
@@ -78,8 +75,9 @@ set to ``None``.
 This field extends Django's `CharField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_ and
 provides additional functionality for handling text fields with a fallback
-value. The field will return the **fallback value** whenever the field is
-set to ``None``.
+value.
+
+.. include:: ../partials/fallback-fields.rst
 
 .. code-block:: python
 
@@ -100,8 +98,9 @@ set to ``None``.
 This field extends Django's `URLField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#urlfield>`_ and
 provides additional functionality for handling URL fields with a fallback
-value. The field will return the **fallback value** whenever the field is
-set to ``None``.
+value.
+
+.. include:: ../partials/fallback-fields.rst
 
 .. code-block:: python
 
@@ -122,8 +121,9 @@ set to ``None``.
 This extends Django's `TextField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#django.db.models.TextField>`_
 and provides additional functionality for handling text fields with a
-fallback value. The field will return the **fallback value** whenever the
-field is set to ``None``.
+fallback value.
+
+.. include:: ../partials/fallback-fields.rst
 
 .. code-block:: python
 
@@ -144,8 +144,9 @@ field is set to ``None``.
 This extends Django's `PositiveIntegerField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#positiveintegerfield>`_
 and provides additional functionality for handling positive integer fields
-with a fallback value. The field will return the **fallback value**
-whenever the field is set to ``None``.
+with a fallback value.
+
+.. include:: ../partials/fallback-fields.rst
 
 .. code-block:: python
 
@@ -165,8 +166,9 @@ whenever the field is set to ``None``.
 This extends Django's `DecimalField
 <https://docs.djangoproject.com/en/4.2/ref/models/fields/#decimalfield>`_
 and provides additional functionality for handling decimal fields with a
-fallback value. The field will return the **fallback value** whenever the
-field is set to ``None``.
+fallback value.
+
+.. include:: ../partials/fallback-fields.rst
 
 .. code-block:: python
 
