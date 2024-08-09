@@ -1,7 +1,9 @@
 from django import forms
 from django.db.models.fields import (
+    BLANK_CHOICE_DASH,
     BooleanField,
     CharField,
+    DecimalField,
     PositiveIntegerField,
     TextField,
     URLField,
@@ -39,29 +41,47 @@ class KeyField(CharField):
 
 
 class FallbackMixin(object):
+    """Returns the fallback value when the value of the field is falsy (None or '').
+
+    If the value of the field is equal to the fallback value, then the
+    field will save `None` in the database.
+    """
+
     def __init__(self, *args, **kwargs):
-        self.fallback = kwargs.pop('fallback', None)
-        super().__init__(*args, **kwargs)
+        self.fallback = kwargs.pop('fallback')
+        opts = dict(blank=True, null=True, default=None)
+        opts.update(kwargs)
+        super().__init__(*args, **opts)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
         kwargs['fallback'] = self.fallback
         return (name, path, args, kwargs)
 
-
-class FallbackFromDbValueMixin:
-    """Returns the fallback value when empty.
-
-    Returns the fallback value when the value of the field is falsy (None
-    or ''). It does not set the field's value to "None" when the value is
-    equal to the fallback value. This allows overriding of the value when
-    a user knows that the default will get changed.
-    """
-
     def from_db_value(self, value, expression, connection):
+        """Called when fetching value from the database."""
         if value is None:
             return self.fallback
         return value
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        """Called when saving value in the database."""
+        value = super().get_db_prep_value(value, connection, prepared)
+        if value == self.fallback:
+            return None
+        return value
+
+    def get_default(self):
+        """Returns the fallback value for the default.
+
+        The default is set to `None` on field initialization to ensure
+        that the default value in the database schema is `NULL` instead of
+        a non-null value (fallback value). Returning the fallback value
+        here also sets the initial value of the field to the fallback
+        value in admin add forms, similar to how Django handles default
+        values.
+        """
+        return self.fallback
 
 
 class FalsyValueNoneMixin:
@@ -87,16 +107,12 @@ class FalsyValueNoneMixin:
 
 class FallbackBooleanChoiceField(FallbackMixin, BooleanField):
     def formfield(self, **kwargs):
-        default_value = _('Enabled') if self.fallback else _('Disabled')
         kwargs.update(
             {
-                "form_class": forms.NullBooleanField,
+                "form_class": forms.BooleanField,
                 'widget': forms.Select(
-                    choices=[
-                        (
-                            '',
-                            _('Default') + f' ({default_value})',
-                        ),
+                    choices=BLANK_CHOICE_DASH
+                    + [
                         (True, _('Enabled')),
                         (False, _('Disabled')),
                     ]
@@ -107,14 +123,6 @@ class FallbackBooleanChoiceField(FallbackMixin, BooleanField):
 
 
 class FallbackCharChoiceField(FallbackMixin, CharField):
-    def get_choices(self, **kwargs):
-        for choice, value in self.choices:
-            if choice == self.fallback:
-                default = value
-                break
-        kwargs.update({'blank_choice': [('', _('Default') + f' ({default})')]})
-        return super().get_choices(**kwargs)
-
     def formfield(self, **kwargs):
         kwargs.update(
             {
@@ -124,52 +132,36 @@ class FallbackCharChoiceField(FallbackMixin, CharField):
         return super().formfield(**kwargs)
 
 
-class FallbackPositiveIntegerField(
-    FallbackMixin, FallbackFromDbValueMixin, PositiveIntegerField
-):
+class FallbackPositiveIntegerField(FallbackMixin, PositiveIntegerField):
     pass
 
 
-class FallbackCharField(
-    FallbackMixin, FalsyValueNoneMixin, FallbackFromDbValueMixin, CharField
-):
-    """Implements fallback logic.
-
-    Populates the form with the fallback value if the value is set to NULL
-    in the database.
-    """
+class FallbackCharField(FallbackMixin, FalsyValueNoneMixin, CharField):
+    """Populates the form with the fallback value if the value is set to null in the database."""
 
     pass
 
 
-class FallbackURLField(
-    FallbackMixin, FalsyValueNoneMixin, FallbackFromDbValueMixin, URLField
-):
-    """Implements fallback logic.
-
-    Populates the form with the fallback value if the value is set to NULL
-    in the database.
-    """
+class FallbackURLField(FallbackMixin, FalsyValueNoneMixin, URLField):
+    """Populates the form with the fallback value if the value is set to null in the database."""
 
     pass
 
 
-class FallbackTextField(
-    FallbackMixin, FalsyValueNoneMixin, FallbackFromDbValueMixin, TextField
-):
-    """Implements fallback logic.
-
-    Populates the form with the fallback value if the value is set to NULL
-    in the database.
-    """
+class FallbackTextField(FallbackMixin, FalsyValueNoneMixin, TextField):
+    """Populates the form with the fallback value if the value is set to null in the database."""
 
     def formfield(self, **kwargs):
-        kwargs.update({'form_class': FallbackTextFormField})
+        kwargs.update(
+            {
+                'form_class': forms.CharField,
+                'widget': forms.Textarea(
+                    attrs={'rows': 2, 'cols': 34, 'style': 'width:auto'}
+                ),
+            }
+        )
         return super().formfield(**kwargs)
 
 
-class FallbackTextFormField(forms.CharField):
-    def widget_attrs(self, widget):
-        attrs = super().widget_attrs(widget)
-        attrs.update({'rows': 2, 'cols': 34, 'style': 'width:auto'})
-        return attrs
+class FallbackDecimalField(FallbackMixin, DecimalField):
+    pass

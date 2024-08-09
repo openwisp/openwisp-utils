@@ -510,7 +510,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertContains(
                 response,
                 '<select name="is_active" id="id_is_active">'
-                '<option value="">Default (Disabled)</option>'
+                '<option value="">---------</option>'
                 '<option value="True" selected>Enabled</option>'
                 '<option value="False">Disabled</option></select>',
                 html=True,
@@ -519,8 +519,8 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertContains(
                 response,
                 '<select name="is_first_name_required" id="id_is_first_name_required">'
-                '<option value="" selected>Default (Disabled)</option>'
-                '<option value="disabled">Disabled</option>'
+                '<option value="">---------</option>'
+                '<option value="disabled" selected>Disabled</option>'
                 '<option value="allowed">Allowed</option>'
                 '<option value="mandatory">Mandatory</option></select>',
                 html=True,
@@ -555,20 +555,14 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             response = self.client.post(url, payload, follow=True)
             self.assertEqual(response.status_code, 200)
             org_rad_settings.refresh_from_db()
-            self.assertEqual(org_rad_settings.get_field_value('is_active'), False)
+            self.assertEqual(org_rad_settings.is_active, False)
+            self.assertEqual(org_rad_settings.is_first_name_required, 'allowed')
+            self.assertEqual(org_rad_settings.greeting_text, 'Greeting text')
             self.assertEqual(
-                org_rad_settings.get_field_value('is_first_name_required'), 'allowed'
-            )
-            self.assertEqual(
-                org_rad_settings.get_field_value('greeting_text'), 'Greeting text'
-            )
-            self.assertEqual(
-                org_rad_settings.get_field_value('password_reset_url'),
+                org_rad_settings.password_reset_url,
                 'http://localhost:8000/admin/password_change/',
             )
-            self.assertEqual(
-                org_rad_settings.get_field_value('extra_config'), 'no data'
-            )
+            self.assertEqual(org_rad_settings.extra_config, 'no data')
 
     @patch(
         'openwisp_utils.admin_theme.system_info.settings.INSTALLED_APPS',
