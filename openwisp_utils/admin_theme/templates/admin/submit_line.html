@@ -8,8 +8,8 @@
 {% endif %}
 {% if additional_buttons %}
     {% for button in additional_buttons %}
-        {% if button.html %}
-        {{ button.html }}
+        {% if button.raw_html %}
+        {{ button.raw_html }}
         {% else %}
         <input type="{{ button.type }}"
                data-url="{{ button.url }}"
