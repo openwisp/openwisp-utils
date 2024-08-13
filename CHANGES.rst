@@ -1,10 +1,74 @@
 Changelog
 =========
 
-Version 1.1.0 [unreleased]
+Version 1.1.0 [2024-08-14]
 --------------------------
 
-WIP.
+Features
+~~~~~~~~
+
+- Added quick link button to the dashboard chart and introduced option to
+  filter queryset.
+- Added the option to add dashboard templates after charts.
+- Added `retryable_request
+  <https://openwisp.io/docs/dev/utils/developer/other-utilities.html#openwisp-utils-utils-retryable-request>`_
+  utility function for making HTTP requests with built-in retry logic.
+- Added `AutocompleteFilter
+  <https://openwisp.io/docs/dev/utils/developer/admin-utilities.html#openwisp-utils-admin-theme-filters-autocompletefilter>`_
+  to load filter data asynchronously.
+- Added `fallback fields
+  <https://openwisp.io/docs/dev/utils/developer/custom-fields.html#openwisp-utils-fields-fallbackbooleanchoicefield>`_
+  which returns the fallback value when the field is set to ``None``.
+- Added `CopyableFieldsAdmin
+  <https://openwisp.io/docs/dev/utils/developer/admin-utilities.html#openwisp-utils-admin-copyablefieldsadmin>`_
+  which allows to set admin fields to be read-only and makes it easy to
+  copy the fields contents.
+- Added the `SeleniumTestMixin
+  <https://openwisp.io/docs/dev/utils/developer/test-utilities.html#openwisp-utils-tests-assertnumqueriessubtestmixin>`_
+  for streamlined Selenium testing.
+- Added the `openwisp_utils.db.backends.spatialite
+  <https://openwisp.io/docs/dev/utils/developer/admin-utilities.html#openwisp-utils-admin-copyablefieldsadmin>`_
+  database backend to implement a workaround for handling `issue with
+  sqlite 3.36 and spatialite 5
+  <https://code.djangoproject.com/ticket/32935>`_.
+- Added a page to display installed OpenWISP modules and system
+  information.
+- Added an optional feature for `collecting usage metrics
+  <https://openwisp.io/docs/dev/utils/user/metric-collection.html>`_,
+  utilizing `Clean Insights <https://cleaninsights.org/>`_.
+
+Changes
+~~~~~~~
+
+- Allowed passing extra arguments to the Django ``send_email`` function,
+  providing more flexibility in email handling.
+- Replaced the ReStructuredText check with ``docstrfmt``, improving
+  documentation formatting and validation.
+
+**Dependencies**:
+
+- Bumped ``django-model-utils~=4.3.1``
+- Bumped ``djangorestframework>=3.14,<3.15.2``
+- Bumped ``django-filter~=23.2``
+- Bumped ``drf-yasg~=1.21.7``
+- Bumped ``celery~=5.3.0``
+- Bumped ``black~=23.12.1``
+- Bumped ``flake8~=7.1.0``
+- Bumped ``isort~=5.13.2``
+- Bumped ``coveralls~=4.0.1``
+- Bumped ``selenium>=4.10,<4.24``
+- Added ``django-admin-autocomplete-filter~=0.7.1``,
+  ``urllib3>=2.0.0,<3.0.0``, ``tblib~=3.0.0``, ``selenium>=4.10,<4.24``,
+  and ``docstrfmt~=1.8.0``.
+- Added support for Django ``4.1.x`` and ``4.2.x``
+- Added support for Python ``3.10``
+- Dropped support for Python ``3.7``
+- Dropped support for Django ``3.0.x`` and ``3.1.x``
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the alert icon URL in the ``HelpTextStackedInline`` template
 
 Version 1.0.4 [2022-10-07]
 --------------------------
