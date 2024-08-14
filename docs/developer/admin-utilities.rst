@@ -218,3 +218,63 @@ all at once which may cause the slow loading of the page.
 To customize or know more about it, please refer to the
 `django-admin-autocomplete-filter documentation
 <https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_.
+
+Customizing the Submit Row in OpenWISP Admin
+--------------------------------------------
+
+In the OpenWISP admin interface, the ``submit_line.html`` template
+controls the rendering of action buttons in the model form's submit row.
+OpenWISP Utils extends this template to allow the addition of custom
+buttons.
+
+To add custom buttons, you can use the ``additional_buttons`` context
+variable. This variable should be a list of dictionaries, each
+representing a button with customizable properties such as type, class,
+value, title, URL, or even raw HTML content.
+
+Here's an example of adding a custom button with both standard properties
+and raw HTML to the submit row in the ``change_view`` method:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from django.utils.safestring import mark_safe
+    from .models import MyModel
+
+
+    @admin.register(MyModel)
+    class MyModelAdmin(admin.ModelAdmin):
+        def change_view(
+            self, request, object_id, form_url="", extra_context=None
+        ):
+            extra_context = extra_context or {}
+            extra_context["additional_buttons"] = [
+                {
+                    "type": "button",
+                    "class": "btn btn-secondary",
+                    "value": "Custom Action",
+                    "title": "Perform a custom action",
+                    "url": "https://example.com",
+                },
+                {
+                    "raw_html": mark_safe(
+                        '<button type="button" class="btn btn-warning" '
+                        "onclick=\"alert('This is a raw HTML button!')\">"
+                        "Raw HTML Button</button>"
+                    )
+                },
+            ]
+            return super().change_view(
+                request, object_id, form_url, extra_context
+            )
+
+In this example, two buttons are added to the submit row:
+
+1. A standard button labeled "Custom Action" with a link to
+   `https://example.com`.
+2. A button rendered using raw HTML that triggers an alert when clicked,
+   labeled "Raw HTML Button." The raw HTML is wrapped in `mark_safe` to
+   ensure it is rendered correctly.
+
+The `mark_safe` function is necessary to ensure that the raw HTML is
+rendered as HTML and not escaped as plain text.
