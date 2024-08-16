@@ -45,7 +45,12 @@ class Migration(migrations.Migration):
                     "user_consented",
                     models.BooleanField(
                         default=True,
-                        help_text='Allow OpenWISP to collect and share anonymous usage metrics to improve the software. Before opting-out kindly consider reading <a href="https://openwisp.io/docs/user/usage-metric-collection.html" target="_blank">why we collect metrics</a>.',
+                        help_text=(
+                            'Allow OpenWISP to collect and share anonymous usage metrics to improve'
+                            ' the software. Before opting-out kindly consider reading'
+                            ' <a href="https://openwisp.io/docs/user/usage-metric-collection.html"'
+                            ' target="_blank">why we collect metrics</a>.'
+                        ),
                         verbose_name="Allow collecting anonymous usage metrics",
                     ),
                 ),

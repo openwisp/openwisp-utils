@@ -131,6 +131,6 @@ CELERY_BROKER_URL = 'memory://'
 
 # local settings must be imported before test runner otherwise they'll be ignored
 try:
-    from local_settings import *
+    from local_settings import *  # noqa
 except ImportError:
     pass
