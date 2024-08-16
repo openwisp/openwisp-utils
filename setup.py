@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-import os
-import sys
-
 from openwisp_utils import get_version
 from setuptools import find_packages, setup
 
