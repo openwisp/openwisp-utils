@@ -122,7 +122,7 @@ customize admin theme.
     to use the ``STATICFILES_DIR`` setting in ``settings.py``.
 
     You can learn more in the `Django documentation
-    <https://docs.djangoproject.com/en/3.0/ref/settings/#std:setting-STATICFILES_DIRS>`_.
+    <https://docs.djangoproject.com/en/4.2/ref/settings/#std:setting-STATICFILES_DIRS>`_.
 
 Extend Admin Theme Programmatically
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
