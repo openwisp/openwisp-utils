@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Version 1.1.1 [2024-11-20]
+--------------------------
+
+- [fix:ui] Added CSS for djang-allauth forms submit button.
+- [fix:docs] Updated links to django documentation and other minor
+  improvements to the docuemntation.
+
 Version 1.1.0 [2024-08-16]
 --------------------------
 
