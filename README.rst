@@ -43,9 +43,9 @@ and ease maintenance.
 Documentation
 -------------
 
-- `Usage documentation <https://openwisp.io/docs/dev/utils/>`_
+- `Usage documentation <https://openwisp.io/docs/stable/utils/>`_
 - `Developer documentation
-  <https://openwisp.io/docs/dev/utils/developer/>`_
+  <https://openwisp.io/docs/stable/utils/developer/>`_
 
 Contributing
 ------------

@@ -18,30 +18,30 @@ Features
   filter queryset.
 - Added the option to add dashboard templates after charts.
 - Added `retryable_request
-  <https://openwisp.io/docs/dev/utils/developer/other-utilities.html#openwisp-utils-utils-retryable-request>`_
+  <https://openwisp.io/docs/stable/utils/developer/other-utilities.html#openwisp-utils-utils-retryable-request>`_
   utility function for making HTTP requests with built-in retry logic.
 - Added `AutocompleteFilter
-  <https://openwisp.io/docs/dev/utils/developer/admin-utilities.html#openwisp-utils-admin-theme-filters-autocompletefilter>`_
+  <https://openwisp.io/docs/stable/utils/developer/admin-utilities.html#openwisp-utils-admin-theme-filters-autocompletefilter>`_
   to load filter data asynchronously.
 - Added `fallback fields
-  <https://openwisp.io/docs/dev/utils/developer/custom-fields.html#openwisp-utils-fields-fallbackbooleanchoicefield>`_
+  <https://openwisp.io/docs/stable/utils/developer/custom-fields.html#openwisp-utils-fields-fallbackbooleanchoicefield>`_
   which returns the fallback value when the field is set to ``None``.
 - Added `CopyableFieldsAdmin
-  <https://openwisp.io/docs/dev/utils/developer/admin-utilities.html#openwisp-utils-admin-copyablefieldsadmin>`_
+  <https://openwisp.io/docs/stable/utils/developer/admin-utilities.html#openwisp-utils-admin-copyablefieldsadmin>`_
   which allows to set admin fields to be read-only and makes it easy to
   copy the fields contents.
 - Added the `SeleniumTestMixin
-  <https://openwisp.io/docs/dev/utils/developer/test-utilities.html#openwisp-utils-tests-assertnumqueriessubtestmixin>`_
+  <https://openwisp.io/docs/stable/utils/developer/test-utilities.html#openwisp-utils-tests-assertnumqueriessubtestmixin>`_
   for streamlined Selenium testing.
 - Added the `openwisp_utils.db.backends.spatialite
-  <https://openwisp.io/docs/dev/utils/developer/admin-utilities.html#openwisp-utils-admin-copyablefieldsadmin>`_
+  <https://openwisp.io/docs/stable/utils/developer/admin-utilities.html#openwisp-utils-admin-copyablefieldsadmin>`_
   database backend to implement a workaround for handling `issue with
   sqlite 3.36 and spatialite 5
   <https://code.djangoproject.com/ticket/32935>`_.
 - Added a page to display installed OpenWISP modules and system
   information.
 - Added an optional feature for `collecting usage metrics
-  <https://openwisp.io/docs/dev/utils/user/metric-collection.html>`_,
+  <https://openwisp.io/docs/stable/utils/user/metric-collection.html>`_,
   utilizing `Clean Insights <https://cleaninsights.org/>`_.
 
 Changes
