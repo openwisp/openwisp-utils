@@ -1,0 +1,51 @@
+name: Replicate Commits to Version Branch
+
+on:
+  workflow_call:
+    inputs:
+      module_name:
+        description: 'The name of the module'
+        required: true
+        type: string
+
+jobs:
+  replicate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+
+    - name: Get version
+      id: get_version
+      run: |
+        VERSION=$(python -c "
+        from ${{ inputs.module_name }} import VERSION
+        print(f'{VERSION[0]}.{VERSION[1]}')
+        ")
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+    - name: Rebase changes onto version branch
+      run: |
+        if git ls-remote --heads origin $VERSION | grep -sw $VERSION; then
+          git fetch origin --unshallow
+          git checkout -b $VERSION origin/$VERSION
+          git rebase origin/master
+        else
+          git checkout -b $VERSION
+        fi
+        git push origin $VERSION
