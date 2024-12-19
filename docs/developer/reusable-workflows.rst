@@ -40,6 +40,8 @@ example:
         with:
           # The name of the Python package (required)
           module_name: openwisp_utils
+          # Whether to install the Python package. Defaults to false.
+          install_package: true
 
 .. note::
 
