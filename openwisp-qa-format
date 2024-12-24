@@ -5,8 +5,8 @@ isort .
 black -S .
 docstrfmt --no-docstring-trailing-line --ignore-cache --line-length 74 .
 
-if which stylelint > /dev/null; then
-  stylelint $(find . -type f -name "*.css") --fix
+if which prettier > /dev/null; then
+  prettier $(find . -type f -name "*.css") --write
 else
-  echo "SKIPPED CSS FILES: Please install stylelint"
+  echo "SKIPPED CSS FILES: Please install prettier"
 fi
