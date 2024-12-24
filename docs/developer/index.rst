@@ -16,6 +16,7 @@ Developer Docs
     ./admin-utilities.rst
     ./test-utilities.rst
     ./other-utilities.rst
+    ./reusable-workflows.rst
 
 Other useful resources:
 
