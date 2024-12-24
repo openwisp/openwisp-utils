@@ -41,9 +41,9 @@ show_help() {
   printf "ReStructuredText check options:\n"
   printf "  --skip-checkrst\t\t: Skip ReStructuredText check\n"
   printf "CSSlinter check options:\n"
-  printf "  --csslinter\t\t\t: Runs stylelint check\n"
+  printf "  --csslinter\t\t\t: Runs prettier check on css files\n"
   printf "Jslinter check options:\n"
-  printf "  --jslinter\t\t\t: Runs jshint check\n"
+  printf "  --jslinter\t\t\t: Runs prettier check on javascript files\n"
 }
 
 echoerr() { echo "$@" 1>&2; }
@@ -67,13 +67,13 @@ runcheckendline() {
   fi
 }
 
-runstylelintcheck() {
-  package='stylelint'
-  if which stylelint > /dev/null; then
-    stylelint verbose $(find . -type f -name "*.css") &&
-      echo "SUCCESS: Stylelint check successful!" ||
+runcssprettiercheck() {
+  package='prettier'
+  if which prettier > /dev/null; then
+    prettier $(find . -type f -name "*.css") --check &&
+      echo "SUCCESS: Prettier check successful!" ||
       {
-        echoerr "ERROR: Stylelint check failed! Hint: did you forget to run openwisp-qa-format?"
+        echoerr "ERROR: Prettier check failed! Hint: did you forget to run openwisp-qa-format?"
         FAILURE=1
       }
   else
@@ -82,13 +82,13 @@ runstylelintcheck() {
   fi
 }
 
-runjshintcheck() {
-  package='jshint'
-  if which jshint > /dev/null; then
-    jshint --verbose $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") &&
-      echo "SUCCESS: Jshint check successful!" ||
+runjsprettiercheck() {
+  package='prettier'
+  if which prettier > /dev/null; then
+    prettier $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") --check &&
+      echo "SUCCESS: Prettier check successful!" ||
       {
-        echoerr "ERROR: Jshint check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
+        echoerr "ERROR: Prettier check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
         FAILURE=1
       }
   else
@@ -283,11 +283,11 @@ if ! $SKIP_FLAKE8; then
 fi
 
 if ! $SKIP_CSS_LINTER; then
-  runstylelintcheck
+  runcssprettiercheck
 fi
 
 if ! $SKIP_JS_LINTER; then
-  runjshintcheck
+  runjsprettiercheck
 fi
 
 if ! $SKIP_RSTCHECK; then
