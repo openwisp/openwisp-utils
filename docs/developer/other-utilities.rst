@@ -57,9 +57,7 @@ Here's how to easily do it:
         verbose_name = _("My OpenWISP Module")
 
         # assumes API is enabled by default
-        API_ENABLED = getattr(
-            settings, "MY_OPENWISP_MODULE_API_ENABLED", True
-        )
+        API_ENABLED = getattr(settings, "MY_OPENWISP_MODULE_API_ENABLED", True)
         # set throttling rates for your module here
         REST_FRAMEWORK_SETTINGS = {
             "DEFAULT_THROTTLE_RATES": {"my_module": "400/hour"},
