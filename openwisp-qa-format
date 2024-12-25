@@ -7,6 +7,7 @@ docstrfmt --no-docstring-trailing-line --ignore-cache --line-length 74 .
 
 if which prettier > /dev/null; then
   prettier $(find . -type f -name "*.css") --write
+  prettier $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") --write
 else
   echo "SKIPPED CSS FILES: Please install prettier"
 fi
