@@ -89,7 +89,9 @@ object. Following is an example:
                 '"Number of IPs" will not be possible.'
             ),
             # (optional) You can provide a link to documentation for user reference
-            "documentation_url": ("https://github.com/openwisp/openwisp-utils"),
+            "documentation_url": (
+                "https://github.com/openwisp/openwisp-utils"
+            ),
             # (optional) Icon to be shown along with help text. By default it uses
             # "/static/admin/img/icon-alert.svg"
             "image_url": "/static/admin/img/icon-alert.svg",
@@ -242,7 +244,9 @@ and raw HTML to the submit row in the ``change_view`` method:
 
     @admin.register(MyModel)
     class MyModelAdmin(admin.ModelAdmin):
-        def change_view(self, request, object_id, form_url="", extra_context=None):
+        def change_view(
+            self, request, object_id, form_url="", extra_context=None
+        ):
             extra_context = extra_context or {}
             extra_context["additional_buttons"] = [
                 {
@@ -260,7 +264,9 @@ and raw HTML to the submit row in the ``change_view`` method:
                     )
                 },
             ]
-            return super().change_view(request, object_id, form_url, extra_context)
+            return super().change_view(
+                request, object_id, form_url, extra_context
+            )
 
 In this example, two buttons are added to the submit row:
 
