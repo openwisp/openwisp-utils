@@ -1,4 +1,5 @@
 """Common Quality Assurance checks for OpenWISP modules."""
+
 import argparse
 import os
 import re
