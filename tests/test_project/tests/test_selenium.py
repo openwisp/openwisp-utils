@@ -724,6 +724,11 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
         )
         self.web_driver.find_element(By.CSS_SELECTOR, filter_css_selector).click()
         self.web_driver.find_element(By.CSS_SELECTOR, '.select2-container--open')
+        WebDriverWait(self.web_driver, 10).until(
+            EC.presence_of_element_located(
+                (By.XPATH, f'//*[contains(text(), "{horror_shelf.name}")]')
+            )
+        )
         self.assertIn(horror_shelf.name, self.web_driver.page_source)
         self.assertIn(factual_shelf.name, self.web_driver.page_source)
         self.web_driver.find_element(By.XPATH, filter_option_xpath).click()
