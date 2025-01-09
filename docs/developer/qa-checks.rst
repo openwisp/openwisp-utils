@@ -20,9 +20,9 @@ It runs ``isort`` and ``black`` to format python code (these two
 dependencies are required and installed automatically when running ``pip
 install openwisp-utils[qa]``).
 
-The ``stylelint`` and ``jshint`` programs are used to perform style checks
-on CSS and JS code respectively, but they are optional: if ``stylelint``
-and/or ``jshint`` are not installed, the check(s) will be skipped.
+The ``prettier`` programs is used to perform style checks on CSS and JS
+code, but it is optional: if ``prettier`` is not installed, the check(s)
+will be skipped.
 
 ``openwisp-qa-check``
 ---------------------
@@ -38,9 +38,9 @@ Shell script to run the following quality assurance checks:
 - ``isort`` - Sorts python imports alphabetically, and separated into
   sections
 - ``black`` - Formats python code using a common standard
-- ``csslinter`` - Formats and checks CSS code using stylelint common
+- ``csslinter`` - Formats and checks CSS code using prettier common
   standard
-- ``jslinter`` - Checks Javascript code using jshint common standard
+- ``jslinter`` - Checks Javascript code using prettier common standard
 
 If a check requires a flag, it can be passed forward in the same way.
 

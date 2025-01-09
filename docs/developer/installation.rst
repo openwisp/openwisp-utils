@@ -52,7 +52,7 @@ Install development dependencies:
 
     pip install -e .[qa,rest]
     pip install -r requirements-test.txt
-    sudo npm install -g jshint stylelint
+    sudo npm install -g prettier
 
 Set up the git *pre-push* hook to run tests and QA checks automatically
 right before the git push action, so that if anything fails the push
