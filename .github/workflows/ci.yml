@@ -47,7 +47,7 @@ jobs:
       run: |
         pip install -U pip wheel setuptools
         pip install -U -r requirements-test.txt
-        sudo npm install -g jshint stylelint
+        sudo npm install -g prettier
         pip install -e .[qa,rest,selenium]
         pip install ${{ matrix.django-version }}
 
