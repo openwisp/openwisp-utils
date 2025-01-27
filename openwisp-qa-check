@@ -88,7 +88,7 @@ runjsprettiercheck() {
     prettier $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") --check &&
       echo "SUCCESS: Prettier check successful!" ||
       {
-        echoerr "ERROR: Prettier check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/developer/contributing.html#javascript-code-conventions"
+        echoerr "ERROR: Prettier check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/dev/developer/contributing.html#css-and-javascript-code-conventions"
         FAILURE=1
       }
   else
