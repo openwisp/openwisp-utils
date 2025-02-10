@@ -110,8 +110,9 @@ body::-webkit-scrollbar {
   text-transform: uppercase;
   font-weight: normal;
   margin: 0 5px;
-  font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans",
-    Verdana, Arial, sans-seri;
+  font-family:
+    "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana,
+    Arial, sans-seri;
 }
 .swagger-ui .btn:hover {
   background-color: #999;

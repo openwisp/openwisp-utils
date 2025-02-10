@@ -73,8 +73,9 @@ See https://code.djangoproject.com/ticket/33878 */
   --object-tools-fg: var(--button-fg) !important;
   --object-tools-bg: var(--close-button-bg) !important;
   --object-tools-hover-bg: var(--close-button-hover-bg) !important;
-  --font-family-primary: "Roboto", "Lucida Grande", "DejaVu Sans",
-    "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+  --font-family-primary:
+    "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana,
+    Arial, sans-serif;
 }
 body {
   min-width: 320px;

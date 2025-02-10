@@ -590,7 +590,9 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
             input_field.send_keys('Horror')
             self._get_filter_button().click()
             # Horror shelf is present
-            self.web_driver.find_element(By.XPATH, horror_result_xpath)
+            WebDriverWait(self.web_driver, 10).until(
+                EC.visibility_of_element_located((By.XPATH, horror_result_xpath))
+            )
             with self.assertRaises(NoSuchElementException):
                 # Factual shelf is absent
                 self.web_driver.find_element(By.XPATH, factual_result_xpath)
