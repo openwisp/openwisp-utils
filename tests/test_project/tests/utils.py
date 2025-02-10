@@ -4,6 +4,7 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.urls import reverse
 from openwisp_utils.test_selenium_mixins import (
     SeleniumTestMixin as BaseSeleniumTestMixin,
 )
@@ -125,7 +126,10 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
         return self.web_driver.find_element(By.CSS_SELECTOR, '.menu-backdrop')
 
     def _get_simple_input_filter(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, 'input[name=shelf]')
+        self.open(reverse('admin:test_project_shelf_changelist'))
+        return WebDriverWait(self.web_driver, 15).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'input[name=shelf]'))
+        )
 
     def _get_input_filter(self):
         return self.web_driver.find_element(
