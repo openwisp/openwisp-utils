@@ -586,11 +586,18 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
 
         with self.subTest('Test SimpleInputFilter'):
             self.open(url)
-            input_field = self._get_simple_input_filter()
+
+            if "test_project/shelf/" not in self.web_driver.current_url:
+                self.open(url)
+
+            input_field = WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'input[name=shelf]'))
+            )
+
             input_field.send_keys('Horror')
             self._get_filter_button().click()
             # Horror shelf is present
-            WebDriverWait(self.web_driver, 10).until(
+            WebDriverWait(self.web_driver, 2).until(
                 EC.visibility_of_element_located((By.XPATH, horror_result_xpath))
             )
             with self.assertRaises(NoSuchElementException):
