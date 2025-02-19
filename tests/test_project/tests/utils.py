@@ -124,9 +124,6 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
     def _get_menu_backdrop(self):
         return self.web_driver.find_element(By.CSS_SELECTOR, '.menu-backdrop')
 
-    def _get_simple_input_filter(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, 'input[name=shelf]')
-
     def _get_input_filter(self):
         return self.web_driver.find_element(
             By.CSS_SELECTOR, 'input[name=books_type__exact]'
