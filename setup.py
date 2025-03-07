@@ -31,7 +31,7 @@ setup(
         'swapper~=1.3.0',
         # allow wider range here to avoid interfering with other modules
         'urllib3>=2.0.0,<3.0.0',
-        'channels>=4.1.0,<5.0.0',
+        'channels~=4.2',
     ],
     extras_require={
         'qa': [
