@@ -11,7 +11,16 @@ from . import settings as app_settings
 logger = logging.getLogger(__name__)
 
 
-def send_email(subject, body_text, body_html, recipients, extra_context={}, **kwargs):
+def send_email(
+    subject,
+    body_text,
+    body_html,
+    recipients,
+    extra_context=None,
+    html_email_template=app_settings.OPENWISP_EMAIL_TEMPLATE,
+    **kwargs,
+):
+    extra_context = extra_context or {}
     mail = EmailMultiAlternatives(
         subject=subject,
         body=strip_tags(body_text),
@@ -19,7 +28,6 @@ def send_email(subject, body_text, body_html, recipients, extra_context={}, **kw
         to=recipients,
         **kwargs,
     )
-
     if app_settings.OPENWISP_HTML_EMAIL and body_html:
         context = dict(
             subject=subject,
@@ -29,7 +37,7 @@ def send_email(subject, body_text, body_html, recipients, extra_context={}, **kw
         context.update(extra_context)
 
         html_message = render_to_string(
-            app_settings.OPENWISP_EMAIL_TEMPLATE,
+            html_email_template,
             context=context,
         )
         mail.attach_alternative(html_message, 'text/html')
