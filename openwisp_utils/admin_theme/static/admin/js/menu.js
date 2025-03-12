@@ -13,6 +13,11 @@ const MenuTransitionTime = '0.1s';
 var wasActiveGroupOpen = false;
 
 (function () {
+  // popup page or other pages
+  // where menu is not displayed
+  if (!owMenu) {
+    return;
+  }
   setMenu();
   initGroupViewHandlers();
   initToggleMenuHandlers();
