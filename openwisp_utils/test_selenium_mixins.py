@@ -3,7 +3,7 @@ import os
 from django.conf import settings
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -21,33 +21,27 @@ class SeleniumTestMixin:
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.page_load_strategy = 'eager'
+        firefox_options = Options()
+        firefox_options.page_load_strategy = 'eager'
         if getattr(settings, 'SELENIUM_HEADLESS', True):
-            chrome_options.add_argument('--headless')
-        CHROME_BIN = os.environ.get('CHROME_BIN', None)
-        if CHROME_BIN:
-            chrome_options.binary_location = CHROME_BIN
-        chrome_options.add_argument('--window-size=1366,768')
-        chrome_options.add_argument('--ignore-certificate-errors')
-        # When running Selenium tests with the "--parallel" flag,
-        # each TestCase class requires its own browser instance.
-        # If the same "remote-debugging-port" is used for all
-        # TestCase classes, it leads to failed test cases.
-        # Therefore, it is necessary to utilize different remote
-        # debugging ports for each TestCase. To accomplish this,
-        # we can leverage the randomized live test server port to
-        # generate a unique port for each browser instance.
-        chrome_options.add_argument(
-            f'--remote-debugging-port={cls.server_thread.port + 100}'
+            firefox_options.add_argument('--headless')
+        GECKO_BIN = os.environ.get('GECKO_BIN', None)
+        if GECKO_BIN:
+            firefox_options.binary_location = GECKO_BIN
+        firefox_options.set_preference(
+            'network.stricttransportsecurity.preloadlist', False
         )
-        capabilities = DesiredCapabilities.CHROME
-        capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
-        chrome_options.set_capability('cloud:options', capabilities)
-        cls.web_driver = webdriver.Chrome(
-            options=chrome_options,
+        # Enable detailed GeckoDriver logging
+        firefox_options.set_capability(
+            'moz:firefoxOptions', {'log': {'level': 'trace'}}
         )
+        kwargs = dict(options=firefox_options)
+        # Optional: Store logs in a file
+        # Pass GECKO_LOG=1 when running tests
+        GECKO_LOG = os.environ.get('GECKO_LOG', None)
+        if GECKO_LOG:
+            kwargs['service'] = webdriver.FirefoxService(log_output='geckodriver.log')
+        cls.web_driver = webdriver.Firefox(**kwargs)
 
     @classmethod
     def tearDownClass(cls):
