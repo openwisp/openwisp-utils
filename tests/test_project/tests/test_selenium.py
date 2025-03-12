@@ -729,18 +729,47 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             ),
             self.web_driver.page_source,
         )
-        self.web_driver.find_element(By.CSS_SELECTOR, filter_css_selector).click()
-        self.web_driver.find_element(By.CSS_SELECTOR, '.select2-container--open')
-        WebDriverWait(self.web_driver, 10).until(
-            EC.presence_of_element_located(
-                (By.XPATH, f'//*[contains(text(), "{horror_shelf.name}")]')
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, filter_css_selector))
             )
-        )
+        except TimeoutException:
+            self.fail(f'{filter_css_selector} not available as expected')
+        else:
+            self.web_driver.find_element(By.CSS_SELECTOR, filter_css_selector).click()
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, '.select2-container--open')
+                )
+            )
+        except TimeoutException:
+            self.fail('select2 widget did not open as expected')
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, f'//*[contains(text(), "{horror_shelf.name}")]')
+                )
+            )
+        except TimeoutException:
+            self.fail(f'"{horror_shelf.name}" not found')
         self.assertIn(horror_shelf.name, self.web_driver.page_source)
         self.assertIn(factual_shelf.name, self.web_driver.page_source)
-        self.web_driver.find_element(By.XPATH, filter_option_xpath).click()
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located((By.XPATH, filter_option_xpath))
+            )
+        except TimeoutException:
+            self.fail(f'"{filter_option_xpath}" not found')
+        else:
+            self.web_driver.find_element(By.XPATH, filter_option_xpath).click()
         self.assertIn(str(factual_shelf.id), self.web_driver.current_url)
-        self.web_driver.find_element(By.CSS_SELECTOR, filter_css_selector)
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, filter_css_selector))
+            )
+        except TimeoutException:
+            self.fail(f'"{filter_css_selector}" not found')
         self.assertNotIn(horror_shelf.name, self.web_driver.page_source)
         self.assertIn(factual_shelf.name, self.web_driver.page_source)
         with self.assertRaises(NoSuchElementException):
@@ -776,11 +805,32 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             ),
             self.web_driver.page_source,
         )
-        self.web_driver.find_element(By.CSS_SELECTOR, filter_css_selector).click()
-        self.web_driver.find_element(By.CSS_SELECTOR, '.select2-container--open')
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, filter_css_selector))
+            )
+        except TimeoutException:
+            self.fail(f'{filter_css_selector} not available as expected')
+        else:
+            self.web_driver.find_element(By.CSS_SELECTOR, filter_css_selector).click()
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, '.select2-container--open')
+                )
+            )
+        except TimeoutException:
+            self.fail('select2 widget did not open as expected')
         self.assertIn(self.admin.username, self.web_driver.page_source)
         self.assertIn(user.username, self.web_driver.page_source)
-        self.web_driver.find_element(By.XPATH, filter_null_option_xpath).click()
+        try:
+            WebDriverWait(self.web_driver, 2).until(
+                EC.presence_of_element_located((By.XPATH, filter_null_option_xpath))
+            )
+        except TimeoutException:
+            self.fail(f'{filter_null_option_xpath} not available as expected')
+        else:
+            self.web_driver.find_element(By.XPATH, filter_null_option_xpath).click()
         self._get_filter_button().click()
         self.assertIn('owner_id__isnull=true', self.web_driver.current_url)
         with self.assertRaises(NoSuchElementException):
