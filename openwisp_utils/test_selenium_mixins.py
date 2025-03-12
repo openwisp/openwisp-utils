@@ -1,6 +1,5 @@
 import os
 
-from django.conf import settings
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -23,7 +22,7 @@ class SeleniumTestMixin:
         super().setUpClass()
         firefox_options = Options()
         firefox_options.page_load_strategy = 'eager'
-        if getattr(settings, 'SELENIUM_HEADLESS', True):
+        if os.environ.get('SELENIUM_HEADLESS', False):
             firefox_options.add_argument('--headless')
         GECKO_BIN = os.environ.get('GECKO_BIN', None)
         if GECKO_BIN:
