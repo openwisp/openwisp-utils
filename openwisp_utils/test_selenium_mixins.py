@@ -89,19 +89,23 @@ class SeleniumTestMixin:
             driver.find_element(by=By.NAME, value='password').send_keys(password)
             driver.find_element(by=By.XPATH, value='//input[@type="submit"]').click()
 
-    def find_element(self, by, value, timeout=2):
-        self.wait_for_visibility(by, value, timeout)
+    def find_element(self, by, value, timeout=2, wait_for='visibility'):
+        method = f'wait_for_{wait_for}'
+        getattr(self, method)(by, value, timeout)
         return self.web_driver.find_element(by=by, value=value)
 
     def wait_for_visibility(self, by, value, timeout=2):
-        self.wait_for('visibility_of_element_located', by, value)
+        return self.wait_for('visibility_of_element_located', by, value)
 
     def wait_for_invisibility(self, by, value, timeout=2):
-        self.wait_for('invisibility_of_element_located', by, value)
+        return self.wait_for('invisibility_of_element_located', by, value)
+
+    def wait_for_presence(self, by, value, timeout=2):
+        return self.wait_for('presence_of_element_located', by, value)
 
     def wait_for(self, method, by, value, timeout=2):
         try:
-            WebDriverWait(self.web_driver, timeout).until(
+            return WebDriverWait(self.web_driver, timeout).until(
                 getattr(EC, method)(((by, value)))
             )
         except TimeoutException as e:
