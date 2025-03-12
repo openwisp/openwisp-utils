@@ -158,7 +158,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         if is_narrow:
             # Do not test when menu is not visible
             return
-        with self.subTest('Test menu dropdown when menu is close'):
+        with self.subTest('Test menu dropdown when menu is closed'):
             self._close_menu()
             # Test mg_dropdown is not visible
             self.assertEqual(mg_dropdown.is_displayed(), False)
@@ -166,7 +166,6 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             self.assertEqual(mg_icon.is_displayed(), True)
             # Test mg dropdown gets visible on clicking mg head
             mg_head.click()
-            is_visible = True
             try:
                 WebDriverWait(self.web_driver, 2).until(
                     EC.visibility_of_element_located(
@@ -174,11 +173,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
                     )
                 )
             except TimeoutException:
-                is_visible = False
-            self.assertEqual(
-                is_visible,
-                True,
-            )
+                self.fail('drop down not visible')
             self.assertEqual(mg_dropdown_label.is_displayed(), True)
             # Test mg dropdown gets invisible on clicking mg head
             mg_head.click()
@@ -188,12 +183,16 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
             main_content.click()
             self.assertEqual(mg_dropdown.is_displayed(), False)
 
-        with self.subTest('Test visibilty of menu label when menu close'):
+        with self.subTest('Test visibilty of menu label when menu is closed'):
             self._close_menu()
             actions = ActionChains(self.web_driver)
             actions.move_to_element(mg_head)
+            # clicking twice forces the hover action
+            # to work consistently, without this it may
+            # yield inconsistent results in automated tests
+            actions.click(mg_head)
+            actions.click(mg_head)
             actions.perform()
-            is_visible = True
             try:
                 WebDriverWait(self.web_driver, 2).until(
                     EC.visibility_of_element_located(
@@ -204,8 +203,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
                     )
                 )
             except TimeoutException:
-                is_visible = False
-            self.assertEqual(is_visible, True)
+                self.fail('label not visible')
             mg_head.click()
             actions.move_to_element(mg_head)
             actions.perform()
