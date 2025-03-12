@@ -1,6 +1,7 @@
 import os
 
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
@@ -47,7 +48,7 @@ class SeleniumTestMixin:
         cls.web_driver.quit()
         super().tearDownClass()
 
-    def open(self, url, driver=None):
+    def open(self, url, driver=None, timeout=5):
         """Opens a URL.
 
         Input Arguments:
@@ -58,8 +59,11 @@ class SeleniumTestMixin:
         if not driver:
             driver = self.web_driver
         driver.get(f'{self.live_server_url}{url}')
-        WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, '#main-content'))
+        WebDriverWait(driver, timeout).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
+        WebDriverWait(self.web_driver, timeout).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '#main-content'))
         )
 
     def login(self, username=None, password=None, driver=None):
@@ -84,3 +88,21 @@ class SeleniumTestMixin:
             driver.find_element(by=By.NAME, value='username').send_keys(username)
             driver.find_element(by=By.NAME, value='password').send_keys(password)
             driver.find_element(by=By.XPATH, value='//input[@type="submit"]').click()
+
+    def find_element(self, by, value, timeout=2):
+        self.wait_for_visibility(by, value, timeout)
+        return self.web_driver.find_element(by=by, value=value)
+
+    def wait_for_visibility(self, by, value, timeout=2):
+        self.wait_for('visibility_of_element_located', by, value)
+
+    def wait_for_invisibility(self, by, value, timeout=2):
+        self.wait_for('invisibility_of_element_located', by, value)
+
+    def wait_for(self, method, by, value, timeout=2):
+        try:
+            WebDriverWait(self.web_driver, timeout).until(
+                getattr(EC, method)(((by, value)))
+            )
+        except TimeoutException as e:
+            self.fail(f'{method} of "{value}" failed: {e}')
