@@ -232,19 +232,21 @@ In case the HTML version if not needed it may be disabled by setting
 
     send_email(subject, body_text, body_html, recipients, **kwargs)
 
-================= ==========================================================================================
-**Parameter**     **Description**
-``subject``       (``str``) The subject of the email template.
-``body_text``     (``str``) The body of the text message to be emailed.
-``body_html``     (``str``) The body of the html template to be emailed.
-``recipients``    (``list``) The list of recipients to send the mail to.
-``extra_context`` **optional** (``dict``) Extra context which is passed to the template. The dictionary keys
-                  ``call_to_action_text`` and ``call_to_action_url`` can be passed to show a call to action
-                  button. Similarly, ``footer`` can be passed to add a footer.
-``**kwargs``      Any additional keyword arguments (e.g. ``attachments``, ``headers``, etc.) are passed
-                  directly to the `django.core.mail.EmailMultiAlternatives
-                  <https://docs.djangoproject.com/en/4.1/topics/email/#sending-alternative-content-types>`_.
-================= ==========================================================================================
+====================== ==========================================================================================
+**Parameter**          **Description**
+``subject``            (``str``) The subject of the email template.
+``body_text``          (``str``) The body of the text message to be emailed.
+``body_html``          (``str``) The body of the html template to be emailed.
+``recipients``         (``list``) The list of recipients to send the mail to.
+``extra_context``      **optional** (``dict``) Extra context which is passed to the template. The dictionary keys
+                       ``call_to_action_text`` and ``call_to_action_url`` can be passed to show a call to action
+                       button. Similarly, ``footer`` can be passed to add a footer.
+``html_body_template`` **(optional, str)** The path to the template used for generating the HTML version. By
+                       default, it uses the template specified in :ref:`openwisp_email_template`.
+``**kwargs``           Any additional keyword arguments (e.g. ``attachments``, ``headers``, etc.) are passed
+                       directly to the `django.core.mail.EmailMultiAlternatives
+                       <https://docs.djangoproject.com/en/4.1/topics/email/#sending-alternative-content-types>`_.
+====================== ==========================================================================================
 
 .. important::
 
