@@ -10,9 +10,6 @@ from .utils import SeleniumTestMixin
 
 
 class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
-    def setUp(self):
-        self.admin = self._create_admin()
-
     def tearDown(self):
         # Clear local storage
         self.web_driver.execute_script('window.localStorage.clear()')
@@ -369,7 +366,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
         super().setUpClass()
 
     def setUp(self):
-        self.admin = self._create_admin()
+        super().setUp()
         self.web_driver.set_window_size(1600, 768)
         self._create_test_data()
 
@@ -516,10 +513,6 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
     def setUpClass(cls):
         super().setUpClass()
 
-    def setUp(self):
-        super().setUp()
-        self.admin = self._create_admin()
-
     def test_input_filters(self):
         url = reverse('admin:test_project_shelf_changelist')
         user = self._create_user()
@@ -613,7 +606,7 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
         super().setUpClass()
 
     def setUp(self):
-        self.admin = self._create_admin()
+        super().setUp()
         self.web_driver.set_window_size(1600, 768)
 
     def test_pie_chart_zero_annotation(self):
@@ -639,7 +632,6 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
 
     def setUp(self):
         super().setUp()
-        self.admin = self._create_admin()
         self.login()
 
     def test_autocomplete_shelf_filter(self):

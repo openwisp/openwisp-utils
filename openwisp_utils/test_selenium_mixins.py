@@ -44,11 +44,28 @@ class SeleniumTestMixin:
         if GECKO_LOG:
             kwargs['service'] = webdriver.FirefoxService(log_output='geckodriver.log')
         cls.web_driver = webdriver.Firefox(**kwargs)
+        # Firefox does not support the WebDriver.get_log API. To work around this,
+        # we inject JavaScript into the page to override window.console within the
+        # browser's JS runtime. This allows us to capture and retrieve console errors
+        # directly from the page.
+        extension_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "firefox-extensions",
+                "console_capture_extension",
+            )
+        )
+        cls.web_driver.install_addon(extension_path, temporary=True)
 
     @classmethod
     def tearDownClass(cls):
         cls.web_driver.quit()
         super().tearDownClass()
+
+    def setUp(self):
+        self.admin = self._create_admin(
+            username=self.admin_username, password=self.admin_password
+        )
 
     def open(self, url, driver=None, timeout=5):
         """Opens a URL.
@@ -67,6 +84,9 @@ class SeleniumTestMixin:
         WebDriverWait(self.web_driver, timeout).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '#main-content'))
         )
+
+    def get_browser_logs(self):
+        return self.web_driver.execute_script('return window._console_logs')
 
     def login(self, username=None, password=None, driver=None):
         """Log in to the admin dashboard.
@@ -96,6 +116,11 @@ class SeleniumTestMixin:
         getattr(self, method)(by, value, timeout)
         return self.web_driver.find_element(by=by, value=value)
 
+    def find_elements(self, by, value, timeout=2, wait_for='visibility'):
+        method = f'wait_for_{wait_for}'
+        getattr(self, method)(by, value, timeout)
+        return self.web_driver.find_elements(by=by, value=value)
+
     def wait_for_visibility(self, by, value, timeout=2):
         return self.wait_for('visibility_of_element_located', by, value)
 
@@ -111,4 +136,5 @@ class SeleniumTestMixin:
                 getattr(EC, method)(((by, value)))
             )
         except TimeoutException as e:
+            print(self.get_browser_logs())
             self.fail(f'{method} of "{value}" failed: {e}')
