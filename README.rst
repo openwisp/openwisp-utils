@@ -1,8 +1,8 @@
 openwisp-utils
 ==============
 
-.. image:: https://github.com/openwisp/openwisp-utils/workflows/OpenWISP%20Utils%20CI%20Build/badge.svg?branch=master
-    :target: https://github.com/openwisp/openwisp-utils/actions?query=workflow%3A%22OpenWISP+Utils+CI+Build%22
+.. image:: https://github.com/openwisp/openwisp-utils/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/openwisp/openwisp-utils/actions/workflows/ci.yml
     :alt: CI build status
 
 .. image:: https://coveralls.io/repos/github/openwisp/openwisp-utils/badge.svg
