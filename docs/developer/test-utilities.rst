@@ -175,5 +175,62 @@ Example usage:
 ``openwisp_utils.test_selenium_mixins.SeleniumTestMixin``
 ---------------------------------------------------------
 
-This mixin provides basic setup for Selenium tests with method to open URL
-and login and logout a user.
+This mixin provides the core Selenium setup logic and reusable test
+methods that must be used across all OpenWISP modules based on Django to
+enforce best practices and avoid flaky tests.
+
+.. _selenium_dependencies:
+
+Selenium Dependencies
+~~~~~~~~~~~~~~~~~~~~~
+
+Running browser tests with Selenium requires that ``geckodriver`` is
+installed locally.
+
+1. Download the appropriate ``geckodriver`` for your OS and architecture
+   (e.g., ``linux-64``).
+2. Extract the downloaded file.
+3. Make the program available on your system by copying the executable to
+   a directory included in your ``PATH``. For example, on a typical Linux
+   system, this could be ``/usr/local/bin/geckodriver``.
+
+The Python dependencies for running Selenium tests are included as extra
+dependencies in ``openwisp-utils`` (``openwisp-utils[selenium]``). These
+should be automatically installed when setting up the development
+environment. All the OpenWISP modules using ``SeleniumTestMixin`` are
+already depending on ``openwisp-utils[selenium]``.
+
+Methods
+~~~~~~~
+
+- ``setUpClass()`` (``@classmethod``): Initializes the Selenium WebDriver
+  with Firefox and applies custom settings to improve test reliability. -
+  Uses the ``SELENIUM_HEADLESS`` environment variable to determine whether
+  to run in headless mode. - Uses the ``GECKO_BIN`` environment variable
+  to specify a custom Firefox binary location. - Uses the ``GECKO_LOG``
+  environment variable to enable GeckoDriver logging to
+  ``geckodriver.log``. - Configures preferences to disable hardware
+  acceleration and increase timeouts.
+- ``tearDownClass()`` (``@classmethod``): Quits the Selenium WebDriver to
+  clean up resources after the test class has finished executing.
+- ``open(url, driver=None, timeout=5)``: Opens a URL in the browser. -
+  Waits for the page to fully load before returning. - Ensures the
+  ``#main-content`` element is present before proceeding.
+- ``login(username=None, password=None, driver=None)``: Logs into the
+  Django admin dashboard. - Defaults to using ``admin`` / ``password``
+  credentials. - Navigates to ``/admin/login/`` and fills in the login
+  form.
+- ``find_element(by, value, timeout=2, wait_for='visibility')``: Finds an
+  element using Selenium's ``find_element`` method. - Waits for the
+  element based on the specified ``wait_for`` condition (``visibility``,
+  ``presence``).
+- ``wait_for_visibility(by, value, timeout=2)``: Waits until an element is
+  visible.
+- ``wait_for_invisibility(by, value, timeout=2)``: Waits until an element
+  is no longer visible.
+- ``wait_for_presence(by, value, timeout=2)``: Waits until an element is
+  present in the DOM.
+- ``wait_for(method, by, value, timeout=2)``: General method for waiting
+  for an element based on a given condition. - Uses Selenium's
+  ``WebDriverWait`` and Expected Conditions (``EC``). - If the timeout is
+  reached, the test fails with a descriptive error message.
