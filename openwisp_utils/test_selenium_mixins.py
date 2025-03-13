@@ -21,21 +21,23 @@ class SeleniumTestMixin:
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        firefox_options = Options()
-        firefox_options.page_load_strategy = 'eager'
+        options = Options()
+        options.page_load_strategy = 'eager'
         if os.environ.get('SELENIUM_HEADLESS', False):
-            firefox_options.add_argument('--headless')
+            options.add_argument('--headless')
         GECKO_BIN = os.environ.get('GECKO_BIN', None)
         if GECKO_BIN:
-            firefox_options.binary_location = GECKO_BIN
-        firefox_options.set_preference(
-            'network.stricttransportsecurity.preloadlist', False
-        )
+            options.binary_location = GECKO_BIN
+        options.set_preference('network.stricttransportsecurity.preloadlist', False)
         # Enable detailed GeckoDriver logging
-        firefox_options.set_capability(
-            'moz:firefoxOptions', {'log': {'level': 'trace'}}
-        )
-        kwargs = dict(options=firefox_options)
+        options.set_capability('moz:firefoxOptions', {'log': {'level': 'trace'}})
+        # Use software rendering instead of hardware acceleration
+        options.set_preference('gfx.webrender.force-disabled', True)
+        options.set_preference('layers.acceleration.disabled', True)
+        # Increase timeouts
+        options.set_preference('marionette.defaultPrefs.update.disabled', True)
+        options.set_preference('dom.max_script_run_time', 30)
+        kwargs = dict(options=options)
         # Optional: Store logs in a file
         # Pass GECKO_LOG=1 when running tests
         GECKO_LOG = os.environ.get('GECKO_LOG', None)
