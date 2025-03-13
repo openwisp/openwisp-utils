@@ -46,6 +46,18 @@ class SeleniumTestMixin:
         # Increase timeouts
         options.set_preference('marionette.defaultPrefs.update.disabled', True)
         options.set_preference('dom.max_script_run_time', 30)
+        # When running Selenium tests with the "--parallel" flag,
+        # each TestCase class requires its own browser instance.
+        # If the same "remote-debugging-port" is used for all
+        # TestCase classes, it leads to failed test cases.
+        # Therefore, it is necessary to utilize different remote
+        # debugging ports for each TestCase. To accomplish this,
+        # we can leverage the randomized live test server port to
+        # generate a unique port for each browser instance.
+        marionette_port = cls.server_thread.port + 100
+        options.set_capability(
+            'moz:firefoxOptions', {'args': ['--marionette-port', marionette_port]}
+        )
         kwargs = dict(options=options)
         # Optional: Store logs in a file
         # Pass GECKO_LOG=1 when running tests
