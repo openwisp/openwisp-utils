@@ -708,7 +708,7 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             )
 
 
-class TestSeleniumHelpers(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
+class TestFirefoxSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
     def setUp(self):
         super().setUp()
         self.login()
@@ -736,3 +736,12 @@ class TestSeleniumHelpers(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
         self.assertEqual(
             self.get_browser_logs(), [{'level': 'INFO', 'message': 'test'}]
         )
+
+
+class TestChromeSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
+    browser = 'chrome'
+
+    def test_get_browser_logs(self):
+        self.assertEqual(self.get_browser_logs(), [])
+        self.web_driver.execute_script('console.log("test")')
+        self.assertEqual(len(self.get_browser_logs()), 1)

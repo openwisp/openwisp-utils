@@ -3,7 +3,6 @@ import os
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -80,15 +79,15 @@ class SeleniumTestMixin:
 
     @classmethod
     def get_chrome_webdriver(cls):
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.page_load_strategy = 'eager'
+        options = webdriver.ChromeOptions()
+        options.page_load_strategy = 'eager'
         if os.environ.get('SELENIUM_HEADLESS', False):
-            chrome_options.add_argument('--headless')
+            options.add_argument('--headless')
         CHROME_BIN = os.environ.get('CHROME_BIN', None)
         if CHROME_BIN:
-            chrome_options.binary_location = CHROME_BIN
-        chrome_options.add_argument('--window-size=1366,768')
-        chrome_options.add_argument('--ignore-certificate-errors')
+            options.binary_location = CHROME_BIN
+        options.add_argument('--window-size=1366,768')
+        options.add_argument('--ignore-certificate-errors')
         # When running Selenium tests with the "--parallel" flag,
         # each TestCase class requires its own browser instance.
         # If the same "remote-debugging-port" is used for all
@@ -97,16 +96,11 @@ class SeleniumTestMixin:
         # debugging ports for each TestCase. To accomplish this,
         # we can leverage the randomized live test server port to
         # generate a unique port for each browser instance.
-        chrome_options.add_argument(
-            f'--remote-debugging-port={cls.server_thread.port + 100}'
+        options.add_argument(f'--remote-debugging-port={cls.server_thread.port + 100}')
+        options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
+        return webdriver.Chrome(
+            options=options,
         )
-        capabilities = DesiredCapabilities.CHROME
-        capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
-        chrome_options.set_capability('cloud:options', capabilities)
-        web_driver = webdriver.Chrome(
-            options=chrome_options,
-        )
-        return web_driver
 
     @classmethod
     def tearDownClass(cls):
