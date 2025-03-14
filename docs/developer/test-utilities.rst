@@ -190,9 +190,9 @@ Running browser tests with Selenium requires that both ``geckodriver`` and
 1. Download the appropriate ``geckodriver`` and ``chromedriver`` for your
    OS and architecture (e.g., ``linux-64``).
 2. Extract the downloaded files.
-3. Make the programs available on your system by copying the executables
-   to a directory included in your ``PATH``. For example, on a typical
-   Linux system, this could be ``/usr/local/bin/geckodriver`` and
+3. Make the programs available on your system by copying the executable
+   files to a directory included in your ``PATH``. For example, on a
+   typical Linux system, this could be ``/usr/local/bin/geckodriver`` and
    ``/usr/local/bin/chromedriver``.
 
 The Python dependencies for running Selenium tests are included as extra
