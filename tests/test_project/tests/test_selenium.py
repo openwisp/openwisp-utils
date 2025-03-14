@@ -729,3 +729,10 @@ class TestSeleniumHelpers(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
             'return document.getElementById("loading-overlay").style.display'
         )
         self.assertEqual(output, 'none')
+
+    def test_get_browser_logs(self):
+        self.assertEqual(self.get_browser_logs(), [])
+        self.web_driver.execute_script('console.log("test")')
+        self.assertEqual(
+            self.get_browser_logs(), [{'level': 'INFO', 'message': 'test'}]
+        )
