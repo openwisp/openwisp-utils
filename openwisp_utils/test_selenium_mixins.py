@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -17,10 +18,18 @@ class SeleniumTestMixin:
 
     admin_username = 'admin'
     admin_password = 'password'
+    browser = 'firefox'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        if cls.browser == 'firefox':
+            cls.web_driver = cls.get_firefox_webdriver()
+        else:
+            cls.web_driver = cls.get_chrome_webdriver()
+
+    @classmethod
+    def get_firefox_webdriver(cls):
         options = Options()
         options.page_load_strategy = 'eager'
         if os.environ.get('SELENIUM_HEADLESS', False):
@@ -43,7 +52,7 @@ class SeleniumTestMixin:
         GECKO_LOG = os.environ.get('GECKO_LOG', None)
         if GECKO_LOG:
             kwargs['service'] = webdriver.FirefoxService(log_output='geckodriver.log')
-        cls.web_driver = webdriver.Firefox(**kwargs)
+        web_driver = webdriver.Firefox(**kwargs)
         # Firefox does not support the WebDriver.get_log API. To work around this,
         # we inject JavaScript into the page to override window.console within the
         # browser's JS runtime. This allows us to capture and retrieve console errors
@@ -55,7 +64,38 @@ class SeleniumTestMixin:
                 "console_capture_extension",
             )
         )
-        cls.web_driver.install_addon(extension_path, temporary=True)
+        web_driver.install_addon(extension_path, temporary=True)
+        return web_driver
+
+    @classmethod
+    def get_chrome_webdriver(cls):
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.page_load_strategy = 'eager'
+        if os.environ.get('SELENIUM_HEADLESS', False):
+            chrome_options.add_argument('--headless')
+        CHROME_BIN = os.environ.get('CHROME_BIN', None)
+        if CHROME_BIN:
+            chrome_options.binary_location = CHROME_BIN
+        chrome_options.add_argument('--window-size=1366,768')
+        chrome_options.add_argument('--ignore-certificate-errors')
+        # When running Selenium tests with the "--parallel" flag,
+        # each TestCase class requires its own browser instance.
+        # If the same "remote-debugging-port" is used for all
+        # TestCase classes, it leads to failed test cases.
+        # Therefore, it is necessary to utilize different remote
+        # debugging ports for each TestCase. To accomplish this,
+        # we can leverage the randomized live test server port to
+        # generate a unique port for each browser instance.
+        chrome_options.add_argument(
+            f'--remote-debugging-port={cls.server_thread.port + 100}'
+        )
+        capabilities = DesiredCapabilities.CHROME
+        capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
+        chrome_options.set_capability('cloud:options', capabilities)
+        web_driver = webdriver.Chrome(
+            options=chrome_options,
+        )
+        return web_driver
 
     @classmethod
     def tearDownClass(cls):
@@ -86,7 +126,9 @@ class SeleniumTestMixin:
         )
 
     def get_browser_logs(self):
-        return self.web_driver.execute_script('return window._console_logs')
+        if self.browser == 'firefox':
+            return self.web_driver.execute_script('return window._console_logs')
+        return self.web_driver.get_log('browser')
 
     def login(self, username=None, password=None, driver=None):
         """Log in to the admin dashboard.
