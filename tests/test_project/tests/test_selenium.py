@@ -737,6 +737,14 @@ class TestFirefoxSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
             self.get_browser_logs(), [{'level': 'INFO', 'message': 'test'}]
         )
 
+    def test_wait_for_failure(self):
+        with self.assertRaises(AssertionError):
+            self.wait_for_visibility(By.CSS_SELECTOR, '#thisdoesnotexist', timeout=0)
+
+    def test_find_elements(self):
+        divs = self.find_elements(By.CSS_SELECTOR, 'div')
+        self.assertTrue(len(divs) > 1)
+
 
 class TestChromeSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
     browser = 'chrome'
