@@ -60,8 +60,8 @@ class SeleniumTestMixin:
         extension_path = os.path.abspath(
             os.path.join(
                 os.path.dirname(__file__),
-                "firefox-extensions",
-                "console_capture_extension",
+                'firefox-extensions',
+                'console_capture_extension',
             )
         )
         web_driver.install_addon(extension_path, temporary=True)
@@ -115,20 +115,22 @@ class SeleniumTestMixin:
         - url: URL to open
         - driver: selenium driver (default: cls.base_driver).
         """
-        if not driver:
-            driver = self.web_driver
+        driver = driver or self.web_driver
         driver.get(f'{self.live_server_url}{url}')
-        WebDriverWait(driver, timeout).until(
-            lambda d: d.execute_script("return document.readyState") == "complete"
-        )
-        WebDriverWait(self.web_driver, timeout).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '#main-content'))
-        )
+        self._wait_until_page_ready(driver=driver)
 
-    def get_browser_logs(self):
+    def _wait_until_page_ready(self, timeout=5, driver=None):
+        driver = driver or self.web_driver
+        WebDriverWait(driver, timeout).until(
+            lambda d: d.execute_script('return document.readyState') == 'complete'
+        )
+        self.wait_for_visibility(By.CSS_SELECTOR, '#main-content', timeout, driver)
+
+    def get_browser_logs(self, driver=None):
+        driver = driver or self.web_driver
         if self.browser == 'firefox':
-            return self.web_driver.execute_script('return window._console_logs')
-        return self.web_driver.get_log('browser')
+            return driver.execute_script('return window._console_logs')
+        return driver.get_log('browser')
 
     def login(self, username=None, password=None, driver=None):
         """Log in to the admin dashboard.
@@ -141,42 +143,53 @@ class SeleniumTestMixin:
           cls.admin_password)
         - driver: selenium driver (default: cls.web_driver).
         """
-        if not driver:
-            driver = self.web_driver
+        driver = driver or self.web_driver
         if not username:
             username = self.admin_username
         if not password:
             password = self.admin_password
         driver.get(f'{self.live_server_url}/admin/login/')
+        self._wait_until_page_ready(driver=driver)
         if 'admin/login' in driver.current_url:
             driver.find_element(by=By.NAME, value='username').send_keys(username)
             driver.find_element(by=By.NAME, value='password').send_keys(password)
             driver.find_element(by=By.XPATH, value='//input[@type="submit"]').click()
+        self._wait_until_page_ready(driver=driver)
 
-    def find_element(self, by, value, timeout=2, wait_for='visibility'):
+    def find_element(self, by, value, timeout=2, driver=None, wait_for='visibility'):
+        driver = driver or self.web_driver
         method = f'wait_for_{wait_for}'
         getattr(self, method)(by, value, timeout)
-        return self.web_driver.find_element(by=by, value=value)
+        return driver.find_element(by=by, value=value)
 
-    def find_elements(self, by, value, timeout=2, wait_for='visibility'):
+    def find_elements(self, by, value, timeout=2, driver=None, wait_for='visibility'):
+        driver = driver or self.web_driver
         method = f'wait_for_{wait_for}'
         getattr(self, method)(by, value, timeout)
-        return self.web_driver.find_elements(by=by, value=value)
+        return driver.find_elements(by=by, value=value)
 
-    def wait_for_visibility(self, by, value, timeout=2):
-        return self.wait_for('visibility_of_element_located', by, value)
+    def wait_for_visibility(self, by, value, timeout=2, driver=None):
+        driver = driver or self.web_driver
+        return self.wait_for(
+            'visibility_of_element_located', by, value, timeout, driver
+        )
 
-    def wait_for_invisibility(self, by, value, timeout=2):
-        return self.wait_for('invisibility_of_element_located', by, value)
+    def wait_for_invisibility(self, by, value, timeout=2, driver=None):
+        driver = driver or self.web_driver
+        return self.wait_for(
+            'invisibility_of_element_located', by, value, timeout, driver
+        )
 
-    def wait_for_presence(self, by, value, timeout=2):
-        return self.wait_for('presence_of_element_located', by, value)
+    def wait_for_presence(self, by, value, timeout=2, driver=None):
+        driver = driver or self.web_driver
+        return self.wait_for('presence_of_element_located', by, value, timeout, driver)
 
-    def wait_for(self, method, by, value, timeout=2):
+    def wait_for(self, method, by, value, timeout=2, driver=None):
+        driver = driver or self.web_driver
         try:
-            return WebDriverWait(self.web_driver, timeout).until(
+            return WebDriverWait(driver, timeout).until(
                 getattr(EC, method)(((by, value)))
             )
         except TimeoutException as e:
-            print(self.get_browser_logs())
+            print(self.get_browser_logs(driver))
             self.fail(f'{method} of "{value}" failed: {e}')
