@@ -112,24 +112,29 @@ class SeleniumTestMixin:
             username=self.admin_username, password=self.admin_password
         )
 
-    def open(self, url, driver=None, timeout=5):
+    def open(self, url, html_container='#main-content', driver=None, timeout=5):
         """Opens a URL.
 
         Input Arguments:
 
         - url: URL to open
         - driver: selenium driver (default: cls.base_driver).
+        - html_container: CSS selector of an HTML element to look for once
+          the page is ready
+        - timeout: timeout until the page is ready
         """
         driver = driver or self.web_driver
         driver.get(f'{self.live_server_url}{url}')
-        self._wait_until_page_ready(driver=driver)
+        self._wait_until_page_ready(driver=driver, html_container=html_container)
 
-    def _wait_until_page_ready(self, timeout=5, driver=None):
+    def _wait_until_page_ready(
+        self, html_container='#main-content', timeout=5, driver=None
+    ):
         driver = driver or self.web_driver
         WebDriverWait(driver, timeout).until(
             lambda d: d.execute_script('return document.readyState') == 'complete'
         )
-        self.wait_for_visibility(By.CSS_SELECTOR, '#main-content', timeout, driver)
+        self.wait_for_visibility(By.CSS_SELECTOR, html_container, timeout, driver)
 
     def get_browser_logs(self, driver=None):
         driver = driver or self.web_driver
