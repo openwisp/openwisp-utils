@@ -172,8 +172,8 @@ Example usage:
             # the assertion above will fail but this line will be executed
             print("This will be printed anyway.")
 
-``openwisp_utils.selenium.SeleniumTestMixin``
----------------------------------------------
+``openwisp_utils.tests.SeleniumTestMixin``
+------------------------------------------
 
 This mixin provides the core Selenium setup logic and reusable test
 methods that must be used across all OpenWISP modules based on Django to

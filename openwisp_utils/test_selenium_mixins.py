@@ -1,3 +1,2 @@
-# For backward compatibility
-# We can remove this once all modules have been updated
-from .selenium import SeleniumTestMixin  # noqa
+# For backward compatibility, TODO: remove once OW modules are updated
+from .tests.selenium import SeleniumTestMixin  # noqa

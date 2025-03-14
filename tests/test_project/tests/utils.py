@@ -4,13 +4,9 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from openwisp_utils.test_selenium_mixins import (
-    SeleniumTestMixin as BaseSeleniumTestMixin,
-)
+from openwisp_utils.tests import SeleniumTestMixin as BaseSeleniumTestMixin
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
 
 User = get_user_model()
 
@@ -201,11 +197,7 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
         return self.web_driver.find_element(By.XPATH, f'//a[@href="?{query}"]')
 
     def wait_for_dropdown(self, filter_class):
-        WebDriverWait(self.web_driver, 2).until(
-            EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, f'.{filter_class} .filter-options')
-            )
-        )
+        self.wait_for_visibility(By.CSS_SELECTOR, f'.{filter_class} .filter-options')
 
 
 class MockUser:

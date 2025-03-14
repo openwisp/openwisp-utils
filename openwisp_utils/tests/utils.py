@@ -9,7 +9,7 @@ from django.db import DEFAULT_DB_ALIAS, connections
 from django.test.runner import DiscoverRunner
 from django.test.utils import CaptureQueriesContext
 
-from .utils import print_color
+from ..utils import print_color
 
 
 @contextmanager
