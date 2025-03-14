@@ -204,3 +204,11 @@ class SeleniumTestMixin:
         except TimeoutException as e:
             print(self.get_browser_logs(driver))
             self.fail(f'{method} of "{value}" failed: {e}')
+
+    def hide_loading_overlay(self, timeout=2, driver=None):
+        """The geckodriver can't figure out the loading overlay is still fading out, so let's just hide it."""
+        driver = driver or self.web_driver
+        driver.execute_script(
+            'document.getElementById("loading-overlay").style.display="none";'
+        )
+        self.wait_for_invisibility(By.CSS_SELECTOR, '#loading-overlay', timeout, driver)

@@ -1,6 +1,6 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import JavascriptException, NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
@@ -11,6 +11,7 @@ from .utils import SeleniumTestMixin
 
 class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
     def tearDown(self):
+        super().tearDown()
         # Clear local storage
         self.web_driver.execute_script('window.localStorage.clear()')
 
@@ -361,10 +362,6 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
     shelf_model = Shelf
     book_model = Book
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
     def setUp(self):
         super().setUp()
         self.web_driver.set_window_size(1600, 768)
@@ -509,10 +506,6 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
 class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
     shelf_model = Shelf
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
     def test_input_filters(self):
         url = reverse('admin:test_project_shelf_changelist')
         user = self._create_user()
@@ -601,10 +594,6 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
 
 
 class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
     def setUp(self):
         super().setUp()
         self.web_driver.set_window_size(1600, 768)
@@ -625,10 +614,6 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
 class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
     shelf_model = Shelf
     book_model = Book
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
 
     def setUp(self):
         super().setUp()
@@ -721,3 +706,26 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             self.web_driver.find_element(
                 By.XPATH, result_xpath.format(factual_shelf.name)
             )
+
+
+class TestSeleniumHelpers(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
+    def setUp(self):
+        super().setUp()
+        self.login()
+
+    def test_hide_loading_overlay(self):
+        try:
+            self.hide_loading_overlay()
+        except JavascriptException:
+            pass
+        else:
+            self.fail('Javascript exception not raised')
+
+        self.web_driver.execute_script(
+            'document.body.insertAdjacentHTML("beforeend", "<div id=\'loading-overlay\'></div>");'
+        )
+        self.hide_loading_overlay()
+        output = self.web_driver.execute_script(
+            'return document.getElementById("loading-overlay").style.display'
+        )
+        self.assertEqual(output, 'none')
