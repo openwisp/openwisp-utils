@@ -1,5 +1,4 @@
 # For backward compatibility and shorthand
-from .selenium import SeleniumTestMixin  # noqa
 from .utils import (  # noqa
     AdminActionPermTestMixin,
     AssertNumQueriesSubTestMixin,
@@ -11,3 +10,10 @@ from .utils import (  # noqa
     capture_stdout,
     catch_signal,
 )
+
+try:
+    from .selenium import SeleniumTestMixin  # noqa
+except ImportError:
+    # Selenium is an optional dependency.
+    # Skip import errors since not all modules use browser-based tests.
+    pass
