@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.utils import free_port
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -52,9 +53,8 @@ class SeleniumTestMixin:
         # debugging ports for each TestCase. To accomplish this,
         # we can leverage the randomized live test server port to
         # generate a unique port for each browser instance.
-        marionette_port = cls.server_thread.port + 100
         options.set_capability(
-            'moz:firefoxOptions', {'args': ['--marionette-port', marionette_port]}
+            'moz:firefoxOptions', {'args': ['--marionette-port', free_port()]}
         )
         kwargs = dict(options=options)
         # Optional: Store logs in a file
@@ -96,7 +96,7 @@ class SeleniumTestMixin:
         # debugging ports for each TestCase. To accomplish this,
         # we can leverage the randomized live test server port to
         # generate a unique port for each browser instance.
-        options.add_argument(f'--remote-debugging-port={cls.server_thread.port + 100}')
+        options.add_argument(f'--remote-debugging-port={free_port()}')
         options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
         return webdriver.Chrome(
             options=options,
