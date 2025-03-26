@@ -45,12 +45,6 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
         opts.update(kwargs)
         return self._create_user(**opts)
 
-    def logout(self):
-        account_button = self._get_account_button()
-        account_button.click()
-        logout_link = self._get_logout_link()
-        logout_link.click()
-
     def _get_menu_toggle(self):
         return self.web_driver.find_element(By.CSS_SELECTOR, '.menu-toggle')
 
