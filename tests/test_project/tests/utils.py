@@ -115,7 +115,7 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
         return self.web_driver.find_element(By.CSS_SELECTOR, '.account-menu-username')
 
     def _get_logout_link(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.menu-link')
+        return self.web_driver.find_element(By.CSS_SELECTOR, '#logout-form button')
 
     def _get_menu_backdrop(self):
         return self.web_driver.find_element(By.CSS_SELECTOR, '.menu-backdrop')

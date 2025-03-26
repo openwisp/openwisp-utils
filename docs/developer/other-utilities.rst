@@ -86,12 +86,19 @@ Adds support for excluding file types using
 :ref:`OPENWISP_STATICFILES_VERSIONED_EXCLUDE
 <openwisp_staticfiles_versioned_exclude>` setting.
 
-To use point ``STATICFILES_STORAGE`` to
+To use point ``STORAGES["staticfiles"]`` to
 ``openwisp_utils.storage.CompressStaticFilesStorage`` in ``settings.py``.
 
 .. code-block:: python
 
-    STATICFILES_STORAGE = "openwisp_utils.storage.CompressStaticFilesStorage"
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "openwisp_utils.storage.CompressStaticFilesStorage",
+        },
+    }
 
 Other Utilities
 ---------------

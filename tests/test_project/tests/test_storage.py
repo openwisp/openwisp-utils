@@ -21,7 +21,9 @@ def create_dir(*paths: str):
 
 
 @override_settings(
-    STATICFILES_STORAGE='openwisp_utils.storage.CompressStaticFilesStorage',
+    STORAGES={
+        'staticfiles': {'BACKEND': 'openwisp_utils.storage.CompressStaticFilesStorage'}
+    },
     STATIC_ROOT=create_dir(settings.BASE_DIR, 'test_storage_dir', 'test_static_root'),
     STATICFILES_DIRS=[
         create_dir(settings.BASE_DIR, 'test_storage_dir', 'test_staticfiles_dir')

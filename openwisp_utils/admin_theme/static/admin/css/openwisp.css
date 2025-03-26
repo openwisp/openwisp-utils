@@ -746,7 +746,8 @@ input[type="button"]:hover,
 }
 .account-button:hover span,
 .account-button:focus span,
-.account-menu a:hover span {
+.account-menu .dropdown-clickable:hover span,
+.account-menu .dropdown-clickable:focus span {
   background: #df5d43;
 }
 .account-menu {
@@ -797,19 +798,28 @@ input[type="button"]:hover,
   display: none;
   color: #777;
 }
-#header .account-menu a {
-  color: #777;
+#header .account-menu .dropdown-clickable {
   display: flex;
-  font-weight: 700;
   padding: 0.375rem;
+  color: #777;
+  font-weight: 700;
   text-decoration: none;
   line-height: 22px;
+}
+#header .account-menu #logout-form button {
+  text-transform: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  outline: revert;
+  width: 100%;
 }
 #header .account-menu li:last-child {
   border-bottom: 0;
 }
 .account-menu-username:hover,
-#header .account-menu a:hover {
+#header .account-menu .dropdown-clickable:hover,
+#header .account-menu .dropdown-clickable:active,
+#header .account-menu .dropdown-clickable:focus {
   color: #df5d43;
 }
 #main-content #header {
