@@ -80,6 +80,9 @@ See https://code.djangoproject.com/ticket/33878 */
 body {
   min-width: 320px;
 }
+th {
+  font-weight: 600;
+}
 .menu-backdrop {
   position: fixed;
   height: 100vh;
@@ -154,7 +157,9 @@ a.section:visited:focus,
 .module h2,
 .module caption,
 .inline-group h2,
-fieldset.module h2 {
+fieldset.module h2,
+.selector .selector-available-title,
+.selector .selector-chosen-title {
   background: #f9f9f9;
   color: #333;
   padding: 15px;
@@ -210,8 +215,14 @@ a:focus {
 .module caption,
 .inline-group h2,
 #content-related h3,
+#main .aligned .selector-available-title label,
+#main .aligned .selector-chosen-title label,
 fieldset.module h2 {
   font-size: 16px;
+}
+#content fieldset .fieldset-heading,
+#content fieldset .inline-heading {
+  border: 0px;
 }
 #main .inline-related h3 {
   padding: 15px;
@@ -433,7 +444,8 @@ div.breadcrumbs {
 #main-content div.breadcrumbs {
   padding: 1rem 2.5rem;
 }
-#main .selector-chosen h2 {
+#main .selector-chosen h2,
+#main .aligned .selector-chosen-title {
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
 }
@@ -746,7 +758,8 @@ input[type="button"]:hover,
 }
 .account-button:hover span,
 .account-button:focus span,
-.account-menu a:hover span {
+.account-menu .dropdown-clickable:hover span,
+.account-menu .dropdown-clickable:focus span {
   background: #df5d43;
 }
 .account-menu {
@@ -797,19 +810,28 @@ input[type="button"]:hover,
   display: none;
   color: #777;
 }
-#header .account-menu a {
-  color: #777;
+#header .account-menu .dropdown-clickable {
   display: flex;
-  font-weight: 700;
   padding: 0.375rem;
+  color: #777;
+  font-weight: 700;
   text-decoration: none;
   line-height: 22px;
+}
+#header .account-menu #logout-form button {
+  text-transform: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  outline: revert;
+  width: 100%;
 }
 #header .account-menu li:last-child {
   border-bottom: 0;
 }
 .account-menu-username:hover,
-#header .account-menu a:hover {
+#header .account-menu .dropdown-clickable:hover,
+#header .account-menu .dropdown-clickable:active,
+#header .account-menu .dropdown-clickable:focus {
   color: #df5d43;
 }
 #main-content #header {
@@ -832,7 +854,7 @@ input[type="button"]:hover,
 #content-main .object-tools {
   display: none;
 }
-#content-main .form-row a:link {
+#content-main .form-row a:link:not(.button) {
   text-decoration: underline;
 }
 #content-main .form-row a:link:hover,
@@ -1059,6 +1081,15 @@ div.calendar-shortcuts a:hover {
 }
 
 /*********** Selector fix ***********/
+.selector-available-title label,
+.selector-chosen-title label {
+  float: unset;
+}
+#main .form-row .selector-chosen-title label,
+#container #main .form-row .selector-chosen-title .helptext {
+  color: #fff;
+}
+
 @media (max-width: 1226px) and (min-width: 1024px) {
   .related-widget-wrapper > a {
     order: 2;

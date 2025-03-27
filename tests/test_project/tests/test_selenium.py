@@ -71,7 +71,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         main_content = self._get_main_content()
         self.assertEqual(main_content.get_attribute('class'), 'm-0')
         # Test login page
-        self.web_driver.refresh()
+        self.open(reverse('admin:login'))
         self.wait_for_visibility(By.CSS_SELECTOR, self.config['site_name_css_selector'])
         hamburger = self._get_hamburger()
         logo = self._get_logo()
