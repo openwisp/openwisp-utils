@@ -166,6 +166,11 @@ class SeleniumTestMixin:
             driver.find_element(by=By.XPATH, value='//input[@type="submit"]').click()
         self._wait_until_page_ready(driver=driver)
 
+    def logout(self, driver=None):
+        driver = driver or self.web_driver
+        self.web_driver.find_element(By.CSS_SELECTOR, '.account-button').click()
+        self.web_driver.find_element(By.CSS_SELECTOR, '#logout-form button').click()
+
     def find_element(self, by, value, timeout=2, driver=None, wait_for='visibility'):
         driver = driver or self.web_driver
         method = f'wait_for_{wait_for}'
