@@ -25,7 +25,7 @@ setup(
     scripts=['openwisp-qa-check', 'openwisp-qa-format', 'openwisp-pre-push-hook'],
     zip_safe=False,
     install_requires=[
-        'django-model-utils~=4.5.0',
+        'django-model-utils>=4.5,<5.1',
         'django-compress-staticfiles~=1.0.1b',
         'django-admin-autocomplete-filter~=0.7.1',
         'swapper~=1.3.0',
