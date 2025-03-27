@@ -39,7 +39,7 @@ setup(
             'isort~=5.13.2',
             'coverage~=7.6.1',
             'tblib~=3.0.0',
-            'docstrfmt~=1.8.0',
+            'docstrfmt>=1.8,<1.11',
         ],
         'rest': [
             'djangorestframework>=3.14,<3.15.2',
