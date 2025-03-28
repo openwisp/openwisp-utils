@@ -1,8 +1,66 @@
-Re-usable GitHub Workflows
-==========================
+Re-usable GitHub Actions and Workflows
+======================================
+
+GitHub Actions
+--------------
+
+Retry Command
+~~~~~~~~~~~~~
+
+This GitHub Action retries a shell command if it fails. It is useful for
+handling flaky tests in CI/CD pipelines.
+
+**Inputs**
+
+- ``command`` (required): The shell command to run.
+- ``max_attempts`` (optional): The number of retry attempts. Defaults to
+  ``3``.
+- ``delay_seconds`` (optional): The delay between retries in seconds.
+  Defaults to ``5``.
+
+**Usage Example**
+
+You can use this action in your workflow as follows:
+
+.. code-block:: yaml
+
+    name: Retry Example
+
+    on:
+      push:
+        branches:
+          - main
+
+    jobs:
+      retry-command-example:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout code
+            uses: actions/checkout@v3
+
+          - name: Test
+            uses: openwisp/openwisp-utils/.github/actions/retry-command@master
+            with:
+              delay_seconds: 30
+              max_attempts: 5
+              command: ./runtests.py --parallel
+            env:
+              SELENIUM_HEADLESS: 1
+
+This example retries the ``./runtests.py --parallel`` command up to 5
+times with a 30 second delay between attempts.
+
+.. note::
+
+    If the command continues to fail after the specified number of
+    attempts, the action will exit with a non-zero status, causing the
+    workflow to fail.
+
+GitHub Workflows
+----------------
 
 Replicate Commits to Version Branch
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This re-usable workflow replicates commits from the ``master`` branch to a
 version branch. The version branch name is derived from the version of the
