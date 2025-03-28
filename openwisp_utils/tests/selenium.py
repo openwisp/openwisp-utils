@@ -82,12 +82,16 @@ class SeleniumTestMixin:
         options = webdriver.ChromeOptions()
         options.page_load_strategy = 'eager'
         if os.environ.get('SELENIUM_HEADLESS', False):
-            options.add_argument('--headless')
+            options.add_argument('--headless=new')
         CHROME_BIN = os.environ.get('CHROME_BIN', None)
         if CHROME_BIN:
             options.binary_location = CHROME_BIN
         options.add_argument('--window-size=1366,768')
         options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-features=VizDisplayCompositor')
         # When running Selenium tests with the "--parallel" flag,
         # each TestCase class requires its own browser instance.
         # If the same "remote-debugging-port" is used for all
