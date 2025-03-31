@@ -82,7 +82,7 @@ class SeleniumTestMixin:
         options = webdriver.ChromeOptions()
         options.page_load_strategy = 'eager'
         if os.environ.get('SELENIUM_HEADLESS', False):
-            options.add_argument('--headless=new')
+            options.add_argument('--headless')
         CHROME_BIN = os.environ.get('CHROME_BIN', None)
         if CHROME_BIN:
             options.binary_location = CHROME_BIN
