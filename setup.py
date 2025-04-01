@@ -37,7 +37,7 @@ setup(
             'black~=23.12.1',
             'flake8~=7.1.0',
             'isort~=5.13.2',
-            'coverage~=7.6.1',
+            'coverage>=7.6.1,<7.9.0',
             'tblib~=3.0.0',
             'docstrfmt~=1.8.0',
         ],
