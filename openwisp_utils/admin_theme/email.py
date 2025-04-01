@@ -40,8 +40,8 @@ def send_email(
             html_email_template,
             context=context,
         )
-        mail.attach_alternative(html_message, 'text/html')
+        mail.attach_alternative(html_message, "text/html")
     try:
         mail.send()
     except SMTPRecipientsRefused as err:
-        logger.warning(f'SMTP recipients refused: {err.recipients}')
+        logger.warning(f"SMTP recipients refused: {err.recipients}")
