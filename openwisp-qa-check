@@ -54,7 +54,7 @@ runcheckendline() {
   flag=0
   
   # Start with basic exclusions
-  exclude_patterns=("*/.git/*" "*/*.egg-info/*" "*.min.*" "*.svg")
+  exclude_patterns=("./.*" "*/.git/*" "*/*.egg-info/*" "*.min.*" "*.svg")
   
   # Add user-provided ignore pattern if specified
   if [ -n "$IGNORE_PATTERN" ]; then
@@ -65,7 +65,7 @@ runcheckendline() {
   # Build the exclusion arguments
   exclude_args=""
   for pattern in "${exclude_patterns[@]}"; do
-    exclude_args="$exclude_args -not -path '$pattern'"
+    exclude_args="$exclude_args -path '$pattern'"
   done
   
   # Find command that uses eval to properly handle the arguments
@@ -136,22 +136,18 @@ runcheckmigrations() {
 }
 
 runflake8() {
-  if [ -n "$IGNORE_PATTERN" ]; then
+  EXCLUDE_PATTERN=".git,__pycache__,build,dist,*.egg-info"
 
-    flake8 --exclude="$IGNORE_PATTERN" . &&
-      echo "SUCCESS: Flake8 check successful!" ||
-      {
-        echoerr "ERROR: Flake8 check failed!"
-        FAILURE=1
-      }
-  else
-    flake8 --exclude=".git,__pycache__,build,dist,*.egg-info" . &&
-      echo "SUCCESS: Flake8 check successful!" ||
-      {
-        echoerr "ERROR: Flake8 check failed!"
-        FAILURE=1
-      }
+  if [ -n "$IGNORE_PATTERN" ]; then
+    EXCLUDE_PATTERN="$IGNORE_PATTERN"
   fi
+
+  flake8 --exclude="$EXCLUDE_PATTERN" . &&
+    echo "SUCCESS: Flake8 check successful!" ||
+    {
+      echoerr "ERROR: Flake8 check failed!"
+      FAILURE=1
+    }
 }
 
 runrstcheck() {
