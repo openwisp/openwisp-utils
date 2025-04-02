@@ -37,7 +37,7 @@ setup(
             'black~=23.12.1',
             'flake8~=7.1.0',
             'isort~=5.13.2',
-            'coverage~=7.6.1',
+            'coverage>=7.6.1,<7.9.0',
             'tblib~=3.0.0',
             'docstrfmt~=1.8.0',
         ],
@@ -45,6 +45,14 @@ setup(
             'djangorestframework>=3.14,<3.17',
             'django-filter~=23.2',  # django-filter uses CalVer
             'drf-yasg~=1.21.7',
+        ],
+        'channels': [
+            'channels[daphne]~=4.2.0',
+            'channels_redis~=4.2.1',
+        ],
+        'channels-test': [
+            'pytest-asyncio~=0.24.0',
+            'pytest-django~=4.10.0',
         ],
         'celery': ['celery~=5.4.0'],
         'selenium': ['selenium>=4.10,<4.30'],
