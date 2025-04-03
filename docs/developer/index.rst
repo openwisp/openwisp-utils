@@ -16,7 +16,7 @@ Developer Docs
     ./admin-utilities.rst
     ./test-utilities.rst
     ./other-utilities.rst
-    ./reusable-workflows.rst
+    ./reusable-github-utils.rst
 
 Other useful resources:
 

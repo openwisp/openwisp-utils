@@ -1,0 +1,37 @@
+name: "Retry Command"
+
+description: "Retries a shell command if it fails"
+
+inputs:
+  command:
+    description: "The shell command to run"
+    required: true
+  max_attempts:
+    description: "Number of retry attempts"
+    required: false
+    default: "3"
+  delay_seconds:
+    description: "Delay between retries in seconds"
+    required: false
+    default: "5"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Retry Command
+      shell: bash
+      run: |
+        attempts=0
+        until [ $attempts -ge ${{ inputs.max_attempts }} ]
+        do
+          echo "Attempt $((attempts+1)) of ${{ inputs.max_attempts }}..."
+          eval "${{ inputs.command }}" && break
+          attempts=$((attempts+1))
+          if [ $attempts -lt ${{ inputs.max_attempts }} ]; then
+            echo "Command failed. Waiting ${{ inputs.delay_seconds }}s before retry..."
+            sleep ${{ inputs.delay_seconds }}
+          else
+            echo "Command failed after $attempts attempts."
+            exit 1
+          fi
+        done
