@@ -52,25 +52,20 @@ echoerr() { echo "$@" 1>&2; }
 
 runcheckendline() {
   flag=0
-  
   # Start with basic exclusions
   exclude_patterns=("./.*" "*/.git/*" "*/*.egg-info/*" "*.min.*" "*.svg")
-  
   # Add user-provided ignore pattern if specified
   if [ -n "$IGNORE_PATTERN" ]; then
     echo "Ignoring: $IGNORE_PATTERN"
     exclude_patterns+=("$IGNORE_PATTERN")
   fi
-  
   # Build the exclusion arguments
   exclude_args=""
   for pattern in "${exclude_patterns[@]}"; do
-    exclude_args="$exclude_args -path '$pattern'"
+    exclude_args="$exclude_args -path $pattern"
   done
-  
   # Find command that uses eval to properly handle the arguments
-  find_command="find . -type f $exclude_args -exec grep -Iq . {} \; -print"
-  
+  find_command="find . -type f -not $exclude_args -exec grep -Iq . {} \; -print"
   # Run the find and process results
   while IFS= read -r file; do
     if [ "$(tail -c 1 "$file")" != "" ]; then
@@ -78,7 +73,6 @@ runcheckendline() {
       flag=1
     fi
   done < <(eval "$find_command")
-  
   if [ $flag -ne 0 ]; then
     echoerr "ERROR: Blank endline check failed!"
     FAILURE=1
@@ -137,11 +131,9 @@ runcheckmigrations() {
 
 runflake8() {
   EXCLUDE_PATTERN=".git,__pycache__,build,dist,*.egg-info"
-
   if [ -n "$IGNORE_PATTERN" ]; then
-    EXCLUDE_PATTERN="$IGNORE_PATTERN"
+    EXCLUDE_PATTERN="$EXCLUDE_PATTERN,$IGNORE_PATTERN"
   fi
-
   flake8 --exclude="$EXCLUDE_PATTERN" . &&
     echo "SUCCESS: Flake8 check successful!" ||
     {
@@ -171,24 +163,13 @@ runisort() {
 }
 
 runblack() {
+  black_args="-S --check --diff --quiet"
   if [ -n "$IGNORE_PATTERN" ]; then
     # Convert shell pattern to regex pattern for Black
     BLACK_EXCLUDE=$(echo "$IGNORE_PATTERN" | sed 's/\./\\./g' | sed 's/\*/.*/g')
-    
-    black -S --exclude "$BLACK_EXCLUDE" --check --diff --quiet . &&
-      echo "SUCCESS: Black check successful!" ||
-      {
-        echoerr "ERROR: Black check failed! Hint: did you forget to run openwisp-qa-format?"
-        FAILURE=1
-      }
-  else
-    black --check --diff --quiet . &&
-      echo "SUCCESS: Black check successful!" ||
-      {
-        echoerr "ERROR: Black check failed! Hint: did you forget to run openwisp-qa-format?"
-        FAILURE=1
-      }
+    black_args="$black_args --exclude \"$BLACK_EXCLUDE\""
   fi
+  eval "black $black_args ."
 }
 
 runcheckcommit() {
