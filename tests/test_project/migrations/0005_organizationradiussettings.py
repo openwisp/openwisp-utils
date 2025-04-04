@@ -6,63 +6,63 @@ import openwisp_utils.fields
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('test_project', '0004_sheft_data'),
+        ("test_project", "0004_sheft_data"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='OrganizationRadiusSettings',
+            name="OrganizationRadiusSettings",
             fields=[
                 (
-                    'id',
+                    "id",
                     models.AutoField(
                         auto_created=True,
                         primary_key=True,
                         serialize=False,
-                        verbose_name='ID',
+                        verbose_name="ID",
                     ),
                 ),
                 (
-                    'is_active',
+                    "is_active",
                     openwisp_utils.fields.FallbackBooleanChoiceField(
                         blank=True, default=None, fallback=False, null=True
                     ),
                 ),
                 (
-                    'is_first_name_required',
+                    "is_first_name_required",
                     openwisp_utils.fields.FallbackCharChoiceField(
                         blank=True,
                         choices=[
-                            ('disabled', 'Disabled'),
-                            ('allowed', 'Allowed'),
-                            ('mandatory', 'Mandatory'),
+                            ("disabled", "Disabled"),
+                            ("allowed", "Allowed"),
+                            ("mandatory", "Mandatory"),
                         ],
-                        fallback='disabled',
+                        fallback="disabled",
                         max_length=32,
                         null=True,
                     ),
                 ),
                 (
-                    'greeting_text',
+                    "greeting_text",
                     openwisp_utils.fields.FallbackCharField(
                         blank=True,
-                        fallback='Welcome to OpenWISP!',
+                        fallback="Welcome to OpenWISP!",
                         max_length=200,
                         null=True,
                     ),
                 ),
                 (
-                    'password_reset_url',
+                    "password_reset_url",
                     openwisp_utils.fields.FallbackURLField(
                         blank=True,
-                        fallback='http://localhost:8000/admin/password_change/',
+                        fallback="http://localhost:8000/admin/password_change/",
                         null=True,
                     ),
                 ),
                 (
-                    'extra_config',
+                    "extra_config",
                     openwisp_utils.fields.FallbackTextField(
-                        blank=True, fallback='no data', max_length=200, null=True
+                        blank=True, fallback="no data", max_length=200, null=True
                     ),
                 ),
             ],

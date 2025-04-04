@@ -22,14 +22,14 @@ def create_dir(*paths: str):
 
 @override_settings(
     STORAGES={
-        'staticfiles': {'BACKEND': 'openwisp_utils.storage.CompressStaticFilesStorage'}
+        "staticfiles": {"BACKEND": "openwisp_utils.storage.CompressStaticFilesStorage"}
     },
-    STATIC_ROOT=create_dir(settings.BASE_DIR, 'test_storage_dir', 'test_static_root'),
+    STATIC_ROOT=create_dir(settings.BASE_DIR, "test_storage_dir", "test_static_root"),
     STATICFILES_DIRS=[
-        create_dir(settings.BASE_DIR, 'test_storage_dir', 'test_staticfiles_dir')
+        create_dir(settings.BASE_DIR, "test_storage_dir", "test_staticfiles_dir")
     ],
-    STATICFILES_FINDERS=['django.contrib.staticfiles.finders.FileSystemFinder'],
-    OPENWISP_STATICFILES_VERSIONED_EXCLUDE=['*skip_this.txt'],
+    STATICFILES_FINDERS=["django.contrib.staticfiles.finders.FileSystemFinder"],
+    OPENWISP_STATICFILES_VERSIONED_EXCLUDE=["*skip_this.txt"],
 )
 class TestCompressStaticFilesStorage(TestCase):
     @classmethod
@@ -37,22 +37,22 @@ class TestCompressStaticFilesStorage(TestCase):
         super().setUpClass()
         static_dir = settings.STATICFILES_DIRS[0]
 
-        file1 = os.path.join(static_dir, 'skip_this.txt')
-        with open(file1, 'w') as f:
-            f.write('this will not be hashed')
+        file1 = os.path.join(static_dir, "skip_this.txt")
+        with open(file1, "w") as f:
+            f.write("this will not be hashed")
 
-        file2 = os.path.join(static_dir, 'this.txt')
-        with open(file2, 'w') as f:
-            f.write('this will be hashed')
+        file2 = os.path.join(static_dir, "this.txt")
+        with open(file2, "w") as f:
+            f.write("this will be hashed")
 
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
-        shutil.rmtree(os.path.join(settings.BASE_DIR, 'test_storage_dir'))
+        shutil.rmtree(os.path.join(settings.BASE_DIR, "test_storage_dir"))
 
     @capture_stdout()
     def test_hashed_name(self):
-        call_command('collectstatic')
+        call_command("collectstatic")
         hashed_files = storage.staticfiles_storage.hashed_files
-        self.assertEqual(hashed_files['skip_this.txt'], 'skip_this.txt')
-        self.assertNotEqual(hashed_files['this.txt'], 'this.txt')
+        self.assertEqual(hashed_files["skip_this.txt"], "skip_this.txt")
+        self.assertNotEqual(hashed_files["this.txt"], "this.txt")

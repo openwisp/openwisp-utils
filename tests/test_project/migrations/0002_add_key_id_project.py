@@ -9,30 +9,30 @@ import uuid
 
 
 class Migration(migrations.Migration):
-    dependencies = [('test_project', '0001_initial')]
+    dependencies = [("test_project", "0001_initial")]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='key',
+            model_name="project",
+            name="key",
             field=openwisp_utils.base.KeyField(
                 db_index=True,
                 default=openwisp_utils.utils.get_random_key,
-                help_text='unique project key',
+                help_text="unique project key",
                 max_length=64,
                 unique=True,
                 validators=[
                     django.core.validators.RegexValidator(
-                        re.compile('^[^\\s/\\.]+$'),
-                        code='invalid',
-                        message='This value must not contain spaces, dots or slashes.',
+                        re.compile("^[^\\s/\\.]+$"),
+                        code="invalid",
+                        message="This value must not contain spaces, dots or slashes.",
                     )
                 ],
             ),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='id',
+            model_name="project",
+            name="id",
             field=models.UUIDField(
                 default=uuid.uuid4, editable=False, primary_key=True, serialize=False
             ),

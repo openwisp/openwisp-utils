@@ -4,8 +4,8 @@ try:
     from rest_framework import serializers
 except ImportError:  # pragma: nocover
     raise ImproperlyConfigured(
-        'Django REST Framework is required to use '
-        'this feature but it is not installed'
+        "Django REST Framework is required to use "
+        "this feature but it is not installed"
     )
 
 
