@@ -6,7 +6,7 @@ class AdminTestMixin(object):
     def setUp(self):
         super().setUp()
         user = get_user_model().objects.create_superuser(
-            username='administrator', password='admin', email='test@test.org'
+            username="administrator", password="admin", email="test@test.org"
         )
         self.client.force_login(user)
         self.site = AdminSite()
@@ -14,7 +14,7 @@ class AdminTestMixin(object):
 
 class CreateMixin(object):
     def _create_book(self, **kwargs):
-        options = dict(name='test-book', author='test-author')
+        options = dict(name="test-book", author="test-author")
         options.update(kwargs)
         b = self.book_model(**options)
         b.full_clean()
@@ -22,7 +22,7 @@ class CreateMixin(object):
         return b
 
     def _create_shelf(self, **kwargs):
-        options = dict(name='test-shelf')
+        options = dict(name="test-shelf")
         options.update(kwargs)
         s = self.shelf_model(**options)
         s.full_clean()

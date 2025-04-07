@@ -5,7 +5,7 @@ import pkg_resources
 from django.conf import settings
 from django.utils.module_loading import import_string
 
-EXTRA_OPENWISP_PACKAGES = ['netdiff', 'netjsonconfig']
+EXTRA_OPENWISP_PACKAGES = ["netdiff", "netjsonconfig"]
 
 
 def get_installed_openwisp_packages():
@@ -13,23 +13,23 @@ def get_installed_openwisp_packages():
     return {
         dist.key: dist.version
         for dist in dists
-        if dist.key.startswith('openwisp') or dist.key in EXTRA_OPENWISP_PACKAGES
+        if dist.key.startswith("openwisp") or dist.key in EXTRA_OPENWISP_PACKAGES
     }
 
 
 def _get_openwisp2_detail(attribute_name, fallback=None):
     try:
-        return import_string(f'openwisp2.{attribute_name}')
+        return import_string(f"openwisp2.{attribute_name}")
     except ImportError:
         return fallback
 
 
 def get_openwisp_version():
-    return _get_openwisp2_detail('__openwisp_version__')
+    return _get_openwisp2_detail("__openwisp_version__")
 
 
 def get_openwisp_installation_method():
-    return _get_openwisp2_detail('__openwisp_installation_method__', 'unspecified')
+    return _get_openwisp2_detail("__openwisp_installation_method__", "unspecified")
 
 
 def get_enabled_openwisp_modules():
@@ -40,13 +40,13 @@ def get_enabled_openwisp_modules():
         if package in EXTRA_OPENWISP_PACKAGES:
             extra_packages[package] = version
             continue
-        package_name = package.replace('-', '_')
+        package_name = package.replace("-", "_")
         if package_name in settings.INSTALLED_APPS:
             enabled_packages[package] = version
         else:
             # check for sub-apps
             for app in settings.INSTALLED_APPS:
-                if app.startswith(package_name + '.'):
+                if app.startswith(package_name + "."):
                     enabled_packages[package] = version
                     break
     enabled_packages = OrderedDict(sorted(enabled_packages.items()))
@@ -57,7 +57,7 @@ def get_enabled_openwisp_modules():
 def get_os_details():
     uname = platform.uname()
     return {
-        'os_version': uname.version,
-        'kernel_version': uname.release,
-        'hardware_platform': uname.machine,
+        "os_version": uname.version,
+        "kernel_version": uname.release,
+        "hardware_platform": uname.machine,
     }

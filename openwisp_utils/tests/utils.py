@@ -29,7 +29,7 @@ class TimeLoggingTestResult(TextTestResult):
 
     def _get_slow_test_threshold(self):
         slow_test_threshold = getattr(
-            settings, 'OPENWISP_SLOW_TEST_THRESHOLD', [0.3, 1]
+            settings, "OPENWISP_SLOW_TEST_THRESHOLD", [0.3, 1]
         )
         assert isinstance(slow_test_threshold, list)
         assert len(slow_test_threshold) == 2
@@ -47,7 +47,7 @@ class TimeLoggingTestResult(TextTestResult):
 
     def display_slow_tests(self):
         print_color(
-            f'\nSummary of slow tests (>{self.slow_test_threshold[0]}s)\n', 'white_bold'
+            f"\nSummary of slow tests (>{self.slow_test_threshold[0]}s)\n", "white_bold"
         )
         self._module = None
         slow_tests_counter = 0
@@ -55,19 +55,19 @@ class TimeLoggingTestResult(TextTestResult):
             if elapsed > self.slow_test_threshold[0]:
                 slow_tests_counter += 1
                 # Remove docstring if present
-                name = name.split('\n')[0]
+                name = name.split("\n")[0]
                 name, module = name.split()
                 if module != self._module:
                     self._module = module
-                    print_color(f'{module}', 'yellow_bold')
+                    print_color(f"{module}", "yellow_bold")
                 color = (
-                    'red_bold'
+                    "red_bold"
                     if elapsed > self.slow_test_threshold[1]
-                    else 'yellow_bold'
+                    else "yellow_bold"
                 )
-                print_color(f'  ({elapsed:.2f}s)', color, end=' ')
+                print_color(f"  ({elapsed:.2f}s)", color, end=" ")
                 print(name)
-        print_color(f'\nTotal slow tests detected: {slow_tests_counter}', 'white_bold')
+        print_color(f"\nTotal slow tests detected: {slow_tests_counter}", "white_bold")
         return self.test_timings
 
     def stopTestRun(self):
@@ -83,25 +83,25 @@ class TimeLoggingTestRunner(DiscoverRunner):
 class CaptureOutput(object):
     def __call__(self, function):
         def wrapped_function(*args, **kwargs):
-            if hasattr(self, 'stdout'):
+            if hasattr(self, "stdout"):
                 sys.stdout = self.stdout
-            if hasattr(self, 'stderr'):
+            if hasattr(self, "stderr"):
                 sys.stderr = self.stderr
             original_args = list(args)
             args = list(args)
             try:
-                if hasattr(self, 'stdout'):
+                if hasattr(self, "stdout"):
                     args.append(self.stdout)
-                if hasattr(self, 'stderr'):
+                if hasattr(self, "stderr"):
                     args.append(self.stderr)
                 function(*args, **kwargs)
             except TypeError:
                 function(*original_args, **kwargs)
             finally:
-                if hasattr(self, 'stdout'):
+                if hasattr(self, "stdout"):
                     self.stdout.close()
                     sys.stdout = sys.__stdout__
-                if hasattr(self, 'stderr'):
+                if hasattr(self, "stderr"):
                     self.stderr.close()
                     sys.stderr = sys.__stderr__
 
@@ -140,7 +140,7 @@ class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
         if exc_type is not None:
             return
         executed = len(self)
-        with self.test_case.subTest(f'Expecting {self.num} SQL queries'):
+        with self.test_case.subTest(f"Expecting {self.num} SQL queries"):
             self.test_case.assertEqual(
                 executed,
                 self.num,
@@ -148,8 +148,8 @@ class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
                 % (
                     executed,
                     self.num,
-                    '\n'.join(
-                        '%d. %s' % (i, query['sql'])
+                    "\n".join(
+                        "%d. %s" % (i, query["sql"])
                         for i, query in enumerate(self.captured_queries, start=1)
                     ),
                 ),
@@ -176,7 +176,7 @@ class AdminActionPermTestMixin:
         user,
         obj,
         message,
-        message_level='success',
+        message_level="success",
         required_perms=None,
         extra_payload=None,
     ):
@@ -184,14 +184,14 @@ class AdminActionPermTestMixin:
         # using some of the functions in this file (eg: netjsonconfig)
         from django.contrib.auth.models import Permission
 
-        all_perms = {'add', 'change', 'delete', 'view'}
+        all_perms = {"add", "change", "delete", "view"}
         required_perms = required_perms or all_perms
         extra_payload = extra_payload or {}
         self.client.force_login(user)
         payload = {
-            '_selected_action': [obj.pk],
-            'action': action,
-            'post': 'yes',
+            "_selected_action": [obj.pk],
+            "action": action,
+            "post": "yes",
             **extra_payload,
         }
         admin_action_option = f'<option value="{action}">'
@@ -199,13 +199,13 @@ class AdminActionPermTestMixin:
         user.user_permissions.add(
             *Permission.objects.filter(
                 codename__in=[
-                    f'{perm}_{obj._meta.model_name}'
+                    f"{perm}_{obj._meta.model_name}"
                     for perm in all_perms - set(required_perms)
                 ]
             )
         )
 
-        with self.subTest('Test user lacks necessary permission for action'):
+        with self.subTest("Test user lacks necessary permission for action"):
             # Verify admin action option is not present on the changelist
             response = self.client.get(path)
             self.assertNotContains(response, admin_action_option)
@@ -218,7 +218,7 @@ class AdminActionPermTestMixin:
                     response,
                     '<ul class="messagelist">\n'
                     '<li class="warning">No action selected.</li>\n'
-                    '</ul>',
+                    "</ul>",
                     html=True,
                 )
             except AssertionError:
@@ -233,12 +233,12 @@ class AdminActionPermTestMixin:
         user.user_permissions.add(
             *Permission.objects.filter(
                 codename__in=[
-                    f'{perm}_{obj._meta.model_name}' for perm in required_perms
+                    f"{perm}_{obj._meta.model_name}" for perm in required_perms
                 ]
             )
         )
 
-        with self.subTest('Test user has necessary permission for action'):
+        with self.subTest("Test user has necessary permission for action"):
             # Verify admin action option is present on the changelist
             response = self.client.get(path, follow=True)
             self.assertContains(response, admin_action_option)
@@ -250,6 +250,6 @@ class AdminActionPermTestMixin:
                 response,
                 '<ul class="messagelist">\n'
                 f'<li class="{message_level}">{message}</li>'
-                '</ul>',
+                "</ul>",
                 html=True,
             )

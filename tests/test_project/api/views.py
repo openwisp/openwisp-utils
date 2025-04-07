@@ -16,11 +16,11 @@ class ReceiveProjectView(View):
         try:
             project = Project.objects.get(pk=pk)
         except Project.DoesNotExist:
-            return JsonResponse({'detail': _('project not found')}, status=400)
-        key = request.GET.get('key')
+            return JsonResponse({"detail": _("project not found")}, status=400)
+        key = request.GET.get("key")
         if project.key != key:
-            return JsonResponse({'detail': _('wrong key')}, status=403)
-        return JsonResponse({'detail': _('ok'), 'name': project.name}, status=200)
+            return JsonResponse({"detail": _("wrong key")}, status=403)
+        return JsonResponse({"detail": _("ok"), "name": project.name}, status=200)
 
 
 receive_project = ReceiveProjectView.as_view()

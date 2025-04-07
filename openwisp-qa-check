@@ -145,7 +145,7 @@ runisort() {
 }
 
 runblack() {
-  black -S --check --diff --quiet . &&
+  black --check --diff --quiet . &&
     echo "SUCCESS: Black check successful!" ||
     {
       echoerr "ERROR: Black check failed! Hint: did you forget to run openwisp-qa-format?"
