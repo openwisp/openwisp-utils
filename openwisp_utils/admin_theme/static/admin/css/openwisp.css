@@ -877,7 +877,7 @@ input[type="button"]:hover,
 .title-wrapper h2::after {
   content: ")";
 }
-.title-wrapper .object-tools {
+#content.title-wrapper .object-tools {
   margin-top: -4px;
   margin-bottom: 20px;
 }
