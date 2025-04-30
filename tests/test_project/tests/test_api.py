@@ -17,6 +17,24 @@ class TestApi(CreateMixin, TestCase):
         result = serializer.validate(s1)
         self.assertIsInstance(result, Shelf)
 
+    def test_validator_data_dict(self):
+        s1 = self._create_shelf(name='shelf1')
+        data = s1.__dict__
+        to_delete = [
+            '_state',
+            'id',
+            'created',
+            'created_at',
+            'modified',
+        ]
+        for key in to_delete:
+            del data[key]
+        data['writers'] = [1]
+        serializer = ShelfSerializer()
+        # import ipdb; ipdb.set_trace()
+        data = serializer.validate(data)
+        # self.assertNotIn('writers', data)
+
     def test_validator_fail(self):
         with self.assertRaises(ValidationError):
             self._create_shelf(name='Intentional_Test_Fail')
