@@ -31,9 +31,7 @@ class TestApi(CreateMixin, TestCase):
             del data[key]
         data['writers'] = [1]
         serializer = ShelfSerializer()
-        # import ipdb; ipdb.set_trace()
         data = serializer.validate(data)
-        # self.assertNotIn('writers', data)
 
     def test_validator_fail(self):
         with self.assertRaises(ValidationError):
