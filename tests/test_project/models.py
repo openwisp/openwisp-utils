@@ -43,6 +43,12 @@ class Shelf(TimeStampedEditableModel):
         verbose_name=_("Owner of shelf"),
         on_delete=models.CASCADE,
     )
+    writers = models.ManyToManyField(
+        "auth.User",
+        blank=True,
+        verbose_name=_("Writers"),
+        related_name="writer_of",
+    )
     created_at = models.DateTimeField(
         _("Create at"), null=True, blank=True, auto_now_add=True
     )
