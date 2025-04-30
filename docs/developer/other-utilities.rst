@@ -35,6 +35,22 @@ REST API Utilities
 
 A model serializer which calls the model instance ``full_clean()``.
 
+Useful to avoid duplicating model validation logic in the REST framework
+serializers.
+
+An optional ``exclude_validation`` property with a list of field names can
+be supplied to exclude specific fields from validation.
+
+Usage:
+
+.. code-block:: python
+
+    from openwisp_utils.api.serializers import ValidatedModelSerializer
+
+
+    class BaseConfigSerializer(ValidatedModelSerializer):
+        exclude_validation = ["device"]
+
 ``openwisp_utils.api.apps.ApiAppConfig``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
