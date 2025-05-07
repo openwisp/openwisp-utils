@@ -232,6 +232,13 @@ fieldset.module h2 {
   padding: 15px;
   font-size: 15px;
   background: #f9f9f9;
+  margin-top: 0px;
+  color: var(--body-quiet-color);
+}
+.inline-related fieldset.module h4 {
+  font-size: 16px;
+  text-transform: uppercase;
+  padding: 15px;
 }
 td,
 th,
