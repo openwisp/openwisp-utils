@@ -1,4 +1,3 @@
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 from selenium.common.exceptions import JavascriptException, NoSuchElementException
 from selenium.webdriver import ActionChains
@@ -6,10 +5,10 @@ from selenium.webdriver.common.by import By
 
 from ..models import Book, Operator, Shelf
 from . import CreateMixin
-from .utils import SeleniumTestMixin
+from .utils import ChannelsLiveServerTestCase, SeleniumTestMixin
 
 
-class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
+class TestMenu(SeleniumTestMixin, ChannelsLiveServerTestCase):
     def tearDown(self):
         super().tearDown()
         # Clear local storage
@@ -358,7 +357,7 @@ class TestMenu(SeleniumTestMixin, StaticLiveServerTestCase):
         self.web_driver.set_window_size(1366, 768)
 
 
-class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
+class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin):
     shelf_model = Shelf
     book_model = Book
 
@@ -503,7 +502,7 @@ class TestBasicFilter(SeleniumTestMixin, StaticLiveServerTestCase, CreateMixin):
             self.assertEqual(paginator.get_attribute('innerText'), '1 book')
 
 
-class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
+class TestInputFilters(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     shelf_model = Shelf
 
     def test_input_filters(self):
@@ -593,7 +592,7 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase)
             self.find_element(By.XPATH, user_xpath)
 
 
-class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
+class TestDashboardCharts(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     def setUp(self):
         super().setUp()
         self.web_driver.set_window_size(1600, 768)
@@ -611,7 +610,9 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCa
         self.assertEqual(annotation_text.text, '0')
 
 
-class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTestCase):
+class TestAutocompleteFilter(
+    SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase
+):
     shelf_model = Shelf
     book_model = Book
 
@@ -708,7 +709,7 @@ class TestAutocompleteFilter(SeleniumTestMixin, CreateMixin, StaticLiveServerTes
             )
 
 
-class TestFirefoxSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
+class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
     def setUp(self):
         super().setUp()
         self.login()
@@ -746,7 +747,7 @@ class TestFirefoxSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
         self.assertTrue(len(divs) > 1)
 
 
-class TestChromeSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
+class TestChromeSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
     browser = 'chrome'
 
     def test_get_browser_logs(self):
