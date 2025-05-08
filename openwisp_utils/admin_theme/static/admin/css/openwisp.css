@@ -234,6 +234,8 @@ fieldset.module h2 {
   background: #f9f9f9;
   margin-top: 0px;
   color: var(--body-quiet-color);
+  border-top: 1px solid var(--hairline-color);
+  border-bottom: 1px solid var(--hairline-color);
 }
 .inline-related fieldset.module h4 {
   font-size: 16px;
