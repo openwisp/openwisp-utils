@@ -42,7 +42,7 @@ setup(
             'docstrfmt~=1.8.0',
         ],
         'rest': [
-            'djangorestframework>=3.14,<3.17',
+            'djangorestframework>=3.14,<3.16',
             'django-filter~=23.2',  # django-filter uses CalVer
             'drf-yasg~=1.21.7',
         ],
