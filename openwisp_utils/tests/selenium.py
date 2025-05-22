@@ -1,4 +1,5 @@
 import os
+import time
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -18,6 +19,62 @@ class SeleniumTestMixin:
     admin_username = 'admin'
     admin_password = 'password'
     browser = 'firefox'
+
+    retry_max = 5
+    retry_delay = 0
+    retry_threshold = 0.8
+
+    def _print_retry_message(self, test_name, attempt):
+        if attempt == 0:
+            return
+        print('-' * 80)
+        print(f'[Retry] Retrying "{test_name}", attempt {attempt}/{self.retry_max}. ')
+        print('-' * 80)
+
+    def _setup_and_call(self, result, debug=False):
+        """Override unittest.TestCase.run to retry flaky tests.
+
+        This method is responsible for calling setUp and tearDown methods.
+        Thus, we override this method to implement the retry mechanism
+        instead of TestCase.run().
+        """
+        original_result = result
+        test_name = self.id()
+        success_count = 0
+        failed_result = None
+        # Manually call startTest to ensure TimeLoggingTestResult can
+        # measure the execution time for the test.
+        original_result.startTest(self)
+
+        for attempt in range(self.retry_max + 1):
+            # Use a new result object to prevent writing all attempts
+            # to stdout.
+            result = self.defaultTestResult()
+            super()._setup_and_call(result, debug)
+            if result.wasSuccessful():
+                if attempt == 0:
+                    original_result.addSuccess(self)
+                    return
+                else:
+                    success_count += 1
+            else:
+                failed_result = result
+            self._print_retry_message(test_name, attempt)
+            if self.retry_delay:
+                time.sleep(self.retry_delay)
+
+        if success_count / self.retry_max < self.retry_threshold:
+            # If the success rate of retries is below the threshold then,
+            # copy errors and failures from the last failed result to the
+            # original result.
+            original_result.failures = failed_result.failures
+            original_result.errors = failed_result.errors
+            if hasattr(original_result, 'events'):
+                # Parallel tests uses RemoteTestResult which relies on events.
+                original_result.events = failed_result.events
+        else:
+            # Mark the test as passed in the original result
+            original_result.addSuccess(self)
 
     @classmethod
     def setUpClass(cls):
