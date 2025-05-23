@@ -158,11 +158,15 @@ a.section:visited:focus,
 .module caption,
 .inline-group h2,
 fieldset.module h2,
+#content-main fieldset.module summary,
 .selector .selector-available-title,
 .selector .selector-chosen-title {
   background: #f9f9f9;
   color: #333;
   padding: 15px;
+}
+#content-main fieldset.module summary {
+  border-color: var(--hairline-color);
 }
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after,
@@ -228,6 +232,15 @@ fieldset.module h2 {
   padding: 15px;
   font-size: 15px;
   background: #f9f9f9;
+  margin-top: 0px;
+  color: var(--body-quiet-color);
+  border-top: 1px solid var(--hairline-color);
+  border-bottom: 1px solid var(--hairline-color);
+}
+.inline-related fieldset.module h4 {
+  font-size: 16px;
+  text-transform: uppercase;
+  padding: 15px;
 }
 td,
 th,
@@ -877,7 +890,7 @@ input[type="button"]:hover,
 .title-wrapper h2::after {
   content: ")";
 }
-#content.title-wrapper .object-tools {
+#content .title-wrapper .object-tools {
   margin-top: -4px;
   margin-bottom: 20px;
 }

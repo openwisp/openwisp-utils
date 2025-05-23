@@ -1,3 +1,5 @@
+from unittest import expectedFailure
+
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.urls import reverse
 from selenium.common.exceptions import JavascriptException, NoSuchElementException
@@ -753,3 +755,40 @@ class TestChromeSeleniumHelpers(SeleniumTestMixin, StaticLiveServerTestCase):
         self.assertEqual(self.get_browser_logs(), [])
         self.web_driver.execute_script('console.log("test")')
         self.assertEqual(len(self.get_browser_logs()), 1)
+
+
+class TestSeleniumMixinRetryMechanism(SeleniumTestMixin, StaticLiveServerTestCase):
+    retry_delay = 0
+
+    @classmethod
+    def setUpClass(cls):
+        # We don't need browser instances for these tests.
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def test_retry_mechanism_pass(self):
+        if not hasattr(self, '_test_retry_mechanism_pass_called'):
+            self._test_retry_mechanism_pass_called = 1
+            self.fail('Failing on first call')
+        else:
+            self._test_retry_mechanism_pass_called += 1
+
+    def test_retry_mechanism_not_called(self):
+        if not hasattr(self, '_test_retry_mechanism_not_called'):
+            self._test_retry_mechanism_not_called = 1
+        else:
+            # This code should not be executed because the test
+            # is called only once.
+            self._test_retry_mechanism_not_called += 1
+        self.assertEqual(self._test_retry_mechanism_not_called, 1)
+
+    @expectedFailure
+    def test_retry_mechanism_fails(self):
+        if not hasattr(self, '_test_retry_mechanism_fails_called'):
+            self._test_retry_mechanism_fails_called = 0
+        self._test_retry_mechanism_fails_called += 1
+        if self._test_retry_mechanism_fails_called < 5:
+            self.fail('Report failed test')
