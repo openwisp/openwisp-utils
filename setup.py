@@ -54,7 +54,7 @@ setup(
             "pytest-asyncio>=0.24,<0.27",
             "pytest-django~=4.10.0",
         ],
-        "celery": ["celery~=5.4.0"],
+        "celery": ["celery>=5.4,<5.6"],
         "selenium": ["selenium>=4.10,<4.30"],
     },
     classifiers=[
