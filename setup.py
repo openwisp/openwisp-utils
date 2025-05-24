@@ -34,12 +34,12 @@ setup(
     ],
     extras_require={
         "qa": [
-            "black~=23.12.1",
-            "flake8~=7.1.0",
-            "isort~=5.13.2",
+            "black~=24.10.0",
+            "flake8~=7.2.0",
+            "isort~=6.0.1",
             "coverage>=7.6.1,<7.9.0",
-            "tblib~=3.0.0",
-            "docstrfmt~=1.8.0",
+            "tblib~=3.1.0",
+            "docstrfmt~=1.10.0",
         ],
         "rest": [
             "djangorestframework>=3.14,<3.15.2",
