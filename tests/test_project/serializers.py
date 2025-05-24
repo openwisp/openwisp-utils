@@ -5,4 +5,4 @@ from test_project.models import Shelf
 class ShelfSerializer(ValidatedModelSerializer):
     class Meta:
         model = Shelf
-        fields = '__all__'
+        fields = "__all__"

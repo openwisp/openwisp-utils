@@ -14,8 +14,8 @@ class MetricCollectionAdminSiteHelper:
 
     @classmethod
     def is_enabled(cls):
-        return 'openwisp_utils.metric_collection' in getattr(
-            settings, 'INSTALLED_APPS', []
+        return "openwisp_utils.metric_collection" in getattr(
+            settings, "INSTALLED_APPS", []
         )
 
     @classmethod
@@ -41,11 +41,11 @@ class MetricCollectionAdminSiteHelper:
                 request,
                 mark_safe(
                     _(
-                        'We gather anonymous usage '
-                        'metrics to enhance OpenWISP. '
-                        'You can opt out from the '
+                        "We gather anonymous usage "
+                        "metrics to enhance OpenWISP. "
+                        "You can opt out from the "
                         '<a href="{url}">System Information page</a>.'
-                    ).format(url=reverse('admin:ow-info'))
+                    ).format(url=reverse("admin:ow-info"))
                 ),
             )
             # Update the field in DB after showing the message for the
@@ -70,8 +70,8 @@ class MetricCollectionAdminSiteHelper:
 
         context.update(
             {
-                'metric_collection_installed': cls.is_enabled(),
-                'metric_consent_form': form,
+                "metric_collection_installed": cls.is_enabled(),
+                "metric_consent_form": form,
             }
         )
 

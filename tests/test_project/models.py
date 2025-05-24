@@ -15,19 +15,19 @@ from openwisp_utils.fields import (
 
 class Shelf(TimeStampedEditableModel):
     TYPES = (
-        ('HORROR', 'HORROR'),
-        ('FANTASY', 'FANTASY'),
-        ('FACTUAL', 'FACTUAL'),
-        ('Mystery', 'Mystery'),
-        ('Historical Fiction', 'Historical Fiction'),
-        ('Literary Fiction', 'Literary Fiction'),
-        ('Romance', 'Romance'),
-        ('Science Fiction', 'Science Fiction'),
-        ('Short Stories', 'Short Stories'),
-        ('Thrillers', 'Thrillers'),
-        ('Biographies', 'Biographies'),
+        ("HORROR", "HORROR"),
+        ("FANTASY", "FANTASY"),
+        ("FACTUAL", "FACTUAL"),
+        ("Mystery", "Mystery"),
+        ("Historical Fiction", "Historical Fiction"),
+        ("Literary Fiction", "Literary Fiction"),
+        ("Romance", "Romance"),
+        ("Science Fiction", "Science Fiction"),
+        ("Short Stories", "Short Stories"),
+        ("Thrillers", "Thrillers"),
+        ("Biographies", "Biographies"),
     )
-    name = models.CharField(_('name'), max_length=64)
+    name = models.CharField(_("name"), max_length=64)
     books_type = models.CharField(
         _("Type of book"), choices=TYPES, null=True, blank=True, max_length=50
     )
@@ -61,14 +61,14 @@ class Shelf(TimeStampedEditableModel):
 
     def clean(self):
         if self.name == "Intentional_Test_Fail":
-            raise ValidationError('Intentional_Test_Fail')
+            raise ValidationError("Intentional_Test_Fail")
         return self
 
 
 class Book(TimeStampedEditableModel):
-    name = models.CharField(_('name'), max_length=64)
-    author = models.CharField(_('author'), max_length=64)
-    shelf = models.ForeignKey('test_project.Shelf', on_delete=models.CASCADE)
+    name = models.CharField(_("name"), max_length=64)
+    author = models.CharField(_("author"), max_length=64)
+    shelf = models.ForeignKey("test_project.Shelf", on_delete=models.CASCADE)
     price = FallbackDecimalField(max_digits=4, decimal_places=2, fallback=20.0)
 
     def __str__(self):
@@ -79,23 +79,23 @@ class Book(TimeStampedEditableModel):
 
 
 class RadiusAccounting(models.Model):
-    id = models.BigAutoField(primary_key=True, db_column='radacctid')
+    id = models.BigAutoField(primary_key=True, db_column="radacctid")
     session_id = models.CharField(
-        verbose_name=_('session ID'),
+        verbose_name=_("session ID"),
         max_length=64,
-        db_column='acctsessionid',
+        db_column="acctsessionid",
         db_index=True,
     )
     username = models.CharField(
-        verbose_name=_('username'), max_length=64, db_index=True, null=True, blank=True
+        verbose_name=_("username"), max_length=64, db_index=True, null=True, blank=True
     )
     start_time = models.DateTimeField(
-        verbose_name=_('start time'),
+        verbose_name=_("start time"),
         null=True,
         blank=True,
     )
     stop_time = models.DateTimeField(
-        verbose_name=_('stop time'),
+        verbose_name=_("stop time"),
         null=True,
         blank=True,
     )
@@ -108,37 +108,37 @@ class OrganizationRadiusSettings(models.Model):
     is_first_name_required = FallbackCharChoiceField(
         max_length=32,
         choices=(
-            ('disabled', _('Disabled')),
-            ('allowed', _('Allowed')),
-            ('mandatory', _('Mandatory')),
+            ("disabled", _("Disabled")),
+            ("allowed", _("Allowed")),
+            ("mandatory", _("Mandatory")),
         ),
-        fallback='disabled',
+        fallback="disabled",
     )
     greeting_text = FallbackCharField(
         max_length=200,
-        fallback='Welcome to OpenWISP!',
+        fallback="Welcome to OpenWISP!",
     )
     password_reset_url = FallbackURLField(
         max_length=200,
-        fallback='http://localhost:8000/admin/password_change/',
+        fallback="http://localhost:8000/admin/password_change/",
     )
     extra_config = FallbackTextField(
         max_length=200,
-        fallback='no data',
+        fallback="no data",
     )
 
 
 class Project(UUIDModel):
     name = models.CharField(max_length=64, null=True, blank=True)
-    key = KeyField(unique=True, db_index=True, help_text=_('unique project key'))
+    key = KeyField(unique=True, db_index=True, help_text=_("unique project key"))
 
     def __str__(self):
         return self.name
 
 
 class Operator(models.Model):
-    first_name = models.CharField(max_length=30, default='test')
-    last_name = models.CharField(max_length=30, default='test')
+    first_name = models.CharField(max_length=30, default="test")
+    last_name = models.CharField(max_length=30, default="test")
     project = models.ForeignKey(Project, on_delete=models.CASCADE, blank=True)
 
     def __str__(self):

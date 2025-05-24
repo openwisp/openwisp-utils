@@ -2,7 +2,7 @@
 set -e
 
 isort .
-black -S .
+black .
 docstrfmt --no-docstring-trailing-line --ignore-cache --line-length 74 .
 
 if which prettier > /dev/null; then
