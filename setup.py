@@ -51,7 +51,7 @@ setup(
             "channels_redis~=4.2.1",
         ],
         "channels-test": [
-            "pytest-asyncio~=0.24.0",
+            "pytest-asyncio>=0.24,<0.27",
             "pytest-django~=4.10.0",
         ],
         "celery": ["celery~=5.4.0"],
