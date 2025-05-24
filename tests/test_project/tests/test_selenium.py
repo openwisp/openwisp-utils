@@ -770,14 +770,14 @@ class TestSeleniumMixinRetryMechanism(SeleniumTestMixin, StaticLiveServerTestCas
         pass
 
     def test_retry_mechanism_pass(self):
-        if not hasattr(self, '_test_retry_mechanism_pass_called'):
+        if not hasattr(self, "_test_retry_mechanism_pass_called"):
             self._test_retry_mechanism_pass_called = 1
-            self.fail('Failing on first call')
+            self.fail("Failing on first call")
         else:
             self._test_retry_mechanism_pass_called += 1
 
     def test_retry_mechanism_not_called(self):
-        if not hasattr(self, '_test_retry_mechanism_not_called'):
+        if not hasattr(self, "_test_retry_mechanism_not_called"):
             self._test_retry_mechanism_not_called = 1
         else:
             # This code should not be executed because the test
@@ -787,8 +787,8 @@ class TestSeleniumMixinRetryMechanism(SeleniumTestMixin, StaticLiveServerTestCas
 
     @expectedFailure
     def test_retry_mechanism_fails(self):
-        if not hasattr(self, '_test_retry_mechanism_fails_called'):
+        if not hasattr(self, "_test_retry_mechanism_fails_called"):
             self._test_retry_mechanism_fails_called = 0
         self._test_retry_mechanism_fails_called += 1
         if self._test_retry_mechanism_fails_called < 5:
-            self.fail('Report failed test')
+            self.fail("Report failed test")

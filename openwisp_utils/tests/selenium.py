@@ -27,9 +27,9 @@ class SeleniumTestMixin:
     def _print_retry_message(self, test_name, attempt):
         if attempt == 0:
             return
-        print('-' * 80)
+        print("-" * 80)
         print(f'[Retry] Retrying "{test_name}", attempt {attempt}/{self.retry_max}. ')
-        print('-' * 80)
+        print("-" * 80)
 
     def _setup_and_call(self, result, debug=False):
         """Override unittest.TestCase.run to retry flaky tests.
@@ -69,7 +69,7 @@ class SeleniumTestMixin:
             # original result.
             original_result.failures = failed_result.failures
             original_result.errors = failed_result.errors
-            if hasattr(original_result, 'events'):
+            if hasattr(original_result, "events"):
                 # Parallel tests uses RemoteTestResult which relies on events.
                 original_result.events = failed_result.events
         else:
@@ -143,12 +143,12 @@ class SeleniumTestMixin:
         CHROME_BIN = os.environ.get("CHROME_BIN", None)
         if CHROME_BIN:
             options.binary_location = CHROME_BIN
-        options.add_argument('--window-size=1366,768')
-        options.add_argument('--ignore-certificate-errors')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-gpu')
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--disable-features=VizDisplayCompositor')
+        options.add_argument("--window-size=1366,768")
+        options.add_argument("--ignore-certificate-errors")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-features=VizDisplayCompositor")
         # When running Selenium tests with the "--parallel" flag,
         # each TestCase class requires its own browser instance.
         # If the same "remote-debugging-port" is used for all
