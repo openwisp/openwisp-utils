@@ -14,8 +14,8 @@ User = get_user_model()
 class TestConfigMixin(object):
     """Loads test configuration from a config.json file."""
 
-    config_file = os.path.join(os.path.dirname(__file__), 'config.json')
-    root_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+    config_file = os.path.join(os.path.dirname(__file__), "config.json")
+    root_location = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
     with open(config_file) as json_file:
         config = json.load(json_file)
 
@@ -23,11 +23,11 @@ class TestConfigMixin(object):
 class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
     def _create_user(self, **kwargs):
         opts = dict(
-            username=self.config['tester_username'],
-            password=self.config['tester_password'],
-            first_name=self.config['tester_first_name'],
-            last_name=self.config['tester_last_name'],
-            email=self.config['tester_email'],
+            username=self.config["tester_username"],
+            password=self.config["tester_password"],
+            first_name=self.config["tester_first_name"],
+            last_name=self.config["tester_last_name"],
+            email=self.config["tester_email"],
         )
         opts.update(kwargs)
         user = User(**opts)
@@ -36,9 +36,9 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
 
     def _create_admin(self, **kwargs):
         opts = dict(
-            username=self.config['admin_username'],
-            email=self.config['admin_email'],
-            password=self.config['admin_password'],
+            username=self.config["admin_username"],
+            email=self.config["admin_email"],
+            password=self.config["admin_password"],
             is_superuser=True,
             is_staff=True,
         )
@@ -46,77 +46,77 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
         return self._create_user(**opts)
 
     def _get_menu_toggle(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.menu-toggle')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".menu-toggle")
 
     def _get_menu(self):
-        return self.web_driver.find_element(By.ID, 'menu')
+        return self.web_driver.find_element(By.ID, "menu")
 
     def _get_nav(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '#menu .nav')
+        return self.web_driver.find_element(By.CSS_SELECTOR, "#menu .nav")
 
     def _get_hamburger(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.hamburger')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".hamburger")
 
     def _get_main_content(self):
-        return self.web_driver.find_element(By.ID, 'main-content')
+        return self.web_driver.find_element(By.ID, "main-content")
 
     def _get_menu_home_item_label(self):
         return self.web_driver.find_element(
-            By.CSS_SELECTOR, 'a.menu-item:nth-child(1) > span:nth-child(2)'
+            By.CSS_SELECTOR, "a.menu-item:nth-child(1) > span:nth-child(2)"
         )
 
     def _get_logo(self):
-        return self.web_driver.find_element(By.ID, 'site-name')
+        return self.web_driver.find_element(By.ID, "site-name")
 
     def _get_container(self):
-        return self.web_driver.find_element(By.ID, 'container')
+        return self.web_driver.find_element(By.ID, "container")
 
     def _get_test_mg_head(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '#mg-control-32')
+        return self.web_driver.find_element(By.CSS_SELECTOR, "#mg-control-32")
 
     def _get_test_mg_icon(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.auth')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".auth")
 
     def _get_test_mg_label(self):
         return self.web_driver.find_element(
-            By.CSS_SELECTOR, '#mg-control-32 > div:nth-child(1) > span:nth-child(2)'
+            By.CSS_SELECTOR, "#mg-control-32 > div:nth-child(1) > span:nth-child(2)"
         )
 
     def _get_active_mg(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.active-mg .mg-dropdown')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".active-mg .mg-dropdown")
 
     def _get_active_mg_head(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.active-mg .mg-head')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".active-mg .mg-head")
 
     def _get_test_mg_dropdown(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '#mg-dropdown-32')
+        return self.web_driver.find_element(By.CSS_SELECTOR, "#mg-dropdown-32")
 
     def _get_test_mg_dropdown_label(self):
         return self.web_driver.find_element(
-            By.CSS_SELECTOR, '#mg-dropdown-32 > div:nth-child(1)'
+            By.CSS_SELECTOR, "#mg-dropdown-32 > div:nth-child(1)"
         )
 
     def _get_account_button(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.account-button')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".account-button")
 
     def _get_account_dropdown(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.account-menu')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".account-menu")
 
     def _get_account_button_username(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.account-button strong')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".account-button strong")
 
     def _get_account_dropdown_username(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.account-menu-username')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".account-menu-username")
 
     def _get_logout_link(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '#logout-form button')
+        return self.web_driver.find_element(By.CSS_SELECTOR, "#logout-form button")
 
     def _get_menu_backdrop(self):
-        return self.web_driver.find_element(By.CSS_SELECTOR, '.menu-backdrop')
+        return self.web_driver.find_element(By.CSS_SELECTOR, ".menu-backdrop")
 
     def _get_input_filter(self):
         return self.web_driver.find_element(
-            By.CSS_SELECTOR, 'input[name=books_type__exact]'
+            By.CSS_SELECTOR, "input[name=books_type__exact]"
         )
 
     def _open_menu(self):
@@ -124,9 +124,9 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
         if not hamburger.is_displayed():
             hamburger = self._get_menu_toggle()
         container = self._get_container()
-        container_classes = container.get_attribute('class').split()
+        container_classes = container.get_attribute("class").split()
         for class_name in container_classes:
-            if class_name == 'toggle-menu':
+            if class_name == "toggle-menu":
                 hamburger.click()
 
     def _close_menu(self):
@@ -135,21 +135,21 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
             hamburger = self._get_menu_toggle()
         container = self._get_container()
         is_menu_close = False
-        container_classes = container.get_attribute('class').split()
+        container_classes = container.get_attribute("class").split()
         for class_name in container_classes:
-            if class_name == 'toggle-menu':
+            if class_name == "toggle-menu":
                 is_menu_close = True
         if not is_menu_close:
             hamburger.click()
 
     def _get_filter(self):
-        return self.web_driver.find_element(By.ID, 'ow-changelist-filter')
+        return self.web_driver.find_element(By.ID, "ow-changelist-filter")
 
     def _get_filter_button(self):
-        return self.web_driver.find_element(By.ID, 'ow-apply-filter')
+        return self.web_driver.find_element(By.ID, "ow-apply-filter")
 
     def _get_clear_button(self):
-        return self.web_driver.find_element(By.ID, 'changelist-filter-clear')
+        return self.web_driver.find_element(By.ID, "changelist-filter-clear")
 
     def check_exists_by_id(self, id):
         try:
@@ -174,24 +174,24 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
 
     def _get_filter_selected_option(self, filter_class):
         return self.web_driver.find_element(
-            By.CSS_SELECTOR, f'.{filter_class} .selected-option'
+            By.CSS_SELECTOR, f".{filter_class} .selected-option"
         )
 
     def _get_filter_dropdown(self, filter_class):
         return self.web_driver.find_element(
-            By.CSS_SELECTOR, f'.{filter_class} .filter-options'
+            By.CSS_SELECTOR, f".{filter_class} .filter-options"
         )
 
     def _get_filter_title(self, filter_class):
         return self.web_driver.find_element(
-            By.CSS_SELECTOR, f'.{filter_class} .filter-title'
+            By.CSS_SELECTOR, f".{filter_class} .filter-title"
         )
 
     def _get_filter_anchor(self, query):
         return self.web_driver.find_element(By.XPATH, f'//a[@href="?{query}"]')
 
     def wait_for_dropdown(self, filter_class):
-        self.wait_for_visibility(By.CSS_SELECTOR, f'.{filter_class} .filter-options')
+        self.wait_for_visibility(By.CSS_SELECTOR, f".{filter_class} .filter-options")
 
 
 class MockUser:
