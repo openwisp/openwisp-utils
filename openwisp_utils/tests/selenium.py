@@ -49,7 +49,9 @@ class SeleniumTestMixin:
         for attempt in range(self.retry_max + 1):
             # Use a new result object to prevent writing all attempts
             # to stdout.
-            result = self.defaultTestResult()
+            result = original_result.__class__(
+                stream=None, descriptions=None, verbosity=0
+            )
             super()._setup_and_call(result, debug)
             if result.wasSuccessful():
                 if attempt == 0:
