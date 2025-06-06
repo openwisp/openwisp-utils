@@ -1,20 +1,37 @@
 import platform
+import sys
 from collections import OrderedDict
 
-import pkg_resources
 from django.conf import settings
 from django.utils.module_loading import import_string
 
 EXTRA_OPENWISP_PACKAGES = ["netdiff", "netjsonconfig"]
 
 
-def get_installed_openwisp_packages():
-    dists = pkg_resources.working_set
-    return {
-        dist.key: dist.version
-        for dist in dists
-        if dist.key.startswith("openwisp") or dist.key in EXTRA_OPENWISP_PACKAGES
-    }
+# python 3.10+
+if sys.version_info >= (3, 10):
+    import importlib
+
+    def get_installed_openwisp_packages():
+        dists = importlib.metadata.distributions()
+        return {
+            dist.name: dist.version
+            for dist in dists
+            if dist.name.startswith("openwisp") or dist.name in EXTRA_OPENWISP_PACKAGES
+        }
+
+
+# legacy python 3.9, deprecated on recent python versions
+else:
+    import pkg_resources
+
+    def get_installed_openwisp_packages():
+        dists = pkg_resources.working_set
+        return {
+            dist.key: dist.version
+            for dist in dists
+            if dist.key.startswith("openwisp") or dist.key in EXTRA_OPENWISP_PACKAGES
+        }
 
 
 def _get_openwisp2_detail(attribute_name, fallback=None):
