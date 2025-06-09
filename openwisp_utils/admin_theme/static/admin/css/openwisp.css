@@ -551,7 +551,7 @@ div#toolbar form input[type="submit"] {
   margin: 0 10px 0 3px;
   padding: 0.47rem 1rem;
   background: #333;
-  border: 1px solid #333;
+  border: 0 none;
   color: #fff;
 }
 div#toolbar #searchbar {
@@ -569,7 +569,8 @@ div#changelist .actions select {
   margin-right: 7px;
 }
 div#changelist .actions .button {
-  padding: 6px 1rem;
+  padding: 7px 1rem;
+  border: 0 none;
   background: #333;
   color: #fff;
   height: unset;
