@@ -1631,6 +1631,7 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/info.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/info.svg);
 }
+
 .password {
   mask-image: url(../../ui/openwisp/images/password.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/password.svg);
@@ -1793,6 +1794,10 @@ body::-webkit-scrollbar {
 .ow-monitoring-wifi {
   mask-image: url(../../ui/openwisp/images/monitoring-wifi.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/monitoring-wifi.svg);
+}
+.ow-monitoring-map {
+  mask-image: url(../../ui/openwisp/images/map.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/map.svg);
 }
 
 /* FIRMWARE */
