@@ -79,6 +79,8 @@ jobs:
         pip install -e .[qa,rest,selenium]
         pip install ${{ matrix.django-version }}
         sudo npm install -g prettier
+        pip uninstall channels channels-redis daphne -y
+        pip install -e ".[channels]"
 
     - name: QA checks
       run: ./run-qa-checks
@@ -86,7 +88,7 @@ jobs:
     - name: Tests
       if: ${{ !cancelled() && steps.deps.conclusion == 'success' }}
       run: |
-        coverage run runtests.py --parallel
+        coverage run runtests.py
         coverage combine
         coverage xml
       env:
