@@ -55,7 +55,7 @@ setup(
             "pytest-django~=4.10.0",
         ],
         "celery": ["celery~=5.4.0"],
-        "selenium": ["selenium>=4.10,<4.30"],
+        "selenium": ["selenium>=4.10,<4.34"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
