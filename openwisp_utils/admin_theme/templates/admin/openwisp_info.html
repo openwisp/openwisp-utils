@@ -21,16 +21,29 @@
 <p><strong>{% trans "Kernel version" %}:</strong> {{ system_info.kernel_version }}</p>
 <p><strong>{% trans "Hardware platform" %}:</strong> {{ system_info.hardware_platform }}</p>
 
+<div id="metric-consent">
 {% block metric_collect_consent %}
-    {% if metric_collection_installed %}
-        <h2>Metric collection</h2>
-        <form method="POST" id="id_metric_collection_consent_form">
-            {% csrf_token %}
-            {{ metric_consent_form }}
-            <p><input type="submit" style="display:none;"></p>
-        </form>
-    {% endif %}
+  {% if metric_collection_installed %}
+    <h2>Metric collection</h2>
+    <form method="POST" id="id_metric_collection_consent_form">
+      {% csrf_token %}
+      {% for field in metric_consent_form %}
+        <p>
+          {% for error in field.errors %}
+            <span class="error">{{ error }}</span>
+          {% endfor %}
+          {{ field.label_tag }}
+          {{ field }}
+        </p>
+        {% if field.help_text %}
+        <p class="helptext">{{ field.help_text|safe }}</p>
+        {% endif %}
+      {% endfor %}
+      <p><input type="submit" style="display:none;"></p>
+    </form>
+  {% endif %}
 {% endblock metric_collect_consent %}
+</div>
 {% endblock content %}
 
 {% block extrahead %}

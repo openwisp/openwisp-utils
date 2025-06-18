@@ -37,13 +37,17 @@ class MetricCollectionAdminSiteHelper:
         consent = cls._get_consent()
 
         if not consent.shown_once:
-            messages.warning(
+            messages.info(
                 request,
                 mark_safe(
                     _(
-                        'We gather anonymous usage '
-                        'metrics to enhance OpenWISP. '
-                        'You can opt out from the '
+                        "<strong>Congratulations for installing "
+                        "OpenWISP successfully!</strong><br>"
+                        "Use the navigation menu on the left to explore "
+                        "the interface and begin deploying your network.<br>"
+                        "Keep in mind: we gather anonymous usage "
+                        "metrics to improve OpenWISP. "
+                        "You can opt out from the "
                         '<a href="{url}">System Information page</a>.'
                     ).format(url=reverse('admin:ow-info'))
                 ),
