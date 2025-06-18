@@ -50,7 +50,7 @@ setup(
         'selenium': ['selenium>=4.10,<4.24'],
     },
     classifiers=[
-        'Development Status :: 5 - Production/Stable ',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: System :: Networking',
