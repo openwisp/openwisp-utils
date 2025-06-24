@@ -21,10 +21,13 @@ class TestConsent(TestCase):
 
     def test_info_message(self):
         expected_message = (
-            '<li class="warning">We gather anonymous usage metrics '
-            "to enhance OpenWISP. You can opt out from the "
-            '<a href="/admin/openwisp-system-info/">System '
-            "Information page</a>.</li>"
+            '<li class="info"><strong>Congratulations for installing '
+            "OpenWISP successfully!</strong><br>Use the navigation "
+            "menu on the left to explore the interface and begin "
+            "deploying your network.<br>Keep in mind: we gather "
+            "anonymous usage metrics to improve OpenWISP. You can "
+            'opt out from the <a href="/admin/openwisp-system-info/">'
+            "System Information page</a>.</li>"
         )
         non_superuser = self._get_user(is_staff=True, is_superuser=False)
         superuser1 = self._get_user(
