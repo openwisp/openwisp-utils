@@ -77,7 +77,13 @@ TEMPLATES = [
 ]
 
 DATABASES = {
-    "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "openwisp_utils.db"}
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "openwisp_utils.db",
+        "TEST": {
+            "NAME": "openwisp_utils_test.db",
+        },
+    }
 }
 TEST_RUNNER = "openwisp_utils.metric_collection.tests.runner.MockRequestPostRunner"
 OPENWISP_ADMIN_SITE_CLASS = "test_project.site.CustomAdminSite"
@@ -125,7 +131,7 @@ OPENWISP_ADMIN_THEME_JS = ["dummy.js"]
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_BROKER_URL = "memory://"
-
+ASGI_APPLICATION = "openwisp2.asgi.application"
 # local settings must be imported before test runner otherwise they'll be ignored
 try:
     from local_settings import *  # noqa
