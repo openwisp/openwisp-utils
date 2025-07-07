@@ -122,6 +122,21 @@ div#main-content table tbody td {
 #main-content .breadcrumbs {
   font-size: 15px;
 }
+/* Standard links (no need to stand out) */
+table thead th.sorted .sortoptions a.sortremove:focus:after,
+table thead th.sorted .sortoptions a.sortremove:hover:after,
+a:link,
+a:visited {
+  color: #777;
+  text-decoration: none;
+}
+table thead th.sorted .sortoptions a.sortremove:focus:after,
+table thead th.sorted .sortoptions a.sortremove:hover:after,
+a:hover,
+a:focus {
+  color: #000;
+  text-decoration: underline;
+}
 #main-content .breadcrumbs a,
 a.section:link,
 a.section:visited,
@@ -171,21 +186,6 @@ fieldset.module h2,
 }
 #content-main fieldset.module summary {
   border-color: var(--hairline-color);
-}
-/* Standard links (no need to stand out) */
-table thead th.sorted .sortoptions a.sortremove:focus:after,
-table thead th.sorted .sortoptions a.sortremove:hover:after,
-a:link,
-a:visited {
-  color: #777;
-  text-decoration: none;
-}
-table thead th.sorted .sortoptions a.sortremove:focus:after,
-table thead th.sorted .sortoptions a.sortremove:hover:after,
-a:hover,
-a:focus {
-  color: #000;
-  text-decoration: underline;
 }
 #changelist-filter li.selected a {
   color: #df5d43 !important;
