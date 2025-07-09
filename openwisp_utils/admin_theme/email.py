@@ -32,12 +32,14 @@ def send_email(
     if app_settings.OPENWISP_HTML_EMAIL and body_html:
         site = get_current_site(None)
         scheme = "http" if settings.DEBUG else "https"
+        recipients_str = ", ".join(recipients)
         context = dict(
             title=subject,
             message=body_html,
             site_name=site.name,
             site_url=f"{scheme}://{site.domain}",
             logo_url=app_settings.OPENWISP_EMAIL_LOGO,
+            recipients=recipients_str,
         )
         context.update(extra_context)
 
