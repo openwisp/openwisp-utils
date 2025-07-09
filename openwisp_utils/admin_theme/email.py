@@ -38,6 +38,7 @@ def send_email(
             site_name=site.name,
             site_url=f"{scheme}://{site.domain}",
             logo_url=app_settings.OPENWISP_EMAIL_LOGO,
+            recipients=", ".join(recipients),
         )
         context.update(extra_context)
 

@@ -78,7 +78,8 @@
     }
 
     .logo {
-      max-width: 104px;
+      width: 150px;
+      height: 86px;
     }
 
     .call-to-action {
@@ -91,7 +92,7 @@
       font-size: 1.13rem;
       width: fit-content;
       margin: auto;
-      padding-top: 0.25rem;
+      margin-top: 1rem;
       color: #101828;
     }
 
@@ -156,7 +157,7 @@
     </div>
     {% endblock logo %}
     {% block email_info %}
-      <div class="email-info">This email is sent to <u>{{ recipient_email }}</u> from [{{ site_name }}]</div>
+      <div class="email-info">This email is sent to <u>{{ recipients }}</u> from [{{ site_name }}]</div>
     {% endblock email_info %}
     <div class="box">
       {% block mail_header %}
