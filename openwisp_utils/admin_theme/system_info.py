@@ -17,7 +17,10 @@ if sys.version_info >= (3, 10):
         return {
             dist.name: dist.version
             for dist in dists
-            if dist.name.startswith("openwisp") or dist.name in EXTRA_OPENWISP_PACKAGES
+            if dist.name is not None
+            and (
+                dist.name.startswith("openwisp") or dist.name in EXTRA_OPENWISP_PACKAGES
+            )
         }
 
 
