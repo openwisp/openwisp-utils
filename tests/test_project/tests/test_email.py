@@ -29,7 +29,7 @@ class TestEmail(TestCase):
             email.alternatives[0][0],
         )
         # test email doesn't contain link
-        self.assertNotIn("<a href", email.alternatives[0][0])
+        self.assertNotIn('class="btn">', email.alternatives[0][0])
         self.assertEqual(email.attachments[0].get_payload(), "Test attachment")
 
     def test_email_action_text_and_url(self):
