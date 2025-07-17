@@ -12,6 +12,7 @@
       background: #fff;
       margin: 0;
       padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
     }
 
     .email-info {
@@ -35,7 +36,7 @@
     .box {
       width: auto;
       max-width: 700px;
-      padding: 1.5rem 0.94rem;
+      padding: 1rem 0.94rem;
       background-color: #fff;
       border-radius: 12px;
       border: 1px solid #EAECF0;
@@ -61,7 +62,7 @@
 
     .sysname-container {
       width: fit-content;
-      margin: 1rem auto 1rem auto;
+      margin: 1rem auto 0.25rem auto;
       background-color: #F2F4F7;
       padding: 0 0.5em;
       border: solid #D0D5DD 1px;
@@ -98,13 +99,17 @@
       font-size: 0.88rem;
       line-height: 1.25rem;
       text-align: center;
-      margin-top: 0.25rem;
+      margin-top: 0.1rem;
       color: #475467;
     }
 
     hr {
-      margin: 1rem 2.6rem;
       border: 1px solid #EBECF0;
+    }
+
+    .email-title + hr,
+    .subtitle + hr {
+      margin: 0.9rem 2.6rem 1rem 2.6rem;
       display: none;
     }
 
@@ -113,9 +118,10 @@
     }
 
     .msg {
-      color: #000000;
+      color: #0F1729;
       margin: 20px 0;
-      font-size: medium;
+      line-height: 1.20rem;
+      font-size: 0.875rem;;
     }
 
     .btn {
@@ -160,13 +166,18 @@
         margin-right: 0.5rem;
         margin-left: 0.5rem;
         padding: 1rem;
+        padding-bottom: 1.1rem;
       }
-      hr {
+
+      .email-tile + hr,
+      .subtitle + hr {
         display: block;
       }
+
       .email-content {
         margin: 0;
       }
+
       .call-to-action {
         margin-top: 1rem;
       }
