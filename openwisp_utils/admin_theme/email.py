@@ -18,7 +18,7 @@ def send_email(
     body_html,
     recipients,
     extra_context=None,
-    html_email_template=app_settings.OPENWISP_EMAIL_TEMPLATE,
+    html_email_template="openwisp_utils/email_template.html",
     **kwargs,
 ):
     extra_context = extra_context or {}
