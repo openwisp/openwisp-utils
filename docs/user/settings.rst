@@ -205,46 +205,6 @@ default ``True``
 If ``True``, an HTML themed version of the email can be sent using the
 :ref:`send_email <utils_send_email>` function.
 
-.. _openwisp_email_template:
-
-``OPENWISP_EMAIL_TEMPLATE``
----------------------------
-
-======= ======================================
-type    ``str``
-default ``openwisp_utils/email_template.html``
-======= ======================================
-
-This setting allows to change the django template used for sending emails
-with the :ref:`send_email <utils_send_email>` function. It is recommended
-to extend the default email template as in the example below.
-
-.. code-block:: django
-
-    {% extends 'openwisp_utils/email_template.html' %}
-    {% block styles %}
-    {{ block.super }}
-    <style>
-      .background {
-        height: 100%;
-        background: linear-gradient(to bottom, #8ccbbe 50%, #3797a4 50%);
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        padding: 50px;
-      }
-
-      .mail-header {
-        background-color: #3797a4;
-        color: white;
-      }
-    </style>
-    {% endblock styles %}
-
-Similarly, you can customize the HTML of the template by overriding the
-``body`` block. See `email_template.html
-<https://github.com/openwisp/openwisp-utils/blob/master/openwisp_utils/admin_theme/templates/openwisp_utils/email_template.html>`_
-for reference implementation.
-
 .. _openwisp_email_logo:
 
 ``OPENWISP_EMAIL_LOGO``
