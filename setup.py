@@ -47,7 +47,9 @@ setup(
             "drf-yasg~=1.21.7",
         ],
         "channels": [
-            "channels[daphne]~=4.2.0",
+            "channels[daphne]@"
+            "git+https://github.com/openwisp/channels.git@"
+            "issues/2148-ChannelsLiveServerTestCase-Django52-compatible#egg=channels[daphne]",
             "channels_redis~=4.2.1",
         ],
         "channels-test": [
