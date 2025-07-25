@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 from django.conf import settings
-from django.db.models.signals import post_migrate
+from django.db.models.signals import post_migrate, pre_save
 
 
 class MetricsCollectionConfig(AppConfig):
@@ -10,10 +10,24 @@ class MetricsCollectionConfig(AppConfig):
 
     def ready(self):
         super().ready()
-        self.connect_post_migrate_signal()
+        self.connect_signals()
+
+    def connect_signals(self):
+        from .models import Consent
+
+        post_migrate.connect(self.post_migrate_receiver, sender=self)
+        pre_save.connect(
+            Consent.update_consent_withdrawal,
+            sender=Consent,
+            dispatch_uid=".Consent.update_consent_withdrawal",
+        )
 
     def connect_post_migrate_signal(self):
-        post_migrate.connect(self.post_migrate_receiver, sender=self)
+        """DEPRECATED: Use `connect_signals` instead.
+
+        TODO: Remove this method in the next major release.
+        """
+        return self.connect_signals()
 
     @classmethod
     def post_migrate_receiver(cls, **kwargs):

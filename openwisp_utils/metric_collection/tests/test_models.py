@@ -10,7 +10,7 @@ from openwisp_utils import utils
 from openwisp_utils.admin_theme import system_info
 from urllib3.response import HTTPResponse
 
-from .. import models, tasks
+from .. import helper, models, tasks
 from ..models import Consent, OpenwispVersion
 from . import (
     _ENABLED_OPENWISP_MODULES_RETURN_VALUE,
@@ -66,7 +66,7 @@ class TestOpenwispVersion(TestCase):
         "get_os_details",
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     @freeze_time("2023-12-01 00:00:00")
     def test_new_installation(self, mocked_post, *args):
         OpenwispVersion.objects.all().delete()
@@ -91,7 +91,7 @@ class TestOpenwispVersion(TestCase):
         "get_os_details",
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     @freeze_time("2023-12-01 00:00:00")
     def test_install_detected_on_heartbeat_event(self, mocked_post, *args):
         OpenwispVersion.objects.all().delete()
@@ -116,7 +116,7 @@ class TestOpenwispVersion(TestCase):
         "get_os_details",
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     @freeze_time("2023-12-01 00:00:00")
     def test_install_not_detected_on_install_event(self, mocked_post, *args):
         # Checks when the send_usage_metrics is triggered
@@ -136,7 +136,7 @@ class TestOpenwispVersion(TestCase):
         "get_os_details",
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     @freeze_time("2023-12-01 00:00:00")
     def test_heartbeat(self, mocked_post, *args):
         expected_module_version = {
@@ -163,7 +163,7 @@ class TestOpenwispVersion(TestCase):
         "get_os_details",
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     @freeze_time("2023-12-01 00:00:00")
     def test_modules_upgraded(self, mocked_post, *args):
         self.assertEqual(OpenwispVersion.objects.count(), 1)
@@ -196,7 +196,7 @@ class TestOpenwispVersion(TestCase):
         "get_os_details",
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     @freeze_time("2023-12-01 00:00:00")
     def test_upgrade_detected_on_heartbeat_event(self, mocked_post, *args):
         self.assertEqual(OpenwispVersion.objects.count(), 1)
@@ -229,7 +229,7 @@ class TestOpenwispVersion(TestCase):
         "get_os_details",
         return_value=_OS_DETAILS_RETURN_VALUE,
     )
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     @freeze_time("2023-12-01 00:00:00")
     def test_upgrade_not_detected_on_upgrade_event(self, mocked_post, *args):
         """Tests send_usage_metrics is triggered with "Upgrade" category but no modules were upgraded."""
@@ -244,7 +244,7 @@ class TestOpenwispVersion(TestCase):
         bad_response = requests.Response()
         bad_response.status_code = 400
         with patch.object(
-            models, "retryable_request", return_value=bad_response
+            helper, "retryable_request", return_value=bad_response
         ) as mocked_retryable_request:
             tasks.send_usage_metrics.delay()
         mocked_retryable_request.assert_called_once()
@@ -286,7 +286,7 @@ class TestOpenwispVersion(TestCase):
         success_response = requests.Response()
         success_response.status_code = 204
         with patch.object(
-            models, "retryable_request", return_value=success_response
+            helper, "retryable_request", return_value=success_response
         ) as mocked_retryable_request:
             tasks.send_usage_metrics.delay()
         self.assertEqual(len(mocked_retryable_request.mock_calls), 1)
@@ -364,7 +364,7 @@ class TestOpenwispVersion(TestCase):
                 app.post_migrate_receiver(plan=plan)
             mocked_task.assert_not_called()
 
-    @patch.object(OpenwispVersion, "_post_metrics")
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
     def test_send_usage_metrics_user_opted_out(self, mocked_post_usage_metrics):
         Consent.objects.create(user_consented=False)
         tasks.send_usage_metrics.delay()
