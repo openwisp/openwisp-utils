@@ -36,7 +36,15 @@ Opting Out from Metric Collection
 ---------------------------------
 
 You can opt-out from sharing this data any time from the "System Info"
-page. Alternatively, you can also remove the
+page.
+
+.. note::
+
+    When a user opts out of metric collection using the web interface, a
+    one-time metric is still sent to record the opt-out event. This helps
+    us understand user preferences.
+
+Alternatively, you can also remove the
 ``openwisp_utils.metric_collection`` app from ``INSTALLED_APPS`` in one of
 the following ways:
 
