@@ -47,7 +47,7 @@ setup(
             "drf-yasg~=1.21.7",
         ],
         "channels": [
-            "channels[daphne]~=4.2.0",
+            "channels[daphne]~=4.3.0",
             "channels_redis~=4.2.1",
         ],
         "channels-test": [
