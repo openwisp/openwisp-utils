@@ -40,9 +40,9 @@ page.
 
 .. note::
 
-    When a user opts out of metric collection using the web interface, a
+    When a user opts out of metric collection through the web interface, a
     one-time metric is still sent to record the opt-out event. This helps
-    us understand user preferences.
+    distinguish between user abandonment and intentional opt-outs.
 
 Alternatively, you can also remove the
 ``openwisp_utils.metric_collection`` app from ``INSTALLED_APPS`` in one of
