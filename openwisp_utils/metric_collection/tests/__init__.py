@@ -204,3 +204,14 @@ _NEW_INSTALLATION_METRICS = [
         "period_end": 1701388800,
     },
 ]
+_CONSENT_WITHDRAWN_METRICS = [
+    {
+        "category": "Consent Withdrawn",
+        "action": "Action",
+        "name": "Opt-out",
+        "value": 1,
+        "times": 1,
+        "period_start": 1701388800,
+        "period_end": 1701388800,
+    }
+]

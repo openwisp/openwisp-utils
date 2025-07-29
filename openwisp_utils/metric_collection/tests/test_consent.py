@@ -3,8 +3,10 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase, modify_settings
 from django.urls import reverse
+from freezegun import freeze_time
 
 from ..models import Consent
+from . import _CONSENT_WITHDRAWN_METRICS
 
 User = get_user_model()
 
@@ -149,3 +151,37 @@ class TestConsent(TestCase):
             # There should be no change to the field because it is
             # not part of the form.
             self.assertEqual(consent_obj.shown_once, False)
+
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
+    @freeze_time("2023-12-01 00:00:00")
+    def test_updating_consent_withdrawal(self, mock_post_metrics):
+        """Test that metrics for consent withdrawal are sent."""
+
+        with self.subTest("New consent object does not trigger metric"):
+            consent = Consent.objects.create(user_consented=False)
+            mock_post_metrics.assert_not_called()
+
+        with self.subTest("No change in consent does not trigger metric"):
+            consent.save()
+            mock_post_metrics.assert_not_called()
+
+        with self.subTest("Consent opt-in does not trigger metric"):
+            consent.user_consented = True
+            consent.full_clean()
+            consent.save()
+            mock_post_metrics.assert_not_called()
+
+        with self.subTest("Test consent withdrawal triggers metric"):
+            consent.user_consented = False
+            consent.full_clean()
+            consent.save()
+            mock_post_metrics.assert_called_once_with(_CONSENT_WITHDRAWN_METRICS)
+
+        Consent.objects.update(user_consented=True)
+        mock_post_metrics.reset_mock()
+        with self.subTest("Error handling"):
+            with patch.object(Consent.objects, "get", side_effect=Consent.DoesNotExist):
+                consent.user_consented = False
+                consent.full_clean()
+                consent.save()
+                mock_post_metrics.assert_not_called()
