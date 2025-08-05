@@ -89,16 +89,16 @@ split_commits = false
 
 # regex for parsing and grouping commits
 commit_parsers = [
-  # Regex for features, e.g., '[feature] Add new button'
-  { message = "^(\\[feature\\])", group = "<!-- 0 -->Features", strip = "message" },
-  # Regex for backward-incompatible changes, e.g., '[change!] Remove API endpoint'
-  { message = "^(\\[change!\\])", group = "<!-- 1 -->Backward-incompatible changes", strip = "message" },
-  # Regex for regular changes, e.g., '[change] Update styles'
-  { message = "^(\\[change\\])", group = "<!-- 2 -->Other changes", strip = "message" },
-  # Regex for dependency updates.
-  { message = "^(\\[deps\\])", group = "<!-- 3 -->Dependencies", strip = "message" },
-  # Regex for bugfixes, e.g., '[fix] Correct alignment'
-  { message = "^(\\[fix\\])", group = "<!-- 4 -->Bugfixes", strip = "message" },
+  # Regex for features, e.g., '[feature]' or '[feature:api]'
+  { message = "^(\\[feature(:[a-zA-Z0-9_-]+)?\\])", group = "<!-- 0 -->Features", strip = "message" },
+  # Regex for backward-incompatible changes, e.g., '[change!]' or '[change:db!]'
+  { message = "^(\\[change(:[a-zA-Z0-9_-]+)?!\\])", group = "<!-- 1 -->Backward-incompatible changes", strip = "message" },
+  # Regex for regular changes, e.g., '[change]' or '[change:ui]'
+  { message = "^(\\[change(:[a-zA-Z0-9_-]+)?\\])", group = "<!-- 2 -->Other changes", strip = "message" },
+  # Regex for dependency updates, e.g., '[deps]' or '[deps:npm]'
+  { message = "^(\\[deps(:[a-zA-Z0-9_-]+)?\\])", group = "<!-- 3 -->Dependencies", strip = "message" },
+  # Regex for bugfixes, e.g., '[fix]' or '[fix:tests]'
+  { message = "^(\\[fix(:[a-zA-Z0-9_-]+)?\\])", group = "<!-- 4 -->Bugfixes", strip = "message" },
   # Any commits with [skip changelog] in their message will be ignored.
   { message = "\\[skip changelog\\]", skip = true },
 ]
