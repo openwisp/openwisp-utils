@@ -1,0 +1,113 @@
+[changelog]
+# changelog header
+header = """
+Changelog
+=========\n
+"""
+# template for the changelog body
+# https://keats.github.io/tera/docs/#introduction
+body = """
+{% if version %}\
+    Version {{ version | trim_start_matches(pat="v") }}  [{{ timestamp | date(format="%Y-%m-%d") }}]
+    ---------------------------
+{% else %}\
+    [unreleased]
+{% endif %}\
+{#- Features block #}
+{% for group, commits in commits | group_by(attribute="group") %}
+    {% set clean_group = group | striptags | trim %}
+    {%- if clean_group == "Features" -%}
+        {{ clean_group | upper_first }}
+        ~~~~~~~~
+        {% for commit in commits %}
+            - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endfor -%}
+{#- Changes block -#}
+{% for group, commits in commits | group_by(attribute="group") %}
+    {% set clean_group = group | striptags | trim -%}
+        {% if clean_group == "Backward-incompatible changes" or clean_group == "Other changes" or clean_group == "Dependencies" -%}
+            Changes
+            ~~~~~~~
+            {% break %}
+        {% endif -%}
+{% endfor %}
+{%- for group, commits in commits | group_by(attribute="group") %}
+    {% set clean_group = group | striptags | trim -%}
+    {%- if clean_group == "Backward-incompatible changes" -%}
+        {{ clean_group | upper_first }}
+        +++++++++++++++++++++++++++++++++
+        {% for commit in commits %}
+            - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endfor -%}
+{% for group, commits in commits | group_by(attribute="group") %}
+    {% set clean_group = group | striptags | trim %}
+    {%- if clean_group == "Other changes" -%}
+        {{ clean_group | upper_first }}
+        +++++++++++++
+        {% for commit in commits %}
+            - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+        {%- endfor -%}
+    {% endif %}
+{%- endfor -%}
+{% for group, commits in commits | group_by(attribute="group") %}
+    {%- set clean_group = group | striptags | trim -%}
+    {%- if clean_group == "Dependencies" -%}
+        {{ clean_group | upper_first }}
+        ++++++++++++
+        {% for commit in commits %}
+            - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endfor -%}
+{#- Bugfixes block #}
+{%- for group, commits in commits | group_by(attribute="group") -%}
+    {% set clean_group = group | striptags | trim %}
+    {% if clean_group == "Bugfixes" %}
+        {{ clean_group | upper_first }}
+        ~~~~~~~~
+        {% for commit in commits %}
+            - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+        {%- endfor -%}
+    {% endif %}
+{% endfor %}
+"""
+
+# remove the leading and trailing space
+trim = true
+
+[git]
+# parse the commits based on https://www.conventionalcommits.org
+conventional_commits = false
+# filter out the commits that are not conventional
+filter_unconventional = false
+# process each line of a commit as an individual commit
+split_commits = false
+
+# regex for parsing and grouping commits
+commit_parsers = [
+  # Regex for features, e.g., '[feature] Add new button'
+  { message = "^(\\[feature\\])", group = "<!-- 0 -->Features", strip = "message" },
+  # Regex for backward-incompatible changes, e.g., '[change!] Remove API endpoint'
+  { message = "^(\\[change!\\])", group = "<!-- 1 -->Backward-incompatible changes", strip = "message" },
+  # Regex for regular changes, e.g., '[change] Update styles'
+  { message = "^(\\[change\\])", group = "<!-- 2 -->Other changes", strip = "message" },
+  # Regex for dependency updates.
+  { message = "^(\\[deps\\])", group = "<!-- 3 -->Dependencies", strip = "message" },
+  # Regex for bugfixes, e.g., '[fix] Correct alignment'
+  { message = "^(\\[fix\\])", group = "<!-- 4 -->Bugfixes", strip = "message" },
+  # Any commits with [skip changelog] in their message will be ignored.
+  { message = "\\[skip changelog\\]", skip = true },
+]
+
+# protect breaking changes from being skipped due to matching a skipping commit_parser
+protect_breaking_commits = false
+# filter out the commits that are not matched by commit parsers
+filter_commits = false
+# sort the tags topologically
+topo_order = false
+# sort the commits inside sections by oldest/newest order
+sort_commits = "oldest"
