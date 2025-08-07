@@ -55,7 +55,8 @@ def process_changelog(changelog_text):
         return changelog_text.strip()
 
     lines_before_deps = lines[:dep_start_index]
-    dependency_lines = lines[dep_start_index + 2 : dep_end_index]
+    dependency_lines_start = dep_start_index + 2
+    dependency_lines = lines[dependency_lines_start:dep_end_index]
     lines_after_deps = lines[dep_end_index:]
 
     bumped_dependencies = {}
