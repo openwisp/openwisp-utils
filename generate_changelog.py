@@ -37,10 +37,11 @@ def process_changelog(changelog_text):
         # Dependencies section is over when we find the header for the next section
         if dep_start_index != -1 and i > dep_start_index + 1:
             stripped_line = line.strip()
+            # Check if the line is a header section
             if (
                 len(stripped_line) > 3
                 and len(set(stripped_line)) == 1
-                and stripped_line[0] in ["~", "+"]
+                and stripped_line[0] in ["~", "+", "=", "-"]
             ):
                 dep_end_index = i - 1
                 break
@@ -51,7 +52,7 @@ def process_changelog(changelog_text):
 
     # If no Dependencies section was found, just return
     if dep_start_index == -1:
-        return "\n".join(filter(str.strip, lines))
+        return changelog_text.strip()
 
     lines_before_deps = lines[:dep_start_index]
     dependency_lines = lines[dep_start_index + 2 : dep_end_index]
@@ -123,7 +124,7 @@ def format_with_docstrfmt_file(content):
         return formatted_content.strip()
 
     except subprocess.CalledProcessError as e:
-        print(f"\nError running `docstrfmt` command", file=sys.stderr)
+        print("\nError running `docstrfmt` command", file=sys.stderr)
         print(f"{e.stderr}", file=sys.stderr)
         sys.exit(1)
     finally:
