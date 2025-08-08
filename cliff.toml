@@ -12,6 +12,7 @@ body = """
     ---------------------------
 {% else %}\
     [unreleased]
+    ------------
 {% endif %}\
 {#- Features block #}
 {% for group, commits in commits | group_by(attribute="group") %}

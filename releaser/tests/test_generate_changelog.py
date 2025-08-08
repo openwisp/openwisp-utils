@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from textwrap import dedent
 
-from generate_changelog import (
+from releaser.generate_changelog import (
     format_with_docstrfmt_file,
     process_changelog,
     run_git_cliff,
@@ -58,15 +58,17 @@ class TestChangelogGeneration(unittest.TestCase):
         self._git_commit("[deps] Update django requirement from ~=3.2 to ~=4.0")
 
         # Expected output
-        expected_unformatted_output = dedent(
+        expected_output = dedent(
             """
             Changelog
             =========
 
             [unreleased]
+            ------------
 
             Features
             ~~~~~~~~
+
             - Add amazing new feature
 
             Changes
@@ -89,7 +91,7 @@ class TestChangelogGeneration(unittest.TestCase):
             - Bumped ``requests<2.30``
 
             Bugfixes
-            ~~~~~~~~~
+            ~~~~~~~~
 
             - Correct a critical bug #123
         """
@@ -98,6 +100,5 @@ class TestChangelogGeneration(unittest.TestCase):
         processed_output = format_with_docstrfmt_file(
             process_changelog(run_git_cliff())
         )
-        formatted_expected = format_with_docstrfmt_file(expected_unformatted_output)
 
-        self.assertEqual(processed_output, formatted_expected)
+        self.assertEqual(processed_output, expected_output)
