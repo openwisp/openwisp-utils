@@ -1,0 +1,8 @@
+[change] Update README with new instructions
+[feature] Add amazing new feature
+[fix] Correct a critical bug #123
+[change!] Drop support for old API
+[deps] Update django requirement from ~=4.0 to ~=4.1
+[deps] Update requests requirement from <2.25 to <2.30
+[test] Add tests for the new feature
+[deps] Update django requirement from ~=3.2 to ~=4.0
