@@ -1,9 +1,4 @@
 [changelog]
-# changelog header
-header = """
-Changelog
-=========\n
-"""
 # template for the changelog body
 # https://keats.github.io/tera/docs/#introduction
 body = """
