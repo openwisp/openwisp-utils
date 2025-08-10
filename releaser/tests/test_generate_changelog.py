@@ -6,7 +6,7 @@ import tempfile
 import pytest
 
 from releaser.generate_changelog import (
-    format_with_docstrfmt_file,
+    format_rst_block,
     process_changelog,
     run_git_cliff,
 )
@@ -78,7 +78,7 @@ def git_repo():
     "commit_file, expected_changelog_file", find_changelog_test_cases()
 )
 def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
-    """Tests changelog generation for all discovered sample files""" 
+    """Tests changelog generation for all discovered sample files"""
     original_dir = git_repo
     commit_count = 0
 
@@ -110,6 +110,7 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
     # Generate the changelog and get the actual output
     raw_changelog = run_git_cliff()
     processed_changelog = process_changelog(raw_changelog)
-    actual_output = format_with_docstrfmt_file(processed_changelog)
+    processed_changelog = "Changelog\n=========\n\n" + processed_changelog
+    actual_output = format_rst_block(processed_changelog)
 
     assert actual_output == expected_output

@@ -97,8 +97,8 @@ def process_changelog(changelog_text):
     return "\n".join(final_lines)
 
 
-def format_with_docstrfmt_file(content):
-    """Formats content using a temporary file and exits if docstrfmt is missing or fails."""
+def format_rst_block(content):
+    """Formats a RST content using a temporary file."""
     temp_file_path = None
     try:
         with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".rst") as tf:
@@ -120,28 +120,13 @@ def format_with_docstrfmt_file(content):
         )
 
         with open(temp_file_path, "r") as tf:
-            formatted_content = tf.read()
-
-        return formatted_content.strip()
-
-    except subprocess.CalledProcessError as e:
-        print("\nError running `docstrfmt` command", file=sys.stderr)
-        print(f"{e.stderr}", file=sys.stderr)
-        sys.exit(1)
+            return tf.read().strip()
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print("\nWarning: Could not format content with `docstrfmt`.", file=sys.stderr)
+        if isinstance(e, subprocess.CalledProcessError):
+            print(f"{e.stderr}", file=sys.stderr)
+        # Return original content if formatting fails
+        return content.strip()
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-
-
-def main():
-    """Main function to execute the script."""
-    raw_changelog = run_git_cliff()
-
-    if raw_changelog:
-        processed_changelog = process_changelog(raw_changelog)
-        final_changelog = format_with_docstrfmt_file(processed_changelog)
-        print(final_changelog)
-
-
-if __name__ == "__main__":
-    main()
