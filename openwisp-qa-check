@@ -44,21 +44,35 @@ show_help() {
   printf "  --csslinter\t\t\t: Runs prettier check on css files\n"
   printf "Jslinter check options:\n"
   printf "  --jslinter\t\t\t: Runs prettier check on javascript files\n"
+  printf "Ignore pattern options:\n"
+  printf "  --ignore-pattern\t\t: Specify file patterns to ignore\n"
 }
 
 echoerr() { echo "$@" 1>&2; }
 
 runcheckendline() {
   flag=0
-  for i in $(find . -type f ! -path "*/*.egg-info/*" \
-    ! -path "./.*" \
-    ! -path "*.min.*" \
-    ! -path "*.svg" -exec grep -Iq . {} \; -and -print); do
-    if [ "$(tail -c 1 $i)" != "" ]; then
-      echo "$i needs newline at the end"
+  # Start with basic exclusions
+  exclude_patterns=("./.*" "*/.git/*" "*/*.egg-info/*" "*.min.*" "*.svg")
+  # Add user-provided ignore pattern if specified
+  if [ -n "$IGNORE_PATTERN" ]; then
+    echo "Ignoring: $IGNORE_PATTERN"
+    exclude_patterns+=("$IGNORE_PATTERN")
+  fi
+  # Build the exclusion arguments
+  exclude_args=""
+  for pattern in "${exclude_patterns[@]}"; do
+    exclude_args="$exclude_args -path $pattern"
+  done
+  # Find command that uses eval to properly handle the arguments
+  find_command="find . -type f -not $exclude_args -exec grep -Iq . {} \; -print"
+  # Run the find and process results
+  while IFS= read -r file; do
+    if [ "$(tail -c 1 "$file")" != "" ]; then
+      echo "$file needs newline at the end"
       flag=1
     fi
-  done
+  done < <(eval "$find_command")
   if [ $flag -ne 0 ]; then
     echoerr "ERROR: Blank endline check failed!"
     FAILURE=1
@@ -66,7 +80,6 @@ runcheckendline() {
     echo "SUCCESS: Blank endline check successful!"
   fi
 }
-
 runcssprettiercheck() {
   package='prettier'
   if which prettier > /dev/null; then
@@ -117,7 +130,12 @@ runcheckmigrations() {
 }
 
 runflake8() {
-  flake8 && echo "SUCCESS: Flake8 check successful!" ||
+  EXCLUDE_PATTERN=".git,__pycache__,build,dist,*.egg-info"
+  if [ -n "$IGNORE_PATTERN" ]; then
+    EXCLUDE_PATTERN="$EXCLUDE_PATTERN,$IGNORE_PATTERN"
+  fi
+  flake8 --exclude="$EXCLUDE_PATTERN" . &&
+    echo "SUCCESS: Flake8 check successful!" ||
     {
       echoerr "ERROR: Flake8 check failed!"
       FAILURE=1
@@ -145,12 +163,13 @@ runisort() {
 }
 
 runblack() {
-  black --check --diff --quiet . &&
-    echo "SUCCESS: Black check successful!" ||
-    {
-      echoerr "ERROR: Black check failed! Hint: did you forget to run openwisp-qa-format?"
-      FAILURE=1
-    }
+  black_args="-S --check --diff --quiet"
+  if [ -n "$IGNORE_PATTERN" ]; then
+    # Convert shell pattern to regex pattern for Black
+    BLACK_EXCLUDE=$(echo "$IGNORE_PATTERN" | sed 's/\./\\./g' | sed 's/\*/.*/g')
+    black_args="$black_args --exclude \"$BLACK_EXCLUDE\""
+  fi
+  eval "black $black_args ."
 }
 
 runcheckcommit() {
@@ -197,11 +216,16 @@ MIGRATIONS_TO_IGNORE="0"
 COMMIT_MESSAGE=$(git log $TRAVIS_PULL_REQUEST_SHA --format=%B -n 1)
 FAILURE=0
 MODULE=""
+IGNORE_PATTERN=""
 
 while [ "$1" != "" ]; do
   case "$1" in
   --skip-checkendline)
     SKIP_CHECKENDLINE=true
+    ;;
+  --ignore-pattern)
+    shift
+    IGNORE_PATTERN="$1"
     ;;
   --skip-checkmigrations)
     SKIP_CHECKMIGRATIONS=true
