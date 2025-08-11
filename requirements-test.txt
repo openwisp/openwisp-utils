@@ -2,3 +2,4 @@
 openwisp_controller @ https://github.com/openwisp/openwisp-controller/tarball/master
 freezegun
 pytest
+pytest-mock

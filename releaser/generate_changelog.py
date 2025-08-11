@@ -100,10 +100,13 @@ def process_changelog(changelog_text):
 def format_rst_block(content):
     """Formats a RST content using a temporary file."""
     temp_file_path = None
+    header_for_formatting = "Changelog\n=========\n\n"
+    content_with_header = header_for_formatting + content
+
     try:
         with tempfile.NamedTemporaryFile(mode="w+", delete=False, suffix=".rst") as tf:
             temp_file_path = tf.name
-            tf.write(content)
+            tf.write(content_with_header)
 
         subprocess.run(
             [
@@ -120,7 +123,13 @@ def format_rst_block(content):
         )
 
         with open(temp_file_path, "r") as tf:
-            return tf.read().strip()
+            formatted_full_content = tf.read()
+
+        formatted_block = formatted_full_content.replace(
+            header_for_formatting, "", 1
+        ).strip()
+        return formatted_block
+
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print("\nWarning: Could not format content with `docstrfmt`.", file=sys.stderr)
         if isinstance(e, subprocess.CalledProcessError):
