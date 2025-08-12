@@ -82,9 +82,15 @@ conventional_commits = false
 filter_unconventional = false
 # process each line of a commit as an individual commit
 split_commits = false
+# an array of regex based parsers to modify commit messages prior to further processing.
+commit_preprocessors = [
+  { pattern = '#([0-9]+)', replace = '`#$1 <https://github.com/#REPO#/issues/$1>`_' },
+]
 
 # regex for parsing and grouping commits
 commit_parsers = [
+  # Any commits with [skip changelog] in their message will be ignored.
+  { message = "\\[skip changelog\\]", skip = true },
   # Regex for features, e.g., '[feature]' or '[feature:api]'
   { message = "^(\\[feature(:[a-zA-Z0-9_-]+)?\\])", group = "<!-- 0 -->Features", strip = "message" },
   # Regex for backward-incompatible changes, e.g., '[change!]' or '[change:db!]'
@@ -95,8 +101,6 @@ commit_parsers = [
   { message = "^(\\[deps(:[a-zA-Z0-9_-]+)?\\])", group = "<!-- 3 -->Dependencies", strip = "message" },
   # Regex for bugfixes, e.g., '[fix]' or '[fix:tests]'
   { message = "^(\\[fix(:[a-zA-Z0-9_-]+)?\\])", group = "<!-- 4 -->Bugfixes", strip = "message" },
-  # Any commits with [skip changelog] in their message will be ignored.
-  { message = "\\[skip changelog\\]", skip = true },
 ]
 
 # protect breaking changes from being skipped due to matching a skipping commit_parser

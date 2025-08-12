@@ -4,14 +4,12 @@ import sys
 
 
 def get_current_version(config):
-    """Parses the VERSION tuple from the specified file and returns a string like "1.2.0"."""
+    # Parses the VERSION tuple from the specified file.
+    # Returns the version string (e.g., "1.2.0") or None if version_path is not set.
     version_path = config.get("version_path")
     if not version_path or not os.path.exists(version_path):
-        print(
-            f"Error: version_path '{version_path}' in releaser.toml is invalid.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+        # Return None if path is missing, allowing the main script to handle it
+        return None
 
     with open(version_path, "r") as f:
         content = f.read()
@@ -31,8 +29,12 @@ def get_current_version(config):
 
 
 def bump_version(config, new_version):
-    """Updates the VERSION tuple in the specified file, setting the release status to 'final'."""
-    version_path = config["version_path"]
+    """Updates the VERSION tuple. Returns True on success, False if version_path is not configured."""
+    version_path = config.get("version_path")
+    if not version_path:
+        # Indicate that bumping was not performed
+        return False
+
     try:
         new_version_parts = new_version.split(".")
         if len(new_version_parts) != 3:
@@ -61,3 +63,4 @@ def bump_version(config, new_version):
 
     with open(version_path, "w") as f:
         f.write(new_content)
+    return True

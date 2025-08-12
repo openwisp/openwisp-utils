@@ -1,6 +1,6 @@
 from unittest.mock import mock_open, patch
 
-from releaser.release import update_changelog_file
+from openwisp_utils.releaser.release import update_changelog_file
 
 SAMPLE_CHANGELOG = """Changelog
 =========
