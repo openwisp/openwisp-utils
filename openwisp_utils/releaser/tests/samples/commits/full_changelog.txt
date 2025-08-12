@@ -1,0 +1,16 @@
+[feature] Generate CHANGES.rst automatically #496
+[change] Switched to prettier for CSS/JS linting #367
+[change!] Dropped support for OPENWISP_EMAIL_TEMPLATE setting #482
+[fix] Fixed the height of the logo in email template
+[change] Rollback DRF to 3.15 (security)
+[feature] Added retry mechanism to SeleniumTestMixin #464
+[deps] Update selenium requirement from <4.30,>=4.10 to >=4.10,<4.35
+[feature] Should be skipped [skip changelog]
+[fix] Fixed the recipient string in email template
+[deps] Update swapper requirement from ~=1.3.0 to ~=1.4.0
+[feature] ValidatedModelSerializer: added exclude_validation, don't set m2m
+[deps] Update pytest-asyncio requirement from ~=0.24.0 to >=0.24,<0.27
+[change] Use docstrfmt for checking ReStructuredText files
+[fix] Fixed padding of the email container
+[deps] Updated QA dependencies
+[deps] Update djangorestframework requirement from <3.15.2,>=3.14 to >=3.14,<3.16.1

@@ -28,11 +28,6 @@ setup(
         "django-model-utils>=4.5,<5.1",
         "django-compress-staticfiles~=1.0.1b",
         "django-admin-autocomplete-filter~=0.7.1",
-        "git-cliff~=2.10.0",
-        "questionary~=2.1.0",
-        "pypandoc~=1.15",
-        "pypandoc-binary~=1.15",
-        "tomli~=2.2.1",
         "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
         "urllib3>=2.0.0,<3.0.0",
@@ -61,6 +56,13 @@ setup(
         ],
         "celery": ["celery~=5.4.0"],
         "selenium": ["selenium>=4.10,<4.35"],
+        "releaser": [
+            "git-cliff~=2.10.0",
+            "questionary~=2.1.0",
+            "pypandoc~=1.15",
+            "pypandoc-binary~=1.15",
+            "tomli~=2.2.1",
+        ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",

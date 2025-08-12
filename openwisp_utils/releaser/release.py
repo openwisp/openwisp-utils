@@ -8,17 +8,29 @@ from datetime import datetime
 import pypandoc
 import questionary
 import requests
-
-from releaser.config import load_config
-from releaser.generate_changelog import (
+from openwisp_utils.releaser.config import load_config
+from openwisp_utils.releaser.generate_changelog import (
     format_rst_block,
     process_changelog,
     run_git_cliff,
 )
-from releaser.github import GitHub
-from releaser.version import bump_version, get_current_version
+from openwisp_utils.releaser.github import GitHub
+from openwisp_utils.releaser.version import bump_version, get_current_version
 
 MAIN_BRANCHES = ["main", "master"]
+
+
+def verify_pandoc_installed():
+    try:
+        import pypandoc
+
+        pypandoc.get_pandoc_path()
+    except (AttributeError, ModuleNotFoundError):
+        print(
+            "Error: `pypandoc` is not installed or `pypandoc-binary` is missing.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 def get_current_branch():
@@ -34,11 +46,11 @@ def get_current_branch():
 
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
-    try:
-        return pypandoc.convert_text(text, "gfm", format="rst")
-    except OSError:
-        print("Error: `pandoc` is not installed. Please install it.", file=sys.stderr)
-        sys.exit(1)
+    # Escape underscores not inside backticks to prevent Markdown formatting issues
+    escaped_text = re.sub(r"(?<!`)_", r"\\_", text)
+    return pypandoc.convert_text(
+        escaped_text, "gfm", format="rst", extra_args=["--wrap=none"]
+    ).strip()
 
 
 def format_file_with_docstrfmt(file_path):
@@ -190,6 +202,7 @@ def port_changelog_to_main(gh, config, version, changelog_block, original_branch
 
 
 def main():
+    verify_pandoc_installed()
     original_branch = get_current_branch()
     try:
         config = load_config()
@@ -202,6 +215,7 @@ def main():
         )
 
         raw_changelog_block = run_git_cliff()
+        raw_changelog_block = raw_changelog_block.replace("#REPO#", config["repo"])
         if not raw_changelog_block:
             print("No changes found for the new release. Exiting.")
             sys.exit(0)
@@ -218,9 +232,12 @@ def main():
             sys.exit(0)
 
         current_version = get_current_version(config)
-        new_version = questionary.text(
+        version_prompt = (
             f"Current version is {current_version}. Enter new version:"
-        ).ask()
+            if current_version
+            else "Enter the new version for this release (e.g., 1.2.0):"
+        )
+        new_version = questionary.text(version_prompt).ask()
 
         if (
             new_version
@@ -244,11 +261,20 @@ def main():
             )
             print(f"✅ {changelog_path} has been updated.")
 
-            bump_version(config, new_version)
-            print(f"✅ Version bumped to {new_version} and set to 'final'.")
+            was_bumped = bump_version(config, new_version)
+            if was_bumped:
+                print(f"✅ Version bumped to {new_version} and set to 'final'.")
+            else:
+                print("\n" + "=" * 60)
+                print("⚠️ The version number could not be bumped automatically.")
+                print("   Please bump it manually before the changelog is committed.")
+                questionary.confirm(
+                    "Press Enter when you have bumped the version number..."
+                ).ask()
+                print("=" * 60)
 
             print(
-                f"\n✋ Please review the updated '{changelog_path}' and make any final edits."
+                f"\n✋ Please review the updated '{changelog_path}' and any version files, making final edits."
             )
             questionary.confirm("Press Enter when you have finished editing...").ask()
 
@@ -263,12 +289,11 @@ def main():
                 capture_output=True,
             )
 
-            files_to_add = [config["version_path"], changelog_path]
-            subprocess.run(
-                ["git", "add"] + files_to_add, check=True, capture_output=True
-            )
+            print("Adding all changed files to git...")
+            # Use `git add .` to catch both changelog and any manual version file changes
+            subprocess.run(["git", "add", "."], check=True, capture_output=True)
 
-            commit_message = f"[release] Prepare for release {new_version}"
+            commit_message = f"{new_version} release"
             subprocess.run(
                 ["git", "commit", "-m", commit_message], check=True, capture_output=True
             )
@@ -306,8 +331,12 @@ def main():
             subprocess.run(["git", "push", "origin", tag_name], check=True)
             print(f"🖋️ Git tag '{tag_name}' created and pushed.")
 
-            release_body_md = rst_to_markdown(final_release_block)
-            release_url = gh.create_release(tag_name, release_body_md)
+            release_title = f"{new_version} [{changelog_date_str}]"
+            # Remove the first two lines (header and underline) for the body
+            release_body_rst = "\n".join(final_release_block.splitlines()[2:])
+            release_body_md = rst_to_markdown(release_body_rst)
+
+            release_url = gh.create_release(tag_name, release_title, release_body_md)
             print(f"📦 Draft release created on GitHub: {release_url}")
 
             print("\n🎉 Release process completed successfully!")
@@ -330,18 +359,11 @@ def main():
     except (
         subprocess.CalledProcessError,
         requests.RequestException,
-        KeyError,
         RuntimeError,
-        FileNotFoundError,
     ) as e:
-        print(f"\n❌ An error occurred: {e}", file=sys.stderr)
+        print(f"\n❌ An unexpected error occurred: {e}", file=sys.stderr)
         if isinstance(e, subprocess.CalledProcessError):
             print(f"Error Details: {e.stderr}", file=sys.stderr)
-        if isinstance(e, KeyError) and "GITHUB_TOKEN" in str(e):
-            print(
-                "Please ensure the GITHUB_TOKEN environment variable is set.",
-                file=sys.stderr,
-            )
         sys.exit(1)
 
 

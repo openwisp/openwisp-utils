@@ -4,8 +4,7 @@ import subprocess
 import tempfile
 
 import pytest
-
-from releaser.generate_changelog import (
+from openwisp_utils.releaser.generate_changelog import (
     format_rst_block,
     process_changelog,
     run_git_cliff,
@@ -15,7 +14,7 @@ from releaser.generate_changelog import (
 def find_changelog_test_cases():
     # Scans the samples directory to find matching pairs of commit
     # and changelog files to be used as test cases
-    SAMPLES_DIR = "releaser/tests/samples"
+    SAMPLES_DIR = "openwisp_utils/releaser/tests/samples"
     COMMIT_SAMPLES_DIR = os.path.join(SAMPLES_DIR, "commits")
     CHANGELOG_SAMPLES_DIR = os.path.join(SAMPLES_DIR, "changelogs")
 
