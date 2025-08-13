@@ -47,12 +47,12 @@ setup(
             "drf-yasg~=1.21.7",
         ],
         "channels": [
-            "channels[daphne]~=4.2.0",
+            "channels[daphne]~=4.3.0",
             "channels_redis~=4.2.1",
         ],
         "channels-test": [
             "pytest-asyncio>=0.24,<0.27",
-            "pytest-django~=4.10.0",
+            "pytest-django>=4.10,<4.12",
         ],
         "celery": ["celery~=5.4.0"],
         "selenium": ["selenium>=4.10,<4.35"],
