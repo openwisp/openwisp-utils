@@ -72,6 +72,39 @@ def format_file_with_docstrfmt(file_path):
             print(f"{e.stderr}", file=sys.stderr)
 
 
+def get_release_block_from_file(changelog_path, version):
+    """
+    Reads the entire changelog file and extracts the block for a specific version.
+    Returns the block as a string or exit if not found.
+    """
+    try:
+        with open(changelog_path, "r") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        print(f"Error: {changelog_path} not found.", file=sys.stderr)
+        sys.exit(1)
+
+    release_lines = []
+    in_release_block = False
+    start_pattern = f"Version {version}"
+
+    for line in lines:
+        stripped_line = line.strip()
+        # Start capturing when the correct version header is found
+        if stripped_line.startswith(start_pattern):
+            in_release_block = True
+            release_lines.append(line)
+            continue
+        # Stop capturing if we are in the block and find the next version header
+        if in_release_block and stripped_line.startswith("Version "):
+            break
+        # If we are in the block, keep adding lines
+        if in_release_block:
+            release_lines.append(line)
+
+    return "".join(release_lines).strip() if release_lines else None
+
+
 def update_changelog_file(changelog_path, final_release_block, new_version, is_bugfix):
     """Update the changelog file with the new release block."""
     try:
@@ -249,7 +282,7 @@ def main():
             version_header = f"Version {new_version}  [{changelog_date_str}]"
             underline = "-" * len(version_header)
 
-            final_release_block = re.sub(
+            initial_release_block = re.sub(
                 r"\[unreleased\]\n[=\-~+']+",
                 f"{version_header}\n{underline}",
                 formatted_block,
@@ -257,7 +290,7 @@ def main():
 
             changelog_path = config["changelog_path"]
             update_changelog_file(
-                changelog_path, final_release_block, new_version, is_bugfix
+                changelog_path, initial_release_block, new_version, is_bugfix
             )
             print(f"✅ {changelog_path} has been updated.")
 
@@ -277,6 +310,19 @@ def main():
                 f"\n✋ Please review the updated '{changelog_path}' and any version files, making final edits."
             )
             questionary.confirm("Press Enter when you have finished editing...").ask()
+
+            print("\nReading final changelog content from disk...")
+            latest_changelog_block = get_release_block_from_file(
+                changelog_path, new_version
+            )
+            # Fallback to the initial block if re-reading fails
+            if not latest_changelog_block:
+                print(
+                    "\nWarning: Could not re-read the changelog block from the file. "
+                    "Using the initially generated content for the GitHub release.",
+                    file=sys.stderr,
+                )
+                latest_changelog_block = initial_release_block
 
             print("\nRe-formatting the final changelog file...")
             format_file_with_docstrfmt(changelog_path)
@@ -333,7 +379,7 @@ def main():
 
             release_title = f"{new_version} [{changelog_date_str}]"
             # Remove the first two lines (header and underline) for the body
-            release_body_rst = "\n".join(final_release_block.splitlines()[2:])
+            release_body_rst = "\n".join(latest_changelog_block.splitlines()[2:])
             release_body_md = rst_to_markdown(release_body_rst)
 
             release_url = gh.create_release(tag_name, release_title, release_body_md)
@@ -347,7 +393,7 @@ def main():
                     "Do you want to create a PR to port the changelog to the main branch now?"
                 ).ask():
                     port_changelog_to_main(
-                        gh, config, new_version, final_release_block, original_branch
+                        gh, config, new_version, latest_changelog_block, original_branch
                     )
                 else:
                     print("Skipping changelog port. Please remember to do it manually.")
