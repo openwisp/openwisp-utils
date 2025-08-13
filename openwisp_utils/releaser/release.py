@@ -73,10 +73,7 @@ def format_file_with_docstrfmt(file_path):
 
 
 def get_release_block_from_file(changelog_path, version):
-    """
-    Reads the entire changelog file and extracts the block for a specific version.
-    Returns the block as a string or exit if not found.
-    """
+    """Reads the entire changelog file and extracts the block for a specific version."""
     try:
         with open(changelog_path, "r") as f:
             lines = f.readlines()
