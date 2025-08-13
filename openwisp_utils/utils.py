@@ -92,5 +92,5 @@ def retryable_request(
     retries = Retry(**retry_kwargs)
     request_session.mount("https://", HTTPAdapter(max_retries=retries))
     request_session.mount("http://", HTTPAdapter(max_retries=retries))
-    request_method = getattr(request_session, method)
+    request_method = getattr(request_session, method.lower())
     return request_method(timeout=timeout, **kwargs)
