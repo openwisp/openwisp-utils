@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from unittest.mock import patch
 
 import pytest
 from openwisp_utils.releaser.generate_changelog import (
@@ -113,3 +114,39 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
     actual_output = format_rst_block(processed_changelog)
 
     assert actual_output == expected_output
+
+
+@patch(
+    "openwisp_utils.releaser.generate_changelog.find_cliff_config", return_value=None
+)
+def test_run_git_cliff_no_config(mock_find_config):
+    with pytest.raises(SystemExit):
+        run_git_cliff()
+
+
+@patch(
+    "openwisp_utils.releaser.generate_changelog.find_cliff_config", return_value="path"
+)
+@patch("subprocess.run", side_effect=FileNotFoundError)
+def test_run_git_cliff_file_not_found(mock_run, mock_find_config):
+    with pytest.raises(SystemExit):
+        run_git_cliff()
+
+
+@patch(
+    "openwisp_utils.releaser.generate_changelog.find_cliff_config", return_value="path"
+)
+@patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "cmd"))
+def test_run_git_cliff_called_process_error(mock_run, mock_find_config):
+    with pytest.raises(SystemExit):
+        run_git_cliff()
+
+
+@patch(
+    "subprocess.run",
+    side_effect=subprocess.CalledProcessError(1, "cmd", stderr="error"),
+)
+def test_format_rst_block_failure(mock_run):
+    original_content = "Some content"
+    formatted_content = format_rst_block(original_content)
+    assert formatted_content == original_content.strip()
