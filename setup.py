@@ -61,7 +61,6 @@ setup(
             "questionary~=2.1.0",
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",
-            "tomli~=2.2.1",
         ],
     },
     classifiers=[

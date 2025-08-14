@@ -1,3 +1,4 @@
+import importlib.resources as pkg_resources
 import os
 import re
 import subprocess
@@ -5,13 +6,57 @@ import sys
 import tempfile
 
 
-def run_git_cliff():
-    """Runs the 'git cliff --unreleased' command and returns its output."""
+def find_cliff_config():
+    # Locates the cliff.toml file packaged within 'openwisp_utils'.
     try:
+        with pkg_resources.as_file(
+            pkg_resources.files("openwisp_utils").joinpath("cliff.toml")
+        ) as config_path:
+            if os.path.exists(config_path):
+                return str(config_path)
+            else:
+                return None
+    except Exception as e:
+        print("\n--- FATAL ERROR ---", file=sys.stderr)
+        print(
+            "Could not locate 'cliff.toml' inside the installed package.",
+            file=sys.stderr,
+        )
+        print(f"The specific error was: {type(e).__name__}: {e}", file=sys.stderr)
+        print("\n--- TROUBLESHOOTING ---", file=sys.stderr)
+        print(
+            "Ensure 'openwisp_utils' was installed correctly with the data file.",
+            file=sys.stderr,
+        )
+        print("--------------------------\n", file=sys.stderr)
+        return None
+
+
+def run_git_cliff(version=None):
+    """Runs the 'git cliff --unreleased' command and returns its output."""
+    config_path = find_cliff_config()
+    if not config_path:
+        print(
+            "Error: Path to cliff.toml was not found or provided.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    try:
+        cmd = ["git", "cliff", "--unreleased", "--config", config_path]
+        if version:
+            cmd.extend(["--tag", version])
+
         result = subprocess.run(
-            ["git", "cliff", "--unreleased"], capture_output=True, text=True, check=True
+            cmd,
+            capture_output=True,
+            text=True,
+            check=True,
         )
         return result.stdout
+    except FileNotFoundError:
+        print("Error: 'git' or 'git-cliff' command not found.", file=sys.stderr)
+        sys.exit(1)
     except subprocess.CalledProcessError as e:
         print(f"Error running 'git cliff': {e.stderr}", file=sys.stderr)
         sys.exit(1)

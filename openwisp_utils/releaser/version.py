@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+from ast import literal_eval
 
 
 def get_current_version(config):
@@ -9,7 +10,7 @@ def get_current_version(config):
     version_path = config.get("version_path")
     if not version_path or not os.path.exists(version_path):
         # Return None if path is missing, allowing the main script to handle it
-        return None
+        return None, None
 
     with open(version_path, "r") as f:
         content = f.read()
@@ -20,8 +21,13 @@ def get_current_version(config):
 
     try:
         version_parts = [part.strip() for part in match.group(1).split(",")]
-        major, minor, patch = version_parts[0], version_parts[1], version_parts[2]
-        return f"{major}.{minor}.{patch}"
+        major, minor, patch, type = (
+            version_parts[0],
+            version_parts[1],
+            version_parts[2],
+            version_parts[3],
+        )
+        return f"{major}.{minor}.{patch}", literal_eval(type)
     except IndexError:
         raise RuntimeError(
             f"The VERSION tuple in {version_path} does not appear to have at least three elements."
@@ -32,7 +38,7 @@ def bump_version(config, new_version):
     """Updates the VERSION tuple. Returns True on success, False if version_path is not configured."""
     version_path = config.get("version_path")
     if not version_path:
-        # Indicate that bumping was not performed
+        # version bumping was not performed
         return False
 
     try:
