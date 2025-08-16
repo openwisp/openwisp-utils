@@ -75,7 +75,7 @@ runprettiercheck() {
     [[ "$2" != "true" ]] && CSS_PATTERN="|css"
     PATTERN="**/*.+(yml|yaml|md${JS_PATTERN}${CSS_PATTERN})"
 
-    prettier --check $PATTERN &&
+    prettier --check $PATTERN --print-width 88 &&
       echo "SUCCESS: Prettier check successful!" ||
       {
         echoerr "ERROR: Prettier check failed! Hint: did you forget to run openwisp-qa-format?"

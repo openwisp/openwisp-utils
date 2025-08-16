@@ -6,7 +6,7 @@ black .
 docstrfmt --no-docstring-trailing-line --ignore-cache --line-length 74 .
 
 if which prettier > /dev/null; then
-  prettier --write "**/*.+(yml|yaml|md|js|json|css)"
+  prettier --write "**/*.+(yml|yaml|md|js|json|css)" --print-width 88
 else
   echo "SKIPPED CSS FILES: Please install prettier"
 fi
