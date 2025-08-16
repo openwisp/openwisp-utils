@@ -48,9 +48,7 @@
 .auto-filter .select2-selection[aria-expanded="true"] {
   border-color: #df5d43 !important;
 }
-.auto-filter
-  .select2-selection[aria-expanded="true"]
-  .select2-selection__rendered {
+.auto-filter .select2-selection[aria-expanded="true"] .select2-selection__rendered {
   color: #df5d43 !important;
 }
 .auto-filter .select2-selection__placeholder {

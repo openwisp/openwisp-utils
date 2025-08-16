@@ -141,9 +141,7 @@
           j < elementsParam[i].quick_link.custom_css_classes.length;
           ++j
         ) {
-          quickLink.classList.add(
-            elementsParam[i].quick_link.custom_css_classes[j],
-          );
+          quickLink.classList.add(elementsParam[i].quick_link.custom_css_classes[j]);
         }
       }
       quickLinkContainer.appendChild(quickLink);

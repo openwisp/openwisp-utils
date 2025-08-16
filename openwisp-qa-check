@@ -67,32 +67,25 @@ runcheckendline() {
   fi
 }
 
-runcssprettiercheck() {
-  package='prettier'
+runprettiercheck() {
   if which prettier > /dev/null; then
-    prettier $(find . -type f -name "*.css") --check &&
+    JS_PATTERN=""
+    CSS_PATTERN=""
+    [[ "$1" != "true" ]] && JS_PATTERN="|js|json"
+    [[ "$2" != "true" ]] && CSS_PATTERN="|css"
+    PATTERN="**/*.+(yml|yaml|md${JS_PATTERN}${CSS_PATTERN})"
+
+    prettier --check $PATTERN &&
       echo "SUCCESS: Prettier check successful!" ||
       {
         echoerr "ERROR: Prettier check failed! Hint: did you forget to run openwisp-qa-format?"
+        echoerr "For more information refer to:"
+        echoerr "https://openwisp.io/docs/dev/developer/contributing.html#css-and-javascript-code-conventions"
         FAILURE=1
       }
   else
-    echo "MODULE NOT FOUND: Please install ${package}"
-    FAILURE=1
-  fi
-}
-
-runjsprettiercheck() {
-  package='prettier'
-  if which prettier > /dev/null; then
-    prettier $(find . -type f -name "*.js" -a ! -path "*vendor/*.js") --check &&
-      echo "SUCCESS: Prettier check successful!" ||
-      {
-        echoerr "ERROR: Prettier check failed! Hint: please follow js code conventions. Visit: https://openwisp.io/docs/dev/developer/contributing.html#css-and-javascript-code-conventions"
-        FAILURE=1
-      }
-  else
-    echo "MODULE NOT FOUND: Please install ${package}"
+    echoerr "MODULE NOT FOUND: Please install prettier, e.g.:"
+    echoerr "sudo npm install -g prettier"
     FAILURE=1
   fi
 }
@@ -282,12 +275,8 @@ if ! $SKIP_FLAKE8; then
   runflake8
 fi
 
-if ! $SKIP_CSS_LINTER; then
-  runcssprettiercheck
-fi
-
-if ! $SKIP_JS_LINTER; then
-  runjsprettiercheck
+if [[ "$SKIP_JS_LINTER" != "true" || "$SKIP_CSS_LINTER" != "true" ]]; then
+  runprettiercheck "$SKIP_JS_LINTER" "$SKIP_CSS_LINTER"
 fi
 
 if ! $SKIP_RSTCHECK; then
