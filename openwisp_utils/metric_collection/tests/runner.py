@@ -15,7 +15,14 @@ class ChannelsParallelTestRunner(TimeLoggingTestRunner):
     and WebSocket tests serially when --parallel is used.
     
     This ensures that tests inheriting from ChannelsLiveServerTestCase
-    are run serially to avoid port conflicts and WebSocket connection issues.
+    or StaticLiveServerTestCase are run serially to avoid port conflicts 
+    and WebSocket connection issues.
+    
+    Features:
+    - Automatic detection of WebSocket/Selenium test cases
+    - Parallel execution for regular tests (when --parallel is used)
+    - Serial execution for WebSocket tests (always)
+    - Backward compatibility with existing test infrastructure
     """
 
     def _is_websocket_test(self, test_case):
@@ -67,12 +74,15 @@ class ChannelsParallelTestRunner(TimeLoggingTestRunner):
             if isinstance(test_item, unittest.TestSuite):
                 for sub_item in test_item:
                     extract_tests(sub_item)
-            else:
+            elif hasattr(test_item, '__class__'):
                 # This is an individual test case
                 if self._is_websocket_test(test_item):
                     websocket_tests.addTest(test_item)
                 else:
                     regular_tests.addTest(test_item)
+            else:
+                # Fallback: treat as regular test if we can't determine
+                regular_tests.addTest(test_item)
         
         extract_tests(suite)
         return regular_tests, websocket_tests
@@ -87,6 +97,10 @@ class ChannelsParallelTestRunner(TimeLoggingTestRunner):
             
             # Split the test suite
             regular_tests, websocket_tests = self._split_test_suite(suite)
+            
+            # If no tests to split, run normally
+            if regular_tests.countTestCases() == 0 and websocket_tests.countTestCases() == 0:
+                return super().run_suite(suite)
             
             # Create a combined result object
             result = None
@@ -114,11 +128,16 @@ class ChannelsParallelTestRunner(TimeLoggingTestRunner):
                     
                     # If we have previous results, merge them
                     if result is not None:
-                        # Merge the results
+                        # Merge the results carefully
                         result.errors.extend(serial_result.errors)
                         result.failures.extend(serial_result.failures)
-                        result.skipped.extend(getattr(serial_result, 'skipped', []))
+                        if hasattr(result, 'skipped') and hasattr(serial_result, 'skipped'):
+                            result.skipped.extend(serial_result.skipped)
                         result.testsRun += serial_result.testsRun
+                        
+                        # Merge timing information if available (for TimeLoggingTestResult)
+                        if hasattr(result, 'test_timings') and hasattr(serial_result, 'test_timings'):
+                            result.test_timings.extend(serial_result.test_timings)
                     else:
                         result = serial_result
                         
@@ -134,7 +153,14 @@ class ChannelsParallelTestRunner(TimeLoggingTestRunner):
 
 
 class MockRequestPostRunner(ChannelsParallelTestRunner):
-    """This runner ensures that usage metrics are not sent in development when running tests."""
+    """
+    This runner ensures that usage metrics are not sent in development when running tests.
+    
+    Inherits from ChannelsParallelTestRunner to provide:
+    - Parallel execution for regular tests
+    - Serial execution for WebSocket/Selenium tests
+    - Automatic test type detection and splitting
+    """
     
     def setup_databases(self, **kwargs):
         utils.requests.Session._original_post = utils.requests.Session.post

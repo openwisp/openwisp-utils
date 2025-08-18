@@ -27,12 +27,12 @@ INSTALLED_APPS = [
     "drf_yasg",
 ]
 
-EXTENDED_APPS = ()  # Just for testing purposes
+EXTENDED_APPS = ("openwisp_controller", "django_loci")  # Just for testing purposes
 
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    # "openwisp_utils.staticfiles.DependencyFinder",  # Commented out for testing
+    "openwisp_utils.staticfiles.DependencyFinder",
 ]
 
 MIDDLEWARE = [

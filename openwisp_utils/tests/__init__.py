@@ -11,6 +11,13 @@ from .utils import (  # noqa
     catch_signal,
 )
 
+# Import the custom test runner for convenience
+try:
+    from ..metric_collection.tests.runner import ChannelsParallelTestRunner  # noqa
+except ImportError:
+    # Handle case where metric_collection is not available
+    pass
+
 try:
     from .selenium import SeleniumTestMixin  # noqa
 except ImportError:
