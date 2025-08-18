@@ -393,7 +393,7 @@ def main():
 
         print(
             f"🚀 Starting {release_type} Release Flow "
-            "for version {new_version} on branch '{original_branch}'..."
+            f"for version {new_version} on branch '{original_branch}'..."
         )
 
         raw_changelog_block = run_git_cliff(new_version)
