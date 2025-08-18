@@ -71,14 +71,14 @@ jobs:
             setup.py
             **/requirements*.txt
 
-    - name: Install Dependencies
-      id: deps
-      run: |
-        pip install -U pip wheel setuptools
-        pip install -U -r requirements-test.txt
-        pip install -e .[qa,rest,selenium,releaser]
-        pip install ${{ matrix.django-version }}
-        sudo npm install -g prettier
+      - name: Install Dependencies
+        id: deps
+        run: |
+          pip install -U pip wheel setuptools
+          pip install -U -r requirements-test.txt
+          pip install -e .[qa,rest,selenium,releaser]
+          pip install ${{ matrix.django-version }}
+          sudo npm install -g prettier
 
       - name: QA checks
         run: ./run-qa-checks
