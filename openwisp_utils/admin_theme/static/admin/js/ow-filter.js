@@ -187,8 +187,7 @@ function initInputFilterHandler() {
       var filter = e.target.closest(".ow-input-filter"),
         selectedOption = filter.querySelector(".filter-options a"),
         value = e.target.value,
-        newHref =
-          "?" + selectedOption.getAttribute("parameter_name") + "=" + value;
+        newHref = "?" + selectedOption.getAttribute("parameter_name") + "=" + value;
       selectedOption.setAttribute("href", newHref);
     });
   });
@@ -222,9 +221,7 @@ function filterHandlers() {
     return;
   }
   filterButton.addEventListener("click", function () {
-    const selectedOptions = document.querySelectorAll(
-      ".filter-options .selected",
-    );
+    const selectedOptions = document.querySelectorAll(".filter-options .selected");
     const inputFilters = document.querySelectorAll(
       ".ow-input-filter .filter-options a",
     );

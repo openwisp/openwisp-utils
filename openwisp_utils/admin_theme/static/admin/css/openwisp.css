@@ -74,8 +74,8 @@ See https://code.djangoproject.com/ticket/33878 */
   --object-tools-bg: var(--close-button-bg) !important;
   --object-tools-hover-bg: var(--close-button-hover-bg) !important;
   --font-family-primary:
-    "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana,
-    Arial, sans-serif;
+    "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial,
+    sans-serif;
 }
 body {
   min-width: 320px;
@@ -865,8 +865,8 @@ input[type="button"]:hover,
   margin-left: 2.5rem;
   width: 150px;
   height: 86px;
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg) no-repeat
+    scroll 0 50%/100%;
 }
 
 /* Fix for object tools */
@@ -1299,8 +1299,8 @@ h1#site-name {
   width: 165px;
   height: 95px;
   margin: auto;
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg) no-repeat
+    scroll 0 50%/100%;
   text-indent: -2000px;
 }
 #main-content.m-0 {
@@ -1580,8 +1580,8 @@ body.login {
   display: block;
 }
 .login #site-name a {
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg) no-repeat
+    scroll 0 50%/100%;
   text-indent: -2000px;
   width: 150px;
   height: 86px;
