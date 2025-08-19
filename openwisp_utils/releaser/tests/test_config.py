@@ -112,3 +112,20 @@ def test_config_malformed_version(
     create_changelog(project_dir)
     config = load_config()
     assert config["CURRENT_VERSION"] is None
+
+
+def test_config_malformed_version_literal_eval_fails(
+    project_dir, create_setup_py, create_package_dir_with_version, create_changelog
+):
+    # Tests config loading when __init__.py contains a malformed VERSION
+    # tuple that causes literal_eval to fail.
+
+    create_setup_py(project_dir)
+    # This string is valid python syntax but will fail literal_eval
+    create_package_dir_with_version(
+        project_dir, version_str="VERSION = (1, 2, 'a' + 'b')"
+    )
+    create_changelog(project_dir)
+    config = load_config()
+    # Should gracefully handle the error and return None
+    assert config["CURRENT_VERSION"] is None

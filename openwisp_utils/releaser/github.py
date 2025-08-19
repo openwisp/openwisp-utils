@@ -1,6 +1,8 @@
 import uuid
 
-from openwisp_utils.utils import retryable_request
+import requests
+
+from .utils import SkipSignal, retryable_request
 
 
 class GitHub:
@@ -31,15 +33,13 @@ class GitHub:
         response = retryable_request(
             url=url, method="post", headers=self.headers, json=payload
         )
-        response.raise_for_status()
         return response.json()["html_url"]
 
     def is_pr_merged(self, pr_url):
         """Checks if a pull request has been merged."""
         pr_number = pr_url.split("/")[-1]
         url = f"{self.base_url}/pulls/{pr_number}"
-        response = retryable_request(url=url, method="get", headers=self.headers)
-        response.raise_for_status()
+        response = retryable_request(method="get", url=url, headers=self.headers)
         return response.json().get("merged", False)
 
     def create_release(self, tag_name, title, body):
@@ -50,41 +50,42 @@ class GitHub:
             "name": title,
             "body": body,
             "draft": True,
-            "prerelease": "alpha" in tag_name or "beta" in tag_name or "rc" in tag_name,
+            "prerelease": True,
         }
         response = retryable_request(
-            url=url, method="post", headers=self.headers, json=payload
+            method="post", url=url, headers=self.headers, json=payload
         )
-        response.raise_for_status()
         return response.json()["html_url"]
 
     def check_pr_creation_permission(self) -> bool:
-        # Return True if the token can create PRs on self.repo (no PR is created).
-        # Strategy: POST /pulls with a valid-shaped but impossible head (login:nonexistentbranch).
-        # If permission is OK, GitHub returns 422 (validation failed). Otherwise 403/401/404.
+        """Checks for PR creation permissions."""
+        try:
+            repo_resp = retryable_request(
+                method="get", url=self.base_url, headers=self.headers
+            )
+            base = repo_resp.json().get("default_branch", "master")
 
-        repo_resp = retryable_request(
-            url=self.base_url, method="get", headers=self.headers
-        )
-        repo_resp.raise_for_status()
-        base = repo_resp.json().get("default_branch", "master")
+            me_resp = retryable_request(
+                method="get", url="https://api.github.com/user", headers=self.headers
+            )
+            login = me_resp.json()["login"]
 
-        me_resp = retryable_request(
-            url="https://api.github.com/user", method="get", headers=self.headers
-        )
-        me_resp.raise_for_status()
-        login = me_resp.json()["login"]
+            url = f"{self.base_url}/pulls"
+            fake_branch = f"__perm_probe_{uuid.uuid4().hex[:8]}__"
+            payload = {
+                "title": "Permission Probe",
+                "head": f"{login}:{fake_branch}",
+                "base": base,
+                "body": "This is a temporary probe to check permissions and should not be merged.",
+            }
 
-        url = f"{self.base_url}/pulls"
-        fake_branch = f"__perm_probe_{uuid.uuid4().hex[:8]}__"
-        payload = {
-            "title": "Permission Probe",
-            "head": f"{login}:{fake_branch}",
-            "base": base,
-            "body": "This is a temporary probe to check permissions and should not be merged.",
-        }
-
-        resp = retryable_request(
-            url=url, method="post", headers=self.headers, json=payload
-        )
-        return resp.status_code == 422
+            # This request is expected to fail with 422 if permissions are correct
+            response = requests.post(url=url, headers=self.headers, json=payload)
+            return response.status_code == 422
+        except SkipSignal:
+            print(
+                "Skipped permission check due to network issues. Continuing, but might fail later."
+            )
+            return True  # Assume permissions are correct to proceed
+        except requests.RequestException:
+            return False

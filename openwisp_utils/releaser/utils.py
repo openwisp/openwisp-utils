@@ -1,7 +1,53 @@
 import re
 import subprocess
+import sys
+import time
 
 import pypandoc
+import questionary
+import requests
+
+
+class SkipSignal(Exception):
+    """Signal that the user has chosen to skip an operation."""
+
+    pass
+
+
+def retryable_request(**kwargs):
+    """Executes a requests call and provides a retry/skip/abort prompt on failure."""
+    while True:
+        try:
+            response = requests.request(**kwargs)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as e:
+            error_message = str(e)
+            if e.response is not None:
+                try:
+                    data = e.response.json()
+                    details = data.get("message")
+                    if details:
+                        error_message = f"{e}\n      └── Details: {details}"
+                except requests.JSONDecodeError:
+                    pass
+
+            print(f"\n❌ Network error: {error_message}", file=sys.stderr)
+            decision = questionary.select(
+                "An error occurred. What would you like to do?",
+                choices=["Retry", "Skip", "Abort"],
+            ).ask()
+
+            if decision == "Retry":
+                time.sleep(1)
+                continue
+            elif decision == "Skip":
+                raise SkipSignal(
+                    "User chose to skip the operation after a network error."
+                )
+            else:  # Abort
+                print("\n❌ Operation aborted by user.")
+                sys.exit(1)
 
 
 def adjust_markdown_headings(markdown_text):

@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
-from unittest.mock import mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from openwisp_utils.releaser.changelog import (
@@ -257,3 +257,39 @@ def test_main_flow_no_changes_found(mock_all):
     with pytest.raises(SystemExit):
         run_release()
     mock_all["print"].assert_any_call("No changes found for the new release. Exiting.")
+
+
+@patch("openwisp_utils.releaser.changelog.pkg_resources.as_file")
+def test_find_cliff_config_path_does_not_exist(mock_as_file):
+    """Tests when the config file path exists in theory but not on disk."""
+    mock_context_manager = MagicMock()
+    mock_path = "/path/that/does/not/exist"
+    mock_context_manager.__enter__.return_value = mock_path
+    mock_context_manager.__exit__.return_value = None
+    mock_as_file.return_value = mock_context_manager
+
+    # Patch os.path.exists to return False for the simulated path
+    with patch("os.path.exists", return_value=False) as mock_exists:
+        result = find_cliff_config()
+        assert result is None
+        mock_exists.assert_called_with(mock_path)
+
+
+def test_update_changelog_file_not_found():
+    """Tests the behavior when the changelog file does not exist."""
+    # Use a real temporary file to test the FileNotFoundError path
+    temp_dir = tempfile.mkdtemp()
+    changelog_path = os.path.join(temp_dir, "CHANGES.rst")
+    new_block = "Version 1.0.0\n-------------\n- Initial release."
+
+    # The file does not exist, so opening it for 'r' will fail,
+    # triggering the 'except FileNotFoundError' block.
+    update_changelog_file(changelog_path, new_block)
+
+    with open(changelog_path, "r") as f:
+        content = f.read()
+
+    # Check that the file was created with default headers and the new block
+    assert "Changelog\n=========\n\n" in content
+    assert new_block in content
+    shutil.rmtree(temp_dir)

@@ -4,6 +4,7 @@ import pytest
 from openwisp_utils.releaser.release import check_prerequisites
 from openwisp_utils.releaser.release import main as run_release
 from openwisp_utils.releaser.release import port_changelog_to_main
+from openwisp_utils.releaser.utils import SkipSignal
 
 
 def test_feature_release_flow_markdown(mock_all, mocker):
@@ -179,3 +180,60 @@ def test_main_bugfix_flow_with_porting(mock_all, mocker):
     )
     run_release()
     mock_porting_func.assert_called_once()
+
+
+def test_main_flow_skip_pr_creation(mock_all):
+    """Tests the flow where user skips PR creation."""
+    mock_gh = mock_all["GitHub"].return_value
+    mock_gh.create_pr.side_effect = SkipSignal
+
+    run_release()
+
+    # Ensure the user is prompted to complete the step manually
+    mock_all["questionary_confirm"].assert_any_call(
+        "Press Enter when you have merged the PR manually."
+    )
+    # The rest of the flow should continue, so release creation should be attempted
+    mock_gh.create_release.assert_called_once()
+
+
+def test_main_flow_skip_release_creation(mock_all):
+    """Tests the flow where user skips GitHub release creation."""
+    mock_gh = mock_all["GitHub"].return_value
+    mock_gh.create_release.side_effect = SkipSignal
+
+    run_release()
+
+    mock_gh.create_pr.assert_called_once()
+    mock_all["questionary_confirm"].assert_any_call(
+        "Press Enter when you have created the release manually."
+    )
+
+
+@patch("openwisp_utils.releaser.release.subprocess.run")
+def test_port_changelog_to_main_flow_markdown(mock_subprocess, mock_all):
+    """Tests the changelog porting process for a Markdown file."""
+    mock_gh = MagicMock()
+    mock_config_md = {"changelog_path": "CHANGES.md"}
+    mock_all["questionary_select"].return_value.ask.return_value = "main"
+
+    with patch("openwisp_utils.releaser.release.update_changelog_file") as mock_update:
+        port_changelog_to_main(mock_gh, mock_config_md, "1.1.1", "- fix", "1.1.x")
+        # Check that the header for markdown is correctly formatted
+        called_with_content = mock_update.call_args[0][1]
+        assert "## Version 1.1.1" in called_with_content
+
+
+@patch("openwisp_utils.releaser.release.subprocess.run")
+def test_port_changelog_skip_pr_creation(mock_subprocess, mock_all):
+    """Tests skipping PR creation during changelog porting."""
+    mock_gh = MagicMock()
+    mock_gh.create_pr.side_effect = SkipSignal
+    mock_config = {"changelog_path": "CHANGES.rst"}
+    mock_all["questionary_select"].return_value.ask.return_value = "main"
+
+    with patch("openwisp_utils.releaser.release.update_changelog_file"):
+        port_changelog_to_main(mock_gh, mock_config, "1.1.1", "- fix", "1.1.x")
+        mock_all["questionary_confirm"].assert_any_call(
+            "Press Enter when you have created the PR manually."
+        )
