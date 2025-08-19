@@ -1,44 +1,35 @@
 import os
-import re
 import shutil
 import subprocess
 import sys
 import time
 from datetime import datetime
 
-import pypandoc
 import questionary
 import requests
-from openwisp_utils.releaser.config import load_config
-from openwisp_utils.releaser.generate_changelog import (
+from openwisp_utils.releaser.changelog import (
     format_rst_block,
+    get_release_block_from_file,
     process_changelog,
     run_git_cliff,
+    update_changelog_file,
 )
+from openwisp_utils.releaser.config import load_config
 from openwisp_utils.releaser.github import GitHub
-from openwisp_utils.releaser.version import bump_version, get_current_version
+from openwisp_utils.releaser.utils import (
+    adjust_markdown_headings,
+    demote_markdown_headings,
+    format_file_with_docstrfmt,
+    get_current_branch,
+    rst_to_markdown,
+)
+from openwisp_utils.releaser.version import (
+    bump_version,
+    determine_new_version,
+    get_current_version,
+)
 
-MAIN_BRANCHES = ["main", "master"]
-
-
-def adjust_markdown_headings(markdown_text):
-    """Adjusts heading levels for the CHANGES.md file (## -> ###, etc.)."""
-    markdown_text = re.sub(
-        r"(?m)^### (Other changes|Dependencies|Backward-incompatible changes)",
-        r"#### \1",
-        markdown_text,
-    )
-    markdown_text = re.sub(
-        r"(?m)^## (Features|Changes|Bugfixes)", r"### \1", markdown_text
-    )
-    return markdown_text
-
-
-def demote_markdown_headings(markdown_text):
-    """Reduces heading levels for the GitHub release body"""
-    markdown_text = re.sub(r"(?m)^### ", "# ", markdown_text)
-    markdown_text = re.sub(r"(?m)^#### ", "## ", markdown_text)
-    return markdown_text
+MAIN_BRANCHES = ["master", "main"]
 
 
 def check_prerequisites():
@@ -62,7 +53,7 @@ def check_prerequisites():
     except FileNotFoundError as e:
         checks.append((False, f"Failed to load configuration | {str(e)}"))
 
-    if config.get("repo"):
+    if config and config.get("repo"):
         checks.append((True, f"Repository '{config['repo']}' is found from origin."))
     else:
         checks.append(
@@ -72,7 +63,7 @@ def check_prerequisites():
             )
         )
 
-    if token and config:
+    if token and config and config.get("repo"):
         gh = GitHub(token, repo=config["repo"])
         if gh.check_pr_creation_permission():
             checks.append(
@@ -97,7 +88,7 @@ def check_prerequisites():
     return config, gh
 
 
-def get_gpt_summary(content, file_format, token):
+def get_ai_summary(content, file_format, token):
     # Asks the user if they want to use GPT for summarizing the changelog,
     # and handles the interaction loop (Accept/Retry/Use Original).
     if not questionary.confirm(
@@ -107,7 +98,7 @@ def get_gpt_summary(content, file_format, token):
 
     if not token:
         print(
-            "⚠️ CHATGPT_TOKEN environment variable is not set. Skipping AI summary.",
+            "⚠️ OPENAI_CHATGPT_TOKEN environment variable is not set. Skipping AI summary.",
             file=sys.stderr,
         )
         return content
@@ -153,150 +144,6 @@ def get_gpt_summary(content, file_format, token):
         except requests.RequestException as e:
             print(f"\n⚠️ An error occurred with the AI API: {e}", file=sys.stderr)
             return content
-
-
-def determine_new_version(current_version_str, current_type, is_bugfix):
-    """Automatically determines the new version based on the current version and branch."""
-    if not current_version_str:
-        return questionary.text(
-            "Could not determine the current version. Please enter the new version:"
-        ).ask()
-
-    major, minor, patch = map(int, current_version_str.split("."))
-
-    if current_type != "final":
-        # If the current version is not final, suggest the same version
-        suggested_version = f"{major}.{minor}.{patch}"
-    elif is_bugfix:
-        # Bump patch for bugfix branches
-        suggested_version = f"{major}.{minor}.{patch + 1}"
-    else:
-        # Bump minor for main branches
-        suggested_version = f"{major}.{minor + 1}.0"
-
-    print(f"\nSuggesting new version: {suggested_version}")
-    use_suggested = questionary.confirm(
-        "Do you want to use this version?", default=True
-    ).ask()
-
-    if use_suggested:
-        return suggested_version
-    else:
-        return questionary.text("Please enter the desired version:").ask()
-
-
-def get_current_branch():
-    """Get the current Git branch name."""
-    result = subprocess.run(
-        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=True,
-        encoding="utf-8",
-    )
-    return result.stdout.strip()
-
-
-def rst_to_markdown(text):
-    """Convert reStructuredText to Markdown using pypandoc."""
-    escaped_text = re.sub(r"(?<!`)_", r"\\_", text)
-    return pypandoc.convert_text(
-        escaped_text, "gfm", format="rst", extra_args=["--wrap=none"]
-    ).strip()
-
-
-def format_file_with_docstrfmt(file_path):
-    """Format a file using `docstrfmt`."""
-    subprocess.run(
-        ["docstrfmt", "--ignore-cache", "--line-length", "74", file_path],
-        check=True,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    print(f"✅ Formatted {file_path} successfully.")
-
-
-def get_release_block_from_file(changelog_path, version):
-    """Reads the entire changelog file and extracts the block for a specific version."""
-    with open(changelog_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-
-    release_lines = []
-    in_release_block = False
-    is_md = changelog_path.endswith(".md")
-    start_pattern = f"## Version {version}" if is_md else f"Version {version}"
-    next_version_pattern = "## Version " if is_md else "Version "
-
-    for line in lines:
-        stripped_line = line.strip()
-        if stripped_line.startswith(start_pattern):
-            in_release_block = True
-            release_lines.append(line)
-            continue
-        if in_release_block and stripped_line.startswith(next_version_pattern):
-            break
-        if in_release_block:
-            release_lines.append(line)
-
-    return "".join(release_lines).strip() if release_lines else None
-
-
-def update_changelog_file(changelog_path, new_block, is_port=False):
-    # Updates the changelog file for all release types.
-    # - For a feature release, it replaces the entire [Unreleased] section with the new content.
-    # - For a ported bugfix, it inserts the new block after the [Unreleased] section.
-
-    is_md = changelog_path.endswith(".md")
-    try:
-        with open(changelog_path, "r", encoding="utf-8") as f:
-            content = f.read()
-    except FileNotFoundError:
-        content = "# Change log\n\n" if is_md else "Changelog\n=========\n\n"
-
-    # Regex to find the entire [Unreleased] block, from its header to the next version.
-    unreleased_block_regex_str = (
-        r"^(## Version \S+ \[Unreleased\](?:.|\n)*?)(?=\n## Version|\Z)"
-        if is_md
-        else r"^(Version \S+ \[Unreleased\]\n-+(?:.|\n)*?)(?=\n^Version|\Z)"
-    )
-    unreleased_block_regex = re.compile(
-        unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE
-    )
-    unreleased_match = unreleased_block_regex.search(content)
-
-    if not unreleased_match:
-        # Fallback if no [Unreleased] section is found: insert after the main title.
-        lines = content.splitlines(keepends=True)
-        header_end_index = 1
-        if len(lines) > 1 and ("===" in lines[1] or "---" in lines[1]):
-            header_end_index = 2
-        while len(lines) > header_end_index and not lines[header_end_index].strip():
-            header_end_index += 1
-        lines.insert(header_end_index, new_block.strip() + "\n\n")
-        new_content = "".join(lines)
-    elif is_port:
-        # For a bugfix port, insert the new block AFTER the [Unreleased] block.
-        insertion_point = unreleased_match.end()
-        new_content = (
-            content[:insertion_point].rstrip()
-            + "\n\n"
-            + new_block.strip()
-            + "\n"
-            + content[insertion_point:]
-        )
-    else:
-        # For a feature release, REPLACE the entire [Unreleased] block.
-        # We add a newline to the replacement to ensure there's a blank line
-        # between the new block and the next version.
-        replacement = new_block.strip() + "\n"
-        new_content = unreleased_block_regex.sub(replacement, content, count=1)
-
-    # Clean up any triple newlines to ensure clean formatting
-    final_content = re.sub(r"\n\n\n+", "\n\n", new_content.strip()) + "\n"
-
-    with open(changelog_path, "w", encoding="utf-8") as f:
-        f.write(final_content)
 
 
 def port_changelog_to_main(gh, config, version, changelog_body, original_branch):
@@ -378,189 +225,166 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
 
 
 def main():
-    try:
-        config, gh = check_prerequisites()
-        original_branch = get_current_branch()
-        is_bugfix = original_branch not in MAIN_BRANCHES
-        release_type = "Bugfix" if is_bugfix else "Feature"
+    config, gh = check_prerequisites()
+    original_branch = get_current_branch()
+    is_bugfix = original_branch not in MAIN_BRANCHES
+    release_type = "Bugfix" if is_bugfix else "Feature"
 
-        current_version, current_type = get_current_version(config)
-        new_version = determine_new_version(current_version, current_type, is_bugfix)
+    current_version, current_type = get_current_version(config)
+    new_version = determine_new_version(current_version, current_type, is_bugfix)
 
-        if not new_version:
-            print("No version provided. Release cancelled.")
-            sys.exit(0)
+    if not new_version:
+        print("No version provided. Release cancelled.")
+        sys.exit(0)
 
+    print(
+        f"🚀 Starting {release_type} Release Flow "
+        f"for version {new_version} on branch '{original_branch}'..."
+    )
+
+    raw_changelog_block = run_git_cliff(new_version)
+    raw_changelog_block = raw_changelog_block.replace("#REPO#", config["repo"])
+    if not raw_changelog_block:
+        print("No changes found for the new release. Exiting.")
+        sys.exit(0)
+
+    processed_block = process_changelog(raw_changelog_block)
+
+    print("\n📝  Generated and Formatted Changelog Block:\n")
+    formatted_block_rst = format_rst_block(processed_block)
+
+    gpt_token = os.environ.get("OPENAI_CHATGPT_TOKEN")
+    final_formatted_block = get_ai_summary(
+        formatted_block_rst, config["changelog_format"], gpt_token
+    )
+
+    print("\n📝  Generated and Formatted Changelog Block:\n")
+    print(final_formatted_block)
+
+    if not questionary.confirm("Accept this block and proceed?").ask():
+        print("Release cancelled.")
+        sys.exit(0)
+
+    changelog_date_str = datetime.now().strftime("%Y-%m-%d")
+    tag_date_str = datetime.now().strftime("%d-%m-%Y")
+    changelog_path = config["changelog_path"]
+
+    if config["changelog_format"] == "md":
+        final_formatted_block = rst_to_markdown(final_formatted_block)
+        final_formatted_block = adjust_markdown_headings(final_formatted_block)
+        final_formatted_block = (
+            final_formatted_block.replace("\\#", "#")
+            .replace("\\[", "[")
+            .replace("\\]", "]")
+        )
+
+    update_changelog_file(changelog_path, final_formatted_block)
+
+    # Format the file after changelog addition
+    if config["changelog_format"] == "rst":
+        format_file_with_docstrfmt(changelog_path)
+
+    print(f"✅ {changelog_path} has been updated.")
+
+    was_bumped = bump_version(config, new_version)
+    if was_bumped:
+        print(f"✅ Version bumped to {new_version} and set to 'final'.")
+    else:
+        print("\n" + "=" * 60)
+        print("⚠️  The version number could not be bumped automatically.")
+        print("   Please bump it manually before the changelog is committed.")
+        questionary.confirm(
+            "Press Enter when you have bumped the version number..."
+        ).ask()
+        print("=" * 60)
+
+    print(
+        f"\n👀 Please review the updated '{changelog_path}' and any version files, making final edits."
+    )
+    questionary.confirm("Press Enter when you have finished editing...").ask()
+
+    print("\nReading final changelog content from disk...")
+    latest_changelog_block = get_release_block_from_file(changelog_path, new_version)
+    if not latest_changelog_block:
         print(
-            f"🚀 Starting {release_type} Release Flow "
-            f"for version {new_version} on branch '{original_branch}'..."
+            "\nWarning: Could not re-read the changelog block. Using initially generated content.",
+            file=sys.stderr,
         )
+        latest_changelog_block = final_formatted_block
 
-        raw_changelog_block = run_git_cliff(new_version)
-        raw_changelog_block = raw_changelog_block.replace("#REPO#", config["repo"])
-        if not raw_changelog_block:
-            print("No changes found for the new release. Exiting.")
-            sys.exit(0)
+    if config["changelog_format"] == "rst":
+        format_file_with_docstrfmt(changelog_path)
 
-        processed_block = process_changelog(raw_changelog_block)
+    release_branch = f"release/{new_version}"
+    pr_title = f"[release] Version {new_version}"
+    subprocess.run(
+        ["git", "checkout", "-b", release_branch], check=True, capture_output=True
+    )
 
-        print("\n📝  Generated and Formatted Changelog Block:\n")
-        formatted_block_rst = format_rst_block(processed_block)
+    print("Adding all changed files to git...")
+    subprocess.run(["git", "add", "."], check=True, capture_output=True)
 
-        gpt_token = os.environ.get("CHATGPT_TOKEN")
-        final_formatted_block = get_gpt_summary(
-            formatted_block_rst, config["changelog_format"], gpt_token
-        )
+    commit_message = f"{new_version} release"
+    subprocess.run(
+        ["git", "commit", "-m", commit_message], check=True, capture_output=True
+    )
+    print("✅ Changes committed to the release branch.")
 
-        print("\n📝  Generated and Formatted Changelog Block:\n")
-        print(final_formatted_block)
+    print(f"⤴️  Pushing new branch '{release_branch}' to GitHub...")
+    subprocess.run(
+        ["git", "push", "origin", release_branch], check=True, capture_output=True
+    )
 
-        if not questionary.confirm("Accept this block and proceed?").ask():
-            print("Release cancelled.")
-            sys.exit(0)
+    pr_url = gh.create_pr(release_branch, original_branch, pr_title)
+    print(f" Pull Request created: {pr_url}")
 
-        changelog_date_str = datetime.now().strftime("%Y-%m-%d")
-        tag_date_str = datetime.now().strftime("%d-%m-%Y")
-        changelog_path = config["changelog_path"]
+    print("⏳ Waiting for PR to be merged... (checking every 20s)")
+    while not gh.is_pr_merged(pr_url):
+        time.sleep(20)
+    print("✅ PR merged!")
 
-        if config["changelog_format"] == "md":
-            final_formatted_block = rst_to_markdown(final_formatted_block)
-            final_formatted_block = adjust_markdown_headings(final_formatted_block)
-            final_formatted_block = (
-                final_formatted_block.replace("\\#", "#")
-                .replace("\\[", "[")
-                .replace("\\]", "]")
-            )
+    subprocess.run(
+        ["git", "checkout", original_branch], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "pull", "origin", original_branch], check=True, capture_output=True
+    )
 
-        update_changelog_file(changelog_path, final_formatted_block)
+    tag_name = new_version
+    tag_message = f"Version {new_version} [{tag_date_str}]"
+    subprocess.run(["git", "tag", "-s", tag_name, "-m", tag_message], check=True)
+    subprocess.run(["git", "push", "origin", tag_name], check=True)
+    print(f"🏷️  Git tag '{tag_name}' created and pushed.")
 
-        # Format the file after changelog addition
-        if config["changelog_format"] == "rst":
-            format_file_with_docstrfmt(changelog_path)
+    release_title = f"{new_version} [{changelog_date_str}]"
 
-        print(f"✅ {changelog_path} has been updated.")
+    if config["changelog_format"] == "md":
+        release_body_md = "\n".join(latest_changelog_block.splitlines()[1:]).strip()
+        release_body_md = demote_markdown_headings(release_body_md)
+    else:
+        release_body_rst = "\n".join(latest_changelog_block.splitlines()[2:]).strip()
+        release_body_md = rst_to_markdown(release_body_rst)
 
-        was_bumped = bump_version(config, new_version)
-        if was_bumped:
-            print(f"✅ Version bumped to {new_version} and set to 'final'.")
-        else:
-            print("\n" + "=" * 60)
-            print("⚠️  The version number could not be bumped automatically.")
-            print("   Please bump it manually before the changelog is committed.")
-            questionary.confirm(
-                "Press Enter when you have bumped the version number..."
-            ).ask()
-            print("=" * 60)
+    release_url = gh.create_release(tag_name, release_title, release_body_md)
+    print(f"📦 Draft release created on GitHub: {release_url}")
 
-        print(
-            f"\n👀 Please review the updated '{changelog_path}' and any version files, making final edits."
-        )
-        questionary.confirm("Press Enter when you have finished editing...").ask()
+    print("\n🎉 Release process completed successfully!")
 
-        print("\nReading final changelog content from disk...")
-        latest_changelog_block = get_release_block_from_file(
-            changelog_path, new_version
-        )
-        if not latest_changelog_block:
-            print(
-                "\nWarning: Could not re-read the changelog block. Using initially generated content.",
-                file=sys.stderr,
-            )
-            latest_changelog_block = final_formatted_block
-
-        if config["changelog_format"] == "rst":
-            format_file_with_docstrfmt(changelog_path)
-
-        release_branch = f"release/{new_version}"
-        pr_title = f"[release] Version {new_version}"
-        subprocess.run(
-            ["git", "checkout", "-b", release_branch], check=True, capture_output=True
-        )
-
-        print("Adding all changed files to git...")
-        subprocess.run(["git", "add", "."], check=True, capture_output=True)
-
-        commit_message = f"{new_version} release"
-        subprocess.run(
-            ["git", "commit", "-m", commit_message], check=True, capture_output=True
-        )
-        print("✅ Changes committed to the release branch.")
-
-        print(f"⤴️  Pushing new branch '{release_branch}' to GitHub...")
-        subprocess.run(
-            ["git", "push", "origin", release_branch], check=True, capture_output=True
-        )
-
-        pr_url = gh.create_pr(release_branch, original_branch, pr_title)
-        print(f" Pull Request created: {pr_url}")
-
-        print("⏳ Waiting for PR to be merged... (checking every 20s)")
-        while not gh.is_pr_merged(pr_url):
-            time.sleep(20)
-        print("✅ PR merged!")
-
-        subprocess.run(
-            ["git", "checkout", original_branch], check=True, capture_output=True
-        )
-        subprocess.run(
-            ["git", "pull", "origin", original_branch], check=True, capture_output=True
-        )
-
-        tag_name = new_version
-        tag_message = f"Version {new_version} [{tag_date_str}]"
-        subprocess.run(["git", "tag", "-s", tag_name, "-m", tag_message], check=True)
-        subprocess.run(["git", "push", "origin", tag_name], check=True)
-        print(f"🏷️  Git tag '{tag_name}' created and pushed.")
-
-        release_title = f"{new_version} [{changelog_date_str}]"
-
-        if config["changelog_format"] == "md":
-            release_body_md = "\n".join(latest_changelog_block.splitlines()[1:]).strip()
-            release_body_md = demote_markdown_headings(release_body_md)
-        else:
-            release_body_rst = "\n".join(
-                latest_changelog_block.splitlines()[2:]
+    if is_bugfix:
+        print("\n🐛 Bugfix release complete.")
+        if questionary.confirm(
+            "Do you want to create a PR to port the changelog to the main branch now?"
+        ).ask():
+            lines_to_skip = 2 if config["changelog_format"] != "md" else 1
+            changelog_body_for_porting = "\n".join(
+                latest_changelog_block.splitlines()[lines_to_skip:]
             ).strip()
-            release_body_md = rst_to_markdown(release_body_rst)
-
-        release_url = gh.create_release(tag_name, release_title, release_body_md)
-        print(f"📦 Draft release created on GitHub: {release_url}")
-
-        print("\n🎉 Release process completed successfully!")
-
-        if is_bugfix:
-            print("\n🐛 Bugfix release complete.")
-            if questionary.confirm(
-                "Do you want to create a PR to port the changelog to the main branch now?"
-            ).ask():
-                lines_to_skip = 2 if config["changelog_format"] != "md" else 1
-                changelog_body_for_porting = "\n".join(
-                    latest_changelog_block.splitlines()[lines_to_skip:]
-                ).strip()
-                port_changelog_to_main(
-                    gh,
-                    config,
-                    new_version,
-                    changelog_body_for_porting,
-                    original_branch,
-                )
-            else:
-                print("Skipping changelog port. Please remember to do it manually.")
-
-    except KeyboardInterrupt:
-        print("\n\n❌ Release process terminated by user.")
-        sys.exit(1)
-    except (
-        subprocess.CalledProcessError,
-        requests.RequestException,
-        RuntimeError,
-        FileNotFoundError,
-    ) as e:
-        print(f"\n❌ An error occurred: {e}", file=sys.stderr)
-        if isinstance(e, subprocess.CalledProcessError):
-            print(f"Error Details: {e.stderr}", file=sys.stderr)
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
+            port_changelog_to_main(
+                gh,
+                config,
+                new_version,
+                changelog_body_for_porting,
+                original_branch,
+            )
+        else:
+            print("Skipping changelog port. Please remember to do it manually.")

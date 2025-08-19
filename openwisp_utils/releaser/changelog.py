@@ -184,3 +184,85 @@ def format_rst_block(content):
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+
+
+def get_release_block_from_file(changelog_path, version):
+    """Reads the entire changelog file and extracts the block for a specific version."""
+    with open(changelog_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    release_lines = []
+    in_release_block = False
+    is_md = changelog_path.endswith(".md")
+    start_pattern = f"## Version {version}" if is_md else f"Version {version}"
+    next_version_pattern = "## Version " if is_md else "Version "
+
+    for line in lines:
+        stripped_line = line.strip()
+        if stripped_line.startswith(start_pattern):
+            in_release_block = True
+            release_lines.append(line)
+            continue
+        if in_release_block and stripped_line.startswith(next_version_pattern):
+            break
+        if in_release_block:
+            release_lines.append(line)
+
+    return "".join(release_lines).strip() if release_lines else None
+
+
+def update_changelog_file(changelog_path, new_block, is_port=False):
+    # Updates the changelog file for all release types.
+    # - For a feature release, it replaces the entire [Unreleased] section with the new content.
+    # - For a ported bugfix, it inserts the new block after the [Unreleased] section.
+
+    is_md = changelog_path.endswith(".md")
+    try:
+        with open(changelog_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except FileNotFoundError:
+        content = "# Change log\n\n" if is_md else "Changelog\n=========\n\n"
+
+    # Regex to find the entire [Unreleased] block, from its header to the next version.
+    unreleased_block_regex_str = (
+        r"^(## Version \S+ \[Unreleased\](?:.|\n)*?)(?=\n## Version|\Z)"
+        if is_md
+        else r"^(Version \S+ \[Unreleased\]\n-+(?:.|\n)*?)(?=\n^Version|\Z)"
+    )
+    unreleased_block_regex = re.compile(
+        unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE
+    )
+    unreleased_match = unreleased_block_regex.search(content)
+
+    if not unreleased_match:
+        # Fallback if no [Unreleased] section is found: insert after the main title.
+        lines = content.splitlines(keepends=True)
+        header_end_index = 1
+        if len(lines) > 1 and ("===" in lines[1] or "---" in lines[1]):
+            header_end_index = 2
+        while len(lines) > header_end_index and not lines[header_end_index].strip():
+            header_end_index += 1
+        lines.insert(header_end_index, new_block.strip() + "\n\n")
+        new_content = "".join(lines)
+    elif is_port:
+        # For a bugfix port, insert the new block AFTER the [Unreleased] block.
+        insertion_point = unreleased_match.end()
+        new_content = (
+            content[:insertion_point].rstrip()
+            + "\n\n"
+            + new_block.strip()
+            + "\n"
+            + content[insertion_point:]
+        )
+    else:
+        # For a feature release, REPLACE the entire [Unreleased] block.
+        # We add a newline to the replacement to ensure there's a blank line
+        # between the new block and the next version.
+        replacement = new_block.strip() + "\n"
+        new_content = unreleased_block_regex.sub(replacement, content, count=1)
+
+    # Clean up any triple newlines to ensure clean formatting
+    final_content = re.sub(r"\n\n\n+", "\n\n", new_content.strip()) + "\n"
+
+    with open(changelog_path, "w", encoding="utf-8") as f:
+        f.write(final_content)

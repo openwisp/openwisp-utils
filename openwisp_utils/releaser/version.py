@@ -3,6 +3,8 @@ import re
 import sys
 from ast import literal_eval
 
+import questionary
+
 
 def get_current_version(config):
     # Parses the VERSION tuple from the specified file.
@@ -70,3 +72,33 @@ def bump_version(config, new_version):
     with open(version_path, "w") as f:
         f.write(new_content)
     return True
+
+
+def determine_new_version(current_version_str, current_type, is_bugfix):
+    """Automatically determines the new version based on the current version and branch."""
+    if not current_version_str:
+        return questionary.text(
+            "Could not determine the current version. Please enter the new version:"
+        ).ask()
+
+    major, minor, patch = map(int, current_version_str.split("."))
+
+    if current_type != "final":
+        # If the current version is not final, suggest the same version
+        suggested_version = f"{major}.{minor}.{patch}"
+    elif is_bugfix:
+        # Bump patch for bugfix branches
+        suggested_version = f"{major}.{minor}.{patch + 1}"
+    else:
+        # Bump minor for main branches
+        suggested_version = f"{major}.{minor + 1}.0"
+
+    print(f"\nSuggesting new version: {suggested_version}")
+    use_suggested = questionary.confirm(
+        "Do you want to use this version?", default=True
+    ).ask()
+
+    if use_suggested:
+        return suggested_version
+    else:
+        return questionary.text("Please enter the desired version:").ask()

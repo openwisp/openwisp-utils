@@ -1,5 +1,7 @@
 import subprocess
+from datetime import datetime
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -58,3 +60,93 @@ def _init_git_repo(
 @pytest.fixture
 def init_git_repo():
     return _init_git_repo
+
+
+@pytest.fixture
+def mock_all(mocker):
+    """A master fixture to mock all external dependencies of the release script."""
+    git_command_results = {
+        ("git", "rev-parse", "--abbrev-ref", "HEAD"): MagicMock(
+            stdout="main", check_returncode=True
+        ),
+    }
+
+    default_mock = MagicMock(stdout="", stderr="", check_returncode=True)
+
+    def subprocess_side_effect(command, *args, **kwargs):
+        return git_command_results.get(tuple(command), default_mock)
+
+    mock_q_confirm = mocker.patch("openwisp_utils.releaser.release.questionary.confirm")
+    mock_q_confirm.return_value.ask.return_value = True
+    mocker.patch(
+        "openwisp_utils.releaser.version.questionary.confirm", new=mock_q_confirm
+    )
+
+    mock_q_text = mocker.patch("openwisp_utils.releaser.release.questionary.text")
+    mock_q_text.return_value.ask.return_value = "1.2.1"
+    mocker.patch("openwisp_utils.releaser.version.questionary.text", new=mock_q_text)
+
+    mock_q_select = mocker.patch("openwisp_utils.releaser.release.questionary.select")
+    mock_q_select.return_value.ask.return_value = "main"
+    mocker.patch(
+        "openwisp_utils.releaser.version.questionary.select", new=mock_q_select
+    )
+
+    mocks = {
+        "subprocess": mocker.patch(
+            "openwisp_utils.releaser.release.subprocess.run",
+            side_effect=subprocess_side_effect,
+        ),
+        "GitHub": mocker.patch("openwisp_utils.releaser.release.GitHub"),
+        "time": mocker.patch("openwisp_utils.releaser.release.time.sleep"),
+        "print": mocker.patch("builtins.print"),
+        "load_config": mocker.patch("openwisp_utils.releaser.release.load_config"),
+        "get_current_version": mocker.patch(
+            "openwisp_utils.releaser.release.get_current_version",
+            return_value=("1.2.0", "alpha"),
+        ),
+        "bump_version": mocker.patch(
+            "openwisp_utils.releaser.release.bump_version", return_value=True
+        ),
+        "update_changelog": mocker.patch(
+            "openwisp_utils.releaser.release.update_changelog_file"
+        ),
+        "format_rst_block": mocker.patch(
+            "openwisp_utils.releaser.release.format_rst_block", side_effect=lambda x: x
+        ),
+        "format_file": mocker.patch(
+            "openwisp_utils.releaser.release.format_file_with_docstrfmt"
+        ),
+        "check_prerequisites": mocker.patch(
+            "openwisp_utils.releaser.release.check_prerequisites"
+        ),
+        "run_git_cliff": mocker.patch(
+            "openwisp_utils.releaser.release.run_git_cliff",
+            return_value="[unreleased]\n----\n- A new feature.",
+        ),
+        "get_release_block_from_file": mocker.patch(
+            "openwisp_utils.releaser.release.get_release_block_from_file"
+        ),
+        "_git_command_map": git_command_results,
+        "questionary_confirm": mock_q_confirm,
+        "questionary_text": mock_q_text,
+        "questionary_select": mock_q_select,
+    }
+
+    mock_dt = MagicMock()
+    mock_dt.now.return_value = datetime(2025, 8, 11)
+    mocker.patch("openwisp_utils.releaser.release.datetime", mock_dt)
+
+    mock_gh_instance = mocks["GitHub"].return_value
+    mock_gh_instance.create_pr.side_effect = ["http://pr.url/1", "http://pr.url/2"]
+    mock_gh_instance.is_pr_merged.return_value = True
+
+    mock_config = {
+        "repo": "test/repo",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+    }
+    mocks["check_prerequisites"].return_value = (mock_config, mock_gh_instance)
+    mocks["load_config"].return_value = mock_config
+
+    return mocks

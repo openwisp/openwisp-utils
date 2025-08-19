@@ -1,9 +1,9 @@
-The Releaser Script
-===================
+The Releaser tool
+=================
 
 .. include:: ../partials/developer-docs.rst
 
-This script automates the project release workflow, from changelog
+This tool automates the project release workflow, from change log
 generation to creating a draft release on GitHub.
 
 It supports two modes for version bumping, making it suitable for both

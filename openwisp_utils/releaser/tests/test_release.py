@@ -1,84 +1,9 @@
-from datetime import datetime
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from openwisp_utils.releaser.release import check_prerequisites
 from openwisp_utils.releaser.release import main as run_release
-
-
-@pytest.fixture
-def mock_all(mocker):
-    """A master fixture to mock all external dependencies of the release script."""
-    git_command_results = {
-        ("git", "rev-parse", "--abbrev-ref", "HEAD"): MagicMock(
-            stdout="main", check_returncode=True
-        ),
-    }
-
-    default_mock = MagicMock(stdout="", stderr="", check_returncode=True)
-
-    def subprocess_side_effect(command, *args, **kwargs):
-        return git_command_results.get(tuple(command), default_mock)
-
-    mocks = {
-        "subprocess": mocker.patch(
-            "openwisp_utils.releaser.release.subprocess.run",
-            side_effect=subprocess_side_effect,
-        ),
-        "questionary": mocker.patch("openwisp_utils.releaser.release.questionary"),
-        "GitHub": mocker.patch("openwisp_utils.releaser.release.GitHub"),
-        "time": mocker.patch("openwisp_utils.releaser.release.time.sleep"),
-        "print": mocker.patch("builtins.print"),
-        "load_config": mocker.patch("openwisp_utils.releaser.release.load_config"),
-        "get_current_version": mocker.patch(
-            "openwisp_utils.releaser.release.get_current_version",
-            return_value=("1.2.0", "alpha"),
-        ),
-        "bump_version": mocker.patch(
-            "openwisp_utils.releaser.release.bump_version", return_value=True
-        ),
-        "update_changelog": mocker.patch(
-            "openwisp_utils.releaser.release.update_changelog_file"
-        ),
-        "format_rst_block": mocker.patch(
-            "openwisp_utils.releaser.release.format_rst_block", side_effect=lambda x: x
-        ),
-        "format_file": mocker.patch(
-            "openwisp_utils.releaser.release.format_file_with_docstrfmt"
-        ),
-        "check_prerequisites": mocker.patch(
-            "openwisp_utils.releaser.release.check_prerequisites"
-        ),
-        "run_git_cliff": mocker.patch(
-            "openwisp_utils.releaser.release.run_git_cliff",
-            return_value="[unreleased]\n----\n- A new feature.",
-        ),
-        "get_release_block_from_file": mocker.patch(
-            "openwisp_utils.releaser.release.get_release_block_from_file"
-        ),
-        "_git_command_map": git_command_results,
-    }
-
-    mocks["questionary"].confirm.return_value.ask.return_value = True
-    mocks["questionary"].text.return_value.ask.return_value = "1.2.1"
-    mocks["questionary"].select.return_value.ask.return_value = "main"
-
-    mock_dt = MagicMock()
-    mock_dt.now.return_value = datetime(2025, 8, 11)
-    mocker.patch("openwisp_utils.releaser.release.datetime", mock_dt)
-
-    mock_gh_instance = mocks["GitHub"].return_value
-    mock_gh_instance.create_pr.side_effect = ["http://pr.url/1", "http://pr.url/2"]
-    mock_gh_instance.is_pr_merged.return_value = True
-
-    mock_config = {
-        "repo": "test/repo",
-        "changelog_path": "CHANGES.rst",
-        "changelog_format": "rst",
-    }
-    mocks["check_prerequisites"].return_value = (mock_config, mock_gh_instance)
-    mocks["load_config"].return_value = mock_config
-
-    return mocks
+from openwisp_utils.releaser.release import port_changelog_to_main
 
 
 def test_feature_release_flow_markdown(mock_all, mocker):
@@ -109,7 +34,7 @@ def test_release_flow_manual_bump(mock_all):
     run_release()
     all_print_calls = "".join(str(c) for c in mock_all["print"].call_args_list)
     assert "The version number could not be bumped automatically" in all_print_calls
-    mock_all["questionary"].confirm.assert_any_call(
+    mock_all["questionary_confirm"].assert_any_call(
         "Press Enter when you have bumped the version number..."
     )
 
@@ -135,7 +60,7 @@ def test_prerequisite_check_failure(mocker):
 def test_main_flow_user_cancels_version(mock_all):
     """Tests the flow where the user cancels when asked for a version."""
     mock_all["get_current_version"].return_value = (None, None)
-    mock_all["questionary"].text.return_value.ask.return_value = (
+    mock_all["questionary_text"].return_value.ask.return_value = (
         ""  # User presses enter
     )
     with pytest.raises(SystemExit):
@@ -144,7 +69,7 @@ def test_main_flow_user_cancels_version(mock_all):
 
 def test_main_flow_user_rejects_changelog(mock_all):
     """Tests the flow where the user rejects the generated changelog."""
-    mock_all["questionary"].confirm.return_value.ask.side_effect = [
+    mock_all["questionary_confirm"].return_value.ask.side_effect = [
         True,  # Use AI
         True,  # Use suggested version
         False,  # Reject changelog block
@@ -158,7 +83,7 @@ def test_bugfix_flow_skip_porting(mock_all):
     mock_all["_git_command_map"][
         ("git", "rev-parse", "--abbrev-ref", "HEAD")
     ].stdout = "1.1.x"
-    mock_all["questionary"].confirm.return_value.ask.side_effect = [
+    mock_all["questionary_confirm"].return_value.ask.side_effect = [
         True,
         True,
         True,
@@ -168,3 +93,89 @@ def test_bugfix_flow_skip_porting(mock_all):
     run_release()
     mock_gh = mock_all["GitHub"].return_value
     assert mock_gh.create_pr.call_count == 1
+
+
+def test_check_prerequisites_config_load_error(mocker):
+    """Tests the FileNotFoundError when loading config."""
+    mocker.patch("openwisp_utils.releaser.release.shutil.which", return_value=True)
+    mocker.patch("os.environ.get", return_value="fake-token")
+    mocker.patch(
+        "openwisp_utils.releaser.release.load_config", side_effect=FileNotFoundError
+    )
+    with pytest.raises(SystemExit):
+        check_prerequisites()
+
+
+def test_check_prerequisites_github_permission_error(mocker):
+    """Tests when the GitHub token does not have PR creation permissions."""
+    mocker.patch("openwisp_utils.releaser.release.shutil.which", return_value=True)
+    mocker.patch("os.environ.get", return_value="fake-token")
+    mocker.patch(
+        "openwisp_utils.releaser.release.load_config",
+        return_value={"repo": "owner/repo"},
+    )
+    mock_gh = MagicMock()
+    mock_gh.check_pr_creation_permission.return_value = False
+    mocker.patch("openwisp_utils.releaser.release.GitHub", return_value=mock_gh)
+    with pytest.raises(SystemExit):
+        check_prerequisites()
+
+
+def test_check_prerequisites_success(mocker):
+    """Tests the successful execution path of `check_prerequisites`."""
+    mocker.patch("openwisp_utils.releaser.release.shutil.which", return_value=True)
+    mocker.patch("os.environ.get", return_value="fake-token")
+    mocker.patch(
+        "openwisp_utils.releaser.release.load_config",
+        return_value={"repo": "owner/repo"},
+    )
+    mock_gh = MagicMock()
+    mock_gh.check_pr_creation_permission.return_value = True
+    mocker.patch("openwisp_utils.releaser.release.GitHub", return_value=mock_gh)
+    config, gh = check_prerequisites()
+    assert config is not None and gh is not None
+
+
+def test_main_flow_pr_merge_wait(mock_all):
+    """Tests the `while` loop that waits for a PR to be merged."""
+    mock_gh_instance = mock_all["GitHub"].return_value
+    mock_gh_instance.is_pr_merged.side_effect = [False, True]
+    run_release()
+    mock_all["time"].assert_called_once_with(20)
+    assert mock_gh_instance.is_pr_merged.call_count == 2
+
+
+@patch("openwisp_utils.releaser.release.update_changelog_file")
+@patch("openwisp_utils.releaser.release.format_file_with_docstrfmt")
+@patch("openwisp_utils.releaser.release.subprocess.run")
+@patch("openwisp_utils.releaser.release.questionary")
+def test_port_changelog_to_main_flow(
+    mock_questionary, mock_subprocess, mock_format_file, mock_update_changelog
+):
+    """Tests the changelog porting process for both RST and MD files, and the cancellation path."""
+    mock_gh = MagicMock()
+    mock_config_rst = {"changelog_path": "CHANGES.rst"}
+    mock_questionary.select.return_value.ask.return_value = "main"
+    port_changelog_to_main(mock_gh, mock_config_rst, "1.1.1", "- fix", "1.1.x")
+    mock_gh.create_pr.assert_called_once()
+    mock_format_file.assert_called_once_with("CHANGES.rst")
+
+    mock_gh.reset_mock()
+
+    # Test Cancellation path
+    mock_questionary.select.return_value.ask.return_value = None
+    port_changelog_to_main(mock_gh, mock_config_rst, "1.1.1", "- fix", "1.1.x")
+    mock_gh.create_pr.assert_not_called()
+
+
+def test_main_bugfix_flow_with_porting(mock_all, mocker):
+    """Tests the main release flow for a bugfix, including accepting the changelog port."""
+    mock_all["_git_command_map"][
+        ("git", "rev-parse", "--abbrev-ref", "HEAD")
+    ].stdout = "1.1.x"
+    mock_all["questionary_confirm"].return_value.ask.return_value = True
+    mock_porting_func = mocker.patch(
+        "openwisp_utils.releaser.release.port_changelog_to_main"
+    )
+    run_release()
+    mock_porting_func.assert_called_once()
