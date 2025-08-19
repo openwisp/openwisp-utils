@@ -5,7 +5,7 @@ import os
 import sys
 
 sys.path.insert(0, "tests")
-os.environ["GITHUB_TOKEN"] = "gh_token"
+os.environ["GITHUB_TOKEN"] = ""
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "openwisp2.settings")
 
 if __name__ == "__main__":

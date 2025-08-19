@@ -1,7 +1,11 @@
 from unittest.mock import mock_open, patch
 
 import pytest
-from openwisp_utils.releaser.version import bump_version, get_current_version
+from openwisp_utils.releaser.version import (
+    bump_version,
+    determine_new_version,
+    get_current_version,
+)
 
 SAMPLE_INIT_FILE = """
 # Some comments
@@ -96,3 +100,54 @@ def test_bump_version_no_tuple_found(mock_config):
     ):
         with pytest.raises(RuntimeError, match="Failed to find and bump VERSION"):
             bump_version(mock_config, "1.2.1")
+
+
+def test_bump_version_invalid_format():
+    """Tests the ValueError for an invalid version string in `bump_version`."""
+    mock_config = {"version_path": "dummy/path.py"}
+
+    with pytest.raises(SystemExit):
+        bump_version(mock_config, "1.2")
+
+
+@patch("openwisp_utils.releaser.version.questionary")
+def test_determine_new_version_not_final(mock_questionary):
+    """Tests the version suggestion when the current version is not 'final'."""
+    mock_questionary.confirm.return_value.ask.return_value = True
+
+    suggested = determine_new_version("1.2.0", "alpha", is_bugfix=False)
+
+    assert suggested == "1.2.0"
+    mock_questionary.confirm.assert_called_once_with(
+        "Do you want to use this version?", default=True
+    )
+
+
+@patch("openwisp_utils.releaser.version.questionary")
+def test_determine_new_version_bugfix_suggestion(mock_questionary):
+    """Tests the version suggestion logic for a bugfix release."""
+    mock_questionary.confirm.return_value.ask.return_value = True
+    suggested = determine_new_version("1.2.3", "final", is_bugfix=True)
+    assert suggested == "1.2.4"
+
+
+@patch("openwisp_utils.releaser.version.questionary")
+def test_determine_new_version_feature_suggestion(mock_questionary):
+    """Tests the version suggestion logic for a feature release."""
+    mock_questionary.confirm.return_value.ask.return_value = True
+    suggested = determine_new_version("1.2.3", "final", is_bugfix=False)
+    assert suggested == "1.3.0"
+
+
+@patch("openwisp_utils.releaser.version.questionary")
+def test_determine_new_version_user_provides_own(mock_questionary):
+    """Tests the flow where the user rejects the suggested version."""
+    # User rejects the suggestion
+    mock_questionary.confirm.return_value.ask.return_value = False
+    # User enters a custom version
+    mock_questionary.text.return_value.ask.return_value = "2.0.0"
+
+    version = determine_new_version("1.2.3", "final", is_bugfix=False)
+
+    # The returned version should be the one entered by the user
+    assert version == "2.0.0"

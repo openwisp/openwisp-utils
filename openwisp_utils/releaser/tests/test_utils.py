@@ -6,6 +6,7 @@ from openwisp_utils.releaser.release import (
     get_release_block_from_file,
     rst_to_markdown,
 )
+from openwisp_utils.releaser.utils import format_file_with_docstrfmt
 
 RST_SAMPLE = """
 Features
@@ -144,3 +145,28 @@ def test_get_release_block_from_md_file(mock_file):
     expected_block = "## Version 1.1.0\n- A feature."
     result = get_release_block_from_file("CHANGES.md", "1.1.0")
     assert result == expected_block
+
+
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+@patch("builtins.print")
+def test_format_file_with_docstrfmt(mock_print, mock_subprocess):
+    """Tests the `format_file_with_docstrfmt` function."""
+    file_path = "CHANGES.rst"
+    format_file_with_docstrfmt(file_path)
+
+    expected_command = [
+        "docstrfmt",
+        "--ignore-cache",
+        "--line-length",
+        "74",
+        file_path,
+    ]
+    mock_subprocess.assert_called_once_with(
+        expected_command,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    mock_print.assert_called_once_with(f"✅ Formatted {file_path} successfully.")
