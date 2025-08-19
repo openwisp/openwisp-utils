@@ -17,6 +17,7 @@ from openwisp_utils.releaser.changelog import (
 from openwisp_utils.releaser.config import load_config
 from openwisp_utils.releaser.github import GitHub
 from openwisp_utils.releaser.utils import (
+    SkipSignal,
     adjust_markdown_headings,
     demote_markdown_headings,
     format_file_with_docstrfmt,
@@ -214,8 +215,21 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
         )
 
         print("Creating pull request...")
-        pr_url = gh.create_pr(port_branch, main_branch, pr_title)
-        print(f"\n✅ Successfully created Pull Request for changelog port: {pr_url}")
+        try:
+            pr_url = gh.create_pr(port_branch, main_branch, pr_title)
+            print(
+                f"\n✅ Successfully created Pull Request for changelog port: {pr_url}"
+            )
+        except SkipSignal:
+            print(
+                "\nOperation skipped. Please create the PR manually."
+                f"\n  Branch: {port_branch}"
+                f"\n  Base: {main_branch}"
+                f"\n  Title: {pr_title}"
+            )
+            questionary.confirm(
+                "Press Enter when you have created the PR manually."
+            ).ask()
 
     finally:
         print(f"\nSwitching back to original branch '{original_branch}'...")
@@ -276,6 +290,7 @@ def main():
             final_formatted_block.replace("\\#", "#")
             .replace("\\[", "[")
             .replace("\\]", "]")
+            .replace("# Version", "## Version")
         )
 
     update_changelog_file(changelog_path, final_formatted_block)
@@ -335,13 +350,23 @@ def main():
         ["git", "push", "origin", release_branch], check=True, capture_output=True
     )
 
-    pr_url = gh.create_pr(release_branch, original_branch, pr_title)
-    print(f" Pull Request created: {pr_url}")
+    try:
+        pr_url = gh.create_pr(release_branch, original_branch, pr_title)
+        print(f"✅ Pull Request created: {pr_url}")
 
-    print("⏳ Waiting for PR to be merged... (checking every 20s)")
-    while not gh.is_pr_merged(pr_url):
-        time.sleep(20)
-    print("✅ PR merged!")
+        print("⏳ Waiting for PR to be merged... (checking every 20s)")
+        while not gh.is_pr_merged(pr_url):
+            time.sleep(20)
+        print("✅ PR merged!")
+
+    except SkipSignal:
+        print(
+            "\nOperation skipped. Please create and merge the PR manually."
+            f"\n  Branch: {release_branch}"
+            f"\n  Base: {original_branch}"
+            f"\n  Title: {pr_title}"
+        )
+        questionary.confirm("Press Enter when you have merged the PR manually.").ask()
 
     subprocess.run(
         ["git", "checkout", original_branch], check=True, capture_output=True
@@ -365,8 +390,21 @@ def main():
         release_body_rst = "\n".join(latest_changelog_block.splitlines()[2:]).strip()
         release_body_md = rst_to_markdown(release_body_rst)
 
-    release_url = gh.create_release(tag_name, release_title, release_body_md)
-    print(f"📦 Draft release created on GitHub: {release_url}")
+    try:
+        release_url = gh.create_release(tag_name, release_title, release_body_md)
+        print(f"📦 Draft release created on GitHub: {release_url}")
+    except SkipSignal:
+        print(
+            "\nOperation skipped. Please create the GitHub release manually."
+            f"\n  Tag: {tag_name}"
+            f"\n  Title: {release_title}"
+            "\n  Body: (You can find the content in the latest commit)."
+        )
+        questionary.confirm(
+            "Press Enter when you have created the release manually."
+        ).ask()
+
+    print("\n🎉 Release process completed successfully!")
 
     print("\n🎉 Release process completed successfully!")
 
