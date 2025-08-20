@@ -49,7 +49,7 @@ def test_prerequisite_check_failure(mocker):
     )
     mocker.patch(
         "openwisp_utils.releaser.release.GitHub.check_pr_creation_permission",
-        return_value=True,
+        return_value=(True, "Permissions OK"),
     )
 
     with pytest.raises(SystemExit):
@@ -116,7 +116,10 @@ def test_check_prerequisites_github_permission_error(mocker):
         return_value={"repo": "owner/repo"},
     )
     mock_gh = MagicMock()
-    mock_gh.check_pr_creation_permission.return_value = False
+    mock_gh.check_pr_creation_permission.return_value = (
+        False,
+        "Permission denied.",
+    )
     mocker.patch("openwisp_utils.releaser.release.GitHub", return_value=mock_gh)
     with pytest.raises(SystemExit):
         check_prerequisites()
@@ -131,7 +134,10 @@ def test_check_prerequisites_success(mocker):
         return_value={"repo": "owner/repo"},
     )
     mock_gh = MagicMock()
-    mock_gh.check_pr_creation_permission.return_value = True
+    mock_gh.check_pr_creation_permission.return_value = (
+        True,
+        "Permissions verified.",
+    )
     mocker.patch("openwisp_utils.releaser.release.GitHub", return_value=mock_gh)
     config, gh = check_prerequisites()
     assert config is not None and gh is not None

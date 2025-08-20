@@ -22,6 +22,7 @@ from openwisp_utils.releaser.utils import (
     demote_markdown_headings,
     format_file_with_docstrfmt,
     get_current_branch,
+    retryable_request,
     rst_to_markdown,
 )
 from openwisp_utils.releaser.version import (
@@ -66,13 +67,13 @@ def check_prerequisites():
 
     if token and config and config.get("repo"):
         gh = GitHub(token, repo=config["repo"])
-        if gh.check_pr_creation_permission():
+        has_permission, reason = gh.check_pr_creation_permission()
+        if has_permission:
             checks.append(
                 (True, f"GitHub token has access to the '{config['repo']}' repository.")
             )
         else:
-            error_message = f"GitHub token is missing PR write access to the '{config['repo']}' repository."
-            checks.append((False, error_message))
+            checks.append((False, reason))
 
     all_passed = True
     for passed, message in checks:
@@ -121,8 +122,13 @@ def get_ai_summary(content, file_format, token):
     while True:
         try:
             print("🤖 Generating AI summary... (this might take a moment)")
-            response = requests.post(api_url, headers=headers, json=payload, timeout=60)
-            response.raise_for_status()
+            response = retryable_request(
+                method="post",
+                url=api_url,
+                headers=headers,
+                json=payload,
+                timeout=60,
+            )
             summary = response.json()["choices"][0]["message"]["content"]
 
             print("\n" + "=" * 20 + " AI Generated Summary " + "=" * 20)
@@ -142,8 +148,9 @@ def get_ai_summary(content, file_format, token):
                 continue
             else:
                 return content
-        except requests.RequestException as e:
+        except (requests.RequestException, SkipSignal) as e:
             print(f"\n⚠️ An error occurred with the AI API: {e}", file=sys.stderr)
+            print("Falling back to the original content from git-cliff.")
             return content
 
 
@@ -403,8 +410,6 @@ def main():
         questionary.confirm(
             "Press Enter when you have created the release manually."
         ).ask()
-
-    print("\n🎉 Release process completed successfully!")
 
     print("\n🎉 Release process completed successfully!")
 
