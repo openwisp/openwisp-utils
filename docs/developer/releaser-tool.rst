@@ -1,91 +1,112 @@
-The Releaser tool
+The Releaser Tool
 =================
 
 .. include:: ../partials/developer-docs.rst
 
-This tool automates the project release workflow, from change log
-generation to creating a draft release on GitHub.
-
-It supports two modes for version bumping, making it suitable for both
-Python and non-Python projects.
-
-.. contents:: **Table of Contents**:
-    :depth: 2
-    :local:
-
-Configuration: ``releaser.toml``
---------------------------------
-
-The script is controlled by a ``releaser.toml`` file in the project's
-root.
-
-**Required Keys:**
-
-- ``repo`` (str): The GitHub repository in ``"owner/repo"`` format.
-- ``changelog_path`` (str): Path to the changelog file (e.g.,
-  ``"CHANGES.rst"``).
-
-**Optional Key (Controls the Workflow):**
-
-- ``version_path`` (str): Path to a Python file containing a ``VERSION``
-  tuple. * **If present (Automatic Mode):** The script reads and
-  automatically updates the version number in this file. * **If omitted
-  (Manual Mode):** The script will pause and prompt you to update the
-  version number manually. This is ideal for non-Python projects.
-
-**Example for Automatic Bumping (Python Project):**
-
-.. code-block:: toml
-
-    repo = "openwisp/openwisp-utils"
-    changelog_path = "CHANGES.rst"
-    version_path = "openwisp_utils/__init__.py"
-
-**Example for Manual Bumping (Non-Python Project):**
-
-.. code-block:: toml
-
-    repo = "openwisp/my-ansible-role"
-    changelog_path = "CHANGELOG.md"
-    # version_path is omitted
+This interactive command-line tool streamlines the entire project release
+workflow, from generating a changelog to creating a draft release on
+GitHub. It is designed to be resilient, allowing you to recover from
+common failures like network errors without starting over.
 
 Prerequisites
 -------------
 
-Before running, ensure these are installed and available in your `PATH`:
+**1. Installation**
+~~~~~~~~~~~~~~~~~~~
 
-- ``git-cliff``
-- ``docstrfmt``
-- ``pandoc``
+Install the releaser and all its Python dependencies from the root of the
+``openwisp-utils`` repository:
 
-You must also export a ``GITHUB_TOKEN`` environment variable with `repo`
-scope.
+.. code-block:: shell
+
+    pip install .[releaser]
+
+**2. GitHub Personal Access Token**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The script requires a GitHub Fine-grained Personal Access Token to create
+pull requests, tags, and releases on your behalf.
+
+1. Navigate to **Settings** > **Developer settings** > **Personal access
+   tokens** > **Fine-grained tokens**.
+2. Click **Generate new token**.
+3. Give it a descriptive name (e.g., "OpenWISP Releaser") and set an
+   expiration date.
+4. Under **Repository access**, choose either **All repositories** or
+   select the specific repositories you want to manage.
+5. Under **Permissions**, click on **Add permissions**.
+6. Grant the following permissions:
+
+   - **Metadata**: Read-only
+   - **Pull requests**: Read & write
+
+7. Generate the token and export it as an environment variable:
+
+.. code-block:: shell
+
+    export OW_GITHUB_TOKEN="github_pat_YourTokenGoesHere"
+
+.. image:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/releaser/github-access-token.png
+    :alt: Screenshot showing the required repository permissions for a new fine-grained GitHub Personal Access Token.
+
+**3. OpenAI API Token (Optional)**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The tool can use GPT-4o to generate a human-readable summary of your
+changelog. If you wish to use this feature, export your OpenAI API key:
+
+.. code-block:: shell
+
+    export OPENAI_CHATGPT_TOKEN="sk-YourOpenAITokenGoesHere"
 
 Usage
 -----
 
-Run the script from your project's root directory:
+Navigate to the root directory of the project you want to release and run
+the following command:
 
 .. code-block:: shell
 
-    python -m openwisp_utils.releaser.release
+    python -m openwisp_utils.releaser
 
-The Release Workflow
---------------------
+The Interactive Workflow
+------------------------
 
-The script will guide you through the following automated steps:
+The tool will guide you through each step. Here are the key interactions:
 
-1. **Checks prerequisites**.
-2. **Generates changelog** from unreleased commits.
-3. **Asks for confirmation** before proceeding.
-4. **Handles version bumping** (either automatically or by pausing for
-   manual input).
-5. **Updates changelog file** with the new release section.
-6. **Creates a ``release/<version>`` branch** and commits changes with the
-   message ``<version> release``.
-7. **Creates a pull request** on GitHub.
-8. **Waits for the PR to be merged**.
-9. **Creates and pushes a signed git tag**.
-10. **Creates a draft release** on GitHub.
-11. **Offers to port changelog** to the main branch if the release was
-    made from a bugfix branch.
+**1. Version Confirmation** The script will detect the current version and
+suggest the next one. You can either accept the suggestion or enter a
+different version manually.
+
+.. image:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/releaser/version-confirmation.png
+    :alt: Screenshot showing the tool suggesting a new version number and asking for user confirmation.
+
+**2. Changelog Generation & Review** A changelog is generated from your
+recent commits. If an OpenAI token is configured, the tool will offer to
+generate a more readable summary. You will then be shown the final
+changelog block and asked to accept it before the files are modified.
+
+**3. Resilient Error Handling** If any network operation fails (e.g.,
+creating a pull request), the tool won't crash. Instead, it will prompt
+you to **Retry**, **Skip** the step (with manual instructions), or
+**Abort**.
+
+.. image:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/releaser/error-handling.png
+    :alt: Screenshot of the interactive prompt after a network error, showing Retry, Skip, and Abort options.
+
+Summary of Automated Steps
+--------------------------
+
+Once you confirm the changelog, the tool automates the rest of the
+process:
+
+1. Updates the version number in your project's ``__init__.py``.
+2. Writes the new release notes to your ``CHANGES.rst`` or ``CHANGES.md``
+   file.
+3. Creates a ``release/<version>`` branch and commits the changes.
+4. Pushes the new branch to GitHub.
+5. Creates a pull request and waits for you to merge it.
+6. Once merged, it creates and pushes a signed git tag.
+7. Finally, it creates a draft release on GitHub with the changelog notes.
+8. If releasing a bugfix, it offers to port the changelog to the ``main``
+   or ``master`` branch.
