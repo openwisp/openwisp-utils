@@ -3,6 +3,7 @@ import uuid
 import requests
 
 from .utils import SkipSignal, retryable_request
+from openwisp_utils.utils import retryable_request as utils_retryable_request
 
 
 class GitHub:
@@ -49,25 +50,33 @@ class GitHub:
             "tag_name": tag_name,
             "name": title,
             "body": body,
-            "draft": True,
-            "prerelease": True,
+            "draft": False,
+            "prerelease": False,
         }
         response = retryable_request(
             method="post", url=url, headers=self.headers, json=payload
         )
         return response.json()["html_url"]
 
-    def check_pr_creation_permission(self) -> bool:
-        """Checks for PR creation permissions."""
+    def check_pr_creation_permission(self) -> tuple[bool, str]:
+        """
+        Checks for PR creation permissions.
+
+        Returns:
+            A tuple containing a boolean indicating success and a
+            string with a detailed message.
+        """
         try:
-            repo_resp = retryable_request(
+            repo_resp = utils_retryable_request(
                 method="get", url=self.base_url, headers=self.headers
             )
+            repo_resp.raise_for_status()
             base = repo_resp.json().get("default_branch", "master")
 
-            me_resp = retryable_request(
+            me_resp = utils_retryable_request(
                 method="get", url="https://api.github.com/user", headers=self.headers
             )
+            me_resp.raise_for_status()
             login = me_resp.json()["login"]
 
             url = f"{self.base_url}/pulls"
@@ -79,13 +88,33 @@ class GitHub:
                 "body": "This is a temporary probe to check permissions and should not be merged.",
             }
 
-            # This request is expected to fail with 422 if permissions are correct
-            response = requests.post(url=url, headers=self.headers, json=payload)
-            return response.status_code == 422
-        except SkipSignal:
-            print(
-                "Skipped permission check due to network issues. Continuing, but might fail later."
+            # This request is expected to fail. A 422 status indicates we have permission
+            # to attempt a PR, but the branch doesn't exist. Any other code is a failure.
+            probe_resp = utils_retryable_request(
+                method="post", url=url, headers=self.headers, json=payload
             )
-            return True  # Assume permissions are correct to proceed
-        except requests.RequestException:
-            return False
+            probe_resp.raise_for_status()
+
+            # If the request succeeds (2xx), it's unexpected.
+            return (
+                False,
+                "Github permissions check returned an unexpected success status.",
+            )
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 422:
+                return (True, "GitHub token has sufficient write permissions.")
+            elif e.response is not None:
+                details = e.response.text
+                try:
+                    json_resp = e.response.json()
+                    details = json_resp.get("message", details)
+                except requests.JSONDecodeError:
+                    pass
+                return (
+                    False,
+                    f"Github permission failed with HTTP {e.response.status_code}. Details: {details}",
+                )
+            else:
+                return (False, f"Github permission failed with an HTTP error: {e}")
+        except requests.RequestException as e:
+            return (False, f"A network error occurred during permission check: {e}")

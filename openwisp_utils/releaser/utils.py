@@ -27,6 +27,11 @@ def retryable_request(**kwargs):
                 try:
                     data = e.response.json()
                     details = data.get("message")
+                    if not details:
+                        error_obj = data.get("error")
+                        if isinstance(error_obj, dict):
+                            details = error_obj.get("message")
+
                     if details:
                         error_message = f"{e}\n      └── Details: {details}"
                 except requests.JSONDecodeError:
@@ -42,9 +47,7 @@ def retryable_request(**kwargs):
                 time.sleep(1)
                 continue
             elif decision == "Skip":
-                raise SkipSignal(
-                    "User chose to skip the operation after a network error."
-                )
+                raise SkipSignal("User chose to skip this operation.")
             else:  # Abort
                 print("\n❌ Operation aborted by user.")
                 sys.exit(1)
