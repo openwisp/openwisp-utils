@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -89,10 +90,13 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
     def _git_commit(message):
         nonlocal commit_count
         with open(f"file_{commit_count}.txt", "w") as f:
-            f.write(message)
+            f.write(f"This is file number {commit_count}")
         subprocess.run(["git", "add", "."], check=True, capture_output=True)
         subprocess.run(
-            ["git", "commit", "-m", message], check=True, capture_output=True
+            ["git", "commit", "--file=-"],
+            input=message.encode("utf-8"),
+            check=True,
+            capture_output=True,
         )
         commit_count += 1
 
@@ -102,9 +106,14 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
 
     # Create commits from the provided sample file
     with open(commit_file_path, "r") as f:
-        for line in f:
-            if line.strip():
-                _git_commit(line.strip())
+        content = f.read()
+
+    commit_messages = re.split(r"\n=======================================\n", content)
+    commit_messages = [msg.strip() for msg in commit_messages if msg.strip()]
+
+    for message in commit_messages:
+        if message:
+            _git_commit(message)
 
     # Read the expected output from the sample file
     with open(expected_changelog_path, "r") as f:
