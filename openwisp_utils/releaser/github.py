@@ -1,9 +1,9 @@
 import uuid
 
 import requests
-
-from .utils import SkipSignal, retryable_request
 from openwisp_utils.utils import retryable_request as utils_retryable_request
+
+from .utils import retryable_request
 
 
 class GitHub:
@@ -59,12 +59,11 @@ class GitHub:
         return response.json()["html_url"]
 
     def check_pr_creation_permission(self) -> tuple[bool, str]:
-        """
-        Checks for PR creation permissions.
+        """Checks for PR creation permissions.
 
         Returns:
-            A tuple containing a boolean indicating success and a
-            string with a detailed message.
+            A tuple containing a boolean indicating success and a string
+            with a detailed message.
         """
         try:
             repo_resp = utils_retryable_request(
