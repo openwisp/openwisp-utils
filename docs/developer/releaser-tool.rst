@@ -4,7 +4,7 @@ The Releaser Tool
 .. include:: ../partials/developer-docs.rst
 
 This interactive command-line tool streamlines the entire project release
-workflow, from generating a changelog to creating a draft release on
+workflow, from generating a change log to creating a draft release on
 GitHub. It is designed to be resilient, allowing you to recover from
 common failures like network errors without starting over.
 
@@ -24,7 +24,7 @@ Install the releaser and all its Python dependencies from the root of the
 **2. GitHub Personal Access Token**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The script requires a GitHub Fine-grained Personal Access Token to create
+The tool requires a GitHub Fine-grained Personal Access Token to create
 pull requests, tags, and releases on your behalf.
 
 1. Navigate to **Settings** > **Developer settings** > **Personal access
@@ -53,7 +53,7 @@ pull requests, tags, and releases on your behalf.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The tool can use GPT-4o to generate a human-readable summary of your
-changelog. If you wish to use this feature, export your OpenAI API key:
+change log. If you wish to use this feature, export your OpenAI API key:
 
 .. code-block:: shell
 
@@ -74,14 +74,14 @@ The Interactive Workflow
 
 The tool will guide you through each step. Here are the key interactions:
 
-**1. Version Confirmation** The script will detect the current version and
+**1. Version Confirmation** The tool will detect the current version and
 suggest the next one. You can either accept the suggestion or enter a
 different version manually.
 
 .. image:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/releaser/version-confirmation.png
     :alt: Screenshot showing the tool suggesting a new version number and asking for user confirmation.
 
-**2. Changelog Generation & Review** A changelog is generated from your
+**2. Change Log Generation & Review** A changelog is generated from your
 recent commits. If an OpenAI token is configured, the tool will offer to
 generate a more readable summary. You will then be shown the final
 changelog block and asked to accept it before the files are modified.
@@ -97,7 +97,7 @@ you to **Retry**, **Skip** the step (with manual instructions), or
 Summary of Automated Steps
 --------------------------
 
-Once you confirm the changelog, the tool automates the rest of the
+Once you confirm the change log, the tool automates the rest of the
 process:
 
 1. Updates the version number in your project's ``__init__.py``.
