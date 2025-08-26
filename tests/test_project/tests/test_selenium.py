@@ -1,6 +1,7 @@
 from unittest import expectedFailure
 
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from channels.testing import ChannelsLiveServerTestCase
+from django.test import tag
 from django.urls import reverse
 from selenium.common.exceptions import JavascriptException, NoSuchElementException
 from selenium.webdriver import ActionChains
@@ -8,9 +9,10 @@ from selenium.webdriver.common.by import By
 
 from ..models import Book, Operator, Shelf
 from . import CreateMixin
-from .utils import ChannelsLiveServerTestCase, SeleniumTestMixin
+from .utils import SeleniumTestMixin
 
 
+@tag("selenium_tests")
 class TestMenu(SeleniumTestMixin, ChannelsLiveServerTestCase):
     def tearDown(self):
         super().tearDown()
@@ -360,6 +362,7 @@ class TestMenu(SeleniumTestMixin, ChannelsLiveServerTestCase):
         self.web_driver.set_window_size(1366, 768)
 
 
+@tag("selenium_tests")
 class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin):
     shelf_model = Shelf
     book_model = Book
@@ -505,6 +508,7 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
             self.assertEqual(paginator.get_attribute("innerText"), "1 book")
 
 
+@tag("selenium_tests")
 class TestInputFilters(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     shelf_model = Shelf
 
@@ -595,6 +599,7 @@ class TestInputFilters(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCas
             self.find_element(By.XPATH, user_xpath)
 
 
+@tag("selenium_tests")
 class TestDashboardCharts(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     def setUp(self):
         super().setUp()
@@ -613,6 +618,7 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTest
         self.assertEqual(annotation_text.text, "0")
 
 
+@tag("selenium_tests")
 class TestAutocompleteFilter(
     SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase
 ):
@@ -712,6 +718,7 @@ class TestAutocompleteFilter(
             )
 
 
+@tag("selenium_tests")
 class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
     def setUp(self):
         super().setUp()
@@ -750,6 +757,7 @@ class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
         self.assertTrue(len(divs) > 1)
 
 
+@tag("selenium_tests")
 class TestChromeSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
     browser = "chrome"
 
@@ -759,7 +767,8 @@ class TestChromeSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
         self.assertEqual(len(self.get_browser_logs()), 1)
 
 
-class TestSeleniumMixinRetryMechanism(SeleniumTestMixin, StaticLiveServerTestCase):
+@tag("selenium_tests")
+class TestSeleniumMixinRetryMechanism(SeleniumTestMixin, ChannelsLiveServerTestCase):
     retry_delay = 0
 
     @classmethod
