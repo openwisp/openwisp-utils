@@ -1,12 +1,24 @@
 import os
+import sys
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-SECRET_KEY = "@s8$swhj9du^aglt5+@ut^)wepr+un1m7r*+ixcq(-5i^st=y^"
+TESTING = "test" in sys.argv
 
 DEBUG = True
-
 ALLOWED_HOSTS = []
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": "openwisp_utils.db",
+    }
+}
+if TESTING and "--exclude-tag=selenium_tests" not in sys.argv:
+    DATABASES["default"]["TEST"] = {
+        "NAME": os.path.join(BASE_DIR, "openwisp_utils_tests.db"),
+    }
+
+SECRET_KEY = "@s8$swhj9du^aglt5+@ut^)wepr+un1m7r*+ixcq(-5i^st=y^"
 
 INSTALLED_APPS = [
     "django.contrib.auth",
@@ -76,15 +88,6 @@ TEMPLATES = [
     }
 ]
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": "openwisp_utils.db",
-        "TEST": {
-            "NAME": "openwisp_utils_test.db",
-        },
-    }
-}
 TEST_RUNNER = "openwisp_utils.metric_collection.tests.runner.MockRequestPostRunner"
 OPENWISP_ADMIN_SITE_CLASS = "test_project.site.CustomAdminSite"
 
