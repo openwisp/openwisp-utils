@@ -1,3 +1,4 @@
+import subprocess
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -155,8 +156,8 @@ def test_get_release_block_from_md_file(mock_file):
 
 @patch("openwisp_utils.releaser.utils.subprocess.run")
 @patch("builtins.print")
-def test_format_file_with_docstrfmt(mock_print, mock_subprocess):
-    """Tests the `format_file_with_docstrfmt` function."""
+def test_format_file_with_docstrfmt_success(mock_print, mock_subprocess):
+    """Tests the successful `format_file_with_docstrfmt` function."""
     file_path = "CHANGES.rst"
     format_file_with_docstrfmt(file_path)
 
@@ -176,6 +177,66 @@ def test_format_file_with_docstrfmt(mock_print, mock_subprocess):
     )
 
     mock_print.assert_called_once_with(f"✅ Formatted {file_path} successfully.")
+
+
+@patch("openwisp_utils.releaser.utils.questionary.select")
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_format_file_interactive_retry_success(mock_subprocess, mock_questionary):
+    # Tests the interactive retry loop in `format_file_with_docstrfmt`.
+    # The first format attempt fails, the user "fixes" it, and the second succeeds.
+
+    # First call fails, second call succeeds
+    mock_subprocess.side_effect = [
+        subprocess.CalledProcessError(1, "docstrfmt", stderr="Syntax error"),
+        MagicMock(),  # Represents a successful run
+    ]
+    # User chooses to retry
+    mock_questionary.return_value.ask.return_value = "I have fixed the file, try again."
+
+    format_file_with_docstrfmt("CHANGES.rst")
+
+    # subprocess.run should have been called twice
+    assert mock_subprocess.call_count == 2
+    mock_questionary.assert_called_once()
+
+
+@patch("openwisp_utils.releaser.utils.questionary.select")
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_format_file_interactive_skip(mock_subprocess, mock_questionary):
+    """Tests that the user can skip formatting in `format_file_with_docstrfmt`."""
+    # The call to docstrfmt fails
+    mock_subprocess.side_effect = subprocess.CalledProcessError(
+        1, "docstrfmt", stderr="Syntax error"
+    )
+    # User chooses to skip
+    mock_questionary.return_value.ask.return_value = (
+        "Skip formatting and continue with the unformatted file."
+    )
+
+    format_file_with_docstrfmt("CHANGES.rst")
+
+    # subprocess.run should only have been called once
+    assert mock_subprocess.call_count == 1
+    mock_questionary.assert_called_once()
+
+
+@patch("openwisp_utils.releaser.utils.questionary.select")
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_format_file_interactive_abort(mock_subprocess, mock_questionary):
+    """Tests that the user can abort the release in `format_file_with_docstrfmt`."""
+    # The call to docstrfmt fails
+    mock_subprocess.side_effect = subprocess.CalledProcessError(
+        1, "docstrfmt", stderr="Syntax error"
+    )
+    # User chooses to abort
+    mock_questionary.return_value.ask.return_value = "Abort the release process."
+
+    with pytest.raises(SystemExit):
+        format_file_with_docstrfmt("CHANGES.rst")
+
+    # subprocess.run should have been called once before aborting
+    assert mock_subprocess.call_count == 1
+    mock_questionary.assert_called_once()
 
 
 @patch("requests.request")

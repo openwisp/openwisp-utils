@@ -95,11 +95,47 @@ def rst_to_markdown(text):
 
 def format_file_with_docstrfmt(file_path):
     """Format a file using `docstrfmt`."""
-    subprocess.run(
-        ["docstrfmt", "--ignore-cache", "--line-length", "74", file_path],
-        check=True,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    print(f"✅ Formatted {file_path} successfully.")
+    while True:
+        try:
+            subprocess.run(
+                ["docstrfmt", "--ignore-cache", "--line-length", "74", file_path],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+            print(f"✅ Formatted {file_path} successfully.")
+            break
+        except subprocess.CalledProcessError as e:
+            print(
+                f"\n❌ ERROR: `docstrfmt` failed to format '{file_path}'.",
+                file=sys.stderr,
+            )
+            print("Linter output:", file=sys.stderr)
+            # Indent the error for readability
+            indented_stderr = "\n".join(
+                [f"    {line}" for line in e.stderr.strip().split("\n")]
+            )
+            print(indented_stderr, file=sys.stderr)
+
+            print(
+                f"\nThis is likely caused by a syntax error in '{file_path}'.\n"
+                "Please open the file in another terminal, fix the issue, and save it."
+            )
+            decision = questionary.select(
+                "How would you like to proceed?",
+                choices=[
+                    "I have fixed the file, try again.",
+                    "Skip formatting and continue with the unformatted file.",
+                    "Abort the release process.",
+                ],
+            ).ask()
+
+            if decision == "I have fixed the file, try again.":
+                continue
+            elif decision == "Skip formatting and continue with the unformatted file.":
+                print(f"⚠️  Skipped formatting for '{file_path}'.")
+                break
+            else:  # Abort or None
+                print("\n❌ Release process aborted by user.")
+                sys.exit(1)

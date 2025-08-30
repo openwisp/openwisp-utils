@@ -148,14 +148,42 @@ def test_run_git_cliff_called_process_error(mock_run, mock_find_config):
         run_git_cliff()
 
 
-@patch(
-    "subprocess.run",
-    side_effect=subprocess.CalledProcessError(1, "cmd", stderr="error"),
-)
-def test_format_rst_block_failure(mock_run):
-    original_content = "Some content"
-    formatted_content = format_rst_block(original_content)
-    assert formatted_content == original_content.strip()
+@patch("openwisp_utils.releaser.changelog.questionary.confirm")
+@patch("openwisp_utils.releaser.changelog.subprocess.run")
+def test_format_rst_block_failure_user_continues(mock_subprocess, mock_questionary):
+    """Tests that if formatting fails, the user can choose to continue with the unformatted content."""
+    # Simulate user choosing to continue
+    mock_questionary.return_value.ask.return_value = True
+    # Simulate a docstrfmt failure
+    mock_subprocess.side_effect = subprocess.CalledProcessError(
+        1, "docstrfmt", stderr="Syntax error on line 5."
+    )
+    original_content = "* a list"
+
+    result = format_rst_block(original_content)
+
+    # The function should return the original, unformatted content
+    assert result == original_content
+    # The user should have been prompted
+    mock_questionary.assert_called_once()
+
+
+@patch("openwisp_utils.releaser.changelog.questionary.confirm")
+@patch("openwisp_utils.releaser.changelog.subprocess.run")
+def test_format_rst_block_failure_user_aborts(mock_subprocess, mock_questionary):
+    """Tests that if formatting fails, the user can choose to abort the release process."""
+    # Simulate user choosing to abort
+    mock_questionary.return_value.ask.return_value = False
+    # Simulate a docstrfmt failure
+    mock_subprocess.side_effect = subprocess.CalledProcessError(
+        1, "docstrfmt", stderr="Syntax error on line 5."
+    )
+
+    with pytest.raises(SystemExit):
+        format_rst_block("* a list")
+
+    # The user should have been prompted
+    mock_questionary.assert_called_once()
 
 
 SAMPLE_CHANGELOG = """Changelog

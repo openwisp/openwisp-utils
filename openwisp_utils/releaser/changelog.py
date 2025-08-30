@@ -5,6 +5,8 @@ import subprocess
 import sys
 import tempfile
 
+import questionary
+
 
 def find_cliff_config():
     # Locates the cliff.toml file packaged within 'openwisp_utils'.
@@ -175,12 +177,29 @@ def format_rst_block(content):
         ).strip()
         return formatted_block
 
-    except (subprocess.CalledProcessError, FileNotFoundError) as e:
-        print("\nWarning: Could not format content with `docstrfmt`.", file=sys.stderr)
-        if isinstance(e, subprocess.CalledProcessError):
-            print(f"{e.stderr}", file=sys.stderr)
-        # Return original content if formatting fails
-        return content.strip()
+    except subprocess.CalledProcessError as e:
+        print(
+            "\n❌ ERROR: Could not format changelog content with `docstrfmt`.",
+            file=sys.stderr,
+        )
+        print("Linter output:", file=sys.stderr)
+        indented_stderr = "\n".join(
+            [f"    {line}" for line in e.stderr.strip().split("\n")]
+        )
+        print(indented_stderr, file=sys.stderr)
+        print(
+            "\nThis is likely due to a syntax error in the generated changelog from git-cliff."
+        )
+        decision = questionary.confirm(
+            "Continue with the unformatted changelog? You can fix the syntax manually later.",
+            default=True,
+        ).ask()
+
+        if decision:
+            return content.strip()
+        else:
+            print("\n❌ Release process aborted by user.")
+            sys.exit(1)
     finally:
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
