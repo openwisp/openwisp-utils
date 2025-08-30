@@ -1,12 +1,11 @@
 import subprocess
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
 from openwisp_utils.releaser.release import (
     adjust_markdown_headings,
     demote_markdown_headings,
-    get_release_block_from_file,
     rst_to_markdown,
 )
 from openwisp_utils.releaser.utils import (
@@ -102,56 +101,6 @@ def test_demote_markdown_headings():
 """
     result = demote_markdown_headings(input_md)
     assert result.strip() == expected_md.strip()
-
-
-@patch(
-    "builtins.open",
-    new_callable=mock_open,
-    read_data="""
-Changelog
-=========
-
-Version 1.2.0 [Unreleased]
---------------------------
-- In progress.
-
-Version 1.1.0
--------------
-- A feature.
-
-Version 1.0.0
--------------
-- Initial release.
-""",
-)
-def test_get_release_block_from_rst_file(mock_file):
-    """Test extracting a release block from a CHANGES.rst file."""
-    expected_block = "Version 1.1.0\n-------------\n- A feature."
-    result = get_release_block_from_file("CHANGES.rst", "1.1.0")
-    assert result == expected_block
-
-
-@patch(
-    "builtins.open",
-    new_callable=mock_open,
-    read_data="""
-# Changelog
-
-## Version 1.2.0 [Unreleased]
-- In progress.
-
-## Version 1.1.0
-- A feature.
-
-## Version 1.0.0
-- Initial release.
-""",
-)
-def test_get_release_block_from_md_file(mock_file):
-    """Test extracting a release block from a CHANGES.md file."""
-    expected_block = "## Version 1.1.0\n- A feature."
-    result = get_release_block_from_file("CHANGES.md", "1.1.0")
-    assert result == expected_block
 
 
 @patch("openwisp_utils.releaser.utils.subprocess.run")

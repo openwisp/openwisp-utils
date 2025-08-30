@@ -9,6 +9,7 @@ import pytest
 from openwisp_utils.releaser.changelog import (
     find_cliff_config,
     format_rst_block,
+    get_release_block_from_file,
     process_changelog,
     run_git_cliff,
 )
@@ -184,6 +185,60 @@ def test_format_rst_block_failure_user_aborts(mock_subprocess, mock_questionary)
 
     # The user should have been prompted
     mock_questionary.assert_called_once()
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data="""
+Changelog
+=========
+
+Version 1.2.0 [Unreleased]
+--------------------------
+- In progress.
+
+Version 1.1.0
+-------------
+- A feature.
+""",
+)
+def test_get_release_block_with_prefix(mock_file):
+    """Test extracting a release block when 'Version ' prefix is used."""
+    mock_config = {
+        "changelog_path": "CHANGES.rst",
+        "changelog_uses_version_prefix": True,
+    }
+    expected_block = "Version 1.1.0\n-------------\n- A feature."
+    result = get_release_block_from_file(mock_config, "1.1.0")
+    assert result == expected_block
+
+
+@patch(
+    "builtins.open",
+    new_callable=mock_open,
+    read_data="""
+Changelog
+=========
+
+1.2.0 [Unreleased]
+------------------
+- In progress.
+
+1.1.0
+-----
+- A feature.
+""",
+)
+def test_get_release_block_without_prefix(mock_file):
+    """Test extracting a release block when 'Version ' prefix is NOT used."""
+    mock_config = {
+        "changelog_path": "CHANGES.rst",
+        "changelog_uses_version_prefix": False,
+    }
+    expected_block = "1.1.0\n-----\n- A feature."
+    result = get_release_block_from_file(mock_config, "1.1.0")
+    assert result == expected_block
 
 
 SAMPLE_CHANGELOG = """Changelog

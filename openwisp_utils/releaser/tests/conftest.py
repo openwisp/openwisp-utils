@@ -103,7 +103,7 @@ def mock_all(mocker):
         "load_config": mocker.patch("openwisp_utils.releaser.release.load_config"),
         "get_current_version": mocker.patch(
             "openwisp_utils.releaser.release.get_current_version",
-            return_value=("1.2.0", "alpha"),
+            return_value=("1.2.0", "final"),
         ),
         "bump_version": mocker.patch(
             "openwisp_utils.releaser.release.bump_version", return_value=True
@@ -145,6 +145,7 @@ def mock_all(mocker):
         "repo": "test/repo",
         "changelog_path": "CHANGES.rst",
         "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
     }
     mocks["check_prerequisites"].return_value = (mock_config, mock_gh_instance)
     mocks["load_config"].return_value = mock_config

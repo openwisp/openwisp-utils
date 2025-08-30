@@ -205,16 +205,26 @@ def format_rst_block(content):
             os.remove(temp_file_path)
 
 
-def get_release_block_from_file(changelog_path, version):
+def get_release_block_from_file(config, version):
     """Reads the entire changelog file and extracts the block for a specific version."""
+    changelog_path = config["changelog_path"]
     with open(changelog_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
     release_lines = []
     in_release_block = False
     is_md = changelog_path.endswith(".md")
-    start_pattern = f"## Version {version}" if is_md else f"Version {version}"
-    next_version_pattern = "## Version " if is_md else "Version "
+    # Adaptively add the 'Version ' prefix based on detected style
+    prefix = "Version " if config.get("changelog_uses_version_prefix", True) else ""
+
+    start_pattern = f"## {prefix}{version}" if is_md else f"{prefix}{version}"
+    # This regex is used to find the next version header to know when to stop parsing
+    next_version_regex_str = (
+        rf"^## {re.escape(prefix)}\d+\.\d+\.\d+"
+        if is_md
+        else rf"^{re.escape(prefix)}\d+\.\d+\.\d+"
+    )
+    next_version_regex = re.compile(next_version_regex_str)
 
     for line in lines:
         stripped_line = line.strip()
@@ -222,7 +232,8 @@ def get_release_block_from_file(changelog_path, version):
             in_release_block = True
             release_lines.append(line)
             continue
-        if in_release_block and stripped_line.startswith(next_version_pattern):
+        # Stop if we are in a block and find the next version header
+        if in_release_block and next_version_regex.match(stripped_line):
             break
         if in_release_block:
             release_lines.append(line)
@@ -242,11 +253,11 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
     except FileNotFoundError:
         content = "# Change log\n\n" if is_md else "Changelog\n=========\n\n"
 
-    # Regex to find the entire [Unreleased] block, from its header to the next version.
+    # Regex to find the entire [Unreleased] block, with optional "Version" prefix
     unreleased_block_regex_str = (
-        r"^(## Version \S+ \[Unreleased\](?:.|\n)*?)(?=\n## Version|\Z)"
+        r"^(##\s+(?:Version\s+)?\S+\s+\[Unreleased\](?:.|\n)*?)(?=\n##\s+(?:Version\s+)?|\Z)"
         if is_md
-        else r"^(Version \S+ \[Unreleased\]\n-+(?:.|\n)*?)(?=\n^Version|\Z)"
+        else r"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n^(?:Version\s+)?\S|\Z)"
     )
     unreleased_block_regex = re.compile(
         unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE

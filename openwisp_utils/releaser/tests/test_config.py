@@ -1,18 +1,29 @@
 import pytest
-from openwisp_utils.releaser.config import load_config
+from openwisp_utils.releaser.config import detect_changelog_style, load_config
 
 
-def test_load_config_https_rst(
+@pytest.mark.parametrize(
+    "changelog_filename, expected_format",
+    [
+        ("CHANGES.rst", "rst"),
+        ("CHANGELOG.rst", "rst"),
+        ("CHANGES.md", "md"),
+        ("CHANGELOG.md", "md"),
+    ],
+)
+def test_load_config_flexible_changelog_names(
     project_dir,
     create_setup_py,
     create_package_dir_with_version,
     create_changelog,
     init_git_repo,
+    changelog_filename,
+    expected_format,
 ):
-    """Tests the ideal scenario: all files exist, git uses HTTPS, changelog is .rst."""
+    """Tests that various common changelog filenames are detected."""
     create_setup_py(project_dir)
     create_package_dir_with_version(project_dir)
-    create_changelog(project_dir, "rst")
+    (project_dir / changelog_filename).write_text("Changelog")
     init_git_repo(project_dir)
 
     config = load_config()
@@ -20,7 +31,42 @@ def test_load_config_https_rst(
     assert config["repo"] == "my-org/my-test-package"
     assert config["version_path"] == "my_test_package/__init__.py"
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
-    assert config["changelog_path"] == "CHANGES.rst"
+    assert config["changelog_path"] == changelog_filename
+    assert config["changelog_format"] == expected_format
+
+
+def test_load_config_raises_specific_error(project_dir, create_setup_py):
+    create_setup_py(project_dir)
+    with pytest.raises(FileNotFoundError, match="Could not find CHANGES.rst"):
+        load_config()
+
+
+def test_detect_changelog_style_with_prefix(tmp_path):
+    """Tests that style is detected as 'True' when 'Version ' is present."""
+    p = tmp_path / "CHANGES.rst"
+    p.write_text("Version 1.0.0\n---\n- A change.")
+    assert detect_changelog_style(str(p)) is True
+
+
+def test_detect_changelog_style_without_prefix(tmp_path):
+    """Tests that style is detected as 'False' when 'Version ' is absent."""
+    p = tmp_path / "CHANGES.rst"
+    p.write_text("1.0.0\n---\n- A change.")
+    assert detect_changelog_style(str(p)) is False
+
+
+def test_detect_changelog_style_empty_or_no_versions(tmp_path):
+    """Tests that the style defaults to 'True' for new or empty files."""
+    # File does not exist
+    assert detect_changelog_style(str(tmp_path / "new.rst")) is True
+    # File is empty
+    p = tmp_path / "empty.rst"
+    p.touch()
+    assert detect_changelog_style(str(p)) is True
+    # File has content but no versions
+    p_content = tmp_path / "content.rst"
+    p_content.write_text("Changelog\n=========")
+    assert detect_changelog_style(str(p_content)) is True
 
 
 def test_load_config_ssh_md(

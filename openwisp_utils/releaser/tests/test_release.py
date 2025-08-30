@@ -188,6 +188,29 @@ def test_main_bugfix_flow_with_porting(mock_all, mocker):
     mock_porting_func.assert_called_once()
 
 
+def test_main_flow_no_version_prefix_style(mock_all):
+    """Tests the release flow for a changelog that does NOT use the 'Version ' prefix."""
+    # Config where the "Version" prefix is not used
+    mock_config, _ = mock_all["check_prerequisites"].return_value
+    mock_config["changelog_uses_version_prefix"] = False
+    mock_all["get_release_block_from_file"].return_value = None
+
+    run_release()
+
+    # Check that the block written to the file does NOT have the "Version" prefix
+    update_call_args = mock_all["update_changelog"].call_args[0]
+    written_block = update_call_args[1]
+    assert written_block.startswith("1.3.0")
+    assert not written_block.startswith("Version 1.3.0")
+
+    # Check that the user is shown the FULL block for approval
+    full_print_output = "".join(str(call) for call in mock_all["print"].call_args_list)
+    assert "The following block will be added to the changelog" in full_print_output
+    # Verify the header shown to the user is also in the correct style
+    assert "1.3.0  [2025-08-11]" in full_print_output
+    assert "Version 1.3.0" not in full_print_output
+
+
 def test_main_flow_skip_pr_creation(mock_all):
     """Tests the flow where user skips PR creation."""
     mock_gh = mock_all["GitHub"].return_value

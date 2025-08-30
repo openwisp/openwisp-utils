@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -162,13 +163,14 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
 
     is_md = config["changelog_path"].endswith(".md")
     changelog_date_str = datetime.now().strftime("%Y-%m-%d")
+    prefix = "Version " if config.get("changelog_uses_version_prefix", True) else ""
 
     if is_md:
-        version_header = f"## Version {version} [{changelog_date_str}]"
+        version_header = f"## {prefix}{version} [{changelog_date_str}]"
         # The body has already been adjusted for the file, so no heading changes are needed.
         full_block_to_port = f"{version_header}\n\n{changelog_body}"
     else:  # rst
-        version_header = f"Version {version}  [{changelog_date_str}]"
+        version_header = f"{prefix}{version}  [{changelog_date_str}]"
         underline = "-" * len(version_header)
         full_block_to_port = f"{version_header}\n{underline}\n\n{changelog_body}"
 
@@ -270,37 +272,50 @@ def main():
         sys.exit(0)
 
     processed_block = process_changelog(raw_changelog_block)
-
-    print("\n📝  Generated and Formatted Changelog Block:\n")
     formatted_block_rst = format_rst_block(processed_block)
 
     gpt_token = os.environ.get("OPENAI_CHATGPT_TOKEN")
-    final_formatted_block = get_ai_summary(
+    changelog_content = get_ai_summary(
         formatted_block_rst, config["changelog_format"], gpt_token
     )
 
-    print("\n📝  Generated and Formatted Changelog Block:\n")
-    print(final_formatted_block)
+    # Strip any header
+    header_stripping_regex = re.compile(
+        r"^(?:Version\s+)?\d+\.\d+\.\d+.*?\n[-~=]{3,}\n*", re.MULTILINE
+    )
+    changelog_body = header_stripping_regex.sub("", changelog_content).strip()
+
+    changelog_date_str = datetime.now().strftime("%Y-%m-%d")
+    tag_date_str = datetime.now().strftime("%d-%m-%Y")
+    changelog_path = config["changelog_path"]
+    prefix = "Version " if config.get("changelog_uses_version_prefix", True) else ""
+    full_release_block = ""
+
+    if config["changelog_format"] == "md":
+        md_body = rst_to_markdown(changelog_body)
+        md_body = adjust_markdown_headings(md_body)
+        md_body = (
+            md_body.replace("\\#", "#")
+            .replace("\\[", "[")
+            .replace("\\]", "]")
+            .replace("# Version", "## Version")
+        )
+        version_header = f"## {prefix}{new_version} [{changelog_date_str}]"
+        full_release_block = f"{version_header}\n\n{md_body}"
+    else:  # rst
+        version_header = f"{prefix}{new_version}  [{changelog_date_str}]"
+        underline = "-" * len(version_header)
+        full_release_block = f"{version_header}\n{underline}\n\n{changelog_body}"
+
+    print("\n📝 The following block will be added to the changelog:\n")
+    print(full_release_block)
 
     if not questionary.confirm("Accept this block and proceed?").ask():
         print("Release cancelled.")
         sys.exit(0)
 
-    changelog_date_str = datetime.now().strftime("%Y-%m-%d")
-    tag_date_str = datetime.now().strftime("%d-%m-%Y")
-    changelog_path = config["changelog_path"]
-
-    if config["changelog_format"] == "md":
-        final_formatted_block = rst_to_markdown(final_formatted_block)
-        final_formatted_block = adjust_markdown_headings(final_formatted_block)
-        final_formatted_block = (
-            final_formatted_block.replace("\\#", "#")
-            .replace("\\[", "[")
-            .replace("\\]", "]")
-            .replace("# Version", "## Version")
-        )
-
-    update_changelog_file(changelog_path, final_formatted_block)
+    # Now we write the approved block to the file.
+    update_changelog_file(changelog_path, full_release_block)
 
     # Format the file after changelog addition
     if config["changelog_format"] == "rst":
@@ -326,13 +341,13 @@ def main():
     questionary.confirm("Press Enter when you have finished editing...").ask()
 
     print("\nReading final changelog content from disk...")
-    latest_changelog_block = get_release_block_from_file(changelog_path, new_version)
+    latest_changelog_block = get_release_block_from_file(config, new_version)
     if not latest_changelog_block:
         print(
             "\nWarning: Could not re-read the changelog block. Using initially generated content.",
             file=sys.stderr,
         )
-        latest_changelog_block = final_formatted_block
+        latest_changelog_block = full_release_block
 
     if config["changelog_format"] == "rst":
         format_file_with_docstrfmt(changelog_path)

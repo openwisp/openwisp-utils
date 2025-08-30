@@ -17,6 +17,22 @@ def get_package_name_from_setup():
     return None
 
 
+def detect_changelog_style(changelog_path):
+    # Detects if the changelog uses the 'Version ' prefix for its entries
+    if not os.path.exists(changelog_path):
+        return True
+    with open(changelog_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    # Look for a line that starts with 'Version X.Y.Z'
+    if re.search(r"^Version\s+\d+\.\d+\.\d+", content, re.MULTILINE):
+        return True
+    # Look for a line that starts with just 'X.Y.Z'
+    if re.search(r"^\d+\.\d+\.\d+", content, re.MULTILINE):
+        return False
+    # Default to True if no version entries are found yet
+    return True
+
+
 def load_config():
     """Loads configuration from project files and git."""
     config = {}
@@ -57,15 +73,29 @@ def load_config():
                     except (ValueError, SyntaxError):
                         config["CURRENT_VERSION"] = None
 
-    if os.path.exists("CHANGES.rst"):
-        config["changelog_path"] = "CHANGES.rst"
-        config["changelog_format"] = "rst"
-    elif os.path.exists("CHANGES.md"):
-        config["changelog_path"] = "CHANGES.md"
-        config["changelog_format"] = "md"
+    possible_changelog_names = [
+        "CHANGES.rst",
+        "CHANGELOG.rst",
+        "CHANGES.md",
+        "CHANGELOG.md",
+    ]
+    found_changelog = None
+    for name in possible_changelog_names:
+        if os.path.exists(name):
+            found_changelog = name
+            break
+
+    if found_changelog:
+        config["changelog_path"] = found_changelog
+        config["changelog_format"] = "md" if found_changelog.endswith(".md") else "rst"
     else:
         raise FileNotFoundError(
-            "Error: Changelog file is required. Neither CHANGES.rst nor CHANGES.md was found."
+            "Error: Changelog file is required. Could not find CHANGES.rst, "
+            "CHANGELOG.rst, CHANGES.md, or CHANGELOG.md."
         )
+
+    config["changelog_uses_version_prefix"] = detect_changelog_style(
+        config["changelog_path"]
+    )
 
     return config
