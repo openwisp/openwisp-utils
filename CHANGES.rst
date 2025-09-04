@@ -6,6 +6,15 @@ Version 1.2.0 [Unreleased]
 
 Work in progress.
 
+Version 1.1.2 [2025-06-18]
+--------------------------
+
+- [fix:ui] Avoided JS error when menu is not displayed.
+- [chores:ui] Removed border from submit and search buttons.
+- [chores:ui] Updated "Apply filters" button to use standard styling.
+- [chores:ui] Improved metric collection consent UI.
+- [tests] Minor fixes for flaky tests and 1.1 branch CI testing.
+
 Version 1.1.1 [2024-11-20]
 --------------------------
 

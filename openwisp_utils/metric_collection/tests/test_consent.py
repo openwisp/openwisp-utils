@@ -3,8 +3,10 @@ from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase, modify_settings
 from django.urls import reverse
+from freezegun import freeze_time
 
 from ..models import Consent
+from . import _CONSENT_WITHDRAWN_METRICS
 
 User = get_user_model()
 
@@ -21,10 +23,13 @@ class TestConsent(TestCase):
 
     def test_info_message(self):
         expected_message = (
-            '<li class="warning">We gather anonymous usage metrics '
-            "to enhance OpenWISP. You can opt out from the "
-            '<a href="/admin/openwisp-system-info/">System '
-            "Information page</a>.</li>"
+            '<li class="info"><strong>Congratulations for installing '
+            "OpenWISP successfully!</strong><br>Use the navigation "
+            "menu on the left to explore the interface and begin "
+            "deploying your network.<br>Keep in mind: we gather "
+            "anonymous usage metrics to improve OpenWISP. You can "
+            'opt out from the <a href="/admin/openwisp-system-info/">'
+            "System Information page</a>.</li>"
         )
         non_superuser = self._get_user(is_staff=True, is_superuser=False)
         superuser1 = self._get_user(
@@ -146,3 +151,37 @@ class TestConsent(TestCase):
             # There should be no change to the field because it is
             # not part of the form.
             self.assertEqual(consent_obj.shown_once, False)
+
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
+    @freeze_time("2023-12-01 00:00:00")
+    def test_updating_consent_withdrawal(self, mock_post_metrics):
+        """Test that metrics for consent withdrawal are sent."""
+
+        with self.subTest("New consent object does not trigger metric"):
+            consent = Consent.objects.create(user_consented=False)
+            mock_post_metrics.assert_not_called()
+
+        with self.subTest("No change in consent does not trigger metric"):
+            consent.save()
+            mock_post_metrics.assert_not_called()
+
+        with self.subTest("Consent opt-in does not trigger metric"):
+            consent.user_consented = True
+            consent.full_clean()
+            consent.save()
+            mock_post_metrics.assert_not_called()
+
+        with self.subTest("Test consent withdrawal triggers metric"):
+            consent.user_consented = False
+            consent.full_clean()
+            consent.save()
+            mock_post_metrics.assert_called_once_with(_CONSENT_WITHDRAWN_METRICS)
+
+        Consent.objects.update(user_consented=True)
+        mock_post_metrics.reset_mock()
+        with self.subTest("Error handling"):
+            with patch.object(Consent.objects, "get", side_effect=Consent.DoesNotExist):
+                consent.user_consented = False
+                consent.full_clean()
+                consent.save()
+                mock_post_metrics.assert_not_called()

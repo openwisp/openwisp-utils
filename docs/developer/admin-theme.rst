@@ -218,10 +218,12 @@ Sending emails
 ``openwisp_utils.admin_theme.email.send_email``
 +++++++++++++++++++++++++++++++++++++++++++++++
 
-This function allows sending email in both plain text and HTML version
-(using the template and logo that can be customized using
-:ref:`OPENWISP_EMAIL_TEMPLATE <openwisp_email_template>` and
-:ref:`OPENWISP_EMAIL_LOGO <openwisp_email_logo>` respectively).
+This function enables sending emails in both plain text and HTML formats.
+The HTML version uses a customizable template and logo.
+
+You can set the logo using the :ref:`OPENWISP_EMAIL_LOGO
+<openwisp_email_logo>` setting. To override the default template, see
+:ref:`Customizing Email Templates <utils_send_email>`.
 
 In case the HTML version if not needed it may be disabled by setting
 :ref:`OPENWISP_HTML_EMAIL <openwisp_html_email>` to ``False``.
@@ -242,7 +244,7 @@ In case the HTML version if not needed it may be disabled by setting
                        ``call_to_action_text`` and ``call_to_action_url`` can be passed to show a call to action
                        button. Similarly, ``footer`` can be passed to add a footer.
 ``html_body_template`` **(optional, str)** The path to the template used for generating the HTML version. By
-                       default, it uses the template specified in :ref:`openwisp_email_template`.
+                       default, it uses ``openwisp_utils/email_template.html``.
 ``**kwargs``           Any additional keyword arguments (e.g. ``attachments``, ``headers``, etc.) are passed
                        directly to the `django.core.mail.EmailMultiAlternatives
                        <https://docs.djangoproject.com/en/4.1/topics/email/#sending-alternative-content-types>`_.
@@ -252,3 +254,35 @@ In case the HTML version if not needed it may be disabled by setting
 
     Data passed in body should be validated and user supplied data should
     not be sent directly to the function.
+
+Customizing Email Templates
++++++++++++++++++++++++++++
+
+To customize the email templates used by the :ref:`utils_send_email`
+function, you can override the ``openwisp_utils/email_template.html``
+template in your Django project. Create a template with the same path
+(``openwisp_utils/email_template.html``) in your project's template
+directory to override the default template.
+
+It is recommended to extend the default email template as shown below:
+
+.. code-block:: django
+
+    {% extends 'openwisp_utils/email_template.html' %}
+    {% block styles %}
+    {{ block.super }}
+    <style>
+      .body {
+        height: 100%;
+        background: linear-gradient(to bottom, #8ccbbe 50%, #3797a4 50%);
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        padding: 50px;
+      }
+    </style>
+    {% endblock styles %}
+
+Similarly, you can customize the HTML of the template by overriding the
+``body`` block. See `email_template.html
+<https://github.com/openwisp/openwisp-utils/blob/master/openwisp_utils/admin_theme/templates/openwisp_utils/email_template.html>`_
+for reference implementation.

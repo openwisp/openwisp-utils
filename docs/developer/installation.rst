@@ -50,7 +50,7 @@ Install development dependencies:
 
 .. code-block:: shell
 
-    pip install -e .[qa,rest]
+    pip install -e .[qa,rest,selenium]
     pip install -r requirements-test.txt
     sudo npm install -g prettier
 
@@ -82,7 +82,7 @@ Run tests with:
 
 .. code-block:: shell
 
-    ./runtests.py --parallel
+    ./runtests
 
 Run quality assurance tests with:
 

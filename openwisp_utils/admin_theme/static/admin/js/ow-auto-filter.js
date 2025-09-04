@@ -95,10 +95,7 @@ django.jQuery(document).ready(function () {
     // execute this after internal select2 events complete
     Promise.resolve().then(function () {
       setAllPlaceholder(
-        django
-          .jQuery(event.target)
-          .parent()
-          .find(".select2-selection__placeholder"),
+        django.jQuery(event.target).parent().find(".select2-selection__placeholder"),
       );
     });
   });

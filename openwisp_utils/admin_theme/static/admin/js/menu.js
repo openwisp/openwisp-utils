@@ -123,19 +123,13 @@ function toggleGroup(e, callback = null) {
   var dropdown = group.querySelector(".mg-dropdown");
   var currentActiveGroup = document.querySelector(".menu-group.active");
   var firstElement = null;
-  if (
-    currentActiveGroup &&
-    currentActiveGroup.classList.contains("active-mg")
-  ) {
+  if (currentActiveGroup && currentActiveGroup.classList.contains("active-mg")) {
     wasActiveGroupOpen = false;
   }
   if (currentActiveGroup && currentActiveGroup !== mgHead.parentElement) {
     closeActiveGroup(currentActiveGroup);
   }
-  if (
-    group.classList.contains("active-mg") &&
-    !group.classList.contains("active")
-  ) {
+  if (group.classList.contains("active-mg") && !group.classList.contains("active")) {
     wasActiveGroupOpen = true;
   }
   if (window.innerWidth > 768 && !isMenuOpen()) {
@@ -147,8 +141,7 @@ function toggleGroup(e, callback = null) {
         dropdown.style.top = groupPos - scrolledBy - dropdownHeight + 87 + "px";
         setTimeout(function () {
           firstElement = openMenuGroup(group, mgHead, dropdown);
-          dropdown.style.top =
-            groupPos - scrolledBy - dropdownHeight + 40 + "px";
+          dropdown.style.top = groupPos - scrolledBy - dropdownHeight + 40 + "px";
           if (callback) {
             callback(firstElement);
           }

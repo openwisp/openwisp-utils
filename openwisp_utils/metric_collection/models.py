@@ -1,8 +1,6 @@
 import logging
 
 from django.db import models
-from django.utils.html import escape
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from packaging.version import parse as parse_version
 
@@ -13,7 +11,7 @@ from ..admin_theme.system_info import (
     get_os_details,
 )
 from ..base import TimeStampedEditableModel
-from ..utils import retryable_request
+from .helper import COLLECTOR_URL, get_events, post_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +20,9 @@ class OpenwispVersion(TimeStampedEditableModel):
     modified = None
     module_version = models.JSONField(default=dict, blank=True)
 
-    COLLECTOR_URL = "https://analytics.openwisp.io/cleaninsights.php"
+    # DEPRECATED: Use COLLECTOR_URL from helper module instead.
+    # TODO: Remove this in the next major release.
+    COLLECTOR_URL = COLLECTOR_URL
 
     class Meta:
         ordering = ("-created",)
@@ -108,70 +108,16 @@ class OpenwispVersion(TimeStampedEditableModel):
             # Similar to above, but for "Install" category
             return
 
-        metrics = cls._get_events(category, current_versions)
+        metrics = get_events(category, current_versions)
         metrics.extend(
-            cls._get_events(
+            get_events(
                 category, {"Installation Method": get_openwisp_installation_method()}
             )
         )
         logger.info(f"Sending metrics, category={category}")
-        cls._post_metrics(metrics)
+        post_metrics(metrics)
         logger.info(f"Metrics sent successfully, category={category}")
         logger.info(f"Metrics: {metrics}")
-
-    @classmethod
-    def _post_metrics(cls, events):
-        try:
-            response = retryable_request(
-                "post",
-                url=cls.COLLECTOR_URL,
-                json={
-                    "idsite": 5,
-                    "events": events,
-                },
-                max_retries=10,
-            )
-            assert response.status_code == 204
-        except Exception as error:
-            if isinstance(error, AssertionError):
-                message = f"HTTP {response.status_code} Response"
-            else:
-                message = str(error)
-            logger.error(
-                f"Collection of usage metrics failed, max retries exceeded. Error: {message}"
-            )
-
-    @classmethod
-    def _get_events(cls, category, data):
-        """Returns a list of events that will be sent to CleanInsights.
-
-        This method requires two input parameters, category and data,
-        which represent usage metrics, and returns a list of events in a
-        format accepted by the Clean Insights Matomo Proxy (CIMP) API.
-
-        Read the "Event Measurement Schema" in the CIMP documentation:
-        https://cutt.ly/SwBkC40A
-        """
-        events = []
-        unix_time = int(now().timestamp())
-        for key, value in data.items():
-            events.append(
-                {
-                    # OS Details, Install, Hearthbeat, Upgrade
-                    "category": category,
-                    # Name of OW module or OS parameter
-                    "action": escape(key),
-                    # Actual version of OW module, OS or general OW version
-                    "name": escape(value),
-                    # Value is always 1
-                    "value": 1,
-                    # Event happened only 1 time, we do not aggregate
-                    "times": 1,
-                    "period_start": unix_time,
-                    "period_end": unix_time,
-                }
-            )
-        return events
 
 
 class Consent(TimeStampedEditableModel):
@@ -192,11 +138,43 @@ class Consent(TimeStampedEditableModel):
     # usage metrics with the OpenWISP project.
     user_consented = models.BooleanField(
         default=True,
-        verbose_name=_("Allow collecting anonymous usage metrics"),
+        verbose_name=_(
+            "Help improve OpenWISP by allowing the "
+            "collection of anonymous usage metrics."
+        ),
         help_text=_(
-            "Allow OpenWISP to collect and share anonymous usage metrics to improve"
-            " the software. Before opting-out kindly consider reading"
-            ' <a href="https://openwisp.io/docs/user/usage-metric-collection.html"'
-            ' target="_blank">why we collect metrics</a>.'
+            "These statistics help us prioritize features, "
+            " fix bugs, and better support real-world usage,"
+            " all without collecting any personal data. "
+            '<a href="https://openwisp.io/docs/user/usage-metric-collection.html"'
+            ' target="_blank">Learn more about why we collect metrics</a>.'
         ),
     )
+
+    @classmethod
+    def update_consent_withdrawal(cls, sender, instance, **kwargs):
+        """Collects metric when a user withdraws consent for metric collection.
+
+        This signal handler sends a 'Consent Withdrawn' event when a user
+        changes user_consented from True to False, providing the last data
+        point before communications are interrupted.
+        """
+        if instance._state.adding or instance.user_consented is True:
+            # This is a new instance or the user has not opted out,
+            return
+
+        try:
+            db_instance = sender.objects.get(pk=instance.pk)
+            # Check if consent was withdrawn (changed from True to False)
+            if (
+                instance.user_consented is False
+                and db_instance.user_consented != instance.user_consented
+            ):
+                logger.info("Consent withdrawn, sending final metric event")
+                # Create a simple event for consent withdrawal
+                events = get_events("Consent Withdrawn", {"Action": "Opt-out"})
+                post_metrics(events)
+                logger.info("Consent withdrawal metric sent successfully")
+        except sender.DoesNotExist:
+            # In case the instance doesn't exist in DB yet, just pass
+            pass

@@ -28,7 +28,7 @@ setup(
         "django-model-utils>=4.5,<5.1",
         "django-compress-staticfiles~=1.0.1b",
         "django-admin-autocomplete-filter~=0.7.1",
-        "swapper~=1.3.0",
+        "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
         "urllib3>=2.0.0,<3.0.0",
     ],
@@ -42,23 +42,23 @@ setup(
             "docstrfmt~=1.10.0",
         ],
         "rest": [
-            "djangorestframework>=3.14,<3.15.2",
+            "djangorestframework~=3.16.0",
             "django-filter~=23.2",  # django-filter uses CalVer
             "drf-yasg~=1.21.7",
         ],
         "channels": [
-            "channels[daphne]~=4.2.0",
+            "channels[daphne]~=4.3.0",
             "channels_redis~=4.2.1",
         ],
         "channels-test": [
             "pytest-asyncio>=0.24,<0.27",
-            "pytest-django~=4.10.0",
+            "pytest-django>=4.10,<4.12",
         ],
         "celery": ["celery>=5.4,<5.6"],
-        "selenium": ["selenium>=4.10,<4.30"],
+        "selenium": ["selenium>=4.10,<4.35"],
     },
     classifiers=[
-        "Development Status :: 5 - Production/Stable ",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Web Environment",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: System :: Networking",

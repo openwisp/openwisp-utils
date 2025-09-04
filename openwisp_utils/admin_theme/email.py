@@ -2,6 +2,7 @@ import logging
 from smtplib import SMTPRecipientsRefused
 
 from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -17,7 +18,7 @@ def send_email(
     body_html,
     recipients,
     extra_context=None,
-    html_email_template=app_settings.OPENWISP_EMAIL_TEMPLATE,
+    html_email_template="openwisp_utils/email_template.html",
     **kwargs,
 ):
     extra_context = extra_context or {}
@@ -29,10 +30,15 @@ def send_email(
         **kwargs,
     )
     if app_settings.OPENWISP_HTML_EMAIL and body_html:
+        site = get_current_site(None)
+        scheme = "http" if settings.DEBUG else "https"
         context = dict(
-            subject=subject,
+            title=subject,
             message=body_html,
+            site_name=site.name,
+            site_url=f"{scheme}://{site.domain}",
             logo_url=app_settings.OPENWISP_EMAIL_LOGO,
+            recipients=", ".join(recipients),
         )
         context.update(extra_context)
 

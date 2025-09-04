@@ -74,8 +74,8 @@ See https://code.djangoproject.com/ticket/33878 */
   --object-tools-bg: var(--close-button-bg) !important;
   --object-tools-hover-bg: var(--close-button-hover-bg) !important;
   --font-family-primary:
-    "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana,
-    Arial, sans-serif;
+    "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial,
+    sans-serif;
 }
 body {
   min-width: 320px;
@@ -122,6 +122,21 @@ div#main-content table tbody td {
 #main-content .breadcrumbs {
   font-size: 15px;
 }
+/* Standard links (no need to stand out) */
+table thead th.sorted .sortoptions a.sortremove:focus:after,
+table thead th.sorted .sortoptions a.sortremove:hover:after,
+a:link,
+a:visited {
+  color: #777;
+  text-decoration: none;
+}
+table thead th.sorted .sortoptions a.sortremove:focus:after,
+table thead th.sorted .sortoptions a.sortremove:hover:after,
+a:hover,
+a:focus {
+  color: #000;
+  text-decoration: underline;
+}
 #main-content .breadcrumbs a,
 a.section:link,
 a.section:visited,
@@ -129,7 +144,9 @@ a.section:visited,
 #main .help a,
 #main .helptext a,
 fieldset.collapsed a.collapse-toggle,
-fieldset a.collapse-toggle {
+fieldset a.collapse-toggle,
+a.highlighted,
+a.highlighted:visited {
   color: #df5d43;
   text-decoration: none;
 }
@@ -143,8 +160,10 @@ a.section:visited:focus,
 .module th a:focus,
 #main .help a:hover,
 #main .help a:focus,
+#main .helptext a:hover,
 #main .helptext a:focus,
-#main .helptext a:focus {
+a.highlighted:hover,
+a.highlighted:focus {
   text-decoration: underline;
 }
 #main-content .module caption a {
@@ -167,20 +186,6 @@ fieldset.module h2,
 }
 #content-main fieldset.module summary {
   border-color: var(--hairline-color);
-}
-table thead th.sorted .sortoptions a.sortremove:focus:after,
-table thead th.sorted .sortoptions a.sortremove:hover:after,
-a:link,
-a:visited {
-  color: #777;
-  text-decoration: none;
-}
-table thead th.sorted .sortoptions a.sortremove:focus:after,
-table thead th.sorted .sortoptions a.sortremove:hover:after,
-a:hover,
-a:focus {
-  color: #000;
-  text-decoration: none;
 }
 #changelist-filter li.selected a {
   color: #df5d43 !important;
@@ -576,7 +581,7 @@ div#toolbar form input[type="submit"] {
   margin: 0 10px 0 3px;
   padding: 0.47rem 1rem;
   background: #333;
-  border: 1px solid #333;
+  border: 0 none;
   color: #fff;
 }
 div#toolbar #searchbar {
@@ -594,7 +599,8 @@ div#changelist .actions select {
   margin-right: 7px;
 }
 div#changelist .actions .button {
-  padding: 6px 1rem;
+  padding: 7px 1rem;
+  border: 0 none;
   background: #333;
   color: #fff;
   height: unset;
@@ -859,8 +865,8 @@ input[type="button"]:hover,
   margin-left: 2.5rem;
   width: 150px;
   height: 86px;
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg) no-repeat
+    scroll 0 50%/100%;
 }
 
 /* Fix for object tools */
@@ -1293,8 +1299,8 @@ h1#site-name {
   width: 165px;
   height: 95px;
   margin: auto;
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg) no-repeat
+    scroll 0 50%/100%;
   text-indent: -2000px;
 }
 #main-content.m-0 {
@@ -1574,8 +1580,8 @@ body.login {
   display: block;
 }
 .login #site-name a {
-  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg)
-    no-repeat scroll 0 50%/100%;
+  background: url(../../../static/ui/openwisp/images/openwisp-logo-black.svg) no-repeat
+    scroll 0 50%/100%;
   text-indent: -2000px;
   width: 150px;
   height: 86px;
