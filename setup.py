@@ -43,7 +43,7 @@ setup(
         ],
         "rest": [
             "djangorestframework~=3.16.0",
-            "django-filter~=23.2",  # django-filter uses CalVer
+            "django-filter>=25.1,<26.0",  # django-filter uses CalVer
             "drf-yasg~=1.21.7",
         ],
         "channels": [
