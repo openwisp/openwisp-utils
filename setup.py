@@ -34,16 +34,16 @@ setup(
     ],
     extras_require={
         "qa": [
-            "black~=24.10.0",
-            "flake8~=7.2.0",
+            "black~=25.1.0",
+            "flake8~=7.3.0",
             "isort~=6.0.1",
-            "coverage>=7.6.1,<7.9.0",
+            "coverage~=7.10.6",
             "tblib~=3.1.0",
-            "docstrfmt~=1.10.0",
+            "docstrfmt~=1.11.1",
         ],
         "rest": [
-            "djangorestframework>=3.14,<3.15.2",
-            "django-filter~=23.2",  # django-filter uses CalVer
+            "djangorestframework~=3.16.0",
+            "django-filter>=25.1,<26.0",  # django-filter uses CalVer
             "drf-yasg~=1.21.7",
         ],
         "channels": [
@@ -54,7 +54,7 @@ setup(
             "pytest-asyncio>=0.24,<0.27",
             "pytest-django>=4.10,<4.12",
         ],
-        "celery": ["celery~=5.4.0"],
+        "celery": ["celery~=5.5.3"],
         "selenium": ["selenium>=4.10,<4.35"],
         "releaser": [
             "git-cliff~=2.10.0",
