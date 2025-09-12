@@ -56,6 +56,12 @@ setup(
         ],
         "celery": ["celery~=5.5.3"],
         "selenium": ["selenium>=4.10,<4.35"],
+        "releaser": [
+            "git-cliff~=2.10.0",
+            "questionary~=2.1.0",
+            "pypandoc~=1.15",
+            "pypandoc-binary~=1.15",
+        ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
