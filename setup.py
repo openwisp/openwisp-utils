@@ -48,7 +48,7 @@ setup(
         ],
         "channels": [
             "channels[daphne]~=4.3.0",
-            "channels_redis~=4.2.1",
+            "channels_redis>=4.2.1,<4.4.0",
         ],
         "channels-test": [
             "pytest-asyncio>=0.24,<0.27",
