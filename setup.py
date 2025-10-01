@@ -34,7 +34,7 @@ setup(
     ],
     extras_require={
         "qa": [
-            "black~=25.1.0",
+            "black>=25.1,<25.10",
             "flake8~=7.3.0",
             "isort~=6.0.1",
             "coverage~=7.10.6",
