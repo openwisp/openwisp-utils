@@ -41,7 +41,7 @@
   min-width: 222px !important;
 }
 .auto-filter .select2-selection {
-  border: 1px solid var(--ow-color-gray-dark) !important;
+  border: 1px solid var(--ow-color-fg-dark) !important;
   border-radius: 0.2rem !important;
   padding: 0.4rem 1.25rem 0.3125rem 1rem;
 }
@@ -74,7 +74,7 @@
   max-height: 18.75rem;
   min-width: 100%;
   border: none !important;
-  box-shadow: var(--ow-shadow-dark);
+  box-shadow: 0px 1px 4px #00000040;
   overflow-y: auto;
 }
 .auto-filter-choices .select2-results ul {
@@ -84,7 +84,7 @@
 .auto-filter-choices .select2-results li {
   margin: 0;
   list-style-type: none;
-  color: var(--ow-color-gray-dark);
+  color: var(--ow-color-fg-dark);
   font-size: 14px;
   border-radius: 4px;
   font-weight: 500;
