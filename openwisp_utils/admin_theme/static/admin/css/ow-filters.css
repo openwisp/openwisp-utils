@@ -1,3 +1,11 @@
+:root {
+  --ow-selected-filter-option-bg: var(--ow-color-primary);
+  --ow-selected-filter-option-text: var(--button-fg);
+  --ow-filter-option-hover-bg: var(--ow-color-primary-light);
+  --ow-filter-option-hover-text: var(--ow-color-primary-dark);
+  --ow-active-filter-title: var(--ow-color-primary);
+}
+
 #changelist .results,
 #changelist .actions,
 #changelist .paginator {
@@ -142,8 +150,8 @@
   font-size: 14px;
 }
 .ow-filter.ow-active .filter-title {
-  border-color: var(--ow-color-primary);
-  color: var(--ow-color-primary);
+  border-color: var(--ow-active-filter-title);
+  color: var(--ow-active-filter-title);
 }
 .filter-options a {
   padding: 0.5rem 0.75rem;
@@ -161,15 +169,16 @@
 .filter-options .selected,
 .filter-options .selected:hover,
 .filter-options .selected:focus {
-  background: #df5d43;
-  color: #ffff;
+  background: var(--ow-selected-filter-option-bg);
+  color: var(--ow-selected-filter-option-text);
   cursor: default;
 }
 .filter-options a:hover,
 .filter-options a:focus {
-  background: #ffe5e5;
-  color: #ba2121;
+  background: var(--ow-filter-option-hover-bg);
+  color: var(--ow-filter-option-hover-text);
 }
+
 .ow-filter-slider {
   overflow-x: auto;
   padding: 0.625rem 1rem;
@@ -214,7 +223,7 @@
 }
 .left-arrow:hover,
 .right-arrow:hover {
-  background-color: #f7f7f7;
+  background-color: var(--ow-color-gray-lightest);
 }
 .left-arrow.down,
 .right-arrow.down {
@@ -227,7 +236,7 @@ a.field-clear {
   cursor: pointer;
   right: 0.5rem;
   top: 8px;
-  color: #ba2121;
+  color: var(--delete-button-bg);
   position: absolute;
 }
 

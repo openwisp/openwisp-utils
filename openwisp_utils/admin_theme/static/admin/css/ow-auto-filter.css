@@ -46,10 +46,10 @@
   padding: 0.4rem 1.25rem 0.3125rem 1rem;
 }
 .auto-filter .select2-selection[aria-expanded="true"] {
-  border-color: var(--ow-color-primary) !important;
+  border-color: var(--ow-selected-filter-option-bg) !important;
 }
 .auto-filter .select2-selection[aria-expanded="true"] .select2-selection__rendered {
-  color: var(--ow-color-primary) !important;
+  color: var(--ow-active-filter-title) !important;
 }
 .auto-filter .select2-selection__placeholder {
   color: var(--body-fg) !important;
@@ -93,10 +93,19 @@
     background 0.15s;
 }
 .auto-filter-choices .select2-results__option[aria-selected="true"] {
-  background: var(--ow-color-primary) !important;
-  color: var(--button-fg) !important;
+  color: var(--ow-selected-filter-option-text) !important;
+  background: var(--ow-selected-filter-option-bg) !important;
 }
-.auto-filter-choices .select2-results__option--highlighted {
-  background: var(--ow-color-primary-light) !important;
-  color: var(--ow-color-primary-dark) !important;
+.change-list
+  .select2-container--admin-autocomplete
+  .select2-results__option--highlighted[aria-selected] {
+  background: var(--ow-filter-option-hover-bg) !important;
+  color: var(--ow-filter-option-hover-text) !important;
+  text-decoration: underline;
+}
+.change-list
+  .select2-container--admin-autocomplete
+  .select2-results__option[aria-selected="true"] {
+  color: var(--ow-selected-filter-option-text) !important;
+  background: var(--ow-selected-filter-option-bg) !important;
 }

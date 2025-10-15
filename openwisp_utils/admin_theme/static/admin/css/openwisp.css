@@ -150,9 +150,9 @@ See https://code.djangoproject.com/ticket/33878 */
   --ow-btn-default-text: var(--ow-color-white);
   --ow-btn-default-hover: var(--ow-overlay-gray-70);
 
-  --ow-btn-danger-bg: var(--ow-color-primary);
-  --ow-btn-danger-text: var(--ow-color-white);
-  --ow-btn-danger-hover: var(--ow-color-primary-dark);
+  --ow-btn-danger-bg: #df5d43;
+  --ow-btn-danger-text: var(--button-fg);
+  --ow-btn-danger-hover: #b31e00;
 
   --ow-btn-success-bg: var(--ow-color-success);
   --ow-btn-success-text: var(--ow-color-white);
@@ -195,9 +195,9 @@ See https://code.djangoproject.com/ticket/33878 */
 
   /* === PAGINATION === */
   --ow-paginator-bg: var(--ow-color-primary);
-  --ow-paginator-text: var(--ow-color-white);
+  --ow-paginator-text: var(--button-fg);
   --ow-paginator-hover: var(--ow-color-primary-dark);
-  --ow-paginator-border-color: color-mix(in srgb, var(--ow-color-primary), white 30%);
+  --ow-paginator-border-color: color-mix(in srgb, var(--ow-paginator-bg), white 30%);
   --ow-paginator-showall-text: var(--ow-color-primary);
   --ow-paginator-showall-hover: var(--ow-color-primary-dark);
 
@@ -507,6 +507,11 @@ select {
 }
 .select2-selection__clear {
   left: -27px;
+}
+.select2-results__option--highlighted[aria-selected],
+.select2-results__option[aria-selected="true"] {
+  background: var(--ow-menu-link-hover-bg) !important;
+  color: var(--ow-menu-link-hover-text) !important;
 }
 .related-widget-wrapper .change-related {
   margin-left: 7px;
@@ -960,7 +965,7 @@ input[type="button"]:hover,
 .account-button:focus span,
 .account-menu .dropdown-clickable:hover span,
 .account-menu .dropdown-clickable:focus span {
-  background: #df5d43;
+  background: var(--ow-color-primary);
 }
 .account-menu {
   position: absolute;
