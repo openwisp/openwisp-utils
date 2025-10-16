@@ -1,3 +1,11 @@
+:root {
+  --ow-selected-filter-option-bg: var(--ow-color-primary);
+  --ow-selected-filter-option-text: var(--button-fg);
+  --ow-filter-option-hover-bg: var(--ow-color-primary-light);
+  --ow-filter-option-hover-text: var(--ow-color-primary-dark);
+  --ow-active-filter-title: var(--ow-color-primary);
+}
+
 #changelist .results,
 #changelist .actions,
 #changelist .paginator {
@@ -5,8 +13,8 @@
 }
 #ow-changelist-filter {
   padding: 1.25rem 2.5rem;
-  background: #fff;
-  border-bottom: 2px solid #f6f6f6;
+  background-color: var(--body-bg);
+  border-bottom: 2px solid var(--ow-color-fg-lighter);
   display: flex;
   flex-direction: column-reverse;
 }
@@ -77,7 +85,7 @@
   opacity: 0;
   border-radius: 0.35rem;
   width: min-content;
-  background: #ffffff;
+  background: var(--body-bg);
   width: min-content;
   max-height: 18.75rem;
   min-width: 100%;
@@ -97,7 +105,7 @@
   padding: 0px;
 }
 .filter-title {
-  border: 1px solid #747272;
+  border: 1px solid var(--ow-color-fg-dark);
   border-radius: 0.2rem;
   padding: 0.4rem 1.25rem 0.3125rem 1rem;
   cursor: pointer;
@@ -115,8 +123,8 @@
   padding: 0px 5px;
   width: fit-content;
   width: -moz-fit-content;
-  background: #fff;
-  color: rgba(0, 0, 0, 0.65);
+  background: var(--body-bg);
+  color: var(--ow-overlay-67-5);
   pointer-events: none;
   font-weight: 300;
 }
@@ -142,8 +150,8 @@
   font-size: 14px;
 }
 .ow-filter.ow-active .filter-title {
-  border-color: #df5d43;
-  color: #df5d43;
+  border-color: var(--ow-active-filter-title);
+  color: var(--ow-active-filter-title);
 }
 .filter-options a {
   padding: 0.5rem 0.75rem;
@@ -161,15 +169,16 @@
 .filter-options .selected,
 .filter-options .selected:hover,
 .filter-options .selected:focus {
-  background: #df5d43;
-  color: #ffff;
+  background: var(--ow-selected-filter-option-bg);
+  color: var(--ow-selected-filter-option-text);
   cursor: default;
 }
 .filter-options a:hover,
 .filter-options a:focus {
-  background: #ffe5e5;
-  color: #ba2121;
+  background: var(--ow-filter-option-hover-bg);
+  color: var(--ow-filter-option-hover-text);
 }
+
 .ow-filter-slider {
   overflow-x: auto;
   padding: 0.625rem 1rem;
@@ -214,7 +223,7 @@
 }
 .left-arrow:hover,
 .right-arrow:hover {
-  background-color: #f7f7f7;
+  background-color: var(--ow-color-fg-lightest);
 }
 .left-arrow.down,
 .right-arrow.down {
@@ -227,7 +236,7 @@ a.field-clear {
   cursor: pointer;
   right: 0.5rem;
   top: 8px;
-  color: #ba2121;
+  color: var(--delete-button-bg);
   position: absolute;
 }
 
