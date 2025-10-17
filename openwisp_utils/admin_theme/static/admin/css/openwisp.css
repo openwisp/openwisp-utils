@@ -301,9 +301,7 @@ a:visited {
   text-decoration: none;
 }
 table thead th.sorted .sortoptions a.sortremove:focus:after,
-table thead th.sorted .sortoptions a.sortremove:hover:after,
-a:hover,
-a:focus {
+table thead th.sorted .sortoptions a.sortremove:hover:after {
   color: var(--ow-link-hover);
   text-decoration: underline;
 }
@@ -352,6 +350,9 @@ fieldset.module h2,
 .selector .selector-chosen-title {
   background: var(--ow-module-bg);
   color: var(--ow-module-text);
+  border: 1px solid var(--hairline-color);
+  /* avoid double top border due to form-row */
+  margin-top: -1px;
   padding: 15px;
 }
 #content-main fieldset.module summary {
@@ -401,7 +402,9 @@ fieldset.module h2 {
 }
 #content fieldset .fieldset-heading,
 #content fieldset .inline-heading {
-  border: 0px;
+  border-left: 0 none;
+  border-right: 0 none;
+  border-top: 1px solid var(--hairline-color);
 }
 #main .inline-related h3 {
   padding: 15px;
@@ -551,15 +554,24 @@ The following CSS reverts those changes*/
   display: block;
 }
 #main .submit-row input {
-  margin: 0 0 5px 5px;
+  margin: 0 0 0 5px;
 }
 #main .submit-row input.default {
-  margin: 0 0 5px 8px;
+  margin: 0 0 0 8px;
   float: right;
 }
 .submit-row p.deletelink-box {
   float: left;
   margin: 0;
+}
+
+/* icon fixes for Django >= 5.2 */
+.related-widget-wrapper-link {
+  line-height: 30px;
+}
+.related-widget-wrapper-link img {
+  width: 20px;
+  height: 20px;
 }
 
 /* temporary frontend fix */
@@ -874,6 +886,9 @@ input[type="button"]:hover,
   text-align: center;
   margin: 20px 0 40px;
 }
+.inline-related .inline-deletelink {
+  margin-top: -3px;
+}
 
 /*
   NOTE:
@@ -1052,7 +1067,9 @@ input[type="button"]:hover,
   text-decoration: underline;
 }
 #content-main .form-row a:link:hover,
-#content-main a:link:focus {
+#content-main a:link:focus,
+#main .object-tools a:hover,
+#main .object-tools a:focus {
   text-decoration: none;
 }
 .title-wrapper h1,
@@ -1138,9 +1155,6 @@ div#toolbar #searchbar {
   background: var(--ow-option-hover-bg);
   color: var(--ow-option-hover-text);
   outline: 0 none;
-}
-#content p {
-  margin: 10px 0;
 }
 
 /* Calender style */
