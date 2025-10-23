@@ -1,10 +1,67 @@
 Changelog
 =========
 
-Version 1.2.0 [Unreleased]
+Version 1.2.0 [2025-10-23]
 --------------------------
 
-Work in progress.
+Features
+~~~~~~~~
+
+- Added `guided release tool
+  <https://openwisp.io/docs/dev/utils/developer/releaser-tool.html>`_.
+- Added retry mechanism to SeleniumTestMixin `#464
+  <https://github.com/openwisp/openwisp-utils/issues/464>`_.
+- Enhanced ``ValidatedModelSerializer``: introduced ``exclude_validation``
+  and avoided setting many-to-many fields automatically.
+- Added reusable `retry-command GitHub action
+  <https://openwisp.io/docs/dev/utils/developer/reusable-github-utils.html#retry-command>`_.
+- Made HTML template configurable in
+  `openwisp_utils.admin_theme.email.send_email
+  <https://openwisp.io/docs/dev/utils/developer/admin-theme.html#openwisp-utils-admin-theme-email-send-email>`_..
+
+Changes
+~~~~~~~
+
+Backward-incompatible changes
++++++++++++++++++++++++++++++
+
+- Dropped support for OPENWISP_EMAIL_TEMPLATE setting `#482
+  <https://github.com/openwisp/openwisp-utils/issues/482>`_.
+
+Other changes
++++++++++++++
+
+- Moved theme color definitions in CSS to variables `#487
+  <https://github.com/openwisp/openwisp-utils/issues/487>`_.
+- Standardized code style by switching to Prettier for CSS and JavaScript
+  linting `#367 <https://github.com/openwisp/openwisp-utils/issues/367>`_.
+- Added line-length enforcement to prettier.
+- Unified Prettier checks into a single command; now includes YAML,
+  Markdown, and JSON files.
+- Updated UI of HTML email templates.
+- Switched selenium browser tests to Firefox.
+
+Dependencies
+++++++++++++
+
+- Bumped ``django-model-utils>=4.5,<5.1"``.
+- Bumped ``swapper~=1.4.0``.
+- Bumped ``djangorestframework~=3.16.0``.
+- Bumped ``celery~=5.5.3``.
+- Bumped ``django-filter>=25.1,<26.0``.
+- Bumped ``black>=25.1,<25.10``.
+- Bumped ``flake8~=7.3.0``.
+- Bumped ``isort~=6.0.1``.
+- Bumped ``tblib~=3.1.0``.
+- Bumped ``docstrfmt~=1.11.1``.
+- Bumped ``selenium>=4.10,<4.36``.
+- Added ``channels`` and ``channels-test`` extra requires `#388
+  <https://github.com/openwisp/openwisp-utils/issues/388>`_.
+- Removed ``coveralls`` in favor of ``coverage`` package.
+- Added support for Django ``5.x``.
+- Dropped support for Django ``3.2.0`` and Django ``4.1.0``.
+- Added support for Python ``3.11``, ``3.12``, and ``3.13``.
+- Dropped support for Python ``3.8``.
 
 Version 1.1.2 [2025-06-18]
 --------------------------
