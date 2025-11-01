@@ -36,7 +36,7 @@ setup(
         "qa": [
             "black>=25.1,<25.10",
             "flake8~=7.3.0",
-            "isort~=6.0.1",
+            "isort>=6.0.1,<7.1.0",
             "coverage~=7.10.6",
             "tblib~=3.1.0",
             "docstrfmt~=1.11.1",
