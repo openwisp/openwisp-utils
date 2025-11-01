@@ -38,7 +38,7 @@ setup(
             "flake8~=7.3.0",
             "isort~=6.0.1",
             "coverage~=7.10.6",
-            "tblib~=3.1.0",
+            "tblib>=3.1,<3.3",
             "docstrfmt~=1.11.1",
         ],
         "rest": [
