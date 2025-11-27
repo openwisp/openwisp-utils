@@ -101,7 +101,6 @@
   .select2-results__option--highlighted[aria-selected] {
   background: var(--ow-filter-option-hover-bg) !important;
   color: var(--ow-filter-option-hover-text) !important;
-  text-decoration: underline;
 }
 .change-list
   .select2-container--admin-autocomplete
