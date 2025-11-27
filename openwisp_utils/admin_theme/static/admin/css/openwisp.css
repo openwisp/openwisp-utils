@@ -415,6 +415,12 @@ fieldset.module h2 {
   border-top: 1px solid var(--hairline-color);
   border-bottom: 1px solid var(--hairline-color);
 }
+/* Needed due to whitespace elimination in prod */
+#main .inline-related h3 .inline_label,
+#main .inline-related h3 .delete label {
+  margin-left: 0.4em;
+}
+
 .inline-related fieldset.module h4 {
   font-size: 16px;
   text-transform: uppercase;
