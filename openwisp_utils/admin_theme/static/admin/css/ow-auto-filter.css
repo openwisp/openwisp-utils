@@ -59,6 +59,12 @@
   color: var(--body-fg) !important;
   line-height: 1.5rem;
 }
+
+.auto-filter .select2-selection__rendered {
+  height: 1.5rem;
+  line-height: 1.5rem;
+  padding: 0;
+}
 .auto-filter-choices {
   display: block;
   border: none;
