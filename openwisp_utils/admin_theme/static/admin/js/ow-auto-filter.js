@@ -42,7 +42,7 @@ django.jQuery(document).ready(function () {
       dropDownContainer = django
         .jQuery(optionsContainer)
         .find(".select2-container--open")[1];
-    django.jQuery(optionsContainer).css("min-height", "14.75rem");
+    django.jQuery(optionsContainer).css("min-height", "18.75rem");
     django.jQuery(dropDownContainer).appendTo(optionsContainer);
     django.jQuery(dropDownContainer).removeAttr("style");
   });
