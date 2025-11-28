@@ -6,6 +6,12 @@ Version 1.3.0a [unreleased]
 
 Work in progress.
 
+- [fix:ui] Make Select2 autofilers visually consistent with regular filters
+  - Fixed the control height to 1.5rem and aligned borders, padding, and
+    active states to match regular `ow-filters` styles.
+  - Corrected dropdown positioning and updated the dropdown height to
+    18.75rem for a consistent dropdown size.
+
 Version 1.2.0 [2025-10-23]
 --------------------------
 
