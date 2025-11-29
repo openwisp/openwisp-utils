@@ -41,10 +41,48 @@ and ease maintenance.
     :target: http://openwisp.org
 
 Documentation
--------------
+ WOFF files extracted
+ using https://github.com/majodev/google-webfonts-helper.
 
-- `Usage documentation <https://openwisp.io/docs/stable/utils/>`_
-- `Developer documentation
+Running tests locally (Windows PowerShell)
+----------------------------------------
+
+If you're on Windows, the included helper script will create a virtualenv, install deps and run tests.
+
+From the repository root:
+
+```powershell
+.\run-tests.ps1
+```
+
+Alternatively, do the steps manually:
+
+```powershell
+# Create and activate venv
+python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+. .\.venv\Scripts\Activate.ps1
+
+# Install package
+pip install -e .[rest,qa]
+
+# Install test requirements
+pip install -r requirements-test.txt
+
+# Run tests
+python runtests.py
+```
+
+Notes:
+
+- The `requirements-test.txt` installs `openwisp_controller` from the GitHub master tarball. This may take a while and can fail on very new Python versions.
+- If you hit a `ModuleNotFoundError` (for example `openwisp_controller`), try installing the tarball manually:
+
+```powershell
+pip install "openwisp_controller @ https://github.com/openwisp/openwisp-controller/tarball/master"
+```
+
+If you want help running the tests or a CI setup, open an issue with the test failure output and your environment info.
   <https://openwisp.io/docs/stable/utils/developer/>`_
 
 Contributing

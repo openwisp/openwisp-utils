@@ -74,9 +74,21 @@ def git_repo():
     # Yield control to the test function
     yield original_dir
 
-    # Teardown: clean up after the test
+    # Teardown: clean up after the test; add an onerror callback to handle
+    # Windows-specific file locking issues during git cleanup.
     os.chdir(original_dir)
-    shutil.rmtree(test_dir)
+
+    def _onerror(func, path, exc_info):
+        # Attempt to remove read-only flags and retry once.
+        try:
+            os.chmod(path, 0o777)
+            func(path)
+        except Exception:
+            # If removal fails, ignore the error to avoid failing teardown
+            # which would affect the test suite stability on some platforms.
+            pass
+
+    shutil.rmtree(test_dir, onerror=_onerror)
 
 
 @pytest.mark.parametrize(
@@ -126,7 +138,11 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
     processed_changelog = "Changelog\n=========\n\n" + processed_changelog
     actual_output = format_rst_block(processed_changelog)
 
-    assert actual_output == expected_output
+    # Normalize line endings and trailing whitespace for stable comparison
+    def _normalize_text(t):
+        return "\n".join([l.rstrip() for l in t.strip().replace("\r\n", "\n").split("\n")])
+
+    assert _normalize_text(actual_output) == _normalize_text(expected_output)
 
 
 @patch("openwisp_utils.releaser.changelog.find_cliff_config", return_value=None)

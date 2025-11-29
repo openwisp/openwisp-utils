@@ -1,3 +1,4 @@
+import os
 import pytest
 from openwisp_utils.releaser.config import detect_changelog_style, load_config
 
@@ -29,7 +30,8 @@ def test_load_config_flexible_changelog_names(
     config = load_config()
 
     assert config["repo"] == "my-org/my-test-package"
-    assert config["version_path"] == "my_test_package/__init__.py"
+    # Compare normalized paths to be OS-agnostic
+    assert os.path.normpath(config["version_path"]) == os.path.normpath("my_test_package/__init__.py")
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
     assert config["changelog_path"] == changelog_filename
     assert config["changelog_format"] == expected_format
