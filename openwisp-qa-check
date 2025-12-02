@@ -118,7 +118,7 @@ runflake8() {
 }
 
 runrstcheck() {
-  cmd="docstrfmt --no-docstring-trailing-line --ignore-cache --check --line-length 74 ."
+  cmd="docstrfmt --no-docstring-trailing-line -i -c -l 74 -s =-~+^\"\'.: ."
   $($cmd --quiet) &&
     echo "SUCCESS: ReStructuredText check successful!" ||
     {

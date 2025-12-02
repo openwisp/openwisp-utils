@@ -93,17 +93,29 @@ def rst_to_markdown(text):
     ).strip()
 
 
+def _call_docstrfmt(file_path):
+    return subprocess.run(
+        [
+            "docstrfmt",
+            "--ignore-cache",
+            "--section-adornments",
+            "=-~+^\"'.:",
+            "--line-length",
+            "74",
+            file_path,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
 def format_file_with_docstrfmt(file_path):
     """Format a file using `docstrfmt`."""
     while True:
         try:
-            subprocess.run(
-                ["docstrfmt", "--ignore-cache", "--line-length", "74", file_path],
-                check=True,
-                capture_output=True,
-                text=True,
-                encoding="utf-8",
-            )
+            _call_docstrfmt(file_path)
             print(f"✅ Formatted {file_path} successfully.")
             break
         except subprocess.CalledProcessError as e:

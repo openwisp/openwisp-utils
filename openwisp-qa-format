@@ -3,7 +3,9 @@ set -e
 
 isort .
 black .
-docstrfmt --no-docstring-trailing-line --ignore-cache --line-length 74 .
+docstrfmt --no-docstring-trailing-line --ignore-cache \
+  --section-adornments "=-~+^\"\'.:" \
+  --line-length 74 .
 
 if which prettier > /dev/null; then
   prettier --write "**/*.+(yml|yaml|md|js|json|css)" --print-width 88
