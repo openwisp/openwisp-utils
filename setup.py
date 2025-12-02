@@ -37,9 +37,9 @@ setup(
             "black>=25.1,<25.10",
             "flake8~=7.3.0",
             "isort>=6.0.1,<7.1.0",
-            "coverage~=7.10.6",
+            "coverage>=7.10.0,<7.13.0",
             "tblib~=3.1.0",
-            "docstrfmt~=1.11.1",
+            "docstrfmt>=2.0.0,<2.1.0",
         ],
         "rest": [
             "djangorestframework~=3.16.0",

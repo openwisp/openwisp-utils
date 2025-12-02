@@ -113,6 +113,8 @@ def test_format_file_with_docstrfmt_success(mock_print, mock_subprocess):
     expected_command = [
         "docstrfmt",
         "--ignore-cache",
+        "--section-adornments",
+        "=-~+^\"'.:",
         "--line-length",
         "74",
         file_path,
