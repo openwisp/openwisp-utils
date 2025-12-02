@@ -7,6 +7,8 @@ import tempfile
 
 import questionary
 
+from .utils import _call_docstrfmt
+
 
 def find_cliff_config():
     # Locates the cliff.toml file packaged within 'openwisp_utils'.
@@ -155,19 +157,7 @@ def format_rst_block(content):
             temp_file_path = tf.name
             tf.write(content_with_header)
 
-        subprocess.run(
-            [
-                "docstrfmt",
-                "--no-docstring-trailing-line",
-                "--ignore-cache",
-                "--line-length",
-                "74",
-                temp_file_path,
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        _call_docstrfmt(temp_file_path)
 
         with open(temp_file_path, "r") as tf:
             formatted_full_content = tf.read()
