@@ -46,7 +46,7 @@
   padding: 0.4rem 1.25rem 0.3125rem 1rem;
 }
 .auto-filter .select2-selection[aria-expanded="true"] {
-  border-color: var(--ow-selected-filter-option-bg) !important;
+  border-color: var(--ow-active-filter-title) !important;
 }
 .auto-filter .select2-selection[aria-expanded="true"] .select2-selection__rendered {
   color: var(--ow-active-filter-title) !important;
