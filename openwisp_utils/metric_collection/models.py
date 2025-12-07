@@ -1,4 +1,7 @@
+import hashlib
+import json
 import logging
+from datetime import date
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -114,10 +117,28 @@ class OpenwispVersion(TimeStampedEditableModel):
                 category, {"Installation Method": get_openwisp_installation_method()}
             )
         )
+
+        # Check if this exact payload has already been sent today
+        metrics_hash = get_payload_hash(metrics)
+        if MetricSent.objects.filter(
+            category=category,
+            metrics_hash=metrics_hash,
+            date=date.today()
+        ).exists():
+            logger.info(f"Metrics already sent today for category={category}, skipping")
+            return
+
         logger.info(f"Sending metrics, category={category}")
         post_metrics(metrics)
         logger.info(f"Metrics sent successfully, category={category}")
         logger.info(f"Metrics: {metrics}")
+
+        # Mark as sent
+        MetricSent.objects.create(
+            category=category,
+            metrics_hash=metrics_hash,
+            date=date.today()
+        )
 
 
 class Consent(TimeStampedEditableModel):
@@ -173,8 +194,63 @@ class Consent(TimeStampedEditableModel):
                 logger.info("Consent withdrawn, sending final metric event")
                 # Create a simple event for consent withdrawal
                 events = get_events("Consent Withdrawn", {"Action": "Opt-out"})
+
+                # Check if this consent withdrawal has already been sent today
+                metrics_hash = get_payload_hash(events)
+                if MetricSent.objects.filter(
+                    category="Consent Withdrawn",
+                    metrics_hash=metrics_hash,
+                    date=date.today()
+                ).exists():
+                    logger.info("Consent withdrawal metric already sent today, skipping")
+                    return
+
                 post_metrics(events)
                 logger.info("Consent withdrawal metric sent successfully")
+
+                # Mark as sent
+                MetricSent.objects.create(
+                    category="Consent Withdrawn",
+                    metrics_hash=metrics_hash,
+                    date=date.today()
+                )
         except sender.DoesNotExist:
             # In case the instance doesn't exist in DB yet, just pass
             pass
+
+
+class MetricSent(TimeStampedEditableModel):
+    """Tracks sent metrics to prevent duplicates.
+
+    This model stores a hash of each metrics payload that has been sent,
+    along with the category and date, to ensure each unique payload is
+    sent at most once per day.
+    """
+
+    category = models.CharField(
+        max_length=50,
+        help_text="Type of metric (Install, Heartbeat, Upgrade, Consent Withdrawn)"
+    )
+    metrics_hash = models.CharField(
+        max_length=64,
+        help_text="SHA-256 hash of the metrics payload"
+    )
+    date = models.DateField(
+        help_text="Date when the metric was sent"
+    )
+
+    class Meta:
+        unique_together = ('category', 'metrics_hash', 'date')
+        ordering = ("-created",)
+        verbose_name = "Sent Metric"
+        verbose_name_plural = "Sent Metrics"
+
+
+def get_payload_hash(events):
+    """Calculate SHA-256 hash of the events payload."""
+    # Sort events to ensure consistent hashing regardless of order
+    sorted_events = sorted(events, key=lambda x: (x.get('category', ''), x.get('action', ''), x.get('name', '')))
+    payload_str = json.dumps(sorted_events, sort_keys=True)
+    return hashlib.sha256(payload_str.encode('utf-8')).hexdigest()
+
+
