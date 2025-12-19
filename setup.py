@@ -40,6 +40,7 @@ setup(
             "isort~=6.0.1",
             "coverage~=7.10.6",
             "tblib~=3.1.0",
+            "sphinx<9",
             "docstrfmt~=1.11.1",
         ],
         "rest": [
