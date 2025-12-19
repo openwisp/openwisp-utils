@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from unittest.mock import patch
 
 import requests
@@ -11,7 +11,7 @@ from openwisp_utils.admin_theme import system_info
 from urllib3.response import HTTPResponse
 
 from .. import helper, models, tasks
-from ..models import Consent, OpenwispVersion
+from ..models import Consent, OpenwispVersion, MetricSent
 from . import (
     _ENABLED_OPENWISP_MODULES_RETURN_VALUE,
     _HEARTBEAT_METRICS,
@@ -369,3 +369,120 @@ class TestOpenwispVersion(TestCase):
         Consent.objects.create(user_consented=False)
         tasks.send_usage_metrics.delay()
         mocked_post_usage_metrics.assert_not_called()
+
+
+class TestSentMetric(TestCase):
+    def setUp(self):
+        # Clear MetricSent records
+        MetricSent.objects.all().delete()
+
+    def test_get_payload_hash(self):
+        from ..models import get_payload_hash
+        events = [
+            {"category": "Heartbeat", "action": "test", "name": "value", "value": 1, "times": 1, "period_start": 1234567890, "period_end": 1234567890}
+        ]
+        hash1 = get_payload_hash(events)
+        hash2 = get_payload_hash(events)
+        self.assertEqual(hash1, hash2)
+        self.assertEqual(len(hash1), 64)  # SHA-256 hex length
+
+        # Different events should have different hashes
+        events2 = [
+            {"category": "Heartbeat", "action": "test", "name": "value2", "value": 1, "times": 1, "period_start": 1234567890, "period_end": 1234567890}
+        ]
+        hash3 = get_payload_hash(events2)
+        self.assertNotEqual(hash1, hash3)
+
+        # Events with different timestamps should have the same hash
+        events3 = [
+            {"category": "Heartbeat", "action": "test", "name": "value", "value": 1, "times": 1, "period_start": 1234567891, "period_end": 1234567891}
+        ]
+        hash4 = get_payload_hash(events3)
+        self.assertEqual(hash1, hash4)
+
+    @freeze_time("2023-12-01")
+    def test_has_been_sent_today(self):
+        from ..models import get_payload_hash
+        events = [
+            {"category": "Heartbeat", "action": "test", "name": "value", "value": 1, "times": 1, "period_start": 1234567890, "period_end": 1234567890}
+        ]
+        metrics_hash = get_payload_hash(events)
+
+        # Should not exist initially
+        self.assertFalse(MetricSent.objects.filter(
+            category="Heartbeat",
+            metrics_hash=metrics_hash,
+            date=date.today()
+        ).exists())
+
+        # Create record
+        MetricSent.objects.create(
+            category="Heartbeat",
+            metrics_hash=metrics_hash,
+            date=date.today()
+        )
+
+        # Should exist now
+        self.assertTrue(MetricSent.objects.filter(
+            category="Heartbeat",
+            metrics_hash=metrics_hash,
+            date=date.today()
+        ).exists())
+
+        # Different category should not affect
+        self.assertFalse(MetricSent.objects.filter(
+            category="Install",
+            metrics_hash=metrics_hash,
+            date=date.today()
+        ).exists())
+
+    @patch.object(models, "get_openwisp_version", return_value="23.0.0a")
+    @patch.object(
+        models,
+        "get_enabled_openwisp_modules",
+        return_value=_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+    )
+    @patch.object(
+        models,
+        "get_os_details",
+        return_value=_OS_DETAILS_RETURN_VALUE,
+    )
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
+    @freeze_time("2023-12-01 00:00:00")
+    def test_send_usage_metrics_prevents_duplicate_sends_same_day(self, mocked_post, *args):
+        # First send should work
+        tasks.send_usage_metrics.delay(category="Heartbeat")
+        mocked_post.assert_called_once()
+
+        # Reset mock
+        mocked_post.reset_mock()
+
+        # Second send on same day should be skipped
+        tasks.send_usage_metrics.delay(category="Heartbeat")
+        mocked_post.assert_not_called()
+
+    @patch.object(models, "get_openwisp_version", return_value="23.0.0a")
+    @patch.object(
+        models,
+        "get_enabled_openwisp_modules",
+        return_value=_ENABLED_OPENWISP_MODULES_RETURN_VALUE,
+    )
+    @patch.object(
+        models,
+        "get_os_details",
+        return_value=_OS_DETAILS_RETURN_VALUE,
+    )
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
+    @freeze_time("2023-12-01 00:00:00")
+    def test_send_usage_metrics_allows_send_next_day(self, mocked_post, *args):
+        # Send on day 1
+        tasks.send_usage_metrics.delay(category="Heartbeat")
+        mocked_post.assert_called_once()
+
+        # Reset mock
+        mocked_post.reset_mock()
+
+        # Move to next day
+        with freeze_time("2023-12-02 00:00:00"):
+            tasks.send_usage_metrics.delay(category="Heartbeat")
+            mocked_post.assert_called_once()  # Should be called again
