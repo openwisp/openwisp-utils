@@ -6,6 +6,15 @@ Version 1.3.0a [unreleased]
 
 Work in progress.
 
+Version 1.2.1 [2025-12-19]
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+- Updated `system info to retrieve friendly OS identifiers
+  <https://github.com/openwisp/openwisp-utils/issues/544>`_.
+
 Version 1.2.0 [2025-10-23]
 --------------------------
 
