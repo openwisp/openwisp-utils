@@ -280,6 +280,10 @@ def test_update_changelog_bugfix_port_flow(mock_file):
         "Version 1.2.0 [Unreleased]"
     )
     assert written_content.find("Version 1.1.3") < written_content.find("Version 1.1.2")
+    # "Work in progress." text below unreleased header should come before new bugfix block
+    assert written_content.find("Work in progress.") < written_content.find(
+        "Version 1.1.3"
+    )
 
 
 @patch("builtins.open", new_callable=mock_open, read_data=SAMPLE_CHANGELOG)
