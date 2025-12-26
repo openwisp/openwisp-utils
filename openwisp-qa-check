@@ -162,7 +162,7 @@ runcheckpendingmigrations() {
   if [ ! -f "./tests/manage.py" ]; then
     echo "File manage.py not found, skipping Make Migration Check."
   else
-    OUTPUT=$(python tests/manage.py makemigrations --dry-run $MODULE)
+    OUTPUT=$(OWQA_USE_IN_MEMORY_DB=1 python tests/manage.py makemigrations --dry-run $MODULE)
     echo $OUTPUT | grep "No changes detected" &>/dev/null &&
       echo "SUCCESS: Migrations check successful!" ||
       {
