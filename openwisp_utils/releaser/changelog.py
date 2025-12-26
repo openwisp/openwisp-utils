@@ -247,7 +247,7 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
     unreleased_block_regex_str = (
         r"^(##\s+(?:Version\s+)?\S+\s+\[Unreleased\](?:.|\n)*?)(?=\n##\s+(?:Version\s+)?|\Z)"
         if is_md
-        else r"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n^(?:Version\s+)?\S|\Z)"
+        else r"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n(?:Version\s+)?\d+\.\d+\.\d+\s+\[|\Z)"
     )
     unreleased_block_regex = re.compile(
         unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE
