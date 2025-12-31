@@ -358,8 +358,17 @@ def main():
         ["git", "checkout", "-b", release_branch], check=True, capture_output=True
     )
 
-    print("Adding all changed files to git...")
-    subprocess.run(["git", "add", "."], check=True, capture_output=True)
+    print("Adding release-related files to git...")
+    # Add only the specific files that were modified during the release process
+    files_to_add = [config["changelog_path"]]
+
+    # Add version file if it exists and was modified
+    version_path = config.get("version_path")
+    if version_path and os.path.exists(version_path):
+        files_to_add.append(version_path)
+
+    for file_path in files_to_add:
+        subprocess.run(["git", "add", file_path], check=True, capture_output=True)
 
     commit_message = f"{new_version} release"
     subprocess.run(
