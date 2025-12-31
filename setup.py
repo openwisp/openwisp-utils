@@ -15,12 +15,16 @@ setup(
     platforms=["Platform Independent"],
     keywords=["django", "netjson", "openwrt", "networking", "openwisp"],
     packages=find_packages(exclude=["tests*", "docs*"]),
+    py_modules=["cz_openwisp"],
     include_package_data=True,
     entry_points={
         "console_scripts": [
             "checkmigrations = openwisp_utils.qa:check_migration_name",
             "checkcommit = openwisp_utils.qa:check_commit_message",
-        ]
+        ],
+        "commitizen.plugin": [
+            "openwisp = cz_openwisp:OpenWispCommitizen",
+        ],
     },
     scripts=["openwisp-qa-check", "openwisp-qa-format", "openwisp-pre-push-hook"],
     zip_safe=False,
@@ -31,6 +35,7 @@ setup(
         "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
         "urllib3>=2.0.0,<3.0.0",
+        "commitizen",
     ],
     extras_require={
         "qa": [
