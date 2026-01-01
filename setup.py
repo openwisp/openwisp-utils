@@ -35,7 +35,7 @@ setup(
         "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
         "urllib3>=2.0.0,<3.0.0",
-        "commitizen",
+        "commitizen>=4.0.0,<5.0.0",
         "distro~=1.9.0",
     ],
     extras_require={

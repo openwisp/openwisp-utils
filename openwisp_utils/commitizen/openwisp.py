@@ -1,4 +1,5 @@
 import re
+
 from commitizen.cz.base import BaseCommitizen
 
 _CUSTOM_PREFIX_RE = re.compile(r"^[a-z0-9!:-]+$")
@@ -8,9 +9,7 @@ _FIXES_RE = re.compile(r"^Fixes #(\d+)$", re.MULTILINE)
 
 
 class OpenWispCommitizen(BaseCommitizen):
-    """
-    Commitizen plugin for OpenWISP commit conventions.
-    """
+    """Commitizen plugin for OpenWISP commit conventions."""
 
     # Single source for allowed prefixes
     ALLOWED_PREFIXES = [
@@ -30,7 +29,7 @@ class OpenWispCommitizen(BaseCommitizen):
         if not value:
             return "Custom prefix cannot be empty."
         if not _CUSTOM_PREFIX_RE.match(value):
-            return "Prefix must be lowercase  "
+            return "Prefix must be lowercase."
         return True
 
     def _validate_title(self, value: str) -> bool | str:
@@ -94,11 +93,7 @@ class OpenWispCommitizen(BaseCommitizen):
         return f"{prefix} {title}\n\n" f"{body}\n\n" f"Fixes #{issue_number}"
 
     def validate_commit_message(self, message: str) -> bool:
-        """
-        Enforce OpenWISP commit rules:
-        - Title must start with a capital letter
-        - Why and How sections must be present and non-empty
-        """
+        """Enforce OpenWISP commit rules: - Title must start with a capital letter - Why and How sections must be present and non-empty"""
 
         lines = message.splitlines()
         if not lines:
@@ -150,29 +145,26 @@ class OpenWispCommitizen(BaseCommitizen):
 
     def example(self) -> str:
         return (
-            "[feature] Add commit convention enforcement #<issue_number>\n\n"
-            "Why:\n"
-            "* Contributors need consistent and descriptive commit messages\n\n"
-            "This change addresses the need by:\n"
-            "* Introducing a Commitizen-based commit workflow"
+            "[feature] Add commit convention enforcement #110\n\n"
+            "Introduce a Commitizen-based commit workflow to standardize\n"
+            "commit messages across the OpenWISP project.\n\n"
+            "Fixes #110"
         )
 
     def schema(self) -> str:
         return "[<type>] <Title>"
 
     def schema_pattern(self) -> str:
-        return r"^\[(feature|change|fix|docs|test|ci|chore|qa|other)\] [A-Z].+"
+        return r"^\[(feature|change|fix|docs|test|ci|chore|qa)\] [A-Z].+"
 
     def info(self) -> str:
         return (
             "OpenWISP Commit Convention\n\n"
             "Commit messages must follow this structure:\n\n"
-            "[type] Capitalized title\n\n"
-            "Why:\n"
-            "* Describe the problem, limitation, or motivation\n\n"
-            "This change addresses the need by:\n"
-            "* Describe how the change solves the problem\n\n"
-            "Allowed types:\n"
+            "[type] Capitalized title #<issue_number>\n\n"
+            "<description>\n\n"
+            "Fixes #<issue_number>\n\n"
+            "Allowed commit types:\n"
             "- feature\n"
             "- change\n"
             "- fix\n"
@@ -180,7 +172,9 @@ class OpenWispCommitizen(BaseCommitizen):
             "- test\n"
             "- ci\n"
             "- chore\n"
-            "- qa"
+            "- qa\n\n"
+            "If none of the predefined types apply, contributors can select\n"
+            "the 'other' option and provide a custom type enclosed in square brackets."
         )
 
     def __init__(self, config):
