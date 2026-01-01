@@ -3,8 +3,8 @@ _ENABLED_OPENWISP_MODULES_RETURN_VALUE = {
     "openwisp-users": "1.1.0a",
 }
 _OS_DETAILS_RETURN_VALUE = {
-    "kernel_version": "5.13.0-52-generic",
-    "os_version": "#59~20.04.1-Ubuntu SMP Thu Jun 16 21:21:28 UTC 2022",
+    "kernel_version": "5.13.0",
+    "os_version": "Ubuntu 20.04.1 LTS",
     "hardware_platform": "x86_64",
 }
 
@@ -39,7 +39,7 @@ _MODULES_UPGRADE_EXPECTED_METRICS = [
     {
         "category": "Upgrade",
         "action": "kernel_version",
-        "name": "5.13.0-52-generic",
+        "name": "5.13.0",
         "value": 1,
         "times": 1,
         "period_start": 1701388800,
@@ -48,7 +48,7 @@ _MODULES_UPGRADE_EXPECTED_METRICS = [
     {
         "category": "Upgrade",
         "action": "os_version",
-        "name": "#59~20.04.1-Ubuntu SMP Thu Jun 16 21:21:28 UTC 2022",
+        "name": "Ubuntu 20.04.1 LTS",
         "value": 1,
         "times": 1,
         "period_start": 1701388800,
@@ -105,7 +105,7 @@ _HEARTBEAT_METRICS = [
     {
         "category": "Heartbeat",
         "action": "kernel_version",
-        "name": "5.13.0-52-generic",
+        "name": "5.13.0",
         "value": 1,
         "times": 1,
         "period_start": 1701388800,
@@ -114,7 +114,7 @@ _HEARTBEAT_METRICS = [
     {
         "category": "Heartbeat",
         "action": "os_version",
-        "name": "#59~20.04.1-Ubuntu SMP Thu Jun 16 21:21:28 UTC 2022",
+        "name": "Ubuntu 20.04.1 LTS",
         "value": 1,
         "times": 1,
         "period_start": 1701388800,
@@ -170,7 +170,7 @@ _NEW_INSTALLATION_METRICS = [
     {
         "category": "Install",
         "action": "kernel_version",
-        "name": "5.13.0-52-generic",
+        "name": "5.13.0",
         "value": 1,
         "times": 1,
         "period_start": 1701388800,
@@ -179,7 +179,7 @@ _NEW_INSTALLATION_METRICS = [
     {
         "category": "Install",
         "action": "os_version",
-        "name": "#59~20.04.1-Ubuntu SMP Thu Jun 16 21:21:28 UTC 2022",
+        "name": "Ubuntu 20.04.1 LTS",
         "value": 1,
         "times": 1,
         "period_start": 1701388800,

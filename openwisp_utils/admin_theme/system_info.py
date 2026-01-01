@@ -2,6 +2,7 @@ import platform
 import sys
 from collections import OrderedDict
 
+import distro
 from django.conf import settings
 from django.utils.module_loading import import_string
 
@@ -76,8 +77,11 @@ def get_enabled_openwisp_modules():
 
 def get_os_details():
     uname = platform.uname()
+    os_name = distro.name(pretty=True)
+    # Simplify kernel version (e.g., "5.15.0-164-generic" -> "5.15.0")
+    kernel_version = uname.release.split("-")[0]
     return {
-        "os_version": uname.version,
-        "kernel_version": uname.release,
+        "os_version": os_name,
+        "kernel_version": kernel_version,
         "hardware_platform": uname.machine,
     }
