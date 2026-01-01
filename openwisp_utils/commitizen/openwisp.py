@@ -93,7 +93,6 @@ class OpenWispCommitizen(BaseCommitizen):
         return f"{prefix} {title}\n\n" f"{body}\n\n" f"Fixes #{issue_number}"
 
     def validate_commit_message(self, message: str) -> bool:
-        """Enforce OpenWISP commit rules: - Title must start with a capital letter - Why and How sections must be present and non-empty"""
 
         lines = message.splitlines()
         if not lines:
