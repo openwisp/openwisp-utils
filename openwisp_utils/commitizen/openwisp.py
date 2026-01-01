@@ -3,7 +3,7 @@ import re
 from commitizen.cz.base import BaseCommitizen
 
 _CUSTOM_PREFIX_RE = re.compile(r"^[a-z0-9!:-]+$")
-_TITLE_ISSUE_RE = re.compile(r"#(\d+)$")
+_TITLE_ISSUE_RE = re.compile(r"\s#(\d+)$")
 _HEADER_RE = re.compile(r"^\[[a-z0-9:!-]+\] [A-Z].*\s#\d+$")
 _FIXES_RE = re.compile(r"^Fixes #(\d+)$", re.MULTILINE)
 
