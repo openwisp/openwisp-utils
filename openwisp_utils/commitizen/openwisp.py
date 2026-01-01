@@ -88,6 +88,10 @@ class OpenWispCommitizen(BaseCommitizen):
 
         # Extract issue number from title
         match = _TITLE_ISSUE_RE.search(title)
+        if not match:
+            raise ValueError(
+                "Commit title must end with an issue reference like #<issue_number>."
+            )
         issue_number = match.group(1)
 
         return f"{prefix} {title}\n\n" f"{body}\n\n" f"Fixes #{issue_number}"
