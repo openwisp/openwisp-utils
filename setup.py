@@ -55,7 +55,7 @@ setup(
             "pytest-asyncio>=0.24,<1.4",
             "pytest-django>=4.10,<4.12",
         ],
-        "celery": ["celery~=5.5.3"],
+        "celery": ["celery~=5.6.1"],
         "selenium": ["selenium>=4.10,<4.39"],
         "releaser": [
             "git-cliff~=2.10.0",
