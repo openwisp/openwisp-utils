@@ -81,10 +81,13 @@ class SeleniumTestMixin:
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.web_driver = cls.get_webdriver()
+
+    @classmethod
+    def get_webdriver(cls):
         if cls.browser == "firefox":
-            cls.web_driver = cls.get_firefox_webdriver()
-        else:
-            cls.web_driver = cls.get_chrome_webdriver()
+            return cls.get_firefox_webdriver()
+        return cls.get_chrome_webdriver()
 
     @classmethod
     def get_firefox_webdriver(cls):
