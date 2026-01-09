@@ -27,9 +27,8 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        # Pin dependency versions for reproducibility
         run: |
-          pip install requests>=2.31.0 PyGithub>=2.0.0 google-generativeai>=0.3.0
+          pip install -e .[github_actions]
 
       - name: Run CI Failure Bot
         env:
@@ -38,4 +37,8 @@ jobs:
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
           REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number || '' }}
-        run: python .github/scripts/ci_failure_bot.py
+        run: |
+          set -e  # Exit immediately if any command fails
+          echo "Starting CI Failure Bot..."
+          python -m openwisp_utils.ci_failure_bot
+          echo "CI Failure Bot completed successfully"

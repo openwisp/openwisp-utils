@@ -37,7 +37,6 @@ OpenWISP architecture.
     ./user/metric-collection.rst
     ./user/admin-filters.rst
     ./user/settings.rst
-    ./user/ci-failure-bot.rst
 
 .. toctree::
     :caption: Utils Developer Docs
