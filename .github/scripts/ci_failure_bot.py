@@ -3,13 +3,15 @@
 CI Failure Bot - AI-powered analysis of build failures using Gemini
 """
 
+import io
 import json
 import os
 import sys
+import zipfile
 
-import google.generativeai as genai
 import requests
 from github import Github, GithubException
+from google import genai
 
 
 class CIFailureBot:
@@ -49,9 +51,9 @@ class CIFailureBot:
         self.github = Github(self.github_token)
         self.repo = self.github.get_repo(self.repository_name)
 
-        genai.configure(api_key=self.gemini_api_key)
-        model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-        self.model = genai.GenerativeModel(model_name)
+        # Initialize Gemini client with new API
+        self.client = genai.Client(api_key=self.gemini_api_key)
+        self.model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
     def get_build_logs(self):
         """Get actual build logs and error output from failed jobs"""
@@ -70,15 +72,35 @@ class CIFailureBot:
                             "Accept": "application/vnd.github.v3+json",
                         }
                         response = requests.get(logs_url, headers=headers, timeout=30)
-                        if response.status_code == 200:
-                            build_logs.append(
-                                {
-                                    "job_name": job.name,
-                                    "logs": response.text[
-                                        -5000:
-                                    ],  # Last 5000 chars to avoid token limits
-                                }
+                        response.raise_for_status()
+
+                        # Handle ZIP archive response from GitHub Actions logs API
+                        raw = response.content
+                        if raw[:2] == b"PK":  # ZIP file signature
+                            with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+                                parts = []
+                                for name in zf.namelist():
+                                    if name.endswith(".txt"):
+                                        parts.append(
+                                            zf.read(name).decode("utf-8", "replace")
+                                        )
+                                log_text = "\n".join(parts).strip()
+                        else:
+                            log_text = raw.decode("utf-8", "replace")
+
+                        if len(log_text) > 5000:
+                            # Take first 2000 and last 3000 chars for better context
+                            log_text = (
+                                log_text[:2000]
+                                + "\n\n[...middle truncated...]\n\n"
+                                + log_text[-3000:]
                             )
+                        build_logs.append(
+                            {
+                                "job_name": job.name,
+                                "logs": log_text,
+                            }
+                        )
 
                     # Also get step details
                     for step in job.steps:
@@ -92,7 +114,7 @@ class CIFailureBot:
                             )
 
             return build_logs
-        except (GithubException, ValueError) as e:
+        except (GithubException, requests.RequestException, ValueError) as e:
             print(f"Error getting build logs: {e}")
             return []
 
@@ -127,7 +149,7 @@ class CIFailureBot:
                     "body": pr.body or "",
                     "diff": diff_text,
                 }
-        except (GithubException, requests.RequestException) as e:
+        except (GithubException, requests.RequestException, ValueError) as e:
             print(f"Error getting PR diff: {e}")
 
         return None
@@ -138,8 +160,10 @@ class CIFailureBot:
             workflow_run = self.repo.get_workflow_run(self.workflow_run_id)
             workflow_path = workflow_run.path
 
-            # Get workflow file content
-            workflow_file = self.repo.get_contents(workflow_path)
+            # Get workflow file content from the commit that ran
+            workflow_file = self.repo.get_contents(
+                workflow_path, ref=workflow_run.head_sha
+            )
             return workflow_file.decoded_content.decode("utf-8")
         except GithubException as e:
             print(f"Error getting workflow YAML: {e}")
@@ -164,24 +188,24 @@ class CIFailureBot:
         # Gemini prompt - ignore line length for readability
         context = f"""
 ### ROLE
-You are the "Automated Maintainer Gatekeeper." Your goal is to analyze Pull Request (PR) build failures and provide direct, technically accurate, and no-nonsense feedback to contributors.
+You are the "Automated Maintainer Gatekeeper." Your goal is to analyze Pull Request (PR) build failures and provide direct, technically accurate, and no-nonsense feedback to contributors.  # noqa: E501
 
 ### INPUT CONTEXT PROVIDED
 1. **Build Output/Logs:** {build_logs_json}
 2. **YAML Workflow:** {workflow_yaml or "Not available"}
 3. **PR Diff:** {pr_diff_json}
-4. **Project Name:** {project_name}
+4. **Project Name:** {project_name}  # noqa: E501
 5. **Repository:** {repo_url}
-6. **run-qa-checks:** {qa_checks_url}
-7. **runtests:** {runtests_url}
+6. **run-qa-checks:** {qa_checks_url}  # noqa: E501
+7. **runtests:** {runtests_url}  # noqa: E501
 
 ### TASK
-Analyze the provided context to determine why the build failed. Categorize the failure and respond according to the "Tone Guidelines" below.
+Analyze the provided context to determine why the build failed. Categorize the failure and respond according to the "Tone Guidelines" below.  # noqa: E501
 
 ### TONE GUIDELINES
 - **Direct & Honest:** Do not use "fluff" or overly polite corporate language.
 - **Firm Standards:** If a PR is low-effort, spammy, or fails to follow basic instructions, state that clearly.
-- **Action-Oriented:** Provide the exact command or file change needed to fix the error, unless the PR is spammy, in which case we should just declare the PR as potential SPAM and ask maintainers to manually review it.
+- **Action-Oriented:** Provide the exact command or file change needed to fix the error, unless the PR is spammy, in which case we should just declare the PR as potential SPAM and ask maintainers to manually review it.  # noqa: E501
 
 ### RESPONSE STRUCTURE
 1. **Status Summary:** A one-sentence blunt assessment of the failure.
@@ -189,16 +213,21 @@ Analyze the provided context to determine why the build failed. Categorize the f
    - Identify the specific line/test that failed.
    - Explain *why* it failed.
 3. **Required Action:** Provide a code block or specific steps the contributor must take.
-4. **Quality Warning (If Applicable):** If the PR appears to be "spam" (e.g., trivial README changes, AI-generated nonsense, or repeated basic errors), include a firm statement that such contributions are a drain on project resources and ping the maintainers asking them for manual review.
+4. **Quality Warning (If Applicable):** If the PR appears to be "spam" (e.g., trivial README changes, AI-generated nonsense, or repeated basic errors), include a firm statement that such contributions are a drain on project resources and ping the maintainers asking them for manual review.  # noqa: E501
 
 ### EXAMPLE RESPONSE STYLE
-"The build failed because you neglected to update the test suite to match your logic changes. This project does not accept functional changes without corresponding test updates. Refer to the log at line 452. Update tests/logic_test.py before re-submitting. We prioritize high-quality, ready-to-merge code; please ensure you run local tests before pushing."
+"The build failed because you neglected to update the test suite to match your logic changes. This project does not accept functional changes without corresponding test updates. Refer to the log at line 452. Update tests/logic_test.py before re-submitting. We prioritize high-quality, ready-to-merge code; please ensure you run local tests before pushing."  # noqa: E501
 
 Analyze the failure and provide your response:
-"""  # noqa: E501
+"""
 
         try:
-            response = self.model.generate_content(context)
+            # Use new Gemini client API
+            from google.genai import types
+
+            response = self.client.models.generate_content(
+                model=self.model_name, contents=types.Part.from_text(context)
+            )
             return response.text
         except (ValueError, ConnectionError, Exception) as e:
             print(f"Error calling Gemini API: {e}")
@@ -251,37 +280,68 @@ See: https://openwisp.io/docs/dev/developer/contributing.html
 
     def run(self):
         """Main execution flow"""
-        print("CI Failure Bot starting - AI-powered analysis")
-
-        # Double-check: Skip if this is a dependabot PR
         try:
-            workflow_run = self.repo.get_workflow_run(self.workflow_run_id)
-            if workflow_run.actor and "dependabot" in workflow_run.actor.login.lower():
-                print(f"Skipping dependabot PR from {workflow_run.actor.login}")
+            print("CI Failure Bot starting - AI-powered analysis")
+
+            # Security checks: Skip if this is a dependabot PR or fork PR
+            try:
+                workflow_run = self.repo.get_workflow_run(self.workflow_run_id)
+                if (
+                    workflow_run.actor
+                    and "dependabot" in workflow_run.actor.login.lower()
+                ):
+                    print(f"Skipping dependabot PR from {workflow_run.actor.login}")
+                    return
+
+                # Skip fork PRs for security (avoid sending external code to AI)
+                if self.pr_number and self.pr_number.strip():
+                    try:
+                        pr_num = int(self.pr_number)
+                        pr = self.repo.get_pull(pr_num)
+                        if pr.head.repo.full_name != self.repository_name:
+                            print(f"Skipping fork PR from {pr.head.repo.full_name}")
+                            return
+                    except (GithubException, ValueError) as e:
+                        print(f"Warning: Could not check fork status: {e}")
+
+            except (GithubException, AttributeError) as e:
+                print(f"Warning: Could not check actor: {e}")
+
+            # Get all context
+            build_logs = self.get_build_logs()
+            pr_diff = self.get_pr_diff()
+            workflow_yaml = self.get_workflow_yaml()
+
+            if not build_logs:
+                print("No build logs found")
                 return
-        except (GithubException, AttributeError) as e:
-            print(f"Warning: Could not check actor: {e}")
 
-        # Get all context
-        build_logs = self.get_build_logs()
-        pr_diff = self.get_pr_diff()
-        workflow_yaml = self.get_workflow_yaml()
+            print("Analyzing failure with Gemini AI...")
 
-        if not build_logs:
-            print("No build logs found")
-            return
+            # Get AI analysis
+            ai_response = self.analyze_with_gemini(build_logs, pr_diff, workflow_yaml)
 
-        print("Analyzing failure with Gemini AI...")
+            # Post intelligent comment
+            self.post_comment(ai_response)
 
-        # Get AI analysis
-        ai_response = self.analyze_with_gemini(build_logs, pr_diff, workflow_yaml)
+            print("CI Failure Bot completed successfully")
 
-        # Post intelligent comment
-        self.post_comment(ai_response)
+        except Exception as e:
+            print(f"CRITICAL ERROR in CI Failure Bot: {e}")
+            print(f"Error type: {type(e).__name__}")
+            import traceback
 
-        print("CI Failure Bot completed")
+            traceback.print_exc()
+            sys.exit(1)
 
 
 if __name__ == "__main__":
-    bot = CIFailureBot()
-    bot.run()
+    try:
+        bot = CIFailureBot()
+        bot.run()
+    except Exception as e:
+        print(f"FATAL: CI Failure Bot crashed: {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
