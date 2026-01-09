@@ -18,6 +18,7 @@ Developer Docs
     ./other-utilities.rst
     ./reusable-github-utils.rst
     ./releaser-tool.rst
+    ./ci-failure-bot.rst
 
 Other useful resources:
 
