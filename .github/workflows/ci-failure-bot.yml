@@ -1,0 +1,51 @@
+---
+name: CI Failure Bot
+
+on:
+  workflow_run:
+    workflows: ["OpenWISP Utils CI Build"]
+    types:
+      - completed
+
+permissions:
+  issues: write
+  pull-requests: write
+  contents: read
+
+jobs:
+  ci-failure-bot:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' && !contains(github.event.workflow_run.actor.login, 'dependabot') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        # Install minimum required versions
+        run: |
+          pip install requests>=2.32.5 PyGithub>=2.0.0 google-genai>=0.2.0
+
+      - name: Run CI Failure Bot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number || '' }}
+        run: |
+          set -e  # Exit immediately if any command fails
+          echo "Starting CI Failure Bot..."
+          python .github/scripts/ci_failure_bot.py
+          exit_code=$?
+          if [ $exit_code -ne 0 ]; then
+            echo "ERROR: CI Failure Bot failed with exit code $exit_code"
+            echo "This indicates a critical issue with the bot logic that needs immediate attention"
+            exit $exit_code
+          fi
+          echo "CI Failure Bot completed successfully"
