@@ -35,7 +35,6 @@ setup(
         "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
         "urllib3>=2.0.0,<3.0.0",
-        "commitizen>=4.0.0,<5.0.0",
         "distro~=1.9.0",
     ],
     extras_require={
@@ -46,6 +45,7 @@ setup(
             "coverage>=7.10.0,<7.13.0",
             "tblib~=3.2.2",
             "docstrfmt>=2.0.0,<2.1.0",
+            "commitizen>=4.0.0,<5.0.0",
         ],
         "rest": [
             "djangorestframework~=3.16.0",
