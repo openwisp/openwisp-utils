@@ -19,23 +19,24 @@
     container = document.getElementById("plot-container");
 
   const layout = {
-      height: 450,
-      width: 450,
+      height: 410,
+      width: 410,
       margin: {
         t: 0,
         b: 0,
       },
       legend: {
-        yanchor: "center",
+        yanchor: "bottom",
         xanchor: "left",
         x: 0,
-        y: 0,
+        y: -0.025,
         bgcolor: "transparent",
+        itemclick: false,
       },
       title: {
-        yanchor: "center",
-        y: 0.92,
-        font: { size: 20 },
+        yanchor: "auto",
+        y: 0.9,
+        font: { size: 18 },
       },
     },
     options = {
@@ -50,7 +51,7 @@
     delete layout.annotations;
     let data = {
         type: "pie",
-        hole: 0.6,
+        hole: 0.55,
         showlegend: !elementsParam[i].hasOwnProperty("quick_link"),
       },
       element = document.createElement("div"),
@@ -82,7 +83,7 @@
           colors: elementsParam[i].colors,
         };
       }
-      data.texttemplate = "<b>%{value}</b><br>(%{percent})";
+      data.texttemplate = "%{percent}";
       data.targetLink = elementsParam[i].target_link;
       data.filters = elementsParam[i].filters;
       data.filtering = elementsParam[i].filtering;
