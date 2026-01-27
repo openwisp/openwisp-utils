@@ -82,6 +82,3 @@ Attribution
   licensed under the `Apache License, Version 2.0
   <https://www.apache.org/licenses/LICENSE-2.0>`_. WOFF files extracted
   using https://github.com/majodev/google-webfonts-helper.
-
-fixing-readme-typo
---------------------
