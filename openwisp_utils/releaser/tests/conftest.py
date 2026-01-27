@@ -65,10 +65,11 @@ def init_git_repo():
 def _create_package_json(path: Path, version="1.2.3"):
     """Helper to create a package.json file for npm projects."""
     import json
+
     package_json_content = {
         "name": "my-npm-package",
         "version": version,
-        "description": "Test npm package"
+        "description": "Test npm package",
     }
     (path / "package.json").write_text(json.dumps(package_json_content, indent=2))
 
@@ -96,7 +97,9 @@ def create_makefile():
 
 def _create_docker_compose(path: Path):
     """Helper to create a docker-compose.yml file."""
-    (path / "docker-compose.yml").write_text("version: '3'\nservices:\n  app:\n    image: test")
+    (path / "docker-compose.yml").write_text(
+        "version: '3'\nservices:\n  app:\n    image: test"
+    )
 
 
 @pytest.fixture

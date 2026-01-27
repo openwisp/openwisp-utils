@@ -1,8 +1,8 @@
 import ast
+import json
 import os
 import re
 import subprocess
-import json
 
 
 def get_package_name_from_setup():
@@ -22,19 +22,19 @@ def get_package_type_from_setup():
     """Detects package type based on config files present in the project."""
     if os.path.exists("setup.py"):
         return "python"
-    
+
     if os.path.exists("package.json"):
         return "npm"
-    
+
     if os.path.exists("docker-compose.yml"):
         return "docker"
-    
+
     if os.path.exists(".ansible-lint"):
         return "ansible"
-    
+
     if os.path.exists(".luacheckrc"):
         return "openwrt-agents"
-    
+
     return None
 
 
@@ -91,7 +91,9 @@ def load_config():
                     if version_match:
                         config["version_path"] = init_py_path
                         try:
-                            version_tuple = ast.literal_eval(f"({version_match.group(1)})")
+                            version_tuple = ast.literal_eval(
+                                f"({version_match.group(1)})"
+                            )
                             config["CURRENT_VERSION"] = list(version_tuple)
                         except (ValueError, SyntaxError):
                             config["CURRENT_VERSION"] = None
@@ -109,45 +111,67 @@ def load_config():
                             version_tuple, version_type = version_str.split("_", 1)
                         else:
                             version_tuple, version_type = version_str, "final"
-                        
+
                         parts = version_tuple.split(".")
                         if len(parts) < 3:
-                            raise ValueError(f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)")  
-                        
+                            raise ValueError(
+                                f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
+                            )
+
                         config["CURRENT_VERSION"] = [
                             int(parts[0]),
                             int(parts[1]),
                             int(parts[2]),
-                            version_type
+                            version_type,
                         ]
-                    except(ValueError, SyntaxError):
+                    except (ValueError, SyntaxError):
                         config["CURRENT_VERSION"] = None
     elif config["package_type"] == "docker":
         if os.path.exists("Makefile"):
             with open("Makefile", "r") as f:
                 content = f.read()
-                version_match = re.search(r"^OPENWISP_VERSION\s*=\s*([^\s]+)", content, re.MULTILINE)
+                version_match = re.search(
+                    r"^OPENWISP_VERSION\s*=\s*([^\s]+)", content, re.MULTILINE
+                )
                 if version_match:
                     config["version_path"] = "Makefile"
                     version_str = version_match.group(1)
                     parts = version_str.split(".")
                     if len(parts) < 3:
-                        raise ValueError(f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)")
-                    config["CURRENT_VERSION"] = [int(parts[0]), int(parts[1]), int(parts[2]), "final"]
+                        raise ValueError(
+                            f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
+                        )
+                    config["CURRENT_VERSION"] = [
+                        int(parts[0]),
+                        int(parts[1]),
+                        int(parts[2]),
+                        "final",
+                    ]
     elif config["package_type"] == "ansible":
         version_py_path = os.path.join("templates", "openwisp2", "version.py")
         if os.path.exists(version_py_path):
             with open(version_py_path, "r") as f:
                 content = f.read()
-                version_match = re.search(r"^__openwisp_version__\s*=\s*['\"]([^'\"]+)['\"]", content, re.MULTILINE)
+                version_match = re.search(
+                    r"^__openwisp_version__\s*=\s*['\"]([^'\"]+)['\"]",
+                    content,
+                    re.MULTILINE,
+                )
                 if version_match:
                     config["version_path"] = version_py_path
                     try:
                         version_str = version_match.group(1)
                         parts = version_str.split(".")
                         if len(parts) < 3:
-                            raise ValueError(f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)")
-                        config["CURRENT_VERSION"] = [int(parts[0]), int(parts[1]), int(parts[2]), "final"]
+                            raise ValueError(
+                                f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
+                            )
+                        config["CURRENT_VERSION"] = [
+                            int(parts[0]),
+                            int(parts[1]),
+                            int(parts[2]),
+                            "final",
+                        ]
                     except (ValueError, SyntaxError):
                         config["CURRENT_VERSION"] = None
     elif config["package_type"] == "openwrt-agents":
@@ -158,8 +182,15 @@ def load_config():
                     config["version_path"] = "VERSION"
                     parts = version_str.split(".")
                     if len(parts) < 3:
-                        raise ValueError(f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)")
-                    config["CURRENT_VERSION"] = [int(parts[0]), int(parts[1]), int(parts[2]), "final"]
+                        raise ValueError(
+                            f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
+                        )
+                    config["CURRENT_VERSION"] = [
+                        int(parts[0]),
+                        int(parts[1]),
+                        int(parts[2]),
+                        "final",
+                    ]
 
     possible_changelog_names = [
         "CHANGES.rst",

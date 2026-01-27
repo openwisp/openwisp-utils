@@ -1,13 +1,11 @@
-import os
 import re
 import sys
-from ast import literal_eval
 
 import questionary
 
 
 def get_current_version(config):
-    # Parses the CURRENT_VERSION which comes from the version_path file 
+    # Parses the CURRENT_VERSION which comes from the version_path file
     # Returns the version string (e.g., "1.2.0") or None if CURRENT_VERSION is not set.
     current_version = config.get("CURRENT_VERSION")
     if not current_version:
@@ -59,15 +57,18 @@ def bump_version(config, new_version):
             flags=re.MULTILINE,
         )
         if count == 0:
-            raise RuntimeError(f"Failed to find and bump VERSION tuple in {version_path}.")
-    
+            raise RuntimeError(
+                f"Failed to find and bump VERSION tuple in {version_path}."
+            )
+
     elif package_type == "npm":
         import json
+
         data = json.loads(content)
         data["version"] = new_version
         new_content = json.dumps(data, indent=2) + "\n"
         count = 1
-    
+
     elif package_type == "docker":
         new_content, count = re.subn(
             r"^OPENWISP_VERSION\s*=\s*[^\s]+",
@@ -77,8 +78,10 @@ def bump_version(config, new_version):
             flags=re.MULTILINE,
         )
         if count == 0:
-            raise RuntimeError(f"Failed to find and bump OPENWISP_VERSION in {version_path}.")
-    
+            raise RuntimeError(
+                f"Failed to find and bump OPENWISP_VERSION in {version_path}."
+            )
+
     elif package_type == "ansible":
         new_content, count = re.subn(
             r'^__openwisp_version__\s*=\s*["\']([^"\']+)["\']',
@@ -88,14 +91,16 @@ def bump_version(config, new_version):
             flags=re.MULTILINE,
         )
         if count == 0:
-            raise RuntimeError(f"Failed to find and bump __openwisp_version__ in {version_path}.")
-    
+            raise RuntimeError(
+                f"Failed to find and bump __openwisp_version__ in {version_path}."
+            )
+
     elif package_type == "openwrt-agents":
         new_content = f"{new_version}\n"
         count = 1
         if count == 0:
             raise RuntimeError(f"Failed to find and bump in {version_path}")
-    
+
     with open(version_path, "w") as f:
         f.write(new_content)
     return True

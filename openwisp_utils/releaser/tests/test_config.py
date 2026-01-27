@@ -221,14 +221,11 @@ def test_npm_package_with_underscore_suffix(
     assert config["CURRENT_VERSION"] == [1, 2, 3, "rc1"]
 
 
-def test_npm_package_missing_version(
-    project_dir, create_changelog, init_git_repo
-):
+def test_npm_package_missing_version(project_dir, create_changelog, init_git_repo):
     """Tests that npm package handles missing version gracefully."""
     import json
-    (project_dir / "package.json").write_text(
-        json.dumps({"name": "test-package"})
-    )
+
+    (project_dir / "package.json").write_text(json.dumps({"name": "test-package"}))
     create_changelog(project_dir)
     init_git_repo(project_dir)
 
@@ -290,7 +287,9 @@ def test_docker_package_invalid_version(
 ):
     """Tests docker package with invalid version in Makefile."""
     create_docker_compose(project_dir)
-    (project_dir / "Makefile").write_text("OPENWISP_VERSION = 1.2\n")  # Invalid: only 2 parts
+    (project_dir / "Makefile").write_text(
+        "OPENWISP_VERSION = 1.2\n"
+    )  # Invalid: only 2 parts
     create_changelog(project_dir)
     init_git_repo(project_dir)
 
@@ -300,7 +299,11 @@ def test_docker_package_invalid_version(
 
 # Ansible Package Tests
 def test_ansible_package_detection(
-    project_dir, create_ansible_lint, create_ansible_version_file, create_changelog, init_git_repo
+    project_dir,
+    create_ansible_lint,
+    create_ansible_version_file,
+    create_changelog,
+    init_git_repo,
 ):
     """Tests that ansible package type is detected when .ansible-lint exists."""
     create_ansible_lint(project_dir)
@@ -394,8 +397,12 @@ def test_openwrt_agents_invalid_version(
 
 # Package Type Priority Tests
 def test_package_type_priority_python_over_npm(
-    project_dir, create_setup_py, create_package_dir_with_version, 
-    create_package_json, create_changelog, init_git_repo
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version,
+    create_package_json,
+    create_changelog,
+    init_git_repo,
 ):
     """Tests that Python is detected first when both setup.py and package.json exist."""
     create_setup_py(project_dir)

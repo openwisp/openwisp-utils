@@ -34,7 +34,7 @@ def test_get_current_version_success():
     """Tests get_current_version with CURRENT_VERSION set in config."""
     mock_config = {
         "version_path": "path/__init__.py",
-        "CURRENT_VERSION": [1, 2, 0, "alpha"]
+        "CURRENT_VERSION": [1, 2, 0, "alpha"],
     }
     version, version_type = get_current_version(mock_config)
     assert version == "1.2.0"
@@ -55,7 +55,7 @@ def test_get_current_version_file_not_found(_, mock_config):
 
 
 def test_bump_version_success(mock_config):
-    mock_config['package_type'] = 'python'
+    mock_config["package_type"] = "python"
     m_open = mock_open(read_data=SAMPLE_INIT_FILE)
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(mock_config, "1.2.0")
@@ -79,10 +79,7 @@ def test_bump_version_file_not_found(mock_config):
 
 def test_get_current_version_no_tuple():
     """Tests that get_current_version returns None when CURRENT_VERSION is None."""
-    mock_config = {
-        "version_path": "path/__init__.py",
-        "CURRENT_VERSION": None
-    }
+    mock_config = {"version_path": "path/__init__.py", "CURRENT_VERSION": None}
     version, version_type = get_current_version(mock_config)
     assert version is None
     assert version_type is None
@@ -92,17 +89,15 @@ def test_get_current_version_short_tuple():
     """Tests RuntimeError if VERSION tuple has fewer than three elements."""
     mock_config = {
         "version_path": "path/__init__.py",
-        "CURRENT_VERSION": [1, 2]  # Only 2 elements
+        "CURRENT_VERSION": [1, 2],  # Only 2 elements
     }
-    with pytest.raises(
-        RuntimeError, match="does not appear to have at least three"
-    ):
+    with pytest.raises(RuntimeError, match="does not appear to have at least three"):
         get_current_version(mock_config)
 
 
 def test_bump_version_no_tuple_found(mock_config):
     """Tests RuntimeError during version bumping if VERSION is not found."""
-    mock_config['package_type'] = 'python'
+    mock_config["package_type"] = "python"
     with patch("os.path.exists", return_value=True), patch(
         "builtins.open", mock_open(read_data="NO_VERSION_HERE")
     ):
@@ -167,7 +162,7 @@ def test_get_current_version_npm():
     config = {
         "package_type": "npm",
         "version_path": "package.json",
-        "CURRENT_VERSION": [1, 2, 3, "final"]
+        "CURRENT_VERSION": [1, 2, 3, "final"],
     }
     version, version_type = get_current_version(config)
     assert version == "1.2.3"
@@ -179,7 +174,7 @@ def test_get_current_version_npm_with_prerelease():
     config = {
         "package_type": "npm",
         "version_path": "package.json",
-        "CURRENT_VERSION": [1, 2, 3, "beta"]
+        "CURRENT_VERSION": [1, 2, 3, "beta"],
     }
     version, version_type = get_current_version(config)
     assert version == "1.2.3"
@@ -191,15 +186,15 @@ def test_bump_version_npm():
     config = {
         "package_type": "npm",
         "version_path": "package.json",
-        "CURRENT_VERSION": [1, 2, 3, "beta"]
+        "CURRENT_VERSION": [1, 2, 3, "beta"],
     }
-    
+
     package_json_content = '{\n  "name": "test-package",\n  "version": "1.2.3-beta"\n}'
     m_open = mock_open(read_data=package_json_content)
-    
+
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
-    
+
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert '"version": "1.2.4"' in written_content
@@ -211,7 +206,7 @@ def test_get_current_version_docker():
     config = {
         "package_type": "docker",
         "version_path": "Makefile",
-        "CURRENT_VERSION": [1, 2, 3, "final"]
+        "CURRENT_VERSION": [1, 2, 3, "final"],
     }
     version, version_type = get_current_version(config)
     assert version == "1.2.3"
@@ -223,15 +218,15 @@ def test_bump_version_docker():
     config = {
         "package_type": "docker",
         "version_path": "Makefile",
-        "CURRENT_VERSION": [1, 2, 3, "final"]
+        "CURRENT_VERSION": [1, 2, 3, "final"],
     }
-    
+
     makefile_content = "OPENWISP_VERSION = 1.2.3\nDOCKER_IMAGE = openwisp/test\n"
     m_open = mock_open(read_data=makefile_content)
-    
+
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
-    
+
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert "OPENWISP_VERSION = 1.2.4" in written_content
@@ -243,7 +238,7 @@ def test_get_current_version_ansible():
     config = {
         "package_type": "ansible",
         "version_path": "templates/openwisp2/version.py",
-        "CURRENT_VERSION": [1, 2, 3, "final"]
+        "CURRENT_VERSION": [1, 2, 3, "final"],
     }
     version, version_type = get_current_version(config)
     assert version == "1.2.3"
@@ -256,15 +251,15 @@ def test_bump_version_ansible():
     config = {
         "package_type": "ansible",
         "version_path": "templates/openwisp2/version.py",
-        "CURRENT_VERSION": [1, 2, 3]
+        "CURRENT_VERSION": [1, 2, 3],
     }
-    
+
     version_py_content = '__openwisp_version__ = "1.2.3"\n'
     m_open = mock_open(read_data=version_py_content)
-    
+
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
-    
+
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert '__openwisp_version__ = "1.2.4"' in written_content
@@ -276,7 +271,7 @@ def test_get_current_version_openwrt_agents():
     config = {
         "package_type": "openwrt-agents",
         "version_path": "VERSION",
-        "CURRENT_VERSION": [1, 2, 3, "final"]
+        "CURRENT_VERSION": [1, 2, 3, "final"],
     }
     version, version_type = get_current_version(config)
     assert version == "1.2.3"
@@ -288,15 +283,15 @@ def test_bump_version_openwrt_agents():
     config = {
         "package_type": "openwrt-agents",
         "version_path": "VERSION",
-        "CURRENT_VERSION": [1, 2, 3, "final"]
+        "CURRENT_VERSION": [1, 2, 3, "final"],
     }
-    
+
     version_file_content = "1.2.3\n"
     m_open = mock_open(read_data=version_file_content)
-    
+
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
-    
+
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert "1.2.4" in written_content
