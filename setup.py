@@ -46,7 +46,7 @@ setup(
         "rest": [
             "djangorestframework~=3.16.0",
             "django-filter>=25.1,<26.0",  # django-filter uses CalVer
-            "drf-yasg~=1.21.7",
+            "drf-yasg==1.21.11",  # pinning due to https://github.com/openwisp/openwisp-utils/issues/565
         ],
         "channels": [
             "channels[daphne]~=4.3.0",
