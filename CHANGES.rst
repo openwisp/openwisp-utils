@@ -1,6 +1,19 @@
 Changelog
 =========
 
+Version 1.2.2 [2026-01-28]
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+- Temporarily pinned drf-yasg to 1.21.11 `#565
+  <https://github.com/openwisp/openwisp-utils/issues/565>`_
+- Fixed releaser to only commit tracked files `#552
+  <https://github.com/openwisp/openwisp-utils/issues/552>`_
+- Releaser: Fixed insertion of backported bugfix entries in ReST changelog
+  `#532 <https://github.com/openwisp/openwisp-utils/issues/532>`_
+
 Version 1.2.1 [2025-12-19]
 --------------------------
 
