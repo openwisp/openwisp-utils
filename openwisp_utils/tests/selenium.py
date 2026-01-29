@@ -53,6 +53,13 @@ class SeleniumTestMixin:
                 stream=None, descriptions=None, verbosity=0
             )
             super()._setup_and_call(result, debug)
+            # IMPORTANT: a skip is not a success; propagate it as a skip and stop.
+            if getattr(result, "skipped", None):
+                for _, reason in result.skipped:
+                    original_result.addSkip(self, reason)
+                if hasattr(original_result, "events") and hasattr(result, "events"):
+                    original_result.events = result.events
+                return
             if result.wasSuccessful():
                 if attempt == 0:
                     original_result.addSuccess(self)
