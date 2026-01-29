@@ -136,8 +136,13 @@ def test_run_git_cliff_no_config(mock_find_config):
 
 
 @patch("openwisp_utils.releaser.changelog.find_cliff_config", return_value="path")
-@patch("subprocess.run", side_effect=FileNotFoundError)
+@patch("subprocess.run")
 def test_run_git_cliff_file_not_found(mock_run, mock_find_config):
+    # First call (git pull --tags) succeeds, second call (git cliff) raises FileNotFoundError
+    mock_run.side_effect = [
+        subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+        FileNotFoundError,
+    ]
     with pytest.raises(SystemExit):
         run_git_cliff()
 
@@ -320,6 +325,59 @@ def test_run_git_cliff_with_version_tag(mock_subprocess_run, mock_find_config):
     run_git_cliff(version="1.0.0")
     executed_cmd = mock_subprocess_run.call_args[0][0]
     assert "--tag" in executed_cmd and "1.0.0" in executed_cmd
+
+
+@patch(
+    "openwisp_utils.releaser.changelog.find_cliff_config",
+    return_value="path/to/cliff.toml",
+)
+@patch("openwisp_utils.releaser.changelog.subprocess.run")
+def test_run_git_cliff_calls_git_pull_tags(mock_subprocess_run, mock_find_config):
+    """Tests that `git pull --tags` is executed before running git-cliff."""
+    # Mock the subprocess.run to return different results for different calls
+    mock_subprocess_run.return_value = subprocess.CompletedProcess(
+        args=[], returncode=0, stdout="Changelog content", stderr=""
+    )
+    run_git_cliff()
+    # Verify that subprocess.run was called twice: once for git pull --tags, once for git-cliff
+    assert mock_subprocess_run.call_count == 2
+    # Check the first call is for git pull --tags
+    first_call_args = mock_subprocess_run.call_args_list[0][0][0]
+    assert first_call_args == ["git", "pull", "--tags"]
+    # Check the second call is for git cliff
+    second_call_args = mock_subprocess_run.call_args_list[1][0][0]
+    assert (
+        "git" in second_call_args
+        and "cliff" in second_call_args
+        and "--unreleased" in second_call_args
+    )
+
+
+@patch(
+    "openwisp_utils.releaser.changelog.find_cliff_config",
+    return_value="path/to/cliff.toml",
+)
+@patch("openwisp_utils.releaser.changelog.subprocess.run")
+@patch("builtins.print")
+def test_run_git_cliff_git_pull_tags_fails(
+    mock_print, mock_subprocess_run, mock_find_config
+):
+    """Tests that `git pull --tags` failure is handled gracefully and git-cliff still runs."""
+    # First call (git pull --tags) fails, second call (git cliff) succeeds
+    mock_subprocess_run.side_effect = [
+        subprocess.CalledProcessError(1, "git pull --tags", stderr="Network error"),
+        subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="Changelog content", stderr=""
+        ),
+    ]
+    run_git_cliff()
+    # Verify that subprocess.run was called twice despite the first failure
+    assert mock_subprocess_run.call_count == 2
+    # Verify warning message was printed
+    mock_print.assert_called_once()
+    call_args = mock_print.call_args[0][0]
+    assert "Warning: Failed to pull tags:" in call_args
+    assert "Network error" in call_args
 
 
 def test_process_changelog_dependencies_as_last_section():
