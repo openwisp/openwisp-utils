@@ -1,0 +1,249 @@
+name: Stale PR Management
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  manage-stale-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for stale PRs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const DAYS_BEFORE_STALE_WARNING = 7;
+            const DAYS_BEFORE_UNASSIGN = 14;
+            const DAYS_BEFORE_CLOSE = 60;
+            const MS_PER_DAY = 24 * 60 * 60 * 1000;
+            const now = new Date();
+            const { data: pullRequests } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            for (const pr of pullRequests) {
+              const prAuthor = pr.user.login;
+              const prNumber = pr.number;
+              try {
+                const { data: reviews } = await github.rest.pulls.listReviews({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber
+                });
+                const changesRequestedReviews = reviews
+                  .filter(r => r.state === 'CHANGES_REQUESTED')
+                  .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+                if (changesRequestedReviews.length === 0) {
+                  continue;
+                }
+                const lastChangesRequested = new Date(changesRequestedReviews[0].submitted_at);
+                const { data: commits } = await github.rest.pulls.listCommits({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                  per_page: 100
+                });
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  per_page: 100
+                });
+                let lastAuthorActivity = null;
+                for (const commit of commits) {
+                  const commitDate = new Date(commit.commit.author.date);
+                  if (commitDate > lastChangesRequested) {
+                    if (commit.author && commit.author.login === prAuthor) {
+                      if (!lastAuthorActivity || commitDate > lastAuthorActivity) {
+                        lastAuthorActivity = commitDate;
+                      }
+                    }
+                  }
+                }
+                for (const comment of comments) {
+                  if (comment.user.login === prAuthor) {
+                    const commentDate = new Date(comment.created_at);
+                    if (commentDate > lastChangesRequested) {
+                      if (!lastAuthorActivity || commentDate > lastAuthorActivity) {
+                        lastAuthorActivity = commentDate;
+                      }
+                    }
+                  }
+                }
+                const inactivityStart = lastAuthorActivity || lastChangesRequested;
+                const daysSinceActivity = Math.floor((now - inactivityStart) / MS_PER_DAY);
+                console.log(`PR #${prNumber}: ${daysSinceActivity} days since contributor activity`);
+                const botComments = comments.filter(c => 
+                  c.user.type === 'Bot' && 
+                  c.body.includes('stale')
+                );
+                
+                const hasStaleWarning = botComments.some(c => 
+                  c.body.includes('7 days') || c.body.includes('stale warning')
+                );
+                const hasUnassignNotice = botComments.some(c => 
+                  c.body.includes('14 days') || c.body.includes('unassigned')
+                );
+                if (daysSinceActivity >= DAYS_BEFORE_CLOSE) {
+                  const closeMessage = `Hi @${prAuthor} 👋,
+
+            This pull request has been automatically closed due to **${DAYS_BEFORE_CLOSE} days of inactivity** after changes were requested.
+
+            We understand that life gets busy, and we appreciate your initial contribution! 💙
+
+            **The door is always open** for you to come back:
+            - You can **reopen this PR** at any time if you'd like to continue working on it
+            - Feel free to push new commits addressing the requested changes
+            - If you reopen the PR, the linked issue will be reassigned to you
+
+            If you have any questions or need help, don't hesitate to reach out. We're here to support you!
+
+            Thank you for your interest in contributing to OpenWISP! 🙏`;
+                  
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    body: closeMessage
+                  });
+                  await github.rest.pulls.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: prNumber,
+                    state: 'closed'
+                  });
+                  console.log(`Closed PR #${prNumber} after ${DAYS_BEFORE_CLOSE} days of inactivity`);
+                  const prBody = pr.body || '';
+                  const issuePattern = /(?:fix(?:es)?|close[sd]?|resolve[sd]?)\\s+#(\\d+)/gi;
+                  const matches = [...prBody.matchAll(issuePattern)];
+                  const processedIssues = new Set();
+                  for (const match of matches) {
+                    const issueNumber = parseInt(match[1], 10);
+                    if (processedIssues.has(issueNumber)) {
+                      continue;
+                    }
+                    processedIssues.add(issueNumber);
+                    try {
+                      const linkedItem = await github.rest.issues.get({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issueNumber
+                      });
+                      if (linkedItem.data.pull_request) {
+                        console.log(`#${issueNumber} is a PR, skipping unassignment`);
+                        continue;
+                      }
+                      await github.rest.issues.removeAssignees({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issueNumber,
+                        assignees: [prAuthor]
+                      });
+                      console.log(`Unassigned ${prAuthor} from issue #${issueNumber}`);
+                    } catch (e) {
+                      console.log(`Could not unassign from issue #${issueNumber}: ${e.message}`);
+                    }
+                  }
+                }
+                else if (daysSinceActivity >= DAYS_BEFORE_UNASSIGN && !hasUnassignNotice) {
+                  const unassignMessage = `Hi @${prAuthor} 👋,
+
+            This pull request has been marked as **stale** due to **${DAYS_BEFORE_UNASSIGN} days of inactivity** after changes were requested.
+
+            As a result, **the linked issue(s) have been unassigned** from you to allow other contributors to work on it.
+
+            However, **you can still continue working on this PR**! If you push new commits or respond to the review feedback:
+            - The issue will be reassigned to you
+            - Your contribution is still very welcome
+
+            If you need more time or have questions about the requested changes, please let us know. We're happy to help! 🤝
+
+            If there's no further activity within **${DAYS_BEFORE_CLOSE - DAYS_BEFORE_UNASSIGN} more days**, this PR will be automatically closed (but can be reopened anytime).`;
+                  
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    body: unassignMessage
+                  });
+                  
+                  const prBody = pr.body || '';
+                  const issuePattern = /(?:fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
+                  const matches = [...prBody.matchAll(issuePattern)];
+                  const processedIssues = new Set();
+                  for (const match of matches) {
+                    const issueNumber = parseInt(match[1], 10);
+                    if (processedIssues.has(issueNumber)) {
+                      continue;
+                    }
+                    processedIssues.add(issueNumber);
+                    try {
+                      const linkedItem = await github.rest.issues.get({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issueNumber
+                      });
+                      
+                      if (linkedItem.data.pull_request) {
+                        console.log(`#${issueNumber} is a PR, skipping unassignment`);
+                        continue;
+                      }
+                      await github.rest.issues.removeAssignees({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issueNumber,
+                        assignees: [prAuthor]
+                      });
+                      console.log(`Unassigned ${prAuthor} from issue #${issueNumber}`);
+                    } catch (e) {
+                      console.log(`Could not unassign from issue #${issueNumber}: ${e.message}`);
+                    }
+                  }
+                  
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    labels: ['stale']
+                  });
+                  
+                  console.log(`Marked PR #${prNumber} as stale after ${DAYS_BEFORE_UNASSIGN} days`);
+                }
+                else if (daysSinceActivity >= DAYS_BEFORE_STALE_WARNING && !hasStaleWarning) {
+                  const warningMessage = `Hi @${prAuthor} 👋,
+
+            This is a friendly reminder that this pull request has had **no activity for ${DAYS_BEFORE_STALE_WARNING} days** since changes were requested.
+
+            We'd love to see this contribution merged! Please take a moment to:
+            - Address the review feedback
+            - Push your changes
+            - Let us know if you have any questions or need clarification
+
+            If you're busy or need more time, no worries! Just leave a comment to let us know you're still working on it.
+
+            **Note:** If there's no activity within **${DAYS_BEFORE_UNASSIGN - DAYS_BEFORE_STALE_WARNING} more days**, the linked issue will be unassigned to allow other contributors to work on it.
+
+            Thank you for your contribution! 🙏`;
+                  
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    body: warningMessage
+                  });
+                  
+                  console.log(`Sent stale warning for PR #${prNumber}`);
+                }
+                
+              } catch (error) {
+                console.error(`Error processing PR #${prNumber}:`, error.message);
+              }
+            }

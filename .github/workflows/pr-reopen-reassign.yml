@@ -1,0 +1,154 @@
+name: PR Reopen Reassignment
+
+on:
+  pull_request_target:
+    types: [reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  reassign-on-reopen:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target' && github.event.action == 'reopened'
+    steps:
+      - name: Reassign issues on PR reopen
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prAuthor = context.payload.pull_request.user.login;
+            const prNumber = context.payload.pull_request.number;
+            const issuePattern = /(?:fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
+            const matches = [...prBody.matchAll(issuePattern)];
+            if (matches.length === 0) {
+              console.log('No linked issues found in PR body');
+              return;
+            }
+            const processedIssues = new Set();
+            for (const match of matches) {
+              const issueNumber = parseInt(match[1], 10);
+              if (processedIssues.has(issueNumber)) {
+                continue;
+              }
+              processedIssues.add(issueNumber);
+              try {
+                const issue = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+                if (issue.data.pull_request) {
+                  continue;
+                }
+                const currentAssignees = issue.data.assignees?.map(a => a.login) || [];
+                if (currentAssignees.length > 0 && !currentAssignees.includes(prAuthor)) {
+                  console.log(`Issue #${issueNumber} is assigned to others, skipping`);
+                  continue;
+                }
+                if (!currentAssignees.includes(prAuthor)) {
+                  await github.rest.issues.addAssignees({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    assignees: [prAuthor]
+                  });
+                  console.log(`Reassigned issue #${issueNumber} to ${prAuthor}`);
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `Welcome back, @${prAuthor}! 🎉 This issue has been reassigned to you as you've reopened PR #${prNumber}.`
+                  });
+                }
+              } catch (error) {
+                console.error(`Error processing issue #${issueNumber}:`, error.message);
+              }
+            }
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                name: 'stale'
+              });
+            } catch (e) {
+              
+            }
+
+  handle-contributor-activity:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issue_comment' && 
+      github.event.issue.pull_request != null
+    steps:
+      - name: Check and handle stale PR activity
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.issue.number;
+            const commenter = context.payload.comment.user.login;
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            if (commenter !== pr.user.login) {
+              console.log('Comment not from PR author, skipping');
+              return;
+            }
+            const labels = context.payload.issue.labels?.map(l => l.name) || [];
+            if (!labels.includes('stale')) {
+              console.log('PR is not stale, skipping');
+              return;
+            }
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                name: 'stale'
+              });
+              console.log('Removed stale label');
+            } catch (e) {
+              console.log('Could not remove stale label:', e.message);
+            }
+            const prBody = pr.body || '';
+            const issuePattern = /(?:fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
+            const matches = [...prBody.matchAll(issuePattern)];
+            for (const match of matches) {
+              const issueNumber = parseInt(match[1], 10);
+              try {
+                const issue = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+                if (issue.data.pull_request) {
+                  continue;
+                }
+                const currentAssignees = issue.data.assignees?.map(a => a.login) || [];
+                if (currentAssignees.length === 0) {
+                  await github.rest.issues.addAssignees({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    assignees: [commenter]
+                  });
+                  console.log(`Reassigned issue #${issueNumber} to ${commenter}`);
+                }
+              } catch (error) {
+                console.error(`Error reassigning issue #${issueNumber}:`, error.message);
+              }
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `Thanks for following up, @${commenter}! 🙌 The stale status has been removed and the linked issue(s) have been reassigned to you. Looking forward to your updates!`
+            });
