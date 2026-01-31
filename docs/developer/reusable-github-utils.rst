@@ -56,6 +56,128 @@ times with a 30 second delay between attempts.
     attempts, the action will exit with a non-zero status, causing the
     workflow to fail.
 
+CI Failure Bot
+~~~~~~~~~~~~~~
+
+This GitHub workflow automatically analyzes failed CI builds and provides
+intelligent feedback to contributors using AI-powered analysis.
+
+The bot examines build logs, PR changes, and workflow context to generate
+specific, actionable guidance that helps contributors fix issues quickly.
+
+**Inputs**
+
+- ``GEMINI_API_KEY`` (optional): Google Gemini API key for AI analysis. If
+  not provided, the bot uses fallback responses
+- ``GEMINI_MODEL`` (optional): Gemini model to use. Defaults to
+  ``gemini-2.5-flash``
+
+**Usage Example**
+
+You can use this workflow in your repository as follows:
+
+.. code-block:: yaml
+
+    name: CI Failure Bot
+
+    on:
+      workflow_run:
+        workflows: ["OpenWISP Utils CI Build"]
+        types:
+          - completed
+
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+
+    jobs:
+      ci-failure-bot:
+        runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'failure' && !contains(github.event.workflow_run.actor.login, 'dependabot') }}
+
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v6
+
+          - name: Set up Python
+            uses: actions/setup-python@v6
+            with:
+              python-version: "3.11"
+
+          - name: Install dependencies
+            run: |
+              pip install -e .[github_actions]
+
+          - name: Run CI Failure Bot
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+              WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+              REPOSITORY: ${{ github.repository }}
+              PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number || '' }}
+            run: python -m openwisp_utils.ci_failure_bot
+
+This example automatically triggers when the "OpenWISP Utils CI Build"
+workflow fails, analyzes the failure using Gemini AI, and posts
+intelligent feedback to the associated pull request.
+
+**Features**
+
+- **Automatic triggering**: Responds to CI build failures in pull requests
+- **AI-powered analysis**: Uses Google Gemini to analyze failure logs and
+  provide specific guidance
+- **OpenWISP QA integration**: Instructs contributors to use ``pip install
+  -e .[qa]``, ``./run-qa-checks``, and ``openwisp-qa-format`` for proper
+  code formatting
+- **Intelligent responses**: Provides direct, actionable feedback based on
+  actual failure context
+- **Comment deduplication**: Updates existing comments instead of creating
+  duplicates
+- **Dependabot exclusion**: Automatically skips dependency update PRs
+- **Fork detection**: Skips external PRs for security
+- **Fallback handling**: Provides basic guidance if AI analysis fails
+
+**Configuration**
++++++++++++++++++
+
+Repository Secrets
+++++++++++++++++++
+
+The following secrets can be configured in the repository for enhanced
+functionality:
+
+- ``GEMINI_API_KEY``: Google Gemini API key for AI analysis (optional -
+  fallback responses used if not provided)
+
+Environment Variables
++++++++++++++++++++++
+
+Optional environment variables for customization:
+
+- ``GEMINI_MODEL``: Gemini model to use (default: ``gemini-2.5-flash``)
+
+**Limitations**
+
+- **Optional Gemini API**: Google Gemini API access enhances analysis
+  quality, but the bot provides fallback responses when unavailable
+- **Privacy consideration**: PR diffs and build logs are sent to Google's
+  Gemini AI service for analysis when API key is provided. Organizations
+  with sensitive codebases should review Google's data handling policies
+- **API costs**: Each CI failure with Gemini enabled triggers an API call.
+  Monitor usage to manage costs, especially in repositories with frequent
+  CI failures
+- Analysis quality depends on error log clarity
+- May not handle very complex or unusual failure scenarios
+- Skips dependabot PRs to avoid unnecessary noise
+
+.. note::
+
+    If the Gemini API is unavailable, the bot provides a fallback response
+    with basic troubleshooting guidance. The workflow will fail loudly if
+    the bot script encounters critical errors, ensuring issues are visible
+    in GitHub Actions logs.
+
 GitHub Workflows
 ----------------
 

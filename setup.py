@@ -63,6 +63,11 @@ setup(
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",
         ],
+        "github_actions": [
+            "requests>=2.32.5",
+            "PyGithub>=2.0.0",
+            "google-generativeai>=0.8.0",
+        ],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
