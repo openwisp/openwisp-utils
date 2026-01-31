@@ -1,3 +1,4 @@
+import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -157,7 +158,6 @@ def mock_all(mocker):
             stdout="main", check_returncode=True
         ),
     }
-
     default_mock = MagicMock(stdout="", stderr="", check_returncode=True)
 
     def subprocess_side_effect(command, *args, **kwargs):
@@ -179,6 +179,15 @@ def mock_all(mocker):
         "openwisp_utils.releaser.version.questionary.select", new=mock_q_select
     )
 
+    # Mock OPENAI_CHATGPT_TOKEN to None to skip AI summary by default
+    original_environ_get = os.environ.get
+
+    def mock_environ_get(key, default=None):
+        if key == "OPENAI_CHATGPT_TOKEN":
+            return None
+        return original_environ_get(key, default)
+
+    mocker.patch("os.environ.get", side_effect=mock_environ_get)
     mocks = {
         "subprocess": mocker.patch(
             "openwisp_utils.releaser.release.subprocess.run",
@@ -236,5 +245,4 @@ def mock_all(mocker):
     }
     mocks["check_prerequisites"].return_value = (mock_config, mock_gh_instance)
     mocks["load_config"].return_value = mock_config
-
     return mocks
