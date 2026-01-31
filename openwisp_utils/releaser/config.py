@@ -27,11 +27,9 @@ def get_package_type_from_setup():
         ".ansible-lint": "ansible",
         ".luacheckrc": "openwrt-agents",
     }
-
     for filename, package_type in package_type_files.items():
         if os.path.exists(filename):
             return package_type
-
     return None
 
 
@@ -39,7 +37,6 @@ def detect_changelog_style(changelog_path):
     # Detects if the changelog uses the 'Version ' prefix for its entries
     if not os.path.exists(changelog_path):
         return True
-
     with open(changelog_path, "r", encoding="utf-8") as f:
         content = f.read()
     # Look for a line that starts with 'Version X.Y.Z'
@@ -57,12 +54,10 @@ def _handle_python_version(config):
     project_name = get_package_name_from_setup()
     if not project_name:
         return
-
     package_directory = project_name.replace("-", "_")
     init_py_path = os.path.join(package_directory, "__init__.py")
     if not os.path.exists(init_py_path):
         return
-
     with open(init_py_path, "r") as f:
         content = f.read()
         version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
@@ -79,13 +74,11 @@ def _handle_npm_version(config):
     """Handles version detection for NPM packages."""
     if not os.path.exists("package.json"):
         return
-
     with open("package.json", "r") as f:
         content = json.load(f)
         version_str = content.get("version")
         if not version_str:
             return
-
         config["version_path"] = "package.json"
         try:
             if "-" in version_str:
@@ -94,13 +87,11 @@ def _handle_npm_version(config):
                 version_tuple, version_type = version_str.split("_", 1)
             else:
                 version_tuple, version_type = version_str, "final"
-
             parts = version_tuple.split(".")
             if len(parts) < 3:
                 raise ValueError(
                     f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
                 )
-
             config["CURRENT_VERSION"] = [
                 int(parts[0]),
                 int(parts[1]),
@@ -115,7 +106,6 @@ def _handle_docker_version(config):
     """Handles version detection for Docker packages."""
     if not os.path.exists("Makefile"):
         return
-
     with open("Makefile", "r") as f:
         content = f.read()
         version_match = re.search(
@@ -123,7 +113,6 @@ def _handle_docker_version(config):
         )
         if not version_match:
             return
-
         config["version_path"] = "Makefile"
         version_str = version_match.group(1)
         parts = version_str.split(".")
@@ -131,7 +120,6 @@ def _handle_docker_version(config):
             raise ValueError(
                 f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
             )
-
         config["CURRENT_VERSION"] = [
             int(parts[0]),
             int(parts[1]),
@@ -145,7 +133,6 @@ def _handle_ansible_version(config):
     version_py_path = os.path.join("templates", "openwisp2", "version.py")
     if not os.path.exists(version_py_path):
         return
-
     with open(version_py_path, "r") as f:
         content = f.read()
         version_match = re.search(
@@ -155,7 +142,6 @@ def _handle_ansible_version(config):
         )
         if not version_match:
             return
-
         config["version_path"] = version_py_path
         try:
             version_str = version_match.group(1)
@@ -164,7 +150,6 @@ def _handle_ansible_version(config):
                 raise ValueError(
                     f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
                 )
-
             config["CURRENT_VERSION"] = [
                 int(parts[0]),
                 int(parts[1]),
@@ -179,19 +164,16 @@ def _handle_openwrt_agents_version(config):
     """Handles version detection for OpenWRT agents packages."""
     if not os.path.exists("VERSION"):
         return
-
     with open("VERSION", "r") as f:
         version_str = f.read().strip()
         if not version_str:
             return
-
         config["version_path"] = "VERSION"
         parts = version_str.split(".")
         if len(parts) < 3:
             raise ValueError(
                 f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
             )
-
         config["CURRENT_VERSION"] = [
             int(parts[0]),
             int(parts[1]),
@@ -229,11 +211,9 @@ def load_config():
             config["repo"] = "/".join(repo_path.split("/")[-2:])
     except (subprocess.CalledProcessError, FileNotFoundError):
         config["repo"] = None
-
     config["version_path"] = None
     config["CURRENT_VERSION"] = None
     config["package_type"] = get_package_type_from_setup()
-
     # Use handler function if available for the detected package type
     handler = PACKAGE_VERSION_HANDLERS.get(config["package_type"])
     if handler:
