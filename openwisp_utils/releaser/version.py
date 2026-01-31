@@ -12,7 +12,6 @@ def get_current_version(config):
     if not current_version:
         # Return None if CURRENT_VERSION is missing, allowing the main script to handle it
         return None, None
-
     try:
         major, minor, patch = (
             current_version[0],
@@ -38,7 +37,6 @@ def _bump_with_regex(content, pattern, replacement, version_path, error_msg):
     )
     if count == 0:
         raise RuntimeError(f"Failed to find and bump {error_msg} in {version_path}.")
-
     return new_content
 
 
@@ -57,7 +55,10 @@ def _bump_python_version(content, new_version, version_path):
 
 def _bump_npm_version(content, new_version, version_path):
     """Handles version bumping for NPM packages."""
-    data = json.loads(content)
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Malformed JSON in {version_path}: {e}") from e
     data["version"] = new_version
     return json.dumps(data, indent=2) + "\n"
 
@@ -84,8 +85,8 @@ def _bump_ansible_version(content, new_version, version_path):
     )
 
 
-def _bump_openwrt_agents_version(content, new_version, version_path):
-    """Handles version bumping for OpenWRT agents packages."""
+def _bump_openwrt_version(content, new_version, version_path):
+    """Handles version bumping for OpenWRT packages."""
     return f"{new_version}\n"
 
 
@@ -95,7 +96,7 @@ VERSION_BUMP_HANDLERS = {
     "npm": _bump_npm_version,
     "docker": _bump_docker_version,
     "ansible": _bump_ansible_version,
-    "openwrt-agents": _bump_openwrt_agents_version,
+    "openwrt": _bump_openwrt_version,
 }
 
 
@@ -106,7 +107,6 @@ def bump_version(config, new_version):
     if not version_path:
         # version bumping was not performed
         return False
-
     try:
         new_version_parts = new_version.split(".")
         if len(new_version_parts) != 3:
@@ -114,19 +114,14 @@ def bump_version(config, new_version):
     except ValueError as e:
         print(f"Error: Invalid version format. {e}", file=sys.stderr)
         sys.exit(1)
-
     with open(version_path, "r") as f:
         content = f.read()
-
     handler = VERSION_BUMP_HANDLERS.get(package_type)
     if not handler:
         raise RuntimeError(f"Unknown package type: {package_type}")
-
     new_content = handler(content, new_version, version_path)
-
     with open(version_path, "w") as f:
         f.write(new_content)
-
     return True
 
 

@@ -188,13 +188,10 @@ def test_bump_version_npm():
         "version_path": "package.json",
         "CURRENT_VERSION": [1, 2, 3, "beta"],
     }
-
     package_json_content = '{\n  "name": "test-package",\n  "version": "1.2.3-beta"\n}'
     m_open = mock_open(read_data=package_json_content)
-
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
-
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert '"version": "1.2.4"' in written_content
@@ -220,10 +217,8 @@ def test_bump_version_docker():
         "version_path": "Makefile",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
-
     makefile_content = "OPENWISP_VERSION = 1.2.3\nDOCKER_IMAGE = openwisp/test\n"
     m_open = mock_open(read_data=makefile_content)
-
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
 
@@ -253,23 +248,20 @@ def test_bump_version_ansible():
         "version_path": "templates/openwisp2/version.py",
         "CURRENT_VERSION": [1, 2, 3],
     }
-
     version_py_content = '__openwisp_version__ = "1.2.3"\n'
     m_open = mock_open(read_data=version_py_content)
-
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
-
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert '__openwisp_version__ = "1.2.4"' in written_content
 
 
 # OpenWRT Agents Package Version Tests
-def test_get_current_version_openwrt_agents():
-    """Tests getting current version from OpenWRT agents VERSION file."""
+def test_get_current_version_openwrt():
+    """Tests getting current version from OpenWRT VERSION file."""
     config = {
-        "package_type": "openwrt-agents",
+        "package_type": "openwrt",
         "version_path": "VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
@@ -278,20 +270,17 @@ def test_get_current_version_openwrt_agents():
     assert version_type == "final"
 
 
-def test_bump_version_openwrt_agents():
-    """Tests bumping version for OpenWRT agents in VERSION file."""
+def test_bump_version_openwrt():
+    """Tests bumping version for OpenWRT in VERSION file."""
     config = {
-        "package_type": "openwrt-agents",
+        "package_type": "openwrt",
         "version_path": "VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
-
     version_file_content = "1.2.3\n"
     m_open = mock_open(read_data=version_file_content)
-
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         result = bump_version(config, "1.2.4")
-
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert "1.2.4" in written_content
