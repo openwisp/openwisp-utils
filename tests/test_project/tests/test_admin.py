@@ -215,7 +215,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         response = self.client.get(path)
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "field-uuid")
-        self.assertContains(response, "field-receive_url")
+        self.assertNotContains(response, "field-receive_url")
 
     def test_copyablefields_admin(self):
         class TestCopyableFieldAdmin(CopyableFieldsAdmin):
@@ -251,10 +251,12 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         path = reverse("admin:test_project_project_add")
         self.client.get(path)
         ma = ProjectAdmin(Project, self.site)
-        # 'uuid' should be missing from ma.get_fields()
+        # 'uuid' and 'receive_url' should be missing from ma.get_fields()
         # because we're testing the project admin add form,
-        # and now we're adding it here again only to assert the admin field order
-        self.assertEqual(ma.fields, ("uuid", *ma.get_fields(self.client.request)))
+        # and now we're adding them here again only to assert the admin field order
+        self.assertEqual(
+            ma.fields, ("uuid", *ma.get_fields(self.client.request), "receive_url")
+        )
         self.assertEqual(
             ma.readonly_fields, ma.get_readonly_fields(self.client.request)
         )

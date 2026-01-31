@@ -150,14 +150,14 @@ class UUIDAdmin(CopyableFieldsAdmin):
     uuid.short_description = _("UUID")
 
 
-class ReceiveUrlAdmin(ModelAdmin):
+class ReceiveUrlAdmin(CopyableFieldsAdmin):
     """Adds a receive_url field.
 
     The receive_url method will build the URL using the parameters:
 
     - receive_url_name
     - receive_url_object_arg
-    - receive_url_object_arg
+    - receive_url_querystring_arg
     """
 
     receive_url_querystring_arg = "key"
@@ -165,6 +165,7 @@ class ReceiveUrlAdmin(ModelAdmin):
     receive_url_name = None
     receive_url_urlconf = None
     receive_url_baseurl = None
+    copyable_fields = ("receive_url",)
 
     def add_view(self, request, *args, **kwargs):
         self.request = request
