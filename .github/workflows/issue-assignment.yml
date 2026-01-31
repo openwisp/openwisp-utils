@@ -1,0 +1,57 @@
+name: Issue Assignment Bot
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  respond-to-assign-request:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.issue.pull_request == null &&
+      (
+        contains(toLower(github.event.comment.body), 'assign this issue to me') ||
+        contains(toLower(github.event.comment.body), 'assign me') ||
+        contains(toLower(github.event.comment.body), 'can i work on this') ||
+        contains(toLower(github.event.comment.body), 'i would like to work on this') ||
+        contains(toLower(github.event.comment.body), 'i want to work on this')
+      )
+    steps:
+      - name: Respond to assignment request
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const contributingUrl = 'https://openwisp.io/docs/developer/contributing.html';
+            const commenter = context.payload.comment.user.login;
+
+            const message = `Hi @${commenter} 👋,
+
+            Thank you for your interest in contributing to OpenWISP! 🎉
+
+            According to our [contributing guidelines](${contributingUrl}), **you don't need to wait to be assigned** to start working on an issue. We encourage you to:
+
+            1. **Fork the repository** and start working on your solution
+            2. **Open a Pull Request (PR) as soon as possible** - even as a draft if it's still in progress
+            3. **Link your PR to this issue** by including \`Fixes #${context.payload.issue.number}\` in the PR description
+
+            Once you open a PR that references this issue, you will be automatically assigned to it.
+
+            This approach helps us:
+            - See your progress and provide early feedback
+            - Avoid multiple contributors working on the same issue unknowingly
+            - Keep the contribution process moving smoothly
+
+            We look forward to your contribution! If you have any questions, feel free to ask in the PR or check our [documentation](${contributingUrl}).
+
+            Happy coding! 🚀`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: message
+            });

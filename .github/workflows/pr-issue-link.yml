@@ -1,0 +1,86 @@
+name: PR Issue Auto-Assignment
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  auto-assign-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-assign linked issues to PR author
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prAuthor = context.payload.pull_request.user.login;
+            const prNumber = context.payload.pull_request.number;
+            const issuePattern = /(?:fix(?:es)?|close[sd]?|resolve[sd]?)\s+#(\d+)/gi;
+            const matches = [...prBody.matchAll(issuePattern)];
+            if (matches.length === 0) {
+              console.log('No linked issues found in PR body');
+              return;
+            }
+            const MAX_ISSUES_TO_PROCESS = 10;
+            if (matches.length > MAX_ISSUES_TO_PROCESS) {
+              console.log(`Found ${matches.length} issue references, processing first ${MAX_ISSUES_TO_PROCESS} to avoid rate limits`);
+            }
+            const processedIssues = new Set();
+            for (const match of matches) {
+              const issueNumber = parseInt(match[1], 10);
+              if (processedIssues.has(issueNumber)) {
+                continue;
+              }
+              if (processedIssues.size >= MAX_ISSUES_TO_PROCESS) {
+                console.log(`Reached limit of ${MAX_ISSUES_TO_PROCESS} issues, stopping processing`);
+                break;
+              }
+              
+              processedIssues.add(issueNumber);
+              try {
+                const issue = await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber
+                });
+                if (issue.data.pull_request) {
+                  console.log(`#${issueNumber} is a pull request, skipping`);
+                  continue;
+                }
+                if (issue.data.assignees && issue.data.assignees.length > 0) {
+                  const currentAssignees = issue.data.assignees.map(a => a.login);
+                  if (currentAssignees.includes(prAuthor)) {
+                    console.log(`Issue #${issueNumber} already assigned to ${prAuthor}`);
+                    continue;
+                  }
+                  console.log(`Issue #${issueNumber} already assigned to: ${currentAssignees.join(', ')}`);
+                  continue;
+                }
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  assignees: [prAuthor]
+                });
+                
+                console.log(`Assigned issue #${issueNumber} to ${prAuthor}`);
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: `This issue has been automatically assigned to @${prAuthor} who opened PR #${prNumber} to address it. 🎯`
+                });
+                
+              } catch (error) {
+                if (error.status === 404) {
+                  console.log(`Issue #${issueNumber} not found`);
+                } else {
+                  console.error(`Error processing issue #${issueNumber}:`, error.message);
+                }
+              }
+            }
