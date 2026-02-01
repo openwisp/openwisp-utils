@@ -56,7 +56,7 @@ setup(
             "pytest-django>=4.10,<4.12",
         ],
         "celery": ["celery~=5.6.1"],
-        "selenium": ["selenium>=4.10,<4.40"],
+        "selenium": ["selenium>=4.10,<4.41"],
         "releaser": [
             "git-cliff~=2.11.0",
             "questionary~=2.1.0",
