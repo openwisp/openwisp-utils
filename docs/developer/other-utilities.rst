@@ -91,10 +91,10 @@ Storage Utilities
 ``openwisp_utils.storage.CompressStaticFilesStorage``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A static storage backend for compression inheriting from
-`django-compress-staticfiles's
-<https://pypi.org/project/django-compress-staticfiles/>`_
-``CompressStaticFilesStorage`` class.
+A static storage backend for minification and compression inheriting from
+`django-minify-compress-staticfiles's
+<https://github.com/openwisp/django-minify-compress-staticfiles>`_
+``MinicompressStorage`` class.
 
 Adds support for excluding file types using
 :ref:`OPENWISP_STATICFILES_VERSIONED_EXCLUDE
