@@ -214,13 +214,11 @@ class TestAdminDashboard(AdminTestMixin, CreateMixin, DjangoTestCase):
         self.assertContains(
             response, '<div style="display:none">Testing dashboard</div>'
         )
-        # Check for dashboard-test files (may have hash and .min suffix)
-        self.assertRegex(response.content.decode(), r'dashboard-test(\.[a-f0-9]+)?(\.min)?\.js')
-        self.assertRegex(response.content.decode(), r'dashboard-test(\.[a-f0-9]+)?(\.min)?\.css')
+        self.assertContains(response, "dashboard-test.js")
+        self.assertContains(response, "dashboard-test.css")
         self.assertContains(response, "dashboard-test.config1")
         self.assertContains(response, "dashboard-test.config2")
-        # Check for jquery.init (may have hash and .min suffix)
-        self.assertRegex(response.content.decode(), r'jquery\.init(\.[a-f0-9]+)?(\.min)?\.js')
+        self.assertContains(response, "jquery.init.js")
         self.assertContains(response, "Operator presence in projects")
         self.assertContains(response, "with_operator")
         self.assertContains(response, "without_operator")
