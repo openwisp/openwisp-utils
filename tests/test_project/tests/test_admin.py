@@ -292,9 +292,10 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             response, "Only added operators will have permission to access the project."
         )
         self.assertContains(response, "https://github.com/openwisp/openwisp-utils/")
-        # Response should contain static in 'icon_url'
-        self.assertContains(
-            response, '<img src="/static/admin/img/icon-alert.svg">', html=True
+        # Response should contain static icon-alert image (with or without hash)
+        self.assertRegex(
+            response.content.decode(),
+            r'<img src="/static/admin/img/icon-alert(\.[a-f0-9]+)?\.svg">',
         )
 
     def test_admin_theme_css_setting(self):
@@ -358,10 +359,10 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertEqual(
                 _staticfy("admin/css/openwisp.css"), "admin/css/openwisp.css"
             )
-        # test static files are loaded with staticfiles
-        self.assertEqual(
-            _staticfy("admin/css/openwisp.css"), "/static/admin/css/openwisp.css"
-        )
+        # test static files are loaded with staticfiles (may include hash and .min)
+        result = _staticfy("admin/css/openwisp.css")
+        self.assertTrue(result.startswith("/static/admin/css/openwisp."))
+        self.assertTrue(result.endswith(".css"))
 
     def test_admin_theme_js_setting(self):
         # test for improper configuration : not a list
