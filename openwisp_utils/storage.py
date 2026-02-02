@@ -13,7 +13,6 @@ class FileHashedNameMixin:
         settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", []
     )
 
-
     def hashed_name(self, name, content=None, filename=None):
         if not any(
             fnmatch.fnmatch(name, pattern) for pattern in self.excluded_patterns
