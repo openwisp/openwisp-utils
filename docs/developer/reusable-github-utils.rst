@@ -59,8 +59,9 @@ times with a 30 second delay between attempts.
 CI Failure Bot
 ~~~~~~~~~~~~~~
 
-This GitHub workflow automatically analyzes failed CI builds and provides
-intelligent feedback to contributors using AI-powered analysis.
+This GitHub workflow analyzes failed CI builds when a pull request context
+is available and provides intelligent feedback to contributors using
+AI-powered analysis.
 
 The bot examines build logs, PR changes, and workflow context to generate
 specific, actionable guidance that helps contributors fix issues quickly.
@@ -116,7 +117,7 @@ You can use this workflow in your repository as follows:
               WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
               REPOSITORY: ${{ github.repository }}
               PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number || '' }}
-            run: python -m openwisp_utils.ci_failure_bot
+            run: python -m openwisp_utils.bots.ci_failure.bot
 
 This example automatically triggers when the "OpenWISP Utils CI Build"
 workflow fails, analyzes the failure using Gemini AI, and posts
@@ -127,9 +128,8 @@ intelligent feedback to the associated pull request.
 - **Automatic triggering**: Responds to CI build failures in pull requests
 - **AI-powered analysis**: Uses Google Gemini to analyze failure logs and
   provide specific guidance
-- **OpenWISP QA integration**: Instructs contributors to use ``pip install
-  -e .[qa]``, ``./run-qa-checks``, and ``openwisp-qa-format`` for proper
-  code formatting
+- **Targeted remediation**: Suggests QA commands, test commands, or setup
+  fixes depending on which checks failed (no generic advice)
 - **Intelligent responses**: Provides direct, actionable feedback based on
   actual failure context
 - **Comment deduplication**: Updates existing comments instead of creating
@@ -159,6 +159,11 @@ Optional environment variables for customization:
 
 **Limitations**
 
+- **Pull request context availability**: When triggered via
+  ``workflow_run``, GitHub may not always provide an associated pull
+  request (for example, when builds are triggered by pushes or scheduled
+  workflows). In these cases, the bot will not post a comment, as no pull
+  request context is available.
 - **Optional Gemini API**: Google Gemini API access enhances analysis
   quality, but the bot provides fallback responses when unavailable
 - **Privacy consideration**: PR diffs and build logs are sent to Google's
@@ -173,10 +178,10 @@ Optional environment variables for customization:
 
 .. note::
 
-    If the Gemini API is unavailable, the bot provides a fallback response
-    with basic troubleshooting guidance. The workflow will fail loudly if
-    the bot script encounters critical errors, ensuring issues are visible
-    in GitHub Actions logs.
+    If the Gemini API is unavailable or analysis fails, the bot provides a
+    fallback response with standard OpenWISP QA guidance. Critical errors
+    are logged in GitHub Actions, but the workflow is designed to complete
+    safely without blocking contributor feedback.
 
 GitHub Workflows
 ----------------

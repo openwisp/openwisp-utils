@@ -16,5 +16,6 @@ if __name__ == "__main__":
     args.insert(1, "test")
     args.insert(2, "test_project")
     args.insert(3, "openwisp_utils.metric_collection")
+    args.insert(4, "openwisp_utils.bots")
     execute_from_command_line(args)
     sys.exit(pytest.main([os.path.join("openwisp_utils/releaser/tests")]))

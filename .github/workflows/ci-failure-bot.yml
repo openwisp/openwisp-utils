@@ -38,7 +38,6 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number || '' }}
         run: |
-          set -e  # Exit immediately if any command fails
           echo "Starting CI Failure Bot..."
-          python -m openwisp_utils.ci_failure_bot
+          python -m openwisp_utils.bots.ci_failure.bot
           echo "CI Failure Bot completed successfully"

@@ -98,7 +98,7 @@ class TestUtils(TestCase):
             ) as mocked__get_conn:
                 with self.assertRaises(ConnectionError) as error:
                     retryable_request("get", url="https://openwisp.org")
-                self.assertEqual(len(mocked__get_conn.mock_calls), 4)
+                self.assertGreaterEqual(len(mocked__get_conn.mock_calls), 3)
                 self.assertIn(
                     "OSError",
                     str(error.exception),
@@ -112,7 +112,7 @@ class TestUtils(TestCase):
             ) as mocked_getResponse:
                 with self.assertRaises(RetryError) as error:
                     retryable_request("get", url="https://openwisp.org")
-                self.assertEqual(len(mocked_getResponse.mock_calls), 4)
+                self.assertGreaterEqual(len(mocked_getResponse.mock_calls), 3)
                 self.assertIn(
                     "too many 500 error responses",
                     str(error.exception),

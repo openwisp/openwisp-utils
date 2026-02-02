@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "test_project",
     "openwisp_utils.admin_theme",
     "openwisp_utils.metric_collection",
+    "openwisp_utils.bots",
     "django.contrib.sites",
     # admin
     "django.contrib.admin",
