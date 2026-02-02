@@ -8,7 +8,6 @@ from django_minify_compress_staticfiles.storage import (
 
 class FileHashedNameMixin:
     default_excluded_patterns = ["leaflet/*/*.png"]
-
     excluded_patterns = default_excluded_patterns + getattr(
         settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", []
     )
