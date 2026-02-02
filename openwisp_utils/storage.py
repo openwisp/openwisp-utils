@@ -1,16 +1,19 @@
 import fnmatch
 
-from compress_staticfiles.storage import (
-    CompressStaticFilesStorage as BaseCompressStaticFilesStorage,
-)
 from django.conf import settings
+from django_minify_compress_staticfiles.storage import (
+    MinicompressStorage as BaseMinicompressStorage,
+)
 
 
 class FileHashedNameMixin:
     default_excluded_patterns = ["leaflet/*/*.png"]
-    excluded_patterns = default_excluded_patterns + getattr(
-        settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", []
-    )
+
+    @property
+    def excluded_patterns(self):
+        return self.default_excluded_patterns + getattr(
+            settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", []
+        )
 
     def hashed_name(self, name, content=None, filename=None):
         if not any(
@@ -22,8 +25,8 @@ class FileHashedNameMixin:
 
 class CompressStaticFilesStorage(
     FileHashedNameMixin,
-    BaseCompressStaticFilesStorage,
+    BaseMinicompressStorage,
 ):
-    """Like CompressStaticFilesStorage, but allows excluding some files."""
+    """Like MinicompressStorage, but allows excluding some files."""
 
     pass
