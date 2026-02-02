@@ -26,7 +26,7 @@ setup(
     zip_safe=False,
     install_requires=[
         "django-model-utils>=4.5,<5.1",
-        "django-compress-staticfiles~=1.0.1b",
+        "django-minify-compress-staticfiles~=1.1.0",
         "django-admin-autocomplete-filter~=0.7.1",
         "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
@@ -45,7 +45,7 @@ setup(
         "rest": [
             "djangorestframework~=3.16.0",
             "django-filter>=25.1,<26.0",  # django-filter uses CalVer
-            "drf-yasg==1.21.11",  # pinning due to https://github.com/openwisp/openwisp-utils/issues/565
+            "drf-yasg>=1.21.14,<1.22.0",
         ],
         "channels": [
             "channels[daphne]~=4.3.0",
