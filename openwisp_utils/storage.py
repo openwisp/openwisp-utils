@@ -11,8 +11,8 @@ class FileHashedNameMixin:
 
     @property
     def excluded_patterns(self):
-        return self.default_excluded_patterns + getattr(
-            settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", []
+        return self.default_excluded_patterns + list(
+            getattr(settings, "OPENWISP_STATICFILES_VERSIONED_EXCLUDE", [])
         )
 
     def hashed_name(self, name, content=None, filename=None):
