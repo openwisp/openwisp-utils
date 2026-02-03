@@ -263,3 +263,10 @@ default ``'openwisp_utils.admin_theme.views.AutocompleteJsonView'``
 
 Dotted path to the ``AutocompleteJsonView`` used by the
 ``openwisp_utils.admin_theme.filters.AutocompleteFilter``.
+
+.. note::
+
+    With the migration to `django-admin-list-filter (dalf)
+    <https://github.com/vigo/django-admin-list-filter>`_, this setting is
+    deprecated as DALF uses Django's native admin autocomplete
+    infrastructure.

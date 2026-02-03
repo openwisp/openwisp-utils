@@ -1,3 +1,4 @@
+from dalf.admin import DALFModelAdmin
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.forms import ModelForm
@@ -28,12 +29,6 @@ from .models import (
 admin.site.unregister(User)
 
 
-class AutoShelfFilter(AutocompleteFilter):
-    title = _("shelf")
-    field_name = "shelf"
-    parameter_name = "shelf__id"
-
-
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ["username", "is_staff", "is_superuser", "is_active"]
@@ -48,8 +43,8 @@ class UserAdmin(admin.ModelAdmin):
 
 
 @admin.register(Book)
-class BookAdmin(admin.ModelAdmin):
-    list_filter = [AutoShelfFilter, "name"]
+class BookAdmin(DALFModelAdmin):
+    list_filter = [("shelf", AutocompleteFilter), "name"]
     search_fields = ["name"]
 
 
@@ -97,28 +92,16 @@ class ShelfFilter(SimpleInputFilter):
             return queryset.filter(name__icontains=self.value())
 
 
-class ReverseBookFilter(AutocompleteFilter):
-    title = _("Book")
-    field_name = "book"
-    parameter_name = "book"
-
-
-class AutoOwnerFilter(AutocompleteFilter):
-    title = _("owner")
-    field_name = "owner"
-    parameter_name = "owner_id"
-
-
 @admin.register(Shelf)
-class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
+class ShelfAdmin(TimeReadonlyAdminMixin, DALFModelAdmin):
     # DO NOT CHANGE: used for testing filters
     list_filter = [
         ShelfFilter,
         ["books_type", InputFilter],
         ["id", InputFilter],
-        AutoOwnerFilter,
+        ("owner", AutocompleteFilter),
         "books_type",
-        ReverseBookFilter,
+        ("book", AutocompleteFilter),
     ]
     search_fields = ["name"]
 

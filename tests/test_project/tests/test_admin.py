@@ -488,9 +488,10 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
     def test_ow_autocomplete_filter_uuid_exception(self):
         url = reverse("admin:test_project_book_changelist")
         url = f"{url}?shelf__id=invalid"
-        response = self.client.get(url)
+        response = self.client.get(url, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "“invalid” is not a valid UUID.")
+        # The invalid parameter should be stripped from the final URL
+        self.assertNotIn("shelf__id=invalid", response.request["QUERY_STRING"])
 
     def test_organization_radius_settings_admin(self):
         org_rad_settings = self._create_org_radius_settings(
