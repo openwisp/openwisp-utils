@@ -1,0 +1,49 @@
+name: "OpenWISP Changelog Generator"
+description: "Analyzes a PR and generates a RestructuredText changelog entry suggestion"
+author: "OpenWISP"
+
+inputs:
+  github-token:
+    description: "GitHub token for API access"
+    required: true
+  gemini-api-key:
+    description: "Google Gemini API key"
+    required: true
+  llm-model:
+    description: "Gemini model to use (e.g., 'gemini-2.0-flash', 'gemini-1.5-pro')"
+    required: false
+    default: "gemini-2.0-flash"
+  pr-number:
+    description: "Pull request number to analyze"
+    required: true
+  repo-name:
+    description: "Repository name in format owner/repo"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install google-genai
+
+    - name: Generate changelog entry
+      id: generate
+      shell: bash
+      env:
+        PR_NUMBER: ${{ inputs.pr-number }}
+        REPO_NAME: ${{ inputs.repo-name }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+        LLM_MODEL: ${{ inputs.llm-model }}
+      run: |
+        python ${{ github.action_path }}/generate_changelog.py
+
+branding:
+  icon: "file-text"
+  color: "orange"

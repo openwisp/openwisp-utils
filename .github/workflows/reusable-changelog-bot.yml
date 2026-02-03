@@ -1,0 +1,87 @@
+name: Reusable Changelog Bot
+
+on:
+  workflow_call:
+    inputs:
+      llm-model:
+        description: "Gemini model to use (example 'gemini-2.0-flash', 'gemini-1.5-pro')"
+        required: false
+        type: string
+        default: "gemini-2.0-flash"
+      trigger-phrase:
+        description: "Comment phrase that triggers the bot"
+        required: false
+        type: string
+        default: "@openwisp-bot changelog"
+    secrets:
+      GEMINI_API_KEY:
+        description: "Google Gemini API key"
+        required: true
+
+
+jobs:
+  generate-changelog:
+    if: |
+      github.event_name == 'issue_comment' && 
+      github.event.issue.pull_request && 
+      contains(github.event.comment.body, inputs.trigger-phrase || '@openwisp-bot changelog')
+    runs-on: ubuntu-latest
+
+    # give explicit permissions to comment on a PR, to avoid any failures
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Get PR number
+        id: pr
+        run: echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+
+      - name: Check if commenter has write access
+        id: check-permission
+        uses: actions/github-script@v7 # Github action to run js code with github API client and context pre-configured.
+        with:
+          script: |
+            const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.payload.comment.user.login
+            });
+            const hasAccess = ['admin', 'write', 'maintain'].includes(permission.permission);
+            console.log(`User ${context.payload.comment.user.login} has permission: ${permission.permission}`);
+            if (!hasAccess) {
+              core.setFailed('User does not have write access to trigger changelog generation');
+            }
+            return hasAccess;
+
+      - name: Checkout openwisp-utils for action
+        uses: actions/checkout@v4 # GitHub's official action for cloning a repository
+        with:
+          repository: openwisp/openwisp-utils
+          ref: master
+          sparse-checkout: |
+            .github/actions/changelog-generator
+          path: openwisp-utils-action
+
+        # send rocket imoji to the comment to acknowledge, before calling the generator changelog logic
+      - name: Add reaction to trigger comment 
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      - name: Generate changelog
+        uses: ./openwisp-utils-action/.github/actions/changelog-generator
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          llm-model: ${{ inputs.llm-model }}
+          pr-number: ${{ steps.pr.outputs.number }}
+          repo-name: ${{ github.repository }}
+

@@ -1,0 +1,15 @@
+name: Changelog Bot
+
+on:
+  # Trigger on PR comments containing the magic phrase
+  issue_comment:
+    types: [created]
+
+jobs:
+  changelog:
+    # Call the reusable workflow
+    uses: ./.github/workflows/reusable-changelog-bot.yml
+    with:
+      trigger-phrase: "@openwisp-bot changelog"
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
