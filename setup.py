@@ -26,7 +26,7 @@ setup(
     zip_safe=False,
     install_requires=[
         "django-model-utils>=4.5,<5.1",
-        "django-compress-staticfiles~=1.0.1b",
+        "django-minify-compress-staticfiles~=1.1.0",
         "django-admin-autocomplete-filter~=0.7.1",
         "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
@@ -38,14 +38,14 @@ setup(
             "black>=25.1,<25.13",
             "flake8~=7.3.0",
             "isort>=6.0.1,<7.1.0",
-            "coverage>=7.10.0,<7.13.0",
+            "coverage>=7.10.0,<7.14.0",
             "tblib~=3.2.2",
             "docstrfmt>=2.0.0,<2.1.0",
         ],
         "rest": [
             "djangorestframework~=3.16.0",
             "django-filter>=25.1,<26.0",  # django-filter uses CalVer
-            "drf-yasg~=1.21.7",
+            "drf-yasg>=1.21.14,<1.22.0",
         ],
         "channels": [
             "channels[daphne]~=4.3.0",
@@ -56,7 +56,7 @@ setup(
             "pytest-django>=4.10,<4.12",
         ],
         "celery": ["celery~=5.6.1"],
-        "selenium": ["selenium>=4.10,<4.40"],
+        "selenium": ["selenium>=4.10,<4.41"],
         "releaser": [
             "git-cliff~=2.11.0",
             "questionary~=2.1.0",
