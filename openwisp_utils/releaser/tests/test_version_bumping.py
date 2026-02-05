@@ -156,6 +156,23 @@ def test_determine_new_version_user_provides_own(mock_questionary):
     assert version == "2.0.0"
 
 
+@patch("openwisp_utils.releaser.version.questionary")
+def test_determine_new_version_prompts_when_current_version_is_none(mock_questionary):
+    """Tests that user is prompted to enter version when current version cannot be determined.
+
+    This covers the edge case for Ansible (and other) packages where the
+    version file doesn't exist, resulting in CURRENT_VERSION being None.
+    """
+    mock_questionary.text.return_value.ask.return_value = "1.0.0"
+    version = determine_new_version(None, None, is_bugfix=False)
+    assert version == "1.0.0"
+    mock_questionary.text.assert_called_once_with(
+        "Could not determine the current version. Please enter the new version:"
+    )
+    # confirm should NOT be called since we skip the suggestion flow
+    mock_questionary.confirm.assert_not_called()
+
+
 # NPM Package Version Tests
 def test_get_current_version_npm():
     """Tests getting current version from npm package.json."""
