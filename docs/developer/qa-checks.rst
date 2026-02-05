@@ -110,10 +110,10 @@ Usage example:
 
     checkmigrations --migration-path ./django_freeradius/migrations/
 
-.. _utils_checkcommit:
+.. _utils_commit_message_checks:
 
-``checkcommit``
----------------
+``Commit message checks``
+-------------------------
 
 Ensures the last commit message follows our :ref:`commit message style
 guidelines <openwisp_commit_message_style_guidelines>`.
@@ -122,23 +122,37 @@ We want to keep the commit log readable, consistent and easy to scan in
 order to make it easy to analyze the history of our modules, which is also
 a very important activity when performing maintenance.
 
+This check uses Commitizen with a custom OpenWISP Commitizen Plugin. After
+staging changes to git, contributors can use Commitizen to create commit
+messages easily.
+
+Instead of using :
+
+.. code-block::
+
+    git commit
+
+Contributors can use:
+
+.. code-block::
+
+    cz commit
+
+This command interactively prompts for the commit title, related issue
+number and a sort description of the changes, and generate a commit
+messages following the OpenWISP conventions.
+
+The commit message can be checked using Commitizen with the help of ``cz
+check``.
+
 Usage example:
 
 .. code-block::
 
-    checkcommit --message "$(git log --format=%B -n 1)"
+    cz check --rev-range HEAD~1..HEAD
 
-If, for some reason, you wish to skip this QA check for a specific commit
-message you can add ``#noqa`` to the end of your commit message.
-
-Usage example:
-
-.. code-block::
-
-    [qa] Improved #20
-
-    Simulation of a special unplanned case
-    #noqa
+This command validates the latest commit message against the defined
+conventions and reports any formatting issues.
 
 .. _utils_checkendline:
 

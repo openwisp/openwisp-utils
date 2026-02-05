@@ -2,9 +2,9 @@ import re
 
 from commitizen.cz.base import BaseCommitizen
 
-_CUSTOM_PREFIX_RE = re.compile(r"^[a-z0-9!:-]+$")
+_CUSTOM_PREFIX_RE = re.compile(r"^[a-z0-9!/:-]+$")
 _TITLE_ISSUE_RE = re.compile(r"\s#(\d+)$")
-_HEADER_RE = re.compile(r"^\[[a-z0-9:!-]+\] [A-Z].*\s#\d+$")
+_HEADER_RE = re.compile(r"^\[[a-z0-9!/:-]+\] [A-Z].*\s#\d+$")
 _FIXES_RE = re.compile(r"^Fixes #(\d+)$", re.MULTILINE)
 
 
@@ -81,11 +81,9 @@ class OpenWispCommitizen(BaseCommitizen):
             prefix_value = answers["custom_prefix"]
         else:
             prefix_value = answers["change_type"]
-
         prefix = f"[{prefix_value}]"
         title = answers["title"].strip()
         body = answers["how"].strip()
-
         # Extract issue number from title
         match = _TITLE_ISSUE_RE.search(title)
         if not match:
@@ -93,44 +91,40 @@ class OpenWispCommitizen(BaseCommitizen):
                 "Commit title must end with an issue reference like #<issue_number>."
             )
         issue_number = match.group(1)
-
         return f"{prefix} {title}\n\n" f"{body}\n\n" f"Fixes #{issue_number}"
 
     def validate_commit_message(self, message: str) -> bool:
-
         lines = message.splitlines()
-        if not lines:
+        # Must have at least header, blank line, body, blank line, footer
+        if len(lines) < 5:
             return False
-
+        # Enforce blank line after header
+        if lines[1].strip() != "":
+            return False
+        # Enforce blank line before footer
+        if lines[-2].strip() != "":
+            return False
         # Validate header
         header = lines[0]
         if not _HEADER_RE.match(header):
             return False
-
         title_issue = _TITLE_ISSUE_RE.search(header)
         if not title_issue:
             return False
-
         title_issue_num = title_issue.group(1)
-
-        # Remove the Fixes footer before checking body
-        body_and_footer = "\n".join(lines[1:]).strip()
-
-        # Remove footer
-        body = _FIXES_RE.sub("", body_and_footer).strip()
+        # Remove the footer before checking body
+        body_lines = lines[2:-2]
+        body = "\n".join(body_lines).strip()
         if not body:
             return False
-
-        fixes_match = _FIXES_RE.search(message)
-        if not fixes_match:
+        footer = lines[-1]
+        fixes_match = _FIXES_RE.match(footer)
+        if not _FIXES_RE.match(footer):
             return False
-
         fixes_issue_num = fixes_match.group(1)
-
         # Ensure title and footer reference same issue
         if title_issue_num != fixes_issue_num:
             return False
-
         return True
 
     def format_error_message(self, message: str) -> str:
@@ -179,6 +173,3 @@ class OpenWispCommitizen(BaseCommitizen):
             "If none of the predefined types apply, contributors can select\n"
             "the 'other' option and provide a custom type enclosed in square brackets."
         )
-
-    def __init__(self, config):
-        super().__init__(config)
