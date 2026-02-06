@@ -18,8 +18,11 @@ class OpenWispCommitizen(BaseCommitizen):
         "test",
         "ci",
         "chore",
+        "chores",
         "qa",
-        "other",
+        "deps",
+        "release",
+        "bump",
     ]
 
     def _validate_custom_prefix(self, value: str):
@@ -117,7 +120,8 @@ class OpenWispCommitizen(BaseCommitizen):
         return "[<type>] <Title>"
 
     def schema_pattern(self) -> str:
-        return r"(?sm)^\[[a-z0-9!/:-]+\] [A-Z][^\n]* #(?P<issue>\d+)$\n\n.+\n\nFixes #(?P=issue)\n?$"
+        # Allow merge commits (starting with "Merge") or regular commits with prefix
+        return r"(?sm)^(?:Merge .*|\[[a-z0-9!/:-]+\] [A-Z][^\n]*( #(?P<issue>\d+))?$(\n\n.+\n\nFixes #(?P=issue)\n?)?)$"
 
     def info(self) -> str:
         return (
