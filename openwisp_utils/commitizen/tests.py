@@ -119,10 +119,12 @@ def test_error_message_is_user_friendly():
     assert code != 0
     output = out + err
     # Check that error message is user-friendly (not raw regex)
-    assert "Invalid commit message format" in output
+    assert "commit validation: failed!" in output
+    assert "Invalid commit message" in output
     assert "Expected format:" in output
-    assert "Examples:" in output
+    assert "[prefix]" in output
     assert "[feature]" in output
-    assert "[fix]" in output
+    assert "Fixes #<issue>" in output
     # Make sure raw regex pattern is NOT shown
-    assert "pattern:" not in output.lower() or "(?sm)" not in output
+    assert "(?sm)" not in output
+    assert "pattern:" not in output.lower()
