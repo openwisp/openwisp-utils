@@ -1,4 +1,4 @@
-from admin_auto_filters.filters import AutocompleteFilter as BaseAutocompleteFilter
+from dalf.admin import DALFRelatedFieldAjax as BaseAutocompleteFilter
 from django.contrib import messages
 from django.contrib.admin.filters import FieldListFilter, SimpleListFilter
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
@@ -101,23 +101,72 @@ class AutocompleteFilter(BaseAutocompleteFilter):
 
     class Media:
         css = {
-            "screen": ("admin/css/ow-auto-filter.css",),
+            "screen": (
+                "admin/css/vendor/select2/select2.css",
+                "admin/css/autocomplete.css",
+                "admin/css/ow-auto-filter.css",
+            ),
         }
-        js = BaseAutocompleteFilter.Media.js + ("admin/js/ow-auto-filter.js",)
+        js = (
+            # 1. Django's Setup 
+            "admin/js/jquery.init.js",
+            
+            # 2. Django's Autocomplete Logic
+            "admin/js/autocomplete.js",
+            
+            # 3. The Library Script 
+            "admin/js/django_admin_list_filter.js",
+            
+            # 4. OpenWISP's Custom Script
+            "admin/js/ow-auto-filter.js",
+        )
 
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse("admin:ow-auto-filter")
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, field, request, params, model, model_admin, field_path):
+        # We manually use the full arguments instead of *args, **kwargs
+        # so we can manipulate self.ajax_url after initialization
         try:
-            return super().__init__(*args, **kwargs)
-        except ValidationError:
-            None
+            super().__init__(field, request, params, model, model_admin, field_path)
+            # Override dalf's default URL to use OpenWISP's custom view
+            self.ajax_url = reverse("admin:ow-auto-filter")
+        except (ValidationError, ValueError):
+            # Handle invalid UUIDs passed in params during init
+            pass
+
+    def value(self):
+        """
+        Returns the value of this filter from the query string.
+        Required for the 'choices' method to determine if 'All' is selected.
+        """
+        return self.used_parameters.get(self.lookup_kwarg)
+
+    def choices(self, changelist):
+        all_choice = {
+            "selected": self.value() is None,
+            "query_string": changelist.get_query_string(remove=[self.parameter_name]),
+            "display": _("All"),
+            "query_parts": [],
+            "parameter_name": self.lookup_kwarg,
+    }
+
+        for key, value in changelist.get_filters_params().items():
+            if key != self.parameter_name:
+                all_choice["query_parts"].append((key, value))
+
+        yield all_choice
+
 
     def queryset(self, request, queryset):
+        """
+        Fixes AssertionError: 302 != 200.
+        Catches validation errors (like invalid UUIDs) and displays a message
+        instead of crashing or redirecting.
+        """
         try:
             return super().queryset(request, queryset)
-        except ValidationError as e:
-            error_msg = " ".join(e.messages)
+        except (ValidationError, ValueError) as e:
+            if hasattr(e, "messages"):
+                error_msg = " ".join(e.messages)
+            else:
+                error_msg = str(e)
             messages.error(request, error_msg)
             return queryset

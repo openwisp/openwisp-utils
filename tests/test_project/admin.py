@@ -49,7 +49,7 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_filter = [AutoShelfFilter, "name"]
+    list_filter = [("shelf",AutoShelfFilter), "name"]
     search_fields = ["name"]
 
 
@@ -116,9 +116,9 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
         ShelfFilter,
         ["books_type", InputFilter],
         ["id", InputFilter],
-        AutoOwnerFilter,
+        ("owner",AutoOwnerFilter),
         "books_type",
-        ReverseBookFilter,
+        ("book",ReverseBookFilter),
     ]
     search_fields = ["name"]
 

@@ -1,4 +1,4 @@
-.auto-filter {
+.auto-filter,.dalf-filter h3 {
   pointer-events: all;
 }
 .auto-filter ul {
@@ -8,7 +8,7 @@
 .auto-filter li {
   padding: 0;
 }
-.auto-filter h3 {
+.auto-filter h3,.dalf-filter h3 {
   position: relative;
   margin: 0;
   padding: 0px 5px;
@@ -16,10 +16,25 @@
   width: -moz-fit-content;
   background: var(--body-bg);
   color: var(--ow-overlay-67-5);
-  pointer-events: none;
+  pointer-events: all;
+  cursor : pointer;
   font-weight: 300;
   transform: translate(10px, -8px);
   z-index: 3;
+}
+
+/* The Arrow Icon */
+.auto-filter h3::after, .dalf-filter h3::after {
+  content: '▼'; 
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+/* Rotation when the filter is open */
+.auto-filter.is-open h3::after, .dalf-filter.is-open h3::after {
+  transform: rotate(180deg);
 }
 .auto-filter li {
   list-style-type: none;
