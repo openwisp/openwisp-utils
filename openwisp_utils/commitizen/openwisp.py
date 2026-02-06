@@ -117,7 +117,7 @@ class OpenWispCommitizen(BaseCommitizen):
         return "[<type>] <Title>"
 
     def schema_pattern(self) -> str:
-        return r"^\[[a-z0-9!/:-]+\] [A-Z][^\n]* #(?P<issue>\d+)$\n\n.+\n\nFixes #(?P=issue)$"
+        return r"(?sm)^\[[a-z0-9!/:-]+\] [A-Z][^\n]* #(?P<issue>\d+)$\n\n.+\n\nFixes #(?P=issue)\n?$"
 
     def info(self) -> str:
         return (

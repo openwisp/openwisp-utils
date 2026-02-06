@@ -13,7 +13,8 @@ def run_cz_check(message):
 
 def test_valid_commit_message():
     message = "[qa] Good commit message #1\n\n" "Some explanation.\n\n" "Fixes #1"
-    assert run_cz_check(message) != 0
+    code, out, err = run_cz_check(message)
+    assert code == 0
 
 
 def test_empty_commit_message():
