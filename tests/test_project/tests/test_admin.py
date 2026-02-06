@@ -481,7 +481,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
 
     def test_ow_auto_filter_view_reverse_relation(self):
         url = reverse("admin:ow-auto-filter")
-        url = f"{url}?app_label=test_project&model_name=shelf&field_name=book"
+        url = f"{url}?app_label=test_project&model_name=shelf&field_name=books"
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
