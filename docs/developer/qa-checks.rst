@@ -30,7 +30,7 @@ will be skipped.
 Shell script to run the following quality assurance checks:
 
 - :ref:`checkmigrations <utils_checkmigrations>`
-- :ref:`Commit message check <_utils_commit_message_checks>`
+- :ref:`Commit message check <utils_commit_message_checks>`
 - :ref:`checkendline <utils_checkendline>`
 - :ref:`checkpendingmigrations <utils_checkpendingmigrations>`
 - :ref:`checkrst <utils_checkrst>`
