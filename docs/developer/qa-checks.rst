@@ -138,9 +138,9 @@ Contributors can use:
 
     cz commit
 
-This command interactively prompts for the commit title, related issue
-number and a sort description of the changes, and generate a commit
-messages following the OpenWISP conventions.
+This command interactively prompts for the commit prefix, title (including
+the related issue number) and a short description of the changes, and
+generate a commit messages following the OpenWISP conventions.
 
 The commit message can be checked using Commitizen with the help of ``cz
 check``.
@@ -149,7 +149,7 @@ Usage example:
 
 .. code-block::
 
-    cz check --rev-range HEAD~1..HEAD
+    cz check --rev-range HEAD^!
 
 This command validates the latest commit message against the defined
 conventions and reports any formatting issues.

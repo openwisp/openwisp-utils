@@ -3,9 +3,7 @@ import re
 from commitizen.cz.base import BaseCommitizen
 
 _CUSTOM_PREFIX_RE = re.compile(r"^[a-z0-9!/:-]+$")
-_TITLE_ISSUE_RE = re.compile(r"\s#(\d+)$")
-_HEADER_RE = re.compile(r"^\[[a-z0-9!/:-]+\] [A-Z].*\s#\d+$")
-_FIXES_RE = re.compile(r"^Fixes #(\d+)$", re.MULTILINE)
+_TITLE_ISSUE_RE = re.compile(r"^[A-Z][^\n]* \#(\d+)$")
 
 
 class OpenWispCommitizen(BaseCommitizen):
@@ -36,10 +34,11 @@ class OpenWispCommitizen(BaseCommitizen):
         value = value.strip()
         if not value:
             return "Commit title cannot be empty."
-        if not value[0].isupper():
-            return "Commit title must start with a capital letter."
-        if not _TITLE_ISSUE_RE.search(value):
-            return "Please add the issue number at the end of the title " "(e.g. #104)."
+        if not _TITLE_ISSUE_RE.match(value):
+            return (
+                "Commit title must start with a capital letter and "
+                "end with an issue number (e.g. #104)."
+            )
         return True
 
     def questions(self):
@@ -93,40 +92,6 @@ class OpenWispCommitizen(BaseCommitizen):
         issue_number = match.group(1)
         return f"{prefix} {title}\n\n" f"{body}\n\n" f"Fixes #{issue_number}"
 
-    def validate_commit_message(self, message: str) -> bool:
-        lines = message.splitlines()
-        # Must have at least header, blank line, body, blank line, footer
-        if len(lines) < 5:
-            return False
-        # Enforce blank line after header
-        if lines[1].strip() != "":
-            return False
-        # Enforce blank line before footer
-        if lines[-2].strip() != "":
-            return False
-        # Validate header
-        header = lines[0]
-        if not _HEADER_RE.match(header):
-            return False
-        title_issue = _TITLE_ISSUE_RE.search(header)
-        if not title_issue:
-            return False
-        title_issue_num = title_issue.group(1)
-        # Remove the footer before checking body
-        body_lines = lines[2:-2]
-        body = "\n".join(body_lines).strip()
-        if not body:
-            return False
-        footer = lines[-1]
-        fixes_match = _FIXES_RE.match(footer)
-        if not _FIXES_RE.match(footer):
-            return False
-        fixes_issue_num = fixes_match.group(1)
-        # Ensure title and footer reference same issue
-        if title_issue_num != fixes_issue_num:
-            return False
-        return True
-
     def format_error_message(self, message: str) -> str:
         return (
             "Invalid commit message.\n\n"
@@ -152,7 +117,7 @@ class OpenWispCommitizen(BaseCommitizen):
         return "[<type>] <Title>"
 
     def schema_pattern(self) -> str:
-        return r"^\[(feature|change|fix|docs|test|ci|chore|qa)\] [A-Z].+"
+        return r"^\[[a-z0-9!/:-]+\] [A-Z][^\n]* #(?P<issue>\d+)$\n\n.+\n\nFixes #(?P=issue)$"
 
     def info(self) -> str:
         return (

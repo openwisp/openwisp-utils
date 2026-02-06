@@ -153,7 +153,10 @@ runcheckcommit() {
     FAILURE=1
     return
   fi
-  if ! cz check --rev-range HEAD~1..HEAD; then
+  if [ -z "$COMMIT_MESSAGE" ]; then
+    COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+  fi
+  if ! cz check --message "$COMMIT_MESSAGE"; then
     echoerr "ERROR: Commit message check failed."
     echoerr ""
     echoerr "Suggested fix:"
