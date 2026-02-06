@@ -88,3 +88,41 @@ def test_footer_not_last_line():
 def test_mismatched_issue_numbers():
     message = "[qa] Good commit message #1\n\n" "Body\n\n" "Fixes #2"
     assert run_cz_check(message) != 0
+
+
+def test_info_includes_all_prefixes():
+    result = subprocess.run(
+        ["cz", "info"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    assert result.returncode == 0
+    # Check that all expected prefixes are listed
+    assert "- feature" in result.stdout
+    assert "- change" in result.stdout
+    assert "- fix" in result.stdout
+    assert "- docs" in result.stdout
+    assert "- test" in result.stdout
+    assert "- ci" in result.stdout
+    assert "- chore" in result.stdout
+    assert "- chores" in result.stdout
+    assert "- qa" in result.stdout
+    assert "- deps" in result.stdout
+    assert "- release" in result.stdout
+    assert "- bump" in result.stdout
+
+
+def test_error_message_is_user_friendly():
+    message = "INVALID COMMIT MESSAGE"
+    code, out, err = run_cz_check(message)
+    assert code != 0
+    output = out + err
+    # Check that error message is user-friendly (not raw regex)
+    assert "Invalid commit message format" in output
+    assert "Expected format:" in output
+    assert "Examples:" in output
+    assert "[feature]" in output
+    assert "[fix]" in output
+    # Make sure raw regex pattern is NOT shown
+    assert "pattern:" not in output.lower() or "(?sm)" not in output

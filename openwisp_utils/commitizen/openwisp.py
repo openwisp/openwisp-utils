@@ -1,6 +1,6 @@
 import re
 
-from commitizen.cz.base import BaseCommitizen
+from commitizen.cz.base import BaseCommitizen, ValidationResult
 
 _CUSTOM_PREFIX_RE = re.compile(r"^[a-z0-9!/:-]+$")
 _TITLE_ISSUE_RE = re.compile(r"^[A-Z][^\n]* \#(\d+)$")
@@ -17,7 +17,6 @@ class OpenWispCommitizen(BaseCommitizen):
         "docs",
         "test",
         "ci",
-        "chore",
         "chores",
         "qa",
         "deps",
@@ -95,17 +94,63 @@ class OpenWispCommitizen(BaseCommitizen):
         issue_number = match.group(1)
         return f"{prefix} {title}\n\n" f"{body}\n\n" f"Fixes #{issue_number}"
 
+    def validate_commit_message(
+        self,
+        *,
+        commit_msg: str,
+        pattern: re.Pattern[str],
+        allow_abort: bool,
+        allowed_prefixes: list[str],
+        max_msg_length: int | None,
+        commit_hash: str,
+    ) -> ValidationResult:
+        """Validate commit message and return user-friendly errors."""
+        if not commit_msg:
+            return ValidationResult(
+                allow_abort, [] if allow_abort else ["commit message is empty"]
+            )
+        # valid prefixes ok
+        if any(map(commit_msg.startswith, allowed_prefixes)):
+            return ValidationResult(True, [])
+        if pattern.match(commit_msg):
+            return ValidationResult(True, [])
+        # limit exceeded
+        if max_msg_length is not None and max_msg_length > 0:
+            msg_len = len(commit_msg.partition("\n")[0].strip())
+            if msg_len > max_msg_length:
+                return ValidationResult(
+                    False,
+                    [
+                        f"commit message length exceeds the limit ({max_msg_length} chars)",
+                    ],
+                )
+        # Return user-friendly error instead of raw regex
+        return ValidationResult(
+            False,
+            [
+                "Invalid commit message.\n\n"
+                "Expected format:\n\n"
+                "  [prefix] Capitalized title #<issue>\n\n"
+                "  <long-description>\n\n"
+                "  Fixes #<issue>\n\n"
+                "Example:\n\n"
+                "  [feature] Add subnet import support #104\n\n"
+                "  Add support for importing multiple subnets from a CSV file.\n\n"
+                "  Fixes #104"
+            ],
+        )
+
     def format_error_message(self, message: str) -> str:
         return (
             "Invalid commit message.\n\n"
             "Expected format:\n\n"
-            "[prefix] Title starting with capital letter #<issue>\n\n"
-            "<commit body>\n\n"
-            "Fixes #<issue>\n\n"
-            "Example:\n"
-            "[feature] Add subnet import support #104\n\n"
-            "Add support for importing multiple subnets from a CSV file.\n\n"
-            "Fixes #104"
+            "  [prefix] Capitalized title #<issue>\n\n"
+            "  <long-description>\n\n"
+            "  Fixes #<issue>\n\n"
+            "Example:\n\n"
+            "  [feature] Add subnet import support #104\n\n"
+            "  Add support for importing multiple subnets from a CSV file.\n\n"
+            "  Fixes #104"
         )
 
     def example(self) -> str:
@@ -121,24 +166,16 @@ class OpenWispCommitizen(BaseCommitizen):
 
     def schema_pattern(self) -> str:
         # Allow merge commits (starting with "Merge") or regular commits with prefix
-        return r"(?sm)^(?:Merge .*|\[[a-z0-9!/:-]+\] [A-Z][^\n]*( #(?P<issue>\d+))?$(\n\n.+\n\nFixes #(?P=issue)\n?)?)$"
+        return r"(?sm)^(?:Merge .*|\[[a-z0-9!/:-]+\] [A-Z][^\n]*( #(?P<issue>\d+))?$(\n\n.+\n\nFixes #(?P=issue)\n?)?)$"  # noqa: E501
 
     def info(self) -> str:
+        prefixes_list = "\n".join(f"  - {prefix}" for prefix in self.ALLOWED_PREFIXES)
         return (
             "OpenWISP Commit Convention\n\n"
             "Commit messages must follow this structure:\n\n"
-            "[type] Capitalized title #<issue_number>\n\n"
-            "<description>\n\n"
-            "Fixes #<issue_number>\n\n"
-            "Allowed commit types:\n"
-            "- feature\n"
-            "- change\n"
-            "- fix\n"
-            "- docs\n"
-            "- test\n"
-            "- ci\n"
-            "- chore\n"
-            "- qa\n\n"
-            "If none of the predefined types apply, contributors can select\n"
-            "the 'other' option and provide a custom type enclosed in square brackets."
+            "  [type] Capitalized title #<issue_number>\n\n"
+            "  <description>\n\n"
+            "  Fixes #<issue_number>\n\n"
+            f"Allowed commit prefixes:\n\n{prefixes_list}\n\n"
+            "If in doubt, use chores."
         )
