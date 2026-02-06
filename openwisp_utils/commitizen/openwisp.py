@@ -2,7 +2,6 @@ import re
 
 from commitizen.cz.base import BaseCommitizen, ValidationResult
 
-_CUSTOM_PREFIX_RE = re.compile(r"^[a-z0-9!/:-]+$")
 _TITLE_ISSUE_RE = re.compile(r"^[A-Z][^\n]* \#(\d+)$")
 
 
@@ -24,13 +23,17 @@ class OpenWispCommitizen(BaseCommitizen):
         "bump",
     ]
 
-    def _validate_custom_prefix(self, value: str):
-        value = value.strip()
-        if not value:
-            return "Custom prefix cannot be empty."
-        if not _CUSTOM_PREFIX_RE.match(value):
-            return "Prefix must be lowercase."
-        return True
+    ERROR_TEMPLATE = (
+        "Invalid commit message format\n\n"
+        "Expected format:\n\n"
+        "  [prefix] Capitalized title #<issue>\n\n"
+        "  <long-description>\n\n"
+        "  Fixes #<issue>\n\n"
+        "Examples:\n\n"
+        "  [feature] Add subnet import support #104\n\n"
+        "  Add support for importing multiple subnets from a CSV file.\n\n"
+        "  Fixes #104"
+    )
 
     def _validate_title(self, value: str) -> bool | str:
         value = value.strip()
@@ -56,13 +59,6 @@ class OpenWispCommitizen(BaseCommitizen):
             },
             {
                 "type": "input",
-                "name": "custom_prefix",
-                "message": "Enter custom prefix (without square brackets):",
-                "when": lambda answers: answers.get("change_type") == "other",
-                "validate": self._validate_custom_prefix,
-            },
-            {
-                "type": "input",
                 "name": "title",
                 "message": "Commit title (short, first letter capital)",
                 "validate": self._validate_title,
@@ -78,10 +74,7 @@ class OpenWispCommitizen(BaseCommitizen):
         ]
 
     def message(self, answers):
-        if answers["change_type"] == "other":
-            prefix_value = answers["custom_prefix"]
-        else:
-            prefix_value = answers["change_type"]
+        prefix_value = answers["change_type"]
         prefix = f"[{prefix_value}]"
         title = answers["title"].strip()
         body = answers["how"].strip()
@@ -109,12 +102,21 @@ class OpenWispCommitizen(BaseCommitizen):
             return ValidationResult(
                 allow_abort, [] if allow_abort else ["commit message is empty"]
             )
-        # valid prefixes ok
-        if any(map(commit_msg.startswith, allowed_prefixes)):
-            return ValidationResult(True, [])
-        if pattern.match(commit_msg):
-            return ValidationResult(True, [])
-        # limit exceeded
+        # First check if it matches the pattern
+        match_result = pattern.fullmatch(commit_msg)
+        if not match_result:
+            return ValidationResult(False, [self.ERROR_TEMPLATE])
+        # Then verify it starts with an allowed prefix or is a merge commit
+        # Use self.ALLOWED_PREFIXES for our custom prefixes
+        # Allow compound prefixes like [tests:fix] as long as first part is allowed
+        if commit_msg.startswith("Merge "):
+            pass  # Merge commits are allowed
+        elif not any(
+            re.match(rf"\[{prefix}([!/:]|\])", commit_msg)
+            for prefix in self.ALLOWED_PREFIXES
+        ):
+            return ValidationResult(False, [self.ERROR_TEMPLATE])
+        # Check message length limit
         if max_msg_length is not None and max_msg_length > 0:
             msg_len = len(commit_msg.partition("\n")[0].strip())
             if msg_len > max_msg_length:
@@ -124,34 +126,10 @@ class OpenWispCommitizen(BaseCommitizen):
                         f"commit message length exceeds the limit ({max_msg_length} chars)",
                     ],
                 )
-        # Return user-friendly error instead of raw regex
-        return ValidationResult(
-            False,
-            [
-                "Invalid commit message.\n\n"
-                "Expected format:\n\n"
-                "  [prefix] Capitalized title #<issue>\n\n"
-                "  <long-description>\n\n"
-                "  Fixes #<issue>\n\n"
-                "Example:\n\n"
-                "  [feature] Add subnet import support #104\n\n"
-                "  Add support for importing multiple subnets from a CSV file.\n\n"
-                "  Fixes #104"
-            ],
-        )
+        return ValidationResult(True, [])
 
     def format_error_message(self, message: str) -> str:
-        return (
-            "Invalid commit message.\n\n"
-            "Expected format:\n\n"
-            "  [prefix] Capitalized title #<issue>\n\n"
-            "  <long-description>\n\n"
-            "  Fixes #<issue>\n\n"
-            "Example:\n\n"
-            "  [feature] Add subnet import support #104\n\n"
-            "  Add support for importing multiple subnets from a CSV file.\n\n"
-            "  Fixes #104"
-        )
+        return self.ERROR_TEMPLATE
 
     def example(self) -> str:
         return (
@@ -166,7 +144,17 @@ class OpenWispCommitizen(BaseCommitizen):
 
     def schema_pattern(self) -> str:
         # Allow merge commits (starting with "Merge") or regular commits with prefix
-        return r"(?sm)^(?:Merge .*|\[[a-z0-9!/:-]+\] [A-Z][^\n]*( #(?P<issue>\d+))?$(\n\n.+\n\nFixes #(?P=issue)\n?)?)$"  # noqa: E501
+        # Using \Z instead of $ to truly anchor to end-of-string
+        # Split into two alternatives: merge commits and regular commits
+        merge_pattern = r"Merge .*"
+        # Regular commits: header with optional footer section
+        # Footer section: blank line + optional body + "Fixes #<issue>"
+        # Body is optional (.* allows empty) and there's no second blank line required
+        regular_pattern = (
+            r"\[[a-z0-9!/:-]+\] [A-Z][^\n]*( #(?P<issue>\d+))?"
+            r"$(\n\n(.*\n)?Fixes #(?P=issue)\n?)?"
+        )
+        return rf"(?sm)^(?:{merge_pattern}|{regular_pattern})\Z"
 
     def info(self) -> str:
         prefixes_list = "\n".join(f"  - {prefix}" for prefix in self.ALLOWED_PREFIXES)
