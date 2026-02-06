@@ -68,7 +68,9 @@ class Shelf(TimeStampedEditableModel):
 class Book(TimeStampedEditableModel):
     name = models.CharField(_("name"), max_length=64)
     author = models.CharField(_("author"), max_length=64)
-    shelf = models.ForeignKey("test_project.Shelf", on_delete=models.CASCADE)
+    shelf = models.ForeignKey(
+        "test_project.Shelf", on_delete=models.CASCADE, related_name="books"
+    )
     price = FallbackDecimalField(max_digits=4, decimal_places=2, fallback=20.0)
 
     def __str__(self):

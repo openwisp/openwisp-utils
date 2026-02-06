@@ -50,6 +50,11 @@ class OpenwispAdminSite(admin.AdminSite):
         self.metric_collection.manage_form(request, context)
         return render(request, "admin/openwisp_info.html", context)
 
+    def autocomplete_view(self, request):
+        """Override to use custom AutocompleteJsonView that supports reverse relations."""
+        autocomplete_view = import_string(app_settings.AUTOCOMPLETE_FILTER_VIEW)
+        return autocomplete_view.as_view(admin_site=self)(request)
+
     def get_urls(self):
         autocomplete_view = import_string(app_settings.AUTOCOMPLETE_FILTER_VIEW)
         return [

@@ -101,7 +101,7 @@ class ShelfAdmin(TimeReadonlyAdminMixin, DALFModelAdmin):
         ["id", InputFilter],
         ("owner", AutocompleteFilter),
         "books_type",
-        ("book", AutocompleteFilter),
+        ("books", AutocompleteFilter),
     ]
     search_fields = ["name"]
 
