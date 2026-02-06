@@ -95,7 +95,8 @@ def get_ai_summary(content, file_format, token):
     # Asks the user if they want to use GPT for summarizing the changelog,
     # and handles the interaction loop (Accept/Retry/Use Original).
     if not questionary.confirm(
-        "Do you want to use an AI to generate a human-readable summary of the changelog?"
+        "Do you want to use an AI to generate a human-readable summary of the changelog?",
+        default=False,
     ).ask():
         return content
 

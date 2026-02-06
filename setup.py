@@ -52,13 +52,13 @@ setup(
             "channels_redis>=4.2.1,<4.4.0",
         ],
         "channels-test": [
-            "pytest-asyncio>=0.24,<1.4",
+            "pytest-asyncio>=1.3.0,<1.4.0",
             "pytest-django>=4.10,<4.12",
         ],
         "celery": ["celery~=5.6.1"],
         "selenium": ["selenium>=4.10,<4.41"],
         "releaser": [
-            "git-cliff~=2.11.0",
+            "git-cliff~=2.12.0",
             "questionary~=2.1.0",
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",
