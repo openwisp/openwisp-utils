@@ -152,7 +152,8 @@ class OpenWispCommitizen(BaseCommitizen):
         # Body is optional (.* allows empty) and there's no second blank line required
         regular_pattern = (
             r"\[[a-z0-9!/:-]+\] [A-Z][^\n]*( #(?P<issue>\d+))?"
-            r"$(\n\n(.*\n)?Fixes #(?P=issue)\n?)?"
+            r"$(\n\n(.*\n)?(?:Close|Closes|Closed|Fix|Fixes|Fixed"
+            r"|Resolve|Resolves|Resolved|Related to) #(?P=issue)\n?)?"
         )
         return rf"(?sm)^(?:{merge_pattern}|{regular_pattern})\Z"
 

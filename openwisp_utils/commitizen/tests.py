@@ -36,6 +36,28 @@ def test_valid_commit_without_body():
     assert code == 0
 
 
+def test_valid_commit_message_with_closes():
+    # GitHub also accepts "Closes" keyword to close issues
+    message = (
+        "[feature:qa] Standardized commit messages #110\n\n"
+        "Commitizen has been integrated.\n\n"
+        "Closes #110"
+    )
+    code, out, err = run_cz_check(message)
+    assert code == 0
+
+
+def test_valid_commit_message_with_related_to():
+    # "Related to" is used to reference issues without closing them
+    message = (
+        "[feature] Progress on feature #110\n\n"
+        "Partial implementation.\n\n"
+        "Related to #110"
+    )
+    code, out, err = run_cz_check(message)
+    assert code == 0
+
+
 def test_merge_commits_ignored():
     message = "Merge branch 'master' into issues/110-commit-convention-standardization"
     code, out, err = run_cz_check(message)
