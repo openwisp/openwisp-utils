@@ -147,15 +147,32 @@ runblack() {
 }
 
 runcheckcommit() {
-  if [ -z "$COMMIT_MESSAGE" ]; then COMMIT_MESSAGE=$(git log -1 --pretty=%B); fi
-
-  checkcommit --message "$COMMIT_MESSAGE" &&
-    echo "SUCCESS: Commit message check successful!" ||
-    {
-      echo -e "Checked commit message:\n\n$COMMIT_MESSAGE\n\n"
-      echoerr "ERROR: Commit message check failed!"
-      FAILURE=1
-    }
+  if ! command -v cz >/dev/null 2>&1; then
+    echoerr "ERROR: Commitizen (cz) is not installed or not available in PATH."
+    echoerr "Please install it to enable commit message enforcement."
+    FAILURE=1
+    return
+  fi
+  if [ -z "$COMMIT_MESSAGE" ]; then
+    COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+  fi
+  if ! cz check --message "$COMMIT_MESSAGE"; then
+    echoerr "ERROR: Commit message check failed."
+    echoerr ""
+    echoerr "Suggested fix:"
+    echoerr "  git reset --soft HEAD~1; cz commit"
+    echoerr "  # or"
+    echoerr "  git commit --amend"
+    echoerr ""
+    echoerr "For more information, run:"
+    echoerr "  cz info"
+    echoerr ""
+    echoerr "To see a valid commit message example, run:"
+    echoerr "  cz example"
+    FAILURE=1
+  else
+    echo "SUCCESS: Commit message check successful!"
+  fi
 }
 
 runcheckpendingmigrations() {
