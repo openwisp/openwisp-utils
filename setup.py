@@ -20,8 +20,12 @@ setup(
             "checkmigrations = openwisp_utils.qa:check_migration_name",
             "checkcommit = openwisp_utils.qa:check_commit_message",
         ],
+        # We override the default 'cz_conventional_commits' plugin to enforce the OpenWISP
+        # commit message standard across all OpenWISP repositories without requiring
+        # additional configuration in each repo. This ensures consistency and reduces
+        # maintenance overhead.
         "commitizen.plugin": [
-            "openwisp = openwisp_utils.releaser.commitizen:OpenWispCommitizen",
+            "cz_conventional_commits = openwisp_utils.releaser.commitizen:OpenWispCommitizen",
         ],
     },
     include_package_data=True,
