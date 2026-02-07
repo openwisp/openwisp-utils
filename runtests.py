@@ -27,7 +27,6 @@ if __name__ == "__main__":
     pytest_exit_code = pytest.main(
         [
             "openwisp_utils/releaser/tests",
-            "openwisp_utils/commitizen/tests.py",
         ]
     )
     sys.exit(pytest_exit_code)

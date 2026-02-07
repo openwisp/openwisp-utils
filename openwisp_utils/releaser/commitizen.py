@@ -168,3 +168,6 @@ class OpenWispCommitizen(BaseCommitizen):
             f"Allowed commit prefixes:\n\n{prefixes_list}\n\n"
             "If in doubt, use chores."
         )
+
+
+__all__ = ["OpenWispCommitizen"]
