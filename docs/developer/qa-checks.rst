@@ -122,9 +122,10 @@ We want to keep the commit log readable, consistent and easy to scan in
 order to make it easy to analyze the history of our modules, which is also
 a very important activity when performing maintenance.
 
-This check uses Commitizen with a custom OpenWISP Commitizen Plugin. After
-staging changes to git, contributors can use Commitizen to create commit
-messages easily.
+This check uses `Commitizen
+<https://commitizen-tools.github.io/commitizen/>`_ with a custom OpenWISP
+Commitizen plugin. After staging changes to git, contributors can use
+Commitizen to create commit messages easily.
 
 Instead of using :
 
