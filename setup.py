@@ -45,7 +45,7 @@ setup(
             "coverage>=7.10.0,<7.14.0",
             "tblib~=3.2.2",
             "docstrfmt>=2.0.0,<2.1.0",
-            "commitizen>=4.0.0,<5.0.0",
+            "commitizen>=4.13.0,<5.0.0",
         ],
         "rest": [
             "djangorestframework~=3.16.0",
