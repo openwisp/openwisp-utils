@@ -4,7 +4,7 @@ from commitizen.cz.base import BaseCommitizen, ValidationResult
 
 _TITLE_ISSUE_EXTRACT_RE = re.compile(r" #(\d+)")
 _BODY_ISSUE_RE = re.compile(
-    r"(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to) #(\d+)",
+    r"(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to)((?:\s+#\d+)+)",
     re.IGNORECASE,
 )
 
@@ -112,7 +112,13 @@ class OpenWispCommitizen(BaseCommitizen):
             return set()
         # Body is everything after the first line
         body = "\n".join(lines[1:])
-        return set(_BODY_ISSUE_RE.findall(body))
+        # Find all matches and extract individual issue numbers
+        issues = set()
+        for match in _BODY_ISSUE_RE.findall(body):
+            # Each match contains something like " #123 #124"
+            # Extract all #\d+ patterns from it
+            issues.update(_TITLE_ISSUE_EXTRACT_RE.findall(match))
+        return issues
 
     def validate_commit_message(
         self,

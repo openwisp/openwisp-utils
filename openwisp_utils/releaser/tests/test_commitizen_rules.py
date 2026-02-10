@@ -73,6 +73,17 @@ def test_valid_commit_with_multiple_issues():
     assert code == 0, f"Expected success but got: {out + err}"
 
 
+def test_valid_commit_with_multiple_issues_same_line():
+    """Valid: multiple issues on same line with single keyword."""
+    message = (
+        "[feature] Fix bugs #123 #124\n\n"
+        "Fixed multiple issues.\n\n"
+        "Fixes #123 #124"
+    )
+    code, out, err = run_cz_check(message)
+    assert code == 0, f"Multiple issues on same line should work: {out + err}"
+
+
 def test_merge_commits_ignored():
     """Valid: merge commits are always allowed."""
     message = "Merge branch 'master' into issues/110-commit-convention-standardization"
@@ -127,12 +138,9 @@ def test_mismatched_issue_numbers():
 
 
 def test_issue_not_at_end_of_title():
-    """Invalid: issue reference must be at end of title."""
-    # This is allowed now since we extract all issues from title
-    # But let's test that the behavior is correct
+    """Valid: issue reference must be at end of title."""
     message = "[qa] Good #1 commit message\n\n" "Body\n\n" "Fixes #1"
     code, out, err = run_cz_check(message)
-    # This should work since #1 is in both title and body
     assert code == 0, f"Issue in middle of title should still work: {out + err}"
 
 
