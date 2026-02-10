@@ -2,7 +2,6 @@ import re
 
 from commitizen.cz.base import BaseCommitizen, ValidationResult
 
-_TITLE_ISSUE_RE = re.compile(r" #[^#\s]+$")
 _TITLE_ISSUE_EXTRACT_RE = re.compile(r" #(\d+)")
 _BODY_ISSUE_RE = re.compile(
     r"(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to) #(\d+)",
@@ -216,6 +215,12 @@ class OpenWispCommitizen(BaseCommitizen):
         return "[<type>] <Title> [#<issue>]"
 
     def schema_pattern(self) -> str:
+        """Provides regex for basic checks, but skips symmetry enforcement.
+
+        The actual symmetry enforcement of referenced issues (issues must
+        be referenced both in title and body) happens in the
+        validate_commit_message method
+        """
         # Allow merge commits (starting with "Merge") or regular commits with prefix
         merge_pattern = r"Merge .*"
         # Regular commits with allowed prefix

@@ -27,6 +27,11 @@ while [ "$1" != "" ]; do
       ;;
     --rev-range)
       shift
+      if [ -z "$1" ] || [ "${1#-}" != "$1" ]; then
+        printf "Error: --rev-range requires a value\n\n"
+        show_help
+        exit 1
+      fi
       REV_RANGE="$1"
       ;;
     --help | -h)
@@ -34,7 +39,7 @@ while [ "$1" != "" ]; do
       exit 0
       ;;
     *)
-      printf "Unknown argument: %%s\n" "$1"
+      printf "Unknown argument: %s\n" "$1"
       printf "\n"
       show_help
       exit 1
@@ -43,10 +48,10 @@ while [ "$1" != "" ]; do
   shift
 done
 
-# Define reusable commands
+# Define reusable commands (after argument parsing)
 CZ_CMD="cz -n cz_openwisp"
 CZ_COMMIT="$CZ_CMD commit"
-CZ_CHECK="$CZ_CMD check --rev-range HEAD^!"
+CZ_CHECK="$CZ_CMD check --rev-range $REV_RANGE"
 
 run_commit_and_check() {
   $CZ_COMMIT && $CZ_CHECK

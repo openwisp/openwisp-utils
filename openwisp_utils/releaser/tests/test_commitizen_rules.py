@@ -26,8 +26,8 @@ def test_valid_commit_without_issue():
 
 
 def test_valid_commit_without_issue_single_line_body():
-    """Valid: no issue, single line body."""
-    message = "[chores] Good commit message\n\n" "Some explanation."
+    """Valid: no issue, single line body without trailing punctuation."""
+    message = "[chores] Good commit message\n\nSome explanation"
     code, out, err = run_cz_check(message)
     assert code == 0, f"Expected success but got: {out + err}"
 
