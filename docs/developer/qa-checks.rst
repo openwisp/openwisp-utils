@@ -127,33 +127,52 @@ This check uses `Commitizen
 Commitizen plugin. After staging changes to git, contributors can use
 Commitizen to create commit messages easily.
 
-Instead of using :
+Instead of using:
 
 .. code-block::
 
     git commit
 
-Contributors can use:
+Contributors can use the ``openwisp-commit`` shortcut:
 
 .. code-block::
 
-    cz commit
+    openwisp-commit
 
-This command interactively prompts for the commit prefix, title (including
-the related issue number) and a short description of the changes, and
-generate a commit messages following the OpenWISP conventions.
+This command interactively prompts for the commit prefix, title
+(optionally including the reference to a github issue) and a short
+description of the changes, and generates a commit message which follows
+the OpenWISP commit message conventions.
 
-The commit message can be checked using Commitizen with the help of ``cz
-check``.
+If you reference an issue in the title (e.g., ``[feature] Add support
+#123``) but don't reference it in the body, the tool will automatically
+append ``Related to #123`` to the commit message for you.
 
-Usage example:
+The following patterns are valid in the body: ``Fixes``, ``Closes``,
+``Resolves``, or ``Related to``.
+
+If you need to amend the last commit (e.g., to fix the commit message),
+use the ``--amend`` flag:
 
 .. code-block::
 
-    cz check --rev-range HEAD^!
+    openwisp-commit --amend
 
-This command validates the latest commit message against the defined
-conventions and reports any formatting issues.
+To check whether your commit message follows the conventions, use:
+
+.. code-block::
+
+    openwisp-commit --check
+
+This validates the latest commit message against the defined conventions
+and reports any formatting issues.
+
+For advanced use cases, you can also use Commitizen directly:
+
+.. code-block::
+
+    cz -n cz_openwisp commit
+    cz -n cz_openwisp check --rev-range HEAD^!
 
 .. _utils_checkendline:
 
