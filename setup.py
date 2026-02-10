@@ -15,14 +15,26 @@ setup(
     platforms=["Platform Independent"],
     keywords=["django", "netjson", "openwrt", "networking", "openwisp"],
     packages=find_packages(exclude=["tests*", "docs*"]),
-    include_package_data=True,
     entry_points={
         "console_scripts": [
             "checkmigrations = openwisp_utils.qa:check_migration_name",
             "checkcommit = openwisp_utils.qa:check_commit_message",
-        ]
+        ],
+        # We provide a custom 'cz_openwisp' plugin to enforce the OpenWISP commit message
+        # standard across all OpenWISP repositories. Using a unique plugin name (rather
+        # than overriding the default 'cz_conventional_commits') ensures the plugin is
+        # always available regardless of installation order.
+        "commitizen.plugin": [
+            "cz_openwisp = openwisp_utils.releaser.commitizen:OpenWispCommitizen",
+        ],
     },
-    scripts=["openwisp-qa-check", "openwisp-qa-format", "openwisp-pre-push-hook"],
+    include_package_data=True,
+    scripts=[
+        "openwisp-qa-check",
+        "openwisp-qa-format",
+        "openwisp-pre-push-hook",
+        "openwisp-commit",
+    ],
     zip_safe=False,
     install_requires=[
         "django-model-utils>=4.5,<5.1",
@@ -41,6 +53,7 @@ setup(
             "coverage>=7.10.0,<7.14.0",
             "tblib~=3.2.2",
             "docstrfmt>=2.0.0,<2.1.0",
+            "commitizen>=4.13.0,<5.0.0",
         ],
         "rest": [
             "djangorestframework~=3.16.0",
@@ -52,13 +65,13 @@ setup(
             "channels_redis>=4.2.1,<4.4.0",
         ],
         "channels-test": [
-            "pytest-asyncio>=0.24,<1.4",
+            "pytest-asyncio>=1.3.0,<1.4.0",
             "pytest-django>=4.10,<4.12",
         ],
         "celery": ["celery~=5.6.1"],
         "selenium": ["selenium>=4.10,<4.41"],
         "releaser": [
-            "git-cliff~=2.11.0",
+            "git-cliff~=2.12.0",
             "questionary~=2.1.0",
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",

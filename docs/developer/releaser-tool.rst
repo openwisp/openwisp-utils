@@ -83,8 +83,9 @@ different version manually.
 
 **2. Change Log Generation & Review** A changelog is generated from your
 recent commits. If an OpenAI token is configured, the tool will offer to
-generate a more readable summary. You will then be shown the final
-changelog block and asked to accept it before the files are modified.
+generate a more readable summary (this is disabled by default). You will
+then be shown the final changelog block and asked to accept it before the
+files are modified.
 
 **3. Resilient Error Handling** If any network operation fails (e.g.,
 creating a pull request), the tool won't crash. Instead, it will prompt
