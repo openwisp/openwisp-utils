@@ -87,7 +87,9 @@ class OpenWispCommitizen(BaseCommitizen):
         body = answers["how"].strip()
         # Extract issue numbers from title and body
         title_issues = set(_TITLE_ISSUE_EXTRACT_RE.findall(title))
-        body_issues = set(_BODY_ISSUE_RE.findall(body))
+        body_issues = set()
+        for match in _BODY_ISSUE_RE.findall(body):
+            body_issues.update(_TITLE_ISSUE_EXTRACT_RE.findall(match))
         # If issues are in title but not in body, auto-append "Related to"
         missing_issues = title_issues - body_issues
         if missing_issues:

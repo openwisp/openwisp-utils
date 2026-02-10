@@ -137,7 +137,7 @@ def test_mismatched_issue_numbers():
     assert "mismatch" in (out + err).lower() or "match" in (out + err).lower()
 
 
-def test_issue_not_at_end_of_title():
+def test_issue_in_the_middle():
     """Valid: issue reference must be at end of title."""
     message = "[qa] Good #1 commit message\n\n" "Body\n\n" "Fixes #1"
     code, out, err = run_cz_check(message)
