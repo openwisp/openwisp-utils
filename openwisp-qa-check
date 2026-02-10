@@ -153,26 +153,7 @@ runcheckcommit() {
     FAILURE=1
     return
   fi
-  if [ -z "$COMMIT_MESSAGE" ]; then
-    COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-  fi
-  if ! cz check --message "$COMMIT_MESSAGE"; then
-    echoerr "ERROR: Commit message check failed."
-    echoerr ""
-    echoerr "Suggested fix:"
-    echoerr "  git reset --soft HEAD~1; cz commit"
-    echoerr "  # or"
-    echoerr "  git commit --amend"
-    echoerr ""
-    echoerr "For more information, run:"
-    echoerr "  cz info"
-    echoerr ""
-    echoerr "To see a valid commit message example, run:"
-    echoerr "  cz example"
-    FAILURE=1
-  else
-    echo "SUCCESS: Commit message check successful!"
-  fi
+  openwisp-commit --check
 }
 
 runcheckpendingmigrations() {

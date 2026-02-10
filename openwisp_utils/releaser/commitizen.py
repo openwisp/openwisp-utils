@@ -2,7 +2,11 @@ import re
 
 from commitizen.cz.base import BaseCommitizen, ValidationResult
 
-_TITLE_ISSUE_RE = re.compile(r"^[A-Z][^\n]* \#(\d+)$")
+_TITLE_ISSUE_EXTRACT_RE = re.compile(r" #(\d+)")
+_BODY_ISSUE_RE = re.compile(
+    r"(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to)((?:\s+#\d+)+)",
+    re.IGNORECASE,
+)
 
 
 class OpenWispCommitizen(BaseCommitizen):
@@ -26,24 +30,27 @@ class OpenWispCommitizen(BaseCommitizen):
     ERROR_TEMPLATE = (
         "Invalid commit message format\n\n"
         "Expected format:\n\n"
+        "  [prefix] Capitalized title\n\n"
+        "  <description>\n\n"
+        "Or with issue reference (must be symmetric):\n\n"
         "  [prefix] Capitalized title #<issue>\n\n"
-        "  <long-description>\n\n"
+        "  <description>\n\n"
         "  Fixes #<issue>\n\n"
         "Examples:\n\n"
-        "  [feature] Add subnet import support #104\n\n"
-        "  Add support for importing multiple subnets from a CSV file.\n\n"
-        "  Fixes #104"
+        "  [chores] Updated documentation\n\n"
+        "  Added new installation instructions.\n\n"
+        "Or with issue reference:\n\n"
+        "  [feature] Added subnet import support #104\n\n"
+        "  Added support for importing multiple subnets from a CSV file.\n\n"
+        "  Closes #104\n\n"
     )
 
     def _validate_title(self, value: str) -> bool | str:
         value = value.strip()
         if not value:
             return "Commit title cannot be empty."
-        if not _TITLE_ISSUE_RE.match(value):
-            return (
-                "Commit title must start with a capital letter and "
-                "end with an issue number (e.g. #104)."
-            )
+        if not value[0].isupper():
+            return "Commit title must start with a capital letter."
         return True
 
     def questions(self):
@@ -60,13 +67,13 @@ class OpenWispCommitizen(BaseCommitizen):
             {
                 "type": "input",
                 "name": "title",
-                "message": "Commit title (short, first letter capital)",
+                "message": "Commit title (short, first letter capital, optional #issue)",
                 "validate": self._validate_title,
             },
             {
                 "type": "input",
                 "name": "how",
-                "message": ("Describe what you changed and how it addresses the issue"),
+                "message": ("Describe what you changed"),
                 "validate": lambda v: (
                     True if v.strip() else "Commit body cannot be empty."
                 ),
@@ -78,14 +85,42 @@ class OpenWispCommitizen(BaseCommitizen):
         prefix = f"[{prefix_value}]"
         title = answers["title"].strip()
         body = answers["how"].strip()
-        # Extract issue number from title
-        match = _TITLE_ISSUE_RE.search(title)
-        if not match:
-            raise ValueError(
-                "Commit title must end with an issue reference like #<issue_number>."
-            )
-        issue_number = match.group(1)
-        return f"{prefix} {title}\n\n" f"{body}\n\n" f"Fixes #{issue_number}"
+        # Extract issue numbers from title and body
+        title_issues = set(_TITLE_ISSUE_EXTRACT_RE.findall(title))
+        body_issues = set()
+        for match in _BODY_ISSUE_RE.findall(body):
+            body_issues.update(_TITLE_ISSUE_EXTRACT_RE.findall(match))
+        # If issues are in title but not in body, auto-append "Related to"
+        missing_issues = title_issues - body_issues
+        if missing_issues:
+            body += "\n"
+            for issue in sorted(missing_issues):
+                body += f"\nRelated to #{issue}"
+        return f"{prefix} {title}\n\n{body.strip()}"
+
+    def _extract_title_issues(self, commit_msg: str) -> set[str]:
+        """Extract issue numbers from the commit title."""
+        lines = commit_msg.split("\n")
+        if not lines:
+            return set()
+        title = lines[0]
+        # Find all #<number> patterns at the end of the title
+        return set(_TITLE_ISSUE_EXTRACT_RE.findall(title))
+
+    def _extract_body_issues(self, commit_msg: str) -> set[str]:
+        """Extract issue numbers from the commit body."""
+        lines = commit_msg.split("\n")
+        if len(lines) < 2:
+            return set()
+        # Body is everything after the first line
+        body = "\n".join(lines[1:])
+        # Find all matches and extract individual issue numbers
+        issues = set()
+        for match in _BODY_ISSUE_RE.findall(body):
+            # Each match contains something like " #123 #124"
+            # Extract all #\d+ patterns from it
+            issues.update(_TITLE_ISSUE_EXTRACT_RE.findall(match))
+        return issues
 
     def validate_commit_message(
         self,
@@ -102,20 +137,65 @@ class OpenWispCommitizen(BaseCommitizen):
             return ValidationResult(
                 allow_abort, [] if allow_abort else ["commit message is empty"]
             )
-        # First check if it matches the pattern
-        match_result = pattern.fullmatch(commit_msg)
-        if not match_result:
-            return ValidationResult(False, [self.ERROR_TEMPLATE])
-        # Then verify it starts with an allowed prefix or is a merge commit
-        # Use self.ALLOWED_PREFIXES for our custom prefixes
-        # Allow compound prefixes like [tests:fix] as long as first part is allowed
+        # Check if it's a merge commit
         if commit_msg.startswith("Merge "):
-            pass  # Merge commits are allowed
-        elif not any(
+            return ValidationResult(True, [])
+        # Check prefix is allowed
+        if not any(
             re.match(rf"\[{prefix}([!/:]|\])", commit_msg)
             for prefix in self.ALLOWED_PREFIXES
         ):
             return ValidationResult(False, [self.ERROR_TEMPLATE])
+        # Check title starts with capital letter
+        lines = commit_msg.split("\n")
+        if lines:
+            title = lines[0]
+            # Remove prefix to get the actual title text
+            title_match = re.match(r"\[[^\]]+\] (.+)", title)
+            if title_match:
+                title_text = title_match.group(1)
+                if title_text and not title_text[0].isupper():
+                    return ValidationResult(
+                        False,
+                        [
+                            "Commit title must start with a capital letter after the prefix."
+                        ],
+                    )
+        # Extract issues from title and body
+        title_issues = self._extract_title_issues(commit_msg)
+        body_issues = self._extract_body_issues(commit_msg)
+        # Validate issue reference symmetry
+        # Either both have issues (and they match) or neither has issues
+        if title_issues != body_issues:
+            if title_issues and not body_issues:
+                return ValidationResult(
+                    False,
+                    [
+                        "Issue referenced in title but not in body. "
+                        "If you reference an issue in the title, "
+                        "you must also reference it in the body using "
+                        "Fixes/Closes/Related to #<issue>."
+                    ],
+                )
+            elif body_issues and not title_issues:
+                return ValidationResult(
+                    False,
+                    [
+                        "Issue referenced in body but not in title. "
+                        "If you reference an issue in the body, "
+                        "you must also reference it in the title (e.g., '[prefix] Title #123')."
+                    ],
+                )
+            else:
+                # Both have issues but they don't match
+                return ValidationResult(
+                    False,
+                    [
+                        f"Issue mismatch between title ({title_issues}) "
+                        f"and body ({body_issues}). "
+                        "The issues referenced must match exactly."
+                    ],
+                )
         # Check message length limit
         if max_msg_length is not None and max_msg_length > 0:
             msg_len = len(commit_msg.partition("\n")[0].strip())
@@ -140,31 +220,49 @@ class OpenWispCommitizen(BaseCommitizen):
         )
 
     def schema(self) -> str:
-        return "[<type>] <Title>"
+        return "[<type>] <Title> [#<issue>]"
 
     def schema_pattern(self) -> str:
+        """Provides regex for basic checks, but skips symmetry enforcement.
+
+        The actual symmetry enforcement of referenced issues (issues must
+        be referenced both in title and body) happens in the
+        validate_commit_message method
+        """
         # Allow merge commits (starting with "Merge") or regular commits with prefix
-        # Using \Z instead of $ to truly anchor to end-of-string
-        # Split into two alternatives: merge commits and regular commits
         merge_pattern = r"Merge .*"
-        # Regular commits: header with optional footer section
-        # Footer section: blank line + optional body + "Fixes #<issue>"
-        # Body is optional (.* allows empty) and there's no second blank line required
-        regular_pattern = (
-            r"\[[a-z0-9!/:-]+\] [A-Z][^\n]*( #(?P<issue>\d+))?"
-            r"$(\n\n(.*\n)?(?:Close|Closes|Closed|Fix|Fixes|Fixed"
-            r"|Resolve|Resolves|Resolved|Related to) #(?P=issue)\n?)?"
+        # Regular commits with allowed prefix
+        # Title: [prefix] Capitalized title, optional issue references at end
+        # Body: optional, with optional footer containing issue references
+        # Issue references must be symmetric (same in title and body)
+        # Pattern for commits without issues
+        no_issue_pattern = (
+            r"\[[a-z0-9!/:-]+\] [A-Z][^\n]*"
+            r"$(?!\n\n.*(?:Close|Closes|Closed|Fix|Fixes|Fixed"
+            r"|Resolve|Resolves|Resolved|Related to) #\d+)"
         )
-        return rf"(?sm)^(?:{merge_pattern}|{regular_pattern})\Z"
+        # Pattern for commits with issues
+        with_issue_pattern = (
+            r"\[[a-z0-9!/:-]+\] [A-Z][^\n]*(?P<title_issues>(?: #\d+)+)$"
+            r"\n\n.*"
+            r"(?:Close|Closes|Closed|Fix|Fixes|Fixed"
+            r"|Resolve|Resolves|Resolved|Related to)"
+            r"(?P<body_issues>(?: #\d+)+)\n?"
+        )
+        return rf"(?sm)^(?:{merge_pattern}|{no_issue_pattern}|{with_issue_pattern})\Z"
 
     def info(self) -> str:
         prefixes_list = "\n".join(f"  - {prefix}" for prefix in self.ALLOWED_PREFIXES)
         return (
             "OpenWISP Commit Convention\n\n"
             "Commit messages must follow this structure:\n\n"
+            "With issue reference (symmetric, must be in both title and body):\n\n"
             "  [type] Capitalized title #<issue_number>\n\n"
             "  <description>\n\n"
             "  Fixes #<issue_number>\n\n"
+            "Without issue reference (for minor changes or urgent fixes):\n\n"
+            "  [type] Capitalized title\n\n"
+            "  <description>\n\n"
             f"Allowed commit prefixes:\n\n{prefixes_list}\n\n"
             "If in doubt, use chores."
         )

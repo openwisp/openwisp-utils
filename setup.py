@@ -20,16 +20,21 @@ setup(
             "checkmigrations = openwisp_utils.qa:check_migration_name",
             "checkcommit = openwisp_utils.qa:check_commit_message",
         ],
-        # We override the default 'cz_conventional_commits' plugin to enforce the OpenWISP
-        # commit message standard across all OpenWISP repositories without requiring
-        # additional configuration in each repo. This ensures consistency and reduces
-        # maintenance overhead.
+        # We provide a custom 'cz_openwisp' plugin to enforce the OpenWISP commit message
+        # standard across all OpenWISP repositories. Using a unique plugin name (rather
+        # than overriding the default 'cz_conventional_commits') ensures the plugin is
+        # always available regardless of installation order.
         "commitizen.plugin": [
-            "cz_conventional_commits = openwisp_utils.releaser.commitizen:OpenWispCommitizen",
+            "cz_openwisp = openwisp_utils.releaser.commitizen:OpenWispCommitizen",
         ],
     },
     include_package_data=True,
-    scripts=["openwisp-qa-check", "openwisp-qa-format", "openwisp-pre-push-hook"],
+    scripts=[
+        "openwisp-qa-check",
+        "openwisp-qa-format",
+        "openwisp-pre-push-hook",
+        "openwisp-commit",
+    ],
     zip_safe=False,
     install_requires=[
         "django-model-utils>=4.5,<5.1",
