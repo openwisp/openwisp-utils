@@ -27,14 +27,18 @@ jobs:
         id: extract
         env:
           GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          COMMENT_BODY: ${{ inputs.comment_body }}
+          REPO: ${{ github.repository }}
         run: |
-          if [ -n "${{ inputs.commit_sha }}" ]; then
-            SHA="${{ inputs.commit_sha }}"
-            COMMIT_MSG=$(gh api repos/${{ github.repository }}/git/commits/$SHA --jq '.message')
+          if [ -n "$COMMIT_SHA" ]; then
+            SHA="$COMMIT_SHA"
+            COMMIT_MSG=$(gh api "repos/$REPO/git/commits/$SHA" --jq '.message')
             BRANCHES=$(echo "$COMMIT_MSG" | grep -oP '\[backport\s+\K[^\]]+' | tr '\n' ',' | sed 's/,$//')
           else
-            SHA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json mergeCommit --jq '.mergeCommit.oid')
-            BRANCHES=$(echo "${{ inputs.comment_body }}" | grep -oP '/backport\s+\K\S+' | tr '\n' ',' | sed 's/,$//')
+            SHA=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeCommit --jq '.mergeCommit.oid')
+            BRANCHES=$(echo "$COMMENT_BODY" | grep -oP '/backport\s+\K\S+' | tr '\n' ',' | sed 's/,$//')
           fi
 
           if [ -z "$BRANCHES" ]; then
@@ -65,10 +69,11 @@ jobs:
       - name: Cherry-pick and create PR
         env:
           GH_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.parse.outputs.sha }}
+          BRANCH: ${{ matrix.branch }}
+          REPO: ${{ github.repository }}
         run: |
-          SHA="${{ needs.parse.outputs.sha }}"
-          BRANCH="${{ matrix.branch }}"
-          PR_DATA=$(gh api repos/${{ github.repository }}/commits/$SHA/pulls --jq '.[0] | {number, title}')
+          PR_DATA=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[0] | {number, title}')
           PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number')
           PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
           BACKPORT_BRANCH="backport/${PR_NUMBER}-to-${BRANCH}"
