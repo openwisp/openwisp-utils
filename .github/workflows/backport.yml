@@ -1,0 +1,31 @@
+name: Backport fixes to stable branch
+
+on:
+  push:
+    branches:
+      - master
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  backport-on-push:
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/reusable-backport.yml
+    with:
+      commit_sha: ${{ github.sha }}
+
+  backport-on-comment:
+    if: >
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      github.event.issue.state == 'closed' &&
+      contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association) &&
+      startsWith(github.event.comment.body, '/backport')
+    uses: ./.github/workflows/reusable-backport.yml
+    with:
+      pr_number: ${{ github.event.issue.number }}
+      comment_body: ${{ github.event.comment.body }}

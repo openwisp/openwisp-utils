@@ -1,0 +1,102 @@
+name: Backport fixes to stable branch
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        required: false
+        type: string
+        default: ""
+      pr_number:
+        required: false
+        type: number
+        default: 0
+      comment_body:
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.extract.outputs.branches }}
+      sha: ${{ steps.extract.outputs.sha }}
+    steps:
+      - name: Extract backport targets
+        id: extract
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "${{ inputs.commit_sha }}" ]; then
+            SHA="${{ inputs.commit_sha }}"
+            COMMIT_MSG=$(gh api repos/${{ github.repository }}/git/commits/$SHA --jq '.message')
+            BRANCHES=$(echo "$COMMIT_MSG" | grep -oP '\[backport\s+\K[^\]]+' | tr '\n' ',' | sed 's/,$//')
+          else
+            SHA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json mergeCommit --jq '.mergeCommit.oid')
+            BRANCHES=$(echo "${{ inputs.comment_body }}" | grep -oP '/backport\s+\K\S+' | tr '\n' ',' | sed 's/,$//')
+          fi
+
+          if [ -z "$BRANCHES" ]; then
+            echo "branches=[]" >> $GITHUB_OUTPUT
+          else
+            echo "branches=$(echo "$BRANCHES" | tr ',' '\n' | jq -R . | jq -sc .)" >> $GITHUB_OUTPUT
+          fi
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+  backport:
+    needs: parse
+    if: needs.parse.outputs.branches != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.parse.outputs.branches) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Cherry-pick and create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ needs.parse.outputs.sha }}"
+          BRANCH="${{ matrix.branch }}"
+          PR_DATA=$(gh api repos/${{ github.repository }}/commits/$SHA/pulls --jq '.[0] | {number, title}')
+          PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number')
+          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
+          BACKPORT_BRANCH="backport/${PR_NUMBER}-to-${BRANCH}"
+
+          git checkout -b "$BACKPORT_BRANCH" "origin/$BRANCH"
+
+          if git cherry-pick -x "$SHA"; then
+            git push origin "$BACKPORT_BRANCH"
+            gh pr create \
+              --base "$BRANCH" \
+              --head "$BACKPORT_BRANCH" \
+              --title "[backport] $PR_TITLE (to $BRANCH)" \
+              --body "Backport of #$PR_NUMBER to \`$BRANCH\`."
+          else
+            git cherry-pick --abort || true
+            {
+              echo "❌ Cherry-pick to \`$BRANCH\` failed due to conflicts. Please backport manually:"
+              echo ""
+              echo "\`\`\`bash"
+              echo "git fetch origin $BRANCH master"
+              echo "git checkout -b backport/${PR_NUMBER}-to-${BRANCH} origin/$BRANCH"
+              echo "git cherry-pick -x $SHA"
+              echo "# resolve conflicts"
+              echo "git cherry-pick --continue"
+              echo "git push origin backport/${PR_NUMBER}-to-${BRANCH}"
+              echo "\`\`\`"
+              echo ""
+              echo "Then open a PR targeting \`$BRANCH\`."
+            } > /tmp/backport-comment.md
+            gh pr comment "$PR_NUMBER" --body-file /tmp/backport-comment.md
+          fi
