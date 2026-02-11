@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     # admin
     "django.contrib.admin",
+    "dalf",
     "admin_auto_filters",
     # rest framework
     "rest_framework",

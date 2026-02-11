@@ -29,10 +29,10 @@ django.jQuery(document).ready(function () {
       });
   }
 
-  setAllPlaceholder(".auto-filter .select2-selection__placeholder");
+  setAllPlaceholder(".dalf-filter .select2-selection__placeholder, .auto-filter .select2-selection__placeholder");
   initSelect2NullOption();
 
-  django.jQuery(".auto-filter").on("select2:open", function (event) {
+  django.jQuery(".dalf-filter,.auto-filter").on("select2:open", function (event) {
     var optionsContainer = django
         .jQuery(event.target)
         .parent()

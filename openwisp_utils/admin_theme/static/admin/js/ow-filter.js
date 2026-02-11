@@ -5,28 +5,31 @@ const scrollDX = 200,
 var gettext;
 
 (function () {
-  document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-      leftArrow = document.querySelector(".filters-bottom .left-arrow");
-      rightArrow = document.querySelector(".filters-bottom .right-arrow");
-      slider = document.querySelector(".ow-filter-slider");
-      initFilterDropdownHandler();
-      initSliderHandlers();
-      initInputFilterHandler();
-      filterHandlers();
-      if (slider) {
-        setArrowButtonVisibility();
-      }
-      gettext =
-        window.gettext ||
-        function (v) {
-          return v;
-        };
-      add_clear_button();
-    },
-    false,
-  );
+  function initAll() {
+    leftArrow = document.querySelector(".filters-bottom .left-arrow");
+    rightArrow = document.querySelector(".filters-bottom .right-arrow");
+    slider = document.querySelector(".ow-filter-slider");
+    initFilterDropdownHandler();
+    initSliderHandlers();
+    initInputFilterHandler();
+    filterHandlers();
+    if (slider) {
+      setArrowButtonVisibility();
+    }
+    gettext =
+      window.gettext ||
+      function (v) {
+        return v;
+      };
+    add_clear_button();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAll, false);
+  } else {
+    // DOMContentLoaded already fired, initialize immediately
+    initAll();
+  }
 })();
 
 function showFilterOptions(filter, callback = null) {
