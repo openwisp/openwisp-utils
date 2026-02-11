@@ -115,3 +115,39 @@ example:
         git checkout $VERSION
         git reset --hard origin/master
         git push origin $VERSION --force-with-lease
+
+Changelog Bot
+~~~~~~~~~~~~~
+
+This workflow automatically generates changelog entry suggestions for Pull
+Requests using Google Gemini. It gets triggered when a PR with a title
+prefixed with ``[feature]``, ``[fix]``, or ``[change]`` is approved by a
+maintainer. It analyzes the PR's title, description, code changes, and
+linked issues, then posts a properly formatted changelog entry as a
+comment on the PR.
+
+**Inputs**
+
+- ``llm-model`` (optional): The Gemini model to use. Defaults to
+  ``gemini-2.0-flash``.
+
+**Secrets**
+
+- ``GEMINI_API_KEY`` (required): Google Gemini API key.
+
+**Usage Example**
+
+To enable the changelog bot in any OpenWISP repository, create a workflow
+file at ``.github/workflows/changelog-bot.yml``:
+
+.. code-block:: yaml
+
+    name: Changelog Bot
+    on:
+      pull_request_review:
+        types: [submitted]
+    jobs:
+      changelog:
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
+        secrets:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

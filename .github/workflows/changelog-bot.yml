@@ -1,0 +1,13 @@
+name: Changelog Bot
+
+on:
+  # Trigger when a PR review is submitted with approval
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  changelog:
+    # Call the reusable workflow
+    uses: ./.github/workflows/reusable-changelog-bot.yml
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

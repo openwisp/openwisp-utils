@@ -1,0 +1,64 @@
+name: Reusable Changelog Bot
+
+on:
+  workflow_call:
+    inputs:
+      llm-model:
+        description: "Gemini model to use (example 'gemini-2.0-flash', 'gemini-1.5-pro')"
+        required: false
+        type: string
+        default: "gemini-2.0-flash"
+    secrets:
+      GEMINI_API_KEY:
+        description: "Google Gemini API key"
+        required: true
+
+jobs:
+  generate-changelog:
+    # Trigger only when PR is approved
+    if: |
+      github.event_name == 'pull_request_review' &&
+      github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout PR repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Check for noteworthy commits
+        id: check-commits
+        run: |
+          echo "pr_number=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change)\]'; then
+            echo "has_noteworthy=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_noteworthy=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout openwisp-utils for action
+        if: steps.check-commits.outputs.has_noteworthy == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: openwisp/openwisp-utils
+          ref: master
+          sparse-checkout: |
+            .github/actions/changelog-generator
+          path: openwisp-utils-action
+
+      - name: Generate changelog
+        if: steps.check-commits.outputs.has_noteworthy == 'true'
+        uses: ./openwisp-utils-action/.github/actions/changelog-generator
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          llm-model: ${{ inputs.llm-model }}
+          pr-number: ${{ steps.check-commits.outputs.pr_number }}
+          repo-name: ${{ github.repository }}
