@@ -115,3 +115,53 @@ example:
         git checkout $VERSION
         git reset --hard origin/master
         git push origin $VERSION --force-with-lease
+
+Backport Fixes to Stable Branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This re-usable workflow automates cherry-picking fixes from ``master`` to
+stable release branches.
+
+It supports two triggers:
+
+- **Commit message**: Add ``[backport X.Y]`` to the squash merge commit
+  body to automatically backport when merged to ``master``.
+- **Comment**: Comment ``/backport X.Y`` on a merged PR (org members
+  only).
+
+If the cherry-pick fails due to conflicts, the bot comments with manual
+resolution steps.
+
+.. code-block:: yaml
+
+    name: Backport fixes to stable branch
+
+    on:
+      push:
+        branches:
+          - master
+      issue_comment:
+        types: [created]
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    jobs:
+      backport-on-push:
+        if: github.event_name == 'push'
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-backport.yml@master
+        with:
+          commit_sha: ${{ github.sha }}
+
+      backport-on-comment:
+        if: >
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          github.event.issue.state == 'closed' &&
+          contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association) &&
+          startsWith(github.event.comment.body, '/backport')
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-backport.yml@master
+        with:
+          pr_number: ${{ github.event.issue.number }}
+          comment_body: ${{ github.event.comment.body }}
