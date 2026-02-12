@@ -95,7 +95,8 @@ def get_ai_summary(content, file_format, token):
     # Asks the user if they want to use GPT for summarizing the changelog,
     # and handles the interaction loop (Accept/Retry/Use Original).
     if not questionary.confirm(
-        "Do you want to use an AI to generate a human-readable summary of the changelog?"
+        "Do you want to use an AI to generate a human-readable summary of the changelog?",
+        default=False,
     ).ask():
         return content
 
@@ -358,8 +359,8 @@ def main():
         ["git", "checkout", "-b", release_branch], check=True, capture_output=True
     )
 
-    print("Adding all changed files to git...")
-    subprocess.run(["git", "add", "."], check=True, capture_output=True)
+    print("Adding tracked changes to git...")
+    subprocess.run(["git", "add", "-u"], check=True, capture_output=True)
 
     commit_message = f"{new_version} release"
     subprocess.run(
