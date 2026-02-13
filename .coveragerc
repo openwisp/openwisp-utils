@@ -6,3 +6,5 @@ omit =
     /*/test*
     /*/__init__.py
     /*/migrations/*
+    */bots/*
+    openwisp_utils/bots/*
