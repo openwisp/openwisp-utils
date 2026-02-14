@@ -3,3 +3,4 @@ openwisp_controller @ https://github.com/openwisp/openwisp-controller/tarball/ma
 freezegun
 pytest
 pytest-mock
+google-genai
