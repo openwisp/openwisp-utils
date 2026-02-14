@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Tests for the changelog generator GitHub action."""
 
 import os
@@ -6,7 +5,6 @@ import sys
 
 # Add the directory to path for importing (must be before local imports)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 import unittest  # noqa: E402
 from unittest.mock import MagicMock, patch  # noqa: E402
 
@@ -96,10 +94,9 @@ class TestGetPrDiff(unittest.TestCase):
         large_diff = "x" * 20000
         mock_run.return_value = MagicMock(stdout=large_diff)
         result = get_pr_diff("main")
-        self.assertEqual(
-            len(result), 15000 + len("\n\n... [diff truncated for brevity] ...")
-        )
-        self.assertIn("[diff truncated for brevity]", result)
+        self.assertIn("[diff truncated]", result)
+        # Should be truncated to ~15000 chars plus the truncation message
+        self.assertLess(len(result), 16000)
 
     @patch("generate_changelog.subprocess.run")
     def test_returns_empty_on_error(self, mock_run):
@@ -249,10 +246,8 @@ class TestCallGemini(unittest.TestCase):
         mock_response.text = ""
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
-
         with self.assertRaises(SystemExit) as context:
             call_gemini("Test prompt", "api_key")
-
         self.assertEqual(context.exception.code, 1)
 
     @patch("generate_changelog.genai")
@@ -260,10 +255,8 @@ class TestCallGemini(unittest.TestCase):
         mock_client = MagicMock()
         mock_client.models.generate_content.side_effect = Exception("API Error")
         mock_genai.Client.return_value = mock_client
-
         with self.assertRaises(SystemExit) as context:
             call_gemini("Test prompt", "api_key")
-
         self.assertEqual(context.exception.code, 1)
 
     @patch("generate_changelog.genai")
@@ -341,10 +334,8 @@ class TestPostGithubComment(unittest.TestCase):
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock()
         mock_request.return_value = mock_response
-
         # Should not raise
         post_github_comment("org/repo", 123, "Test comment", "token")
-
         mock_request.assert_called_once()
         call_kwargs = mock_request.call_args[1]
         self.assertEqual(call_kwargs["method"], "post")
@@ -359,10 +350,8 @@ class TestPostGithubComment(unittest.TestCase):
         from requests.exceptions import RequestException
 
         mock_request.side_effect = RequestException("API Error")
-
         with self.assertRaises(RuntimeError) as context:
             post_github_comment("org/repo", 123, "Test comment", "token")
-
         self.assertIn("Failed to post comment", str(context.exception))
 
 

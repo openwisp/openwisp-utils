@@ -64,7 +64,9 @@ def github_api_request(endpoint: str, token: str) -> dict:
         response.raise_for_status()
         return response.json()
     except RequestException as e:
-        print(f"GitHub API error: {e}", file=sys.stderr)
+        error_msg = str(e)
+        error_msg = re.sub(r"Bearer\s+[a-zA-Z0-9_-]+", "Bearer ***", error_msg)
+        print(f"GitHub API error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
 
@@ -94,7 +96,11 @@ def get_pr_diff(base_branch: str) -> str:
         )
         diff = result.stdout
         if len(diff) > 15000:
-            diff = diff[:15000] + "\n\n... [diff truncated for brevity] ..."
+            # Truncate at line boundary to avoid breaking syntax
+            truncate_at = diff.rfind("\n", 0, 15000)
+            if truncate_at == -1:
+                truncate_at = 15000
+            diff = diff[:truncate_at] + "\n\n... [diff truncated] ..."
         return diff
     except subprocess.CalledProcessError as e:
         print(f"Warning: Could not get diff: {e}", file=sys.stderr)
@@ -149,7 +155,9 @@ def get_linked_issues(repo: str, pr_body: str, token: str) -> list:
         matches = re.findall(pattern, pr_body, re.IGNORECASE)
         issue_numbers.update(matches)
     issues = []
-    for issue_num in list(issue_numbers)[:3]:  # Limit to 3 issues
+    for issue_num in sorted(list(issue_numbers))[
+        :3
+    ]:  # Limit to 3 issues in sorted order
         try:
             issue_data = github_api_request(f"/repos/{repo}/issues/{issue_num}", token)
             issues.append(
@@ -185,13 +193,17 @@ def call_gemini(
                 ),
                 temperature=0.3,
                 max_output_tokens=1000,
+                timeout=90,
             ),
         )
         if not response.text:
             raise ValueError("Empty response from Gemini")
         return response.text
     except Exception as e:
-        print(f"Gemini API error: {e}", file=sys.stderr)
+        error_msg = str(e)
+        error_msg = re.sub(r"key=[a-zA-Z0-9_-]+", "key=***", error_msg)
+        error_msg = re.sub(r"Bearer\s+[a-zA-Z0-9_-]+", "Bearer ***", error_msg)
+        print(f"Gemini API error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
 
@@ -328,7 +340,9 @@ def main():
     try:
         post_github_comment(repo, pr_number, comment, github_token)
     except RuntimeError as e:
-        print(f"Error: {e}", file=sys.stderr)
+        error_msg = str(e)
+        error_msg = re.sub(r"Bearer\s+[a-zA-Z0-9_-]+", "Bearer ***", error_msg)
+        print(f"Error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
 

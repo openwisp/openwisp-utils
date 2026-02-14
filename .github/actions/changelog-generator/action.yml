@@ -27,10 +27,11 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
+        cache: "pip"
 
     - name: Install dependencies
       shell: bash
-      run: pip install "google-genai>=1.62.0" requests openwisp-utils
+      run: pip install "openwisp-utils[github_actions]"
 
     - name: Generate changelog entry
       id: generate

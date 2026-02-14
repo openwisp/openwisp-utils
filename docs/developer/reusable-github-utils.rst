@@ -148,6 +148,8 @@ file at ``.github/workflows/changelog-bot.yml``:
         types: [submitted]
     jobs:
       changelog:
-        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@bot
+        with:
+          llm-model: "gemini-2.0-flash" #default model
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
