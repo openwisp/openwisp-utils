@@ -119,18 +119,20 @@ example:
 Backport Fixes to Stable Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This re-usable workflow automates cherry-picking fixes from ``master`` to
-stable release branches.
+This re-usable workflow automates cherry-picking fixes from ``master`` or
+``main`` to stable release branches.
 
 It supports two triggers:
 
-- **Commit message**: Add ``[backport X.Y]`` to the squash merge commit
-  body to automatically backport when merged to ``master``.
+- **Commit message**: Add ``[backport X.Y]`` or ``[backport: X.Y]`` to the
+  squash merge commit body to automatically backport when merged to
+  ``master`` or ``main``.
 - **Comment**: Comment ``/backport X.Y`` on a merged PR (org members
   only).
 
-If the cherry-pick fails due to conflicts, the bot comments with manual
-resolution steps.
+If the cherry-pick fails due to conflicts, the bot comments on the PR with
+manual resolution steps. If the target branch does not exist or the PR is
+not yet merged, the workflow exits safely without failing.
 
 .. code-block:: yaml
 
@@ -140,8 +142,13 @@ resolution steps.
       push:
         branches:
           - master
+          - main
       issue_comment:
         types: [created]
+
+    concurrency:
+      group: backport-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
 
     permissions:
       contents: write
@@ -153,6 +160,9 @@ resolution steps.
         uses: openwisp/openwisp-utils/.github/workflows/reusable-backport.yml@master
         with:
           commit_sha: ${{ github.sha }}
+        secrets:
+          app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
       backport-on-comment:
         if: >
@@ -165,3 +175,6 @@ resolution steps.
         with:
           pr_number: ${{ github.event.issue.number }}
           comment_body: ${{ github.event.comment.body }}
+        secrets:
+          app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}

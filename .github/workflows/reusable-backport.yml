@@ -15,6 +15,11 @@ on:
         required: false
         type: string
         default: ""
+    secrets:
+      app_id:
+        required: true
+      private_key:
+        required: true
 
 jobs:
   parse:
@@ -35,10 +40,16 @@ jobs:
           if [ -n "$COMMIT_SHA" ]; then
             SHA="$COMMIT_SHA"
             COMMIT_MSG=$(gh api "repos/$REPO/git/commits/$SHA" --jq '.message')
-            BRANCHES=$(echo "$COMMIT_MSG" | grep -oP '\[backport\s+\K[^\]]+' | tr '\n' ',' | sed 's/,$//')
+            BRANCHES=$(echo "$COMMIT_MSG" | sed -n 's/.*\[backport[:[:space:]]\+\([^]]*\)\].*/\1/p' | tr '\n' ',' | sed 's/,$//')
           else
-            SHA=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json mergeCommit --jq '.mergeCommit.oid')
-            BRANCHES=$(echo "$COMMENT_BODY" | grep -oP '/backport\s+\K\S+' | tr '\n' ',' | sed 's/,$//')
+            PR_DATA=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state,mergeCommit)
+            PR_STATE=$(echo "$PR_DATA" | jq -r '.state')
+            if [ "$PR_STATE" != "MERGED" ]; then
+              echo "PR #$PR_NUMBER is not merged, skipping"
+              exit 0
+            fi
+            SHA=$(echo "$PR_DATA" | jq -r '.mergeCommit.oid')
+            BRANCHES=$(echo "$COMMENT_BODY" | sed -n 's|.*/backport[[:space:]]\+\([^[:space:]]*\).*|\1|p' | tr '\n' ',' | sed 's/,$//')
           fi
 
           if [ -z "$BRANCHES" ]; then
@@ -57,51 +68,93 @@ jobs:
       matrix:
         branch: ${{ fromJSON(needs.parse.outputs.branches) }}
     steps:
-      - uses: actions/checkout@v6
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.app_id }}
+          private-key: ${{ secrets.private_key }}
+
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Configure Git
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git config user.name 'OpenWISP Automation Bot'
+          git config user.email 'support@openwisp.io'
 
       - name: Cherry-pick and create PR
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           SHA: ${{ needs.parse.outputs.sha }}
           BRANCH: ${{ matrix.branch }}
           REPO: ${{ github.repository }}
         run: |
-          PR_DATA=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[0] | {number, title}')
-          PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number')
-          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
-          BACKPORT_BRANCH="backport/${PR_NUMBER}-to-${BRANCH}"
+          BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._/-]//g')
+          if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "::error::Target branch '$BRANCH' does not exist"
+            exit 1
+          fi
+          PR_DATA=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[0] | {number, title}' || echo "null")
+          PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number // empty')
+          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title // "Fix from master"')
+          if [ -z "$PR_NUMBER" ]; then
+            BACKPORT_BRANCH="backport/commit-${SHA:0:7}-to-${BRANCH}"
+            BODY="Backport of commit $SHA to \`$BRANCH\`."
+            PR_TITLE="Backport commit ${SHA:0:7} to $BRANCH"
+          else
+            BACKPORT_BRANCH="backport/${PR_NUMBER}-to-${BRANCH}"
 
+            BODY="Backport of #$PR_NUMBER to \`$BRANCH\`."
+            EXISTING=$(gh pr list --base "$BRANCH" --search "Backport of #$PR_NUMBER" --state open --json number --jq '.[0].number')
+            if [ -n "$EXISTING" ]; then
+              echo "Backport PR #$EXISTING already exists"
+              gh pr comment "$PR_NUMBER" --body "Backport to \`$BRANCH\` already exists: #$EXISTING"
+              exit 0
+            fi
+          fi
+          BACKPORT_BRANCH="${BACKPORT_BRANCH}-$(date +%s)"
           git checkout -b "$BACKPORT_BRANCH" "origin/$BRANCH"
 
           if git cherry-pick -x "$SHA"; then
             git push origin "$BACKPORT_BRANCH"
-            gh pr create \
-              --base "$BRANCH" \
-              --head "$BACKPORT_BRANCH" \
-              --title "[backport] $PR_TITLE (to $BRANCH)" \
-              --body "Backport of #$PR_NUMBER to \`$BRANCH\`."
+            if ! gh pr create \
+                --base "$BRANCH" \
+                --head "$BACKPORT_BRANCH" \
+                --title "[backport] $PR_TITLE (to $BRANCH)" \
+                --body "$BODY"; then
+              echo "::error::Failed to create PR"
+              git push origin --delete "$BACKPORT_BRANCH" || true
+              exit 1
+            fi
+            echo "## ✅ Backport Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **Source**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target Branch**: $BRANCH" >> $GITHUB_STEP_SUMMARY
+            echo "- **Backport Branch**: $BACKPORT_BRANCH" >> $GITHUB_STEP_SUMMARY
+          elif [ $? -eq 1 ] && git diff --cached --quiet; then
+            echo "Commit $SHA appears to already be in $BRANCH (empty cherry-pick)"
+            git cherry-pick --abort || true
+            exit 0
           else
             git cherry-pick --abort || true
             {
               echo "❌ Cherry-pick to \`$BRANCH\` failed due to conflicts. Please backport manually:"
               echo ""
               echo "\`\`\`bash"
-              echo "git fetch origin $BRANCH master"
-              echo "git checkout -b backport/${PR_NUMBER}-to-${BRANCH} origin/$BRANCH"
+              echo "git fetch origin $BRANCH"
+              echo "git checkout -b $BACKPORT_BRANCH origin/$BRANCH"
               echo "git cherry-pick -x $SHA"
               echo "# resolve conflicts"
               echo "git cherry-pick --continue"
-              echo "git push origin backport/${PR_NUMBER}-to-${BRANCH}"
+              echo "git push origin $BACKPORT_BRANCH"
               echo "\`\`\`"
-              echo ""
-              echo "Then open a PR targeting \`$BRANCH\`."
             } > /tmp/backport-comment.md
-            gh pr comment "$PR_NUMBER" --body-file /tmp/backport-comment.md
+            [ -n "$PR_NUMBER" ] && gh pr comment "$PR_NUMBER" --body-file /tmp/backport-comment.md
+            echo "## ❌ Backport Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Source**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target Branch**: $BRANCH" >> $GITHUB_STEP_SUMMARY
+            echo "- **Error**: Cherry-pick failed due to conflicts" >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
