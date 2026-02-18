@@ -65,7 +65,7 @@ jobs:
       - name: Pack Context
         run: |
           cd pr_code
-          repomix --include "**/*" --ignore "**/*.lock,**/*.json,**/.env*,**/*.secret" --style xml --output ../repo_context.xmlrepo_context.xml
+          repomix --include "**/*" --ignore "**/*.lock,**/*.json,**/.env*,**/*.secret" --style xml --output ../repo_context.xml
 
       - name: Generate Bot Token
         id: generate-token

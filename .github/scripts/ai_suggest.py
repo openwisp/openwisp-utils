@@ -1,4 +1,5 @@
 import os
+import sys
 
 from google import genai
 from google.genai import types
@@ -19,7 +20,7 @@ def get_error_logs():
 def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("Skipping: No API Key found.")
+        print("Skipping: No API Key found.", file=sys.stderr)
         return
 
     client = genai.Client(api_key=api_key)
@@ -75,9 +76,12 @@ def main():
         if response.text:
             print(f"## Report\n\n{response.text}")
         else:
-            print("Generation returned an empty response; skipping report.")
+            print(
+                "Generation returned an empty response; skipping report.",
+                file=sys.stderr,
+            )
     except Exception as e:
-        print(f"Generation Failed: {e}")
+        print(f"Generation Failed: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":
