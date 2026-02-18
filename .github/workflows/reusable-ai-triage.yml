@@ -12,6 +12,9 @@ on:
       head_repo:
         required: true
         type: string
+      base_repo:
+        required: true
+        type: string
       run_id:
         required: true
         type: string
@@ -62,7 +65,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           RUN_ID: ${{ inputs.run_id }}
-          REPO: ${{ inputs.head_repo }}
+          REPO: ${{ inputs.base_repo }}
         run: |
           gh run view $RUN_ID --repo $REPO --log-failed > failed_logs.txt
           if [ ! -s failed_logs.txt ]; then
@@ -84,7 +87,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           PR_NUM: ${{ inputs.pr_number }}
-          REPO: ${{ inputs.head_repo }}
+          REPO: ${{ inputs.base_repo }}
         run: |
           if [ ! -s solution.md ]; then
             echo "AI analysis produced no output; skipping comment."
