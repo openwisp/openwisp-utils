@@ -1,0 +1,85 @@
+name: AI Triage
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        required: true
+        type: string
+      head_sha:
+        required: true
+        type: string
+      head_repo:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+      APP_ID:
+        required: true
+      PRIVATE_KEY:
+        required: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Reusable Workflow
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.action_repository }}
+          ref: ${{ github.action_ref }}
+          path: trusted_scripts
+
+      - name: Checkout PR Code
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.head_repo }}
+          ref: ${{ inputs.head_sha }}
+          path: pr_code
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Tools
+        run: |
+          pip install google-genai
+          npm install -g repomix
+
+      - name: Fetch CI Logs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ inputs.head_repo }}
+        run: |
+          gh run view $RUN_ID --repo $REPO --log-failed > failed_logs.txt
+
+      - name: Pack Context
+        run: |
+          cd pr_code
+          repomix --include "**/*" --ignore "**/*.lock,**/*.json" --style xml --output ../repo_context.xml
+
+      - name: Generate Bot Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Run AI Analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python trusted_scripts/.github/scripts/ai_fix.py > solution.md
+
+      - name: Post Comment
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUM: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.head_repo }}
+        run: gh pr comment "$PR_NUM" --repo "$REPO" --body-file solution.md
