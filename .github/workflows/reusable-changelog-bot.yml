@@ -4,10 +4,10 @@ on:
   workflow_call:
     inputs:
       llm-model:
-        description: "Gemini model to use (example 'gemini-2.0-flash', 'gemini-1.5-pro')"
+        description: "Gemini model to use (example 'gemini-2.5-flash-lite', 'gemini-1.5-pro')"
         required: false
         type: string
-        default: "gemini-2.0-flash"
+        default: "gemini-2.5-flash-lite"
     secrets:
       GEMINI_API_KEY:
         description: "Google Gemini API key"
@@ -56,8 +56,8 @@ jobs:
         if: steps.check-commits.outputs.has_noteworthy == 'true'
         uses: actions/checkout@v6
         with:
-          repository: pushpitkamboj/openwisp-utils
-          ref: feature/AI_created_changelog
+          repository: openwisp/openwisp-utils
+          ref: bots
           sparse-checkout: |
             .github/actions/changelog-generator
           path: openwisp-utils-action

@@ -19,7 +19,7 @@ Environment Variables:
     PR_NUMBER: The PR number to analyze
     REPO_NAME: The repository name (e.g., openwisp/openwisp-utils)
     GITHUB_TOKEN: GitHub token for API access
-    LLM_MODEL: Model to use (default: 'gemini-2.0-flash')
+    LLM_MODEL: Model to use (default: 'gemini-2.5-flash-lite')
 """
 
 import os
@@ -176,7 +176,7 @@ def get_linked_issues(repo: str, pr_body: str, token: str) -> list:
 def call_gemini(
     prompt: str,
     api_key: str,
-    model: str = "gemini-2.0-flash",
+    model: str = "gemini-2.5-flash-lite",
     changelog_format: str = "rst",
 ) -> str:
     """Call Google Gemini API to generate changelog using google-genai SDK."""
@@ -193,7 +193,6 @@ def call_gemini(
                 ),
                 temperature=0.3,
                 max_output_tokens=1000,
-                timeout=90,
             ),
         )
         if not response.text:
@@ -325,7 +324,7 @@ def main():
     repo = get_env_or_exit("REPO_NAME")
     github_token = get_env_or_exit("GITHUB_TOKEN")
     api_key = get_env_or_exit("GEMINI_API_KEY")
-    model = os.environ.get("LLM_MODEL", "gemini-2.0-flash")
+    model = os.environ.get("LLM_MODEL", "gemini-2.5-flash-lite")
     pr_details = get_pr_details(repo, pr_number, github_token)
     base_branch = pr_details["base_branch"]
     diff = get_pr_diff(base_branch)

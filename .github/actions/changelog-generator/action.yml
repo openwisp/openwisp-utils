@@ -10,9 +10,9 @@ inputs:
     description: "Google Gemini API key"
     required: true
   llm-model:
-    description: "Gemini model to use (e.g., 'gemini-2.0-flash', 'gemini-1.5-pro')"
+    description: "Gemini model to use (e.g., 'gemini-2.5-flash-lite', 'gemini-1.5-pro')"
     required: false
-    default: "gemini-2.0-flash"
+    default: "gemini-2.5-flash-lite"
   pr-number:
     description: "Pull request number to analyze"
     required: true
@@ -27,11 +27,10 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: "3.11"
-        cache: "pip"
 
     - name: Install dependencies
       shell: bash
-      run: pip install "openwisp-utils[github_actions]"
+      run: pip install "openwisp-utils[github_actions] @ git+https://github.com/openwisp/openwisp-utils.git@bots"
 
     - name: Generate changelog entry
       id: generate
