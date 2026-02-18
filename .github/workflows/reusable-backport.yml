@@ -99,8 +99,7 @@ jobs:
             echo "No SHA to cherry-pick, skipping"
             exit 0
           fi
-          BRANCH=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._/-]//g')
-          if echo "$BRANCH" | grep -q '\.\.'; then
+          if ! git check-ref-format --branch "$BRANCH" > /dev/null 2>&1; then
             echo "::error::Invalid branch name '$BRANCH'"
             exit 1
           fi
@@ -137,7 +136,6 @@ jobs:
           if [ $CP_EXIT -eq 0 ]; then
             if ! git push origin "$BACKPORT_BRANCH"; then
               echo "::error::Failed to push $BACKPORT_BRANCH"
-              git push origin --delete "$BACKPORT_BRANCH" || true
               exit 1
             fi
             if ! gh pr create \
