@@ -135,7 +135,8 @@ comment on the PR.
 
 - ``GEMINI_API_KEY`` (required): Google Gemini API key.
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
-- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private key.
+- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
+  key.
 
 **Usage Example**
 
