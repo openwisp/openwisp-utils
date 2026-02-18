@@ -54,7 +54,8 @@ def main():
     """
 
     prompt = f"""
-    Fix this failing test.
+    Analyze the following CI failure and provide the appropriate remediation
+    according to your instructions.
 
     FAILURE LOGS:
     {error_log}
@@ -71,7 +72,10 @@ def main():
                 system_instruction=system_instruction, temperature=0.4
             ),
         )
-        print(f"## Report\n\n{response.text}")
+        if response.text:
+            print(f"## Report\n\n{response.text}")
+        else:
+            print("Generation returned an empty response; skipping report.")
     except Exception as e:
         print(f"Generation Failed: {e}")
 

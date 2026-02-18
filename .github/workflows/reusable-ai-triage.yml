@@ -30,8 +30,8 @@ jobs:
       - name: Checkout Reusable Workflow
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.action_repository }}
-          ref: ${{ github.action_ref }}
+          repository: openwisp/openwisp-utils
+          ref: issues/524-ci-failure-bot # will change to master upon merge
           path: trusted_scripts
 
       - name: Checkout PR Code
@@ -42,14 +42,14 @@ jobs:
           path: pr_code
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
       - name: Install Tools
         run: |
-          pip install google-genai
-          npm install -g repomix
+          pip install google-genai==1.16.1
+          npm install -g repomix@0.3.5
 
       - name: Fetch CI Logs
         env:
@@ -58,11 +58,14 @@ jobs:
           REPO: ${{ inputs.head_repo }}
         run: |
           gh run view $RUN_ID --repo $REPO --log-failed > failed_logs.txt
+          if [ ! -s failed_logs.txt ]; then
+            echo "No failed logs found or inaccessible run." > failed_logs.txt
+          fi
 
       - name: Pack Context
         run: |
           cd pr_code
-          repomix --include "**/*" --ignore "**/*.lock,**/*.json" --style xml --output ../repo_context.xml
+          repomix --include "**/*" --ignore "**/*.lock,**/*.json,**/.env*,**/*.secret" --style xml --output ../repo_context.xmlrepo_context.xml
 
       - name: Generate Bot Token
         id: generate-token
@@ -75,11 +78,16 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          python trusted_scripts/.github/scripts/ai_fix.py > solution.md
+          python trusted_scripts/.github/scripts/ai_suggest.py > solution.md
 
       - name: Post Comment
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           PR_NUM: ${{ inputs.pr_number }}
           REPO: ${{ inputs.head_repo }}
-        run: gh pr comment "$PR_NUM" --repo "$REPO" --body-file solution.md
+        run: |
+          if [ ! -s solution.md ]; then
+            echo "AI analysis produced no output; skipping comment."
+            exit 0
+          fi
+          gh pr comment "$PR_NUM" --repo "$REPO" --body-file solution.md
