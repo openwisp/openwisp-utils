@@ -27,6 +27,13 @@ jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate Bot Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
       - name: Checkout Reusable Workflow
         uses: actions/checkout@v4
         with:
@@ -53,7 +60,7 @@ jobs:
 
       - name: Fetch CI Logs
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ inputs.head_repo }}
         run: |
@@ -66,13 +73,6 @@ jobs:
         run: |
           cd pr_code
           repomix --include "**/*" --ignore "**/*.lock,**/*.json,**/.env*,**/*.secret" --style xml --output ../repo_context.xml
-
-      - name: Generate Bot Token
-        id: generate-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Run AI Analysis
         env:
