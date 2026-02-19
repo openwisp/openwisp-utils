@@ -78,7 +78,7 @@ jobs:
       - name: Pack Context
         run: |
           cd pr_code
-          repomix --include "**/*" --ignore "**/*.lock,**/.env*,**/*.secret,**/*.png,**/*.svg,**/*.ico,**/*.jpg,**/__pycache__/**,**/*.pyc,**/.pytest_cache/**,**/.tox/**,**/.idea/**,**/.vscode/**" --style xml --output ../repo_context.xml
+          repomix --include "**/*.py,**/*.js,**/*.jsx,**/*.ts,**/*.tsx,**/*.yaml,**/*.yml,**/*.sh,**/*.html,**/*.css,**/*.rst,**/*.md,**/*.lua,**/Makefile,**/Dockerfile" --style xml --output ../repo_context.xml
 
       - name: Run AI Analysis
         env:

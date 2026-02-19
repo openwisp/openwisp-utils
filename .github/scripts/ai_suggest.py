@@ -14,7 +14,18 @@ def get_error_logs():
     try:
         with open(log_file, "r") as f:
             content = f.read()
-            return content[-15000:]
+            MAX_CHARS = 30000
+            if len(content) <= MAX_CHARS:
+                return content
+            head_size = int(MAX_CHARS * 0.2)
+            tail_size = int(MAX_CHARS * 0.8)
+            head = content[:head_size]
+            tail = content[-tail_size:]
+            truncation_marker = (
+                f"\n\n... [LOG TRUNCATED: "
+                f"{len(content) - MAX_CHARS} characters removed] ...\n\n"
+            )
+            return head + truncation_marker + tail
     except Exception as e:
         return f"Error reading logs: {e}"
 
