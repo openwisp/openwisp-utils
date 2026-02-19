@@ -84,6 +84,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PR_AUTHOR: ${{ inputs.pr_author }}
+          COMMIT_SHA: ${{ inputs.head_sha }}
         run: |
           python trusted_scripts/.github/scripts/ai_suggest.py > solution.md
 

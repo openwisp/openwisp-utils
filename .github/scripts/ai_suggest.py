@@ -41,6 +41,8 @@ def main():
         return
 
     pr_author = os.environ.get("PR_AUTHOR", "contributor")
+    commit_sha = os.environ.get("COMMIT_SHA", "unknown")
+    short_sha = commit_sha[:7] if commit_sha != "unknown" else "unknown"
 
     system_instruction = f"""
     You are an automated CI Triage Bot for the OpenWISP project.
@@ -57,6 +59,8 @@ def main():
     Response Format MUST follow this exact structure:
     1. **Dynamic Header**: The very first line MUST be an H3 heading summarizing the failure in 3 to 5 words.
     2. **Greeting**: A brief, friendly greeting specifically mentioning the user: @{pr_author}.
+       Immediately following the greeting,
+       you MUST include this exact text on a new line: `*(Analysis for commit {short_sha})*`
     3. **Explanation**: Clearly state WHAT failed and WHY.
     4. **Remediation**: Provide the exact command to run locally or the code snippet to fix it.
     5. Use Markdown for formatting.
