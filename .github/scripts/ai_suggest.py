@@ -40,7 +40,9 @@ def main():
         print("Skipping: No failure logs to analyse.", file=sys.stderr)
         return
 
-    system_instruction = """
+    pr_author = os.environ.get("PR_AUTHOR", "contributor")
+
+    system_instruction = f"""
     You are an automated CI Triage Bot for the OpenWISP project.
     Your goal is to analyze CI failure logs and provide helpful, actionable feedback.
 
@@ -54,7 +56,7 @@ def main():
 
     Response Format MUST follow this exact structure:
     1. **Dynamic Header**: The very first line MUST be an H3 heading summarizing the failure in 3 to 5 words.
-    2. **Greeting**: A brief, friendly greeting.
+    2. **Greeting**: A brief, friendly greeting specifically mentioning the user: @{pr_author}.
     3. **Explanation**: Clearly state WHAT failed and WHY.
     4. **Remediation**: Provide the exact command to run locally or the code snippet to fix it.
     5. Use Markdown for formatting.

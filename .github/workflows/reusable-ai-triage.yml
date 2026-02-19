@@ -18,6 +18,9 @@ on:
       run_id:
         required: true
         type: string
+      pr_author:
+        required: true
+        type: string
     secrets:
       GEMINI_API_KEY:
         required: true
@@ -80,6 +83,7 @@ jobs:
       - name: Run AI Analysis
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PR_AUTHOR: ${{ inputs.pr_author }}
         run: |
           python trusted_scripts/.github/scripts/ai_suggest.py > solution.md
 
