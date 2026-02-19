@@ -180,7 +180,15 @@ def call_gemini(
     changelog_format: str = "rst",
 ) -> str:
     """Call Google Gemini API to generate changelog using google-genai SDK."""
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(
+            retry_options=types.HttpRetryOptions(
+                attempts=3,
+                max_delay=30.0,
+            )
+        ),
+    )
     format_name = "RestructuredText" if changelog_format == "rst" else "Markdown"
     try:
         response = client.models.generate_content(
