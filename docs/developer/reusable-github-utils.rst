@@ -168,6 +168,7 @@ not yet merged, the workflow exits safely without failing.
         if: >
           github.event_name == 'issue_comment' &&
           github.event.issue.pull_request &&
+          github.event.issue.pull_request.merged_at != null &&
           github.event.issue.state == 'closed' &&
           contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association) &&
           startsWith(github.event.comment.body, '/backport')
