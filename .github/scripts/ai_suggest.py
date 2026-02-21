@@ -11,7 +11,7 @@ def get_error_logs():
     if not os.path.exists(log_file):
         return "No failed logs found."
     try:
-        with open(log_file, "r") as f:
+        with open(log_file, "r", encoding="utf-8") as f:
             content = f.read()
             MAX_CHARS = 30000
             if len(content) <= MAX_CHARS:
@@ -45,13 +45,19 @@ def main():
     repo_context = "No repository context available."
     if os.path.exists("repo_context.xml"):
         try:
-            with open("repo_context.xml", "r") as f:
+            with open("repo_context.xml", "r", encoding="utf-8") as f:
                 repo_context = f.read()
+                MAX_REPO_CHARS = 1500000
+                if len(repo_context) > MAX_REPO_CHARS:
+                    repo_context = repo_context[:MAX_REPO_CHARS] + (
+                        "\n\n... [ SYSTEM WARNING: REPO CONTEXT "
+                        "TRUNCATED DUE TO SIZE LIMITS. ] ..."
+                    )
         except Exception as e:
             print(f"Warning: Could not read repo_context.xml: {e}", file=sys.stderr)
 
     error_log = get_error_logs()
-    if error_log == "No failed logs found.":
+    if "No failed logs" in error_log or error_log.startswith("Error reading logs"):
         print("Skipping: No failure logs to analyse.", file=sys.stderr)
         return
 
@@ -103,21 +109,29 @@ def main():
             model="gemini-2.5-flash-lite",
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction=system_instruction, temperature=0.4
+                system_instruction=system_instruction,
+                temperature=0.4,
+                max_output_tokens=1000,
             ),
         )
         if response.text:
-            print(f"{response.text}")
+            final_comment = response.text
+            if len(final_comment) > 10000:
+                final_comment = (
+                    final_comment[:10000]
+                    + "\n\n*(Warning: Output truncated due to length limits)*"
+                )
+            print(final_comment)
             return
         else:
             print(
                 "Generation returned an empty response; skipping report.",
                 file=sys.stderr,
             )
-            sys.exit(1)
+            sys.exit(0)
     except Exception as e:
         print(f"API Error (Max retries reached or fatal error): {e}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(0)
 
 
 if __name__ == "__main__":

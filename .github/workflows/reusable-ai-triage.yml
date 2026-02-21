@@ -29,33 +29,41 @@ on:
       PRIVATE_KEY:
         required: true
 
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ai-triage-${{ inputs.pr_number || inputs.head_sha }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
       - name: Generate Bot Token
         id: generate-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@c1a285145b9d317df6acd566827912061ed1adbd
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Checkout Reusable Workflow
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: openwisp/openwisp-utils
           ref: issues/524-ci-failure-bot # will change to master upon merge
           path: trusted_scripts
 
       - name: Checkout PR Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ inputs.head_repo }}
           ref: ${{ inputs.head_sha }}
           path: pr_code
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.10"
 
