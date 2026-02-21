@@ -1,7 +1,6 @@
 import os
 import secrets
 import sys
-import time
 
 from google import genai
 from google.genai import types
@@ -22,7 +21,7 @@ def get_error_logs():
             head = content[:head_size]
             tail = content[-tail_size:]
             truncation_marker = (
-                f"\n\n... [LOG TRUNCATED: "
+                f"\n\n... [LOGS TRUNCATED: "
                 f"{len(content) - MAX_CHARS} characters removed] ...\n\n"
             )
             return head + truncation_marker + tail
@@ -36,7 +35,12 @@ def main():
         print("Skipping: No API Key found.", file=sys.stderr)
         return
 
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(
+            retry_options=types.HttpRetryOptions(attempts=4)
+        ),
+    )
 
     repo_context = "No repository context available."
     if os.path.exists("repo_context.xml"):
@@ -94,37 +98,26 @@ def main():
     </code_context_{tag_id}>
     """
 
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.5-flash-lite",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction, temperature=0.4
-                ),
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction, temperature=0.4
+            ),
+        )
+        if response.text:
+            print(f"{response.text}")
+            return
+        else:
+            print(
+                "Generation returned an empty response; skipping report.",
+                file=sys.stderr,
             )
-            if response.text:
-                print(f"{response.text}")
-                return
-            else:
-                print(
-                    "Generation returned an empty response; skipping report.",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-        except Exception as e:
-            print(f"API Error on attempt {attempt + 1}: {e}", file=sys.stderr)
-            if attempt < max_retries - 1:
-                sleep_time = 15 * (attempt + 1)
-                print(f"Retrying in {sleep_time} seconds...", file=sys.stderr)
-                time.sleep(sleep_time)
-            else:
-                print(
-                    "Max retries reached. The Gemini API is currently unavailable.",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
+            sys.exit(1)
+    except Exception as e:
+        print(f"API Error (Max retries reached or fatal error): {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

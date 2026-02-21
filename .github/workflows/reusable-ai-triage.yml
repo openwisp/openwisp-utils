@@ -61,7 +61,7 @@ jobs:
 
       - name: Install Tools
         run: |
-          pip install google-genai==1.16.1
+          pip install google-genai==1.62.0
           npm install -g repomix@0.3.5
 
       - name: Fetch CI Logs
