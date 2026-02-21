@@ -158,3 +158,67 @@ file at ``.github/workflows/changelog-bot.yml``:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+Backport Fixes to Stable Branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This re-usable workflow automates cherry-picking fixes from ``master`` or
+``main`` to stable release branches.
+
+It supports two triggers:
+
+- **Commit message**: Add ``[backport X.Y]`` or ``[backport: X.Y]`` to the
+  squash merge commit body to automatically backport when merged to
+  ``master`` or ``main``.
+- **Comment**: Comment ``/backport X.Y`` on a merged PR (org members
+  only).
+
+If the cherry-pick fails due to conflicts, the bot comments on the PR with
+manual resolution steps. If the target branch does not exist or the PR is
+not yet merged, the workflow exits safely without failing.
+
+.. code-block:: yaml
+
+    name: Backport fixes to stable branch
+
+    on:
+      push:
+        branches:
+          - master
+          - main
+      issue_comment:
+        types: [created]
+
+    concurrency:
+      group: backport-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: false
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    jobs:
+      backport-on-push:
+        if: github.event_name == 'push'
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-backport.yml@master
+        with:
+          commit_sha: ${{ github.sha }}
+        secrets:
+          app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+      backport-on-comment:
+        if: >
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          github.event.issue.pull_request.merged_at != null &&
+          github.event.issue.state == 'closed' &&
+          contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association) &&
+          startsWith(github.event.comment.body, '/backport')
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-backport.yml@master
+        with:
+          pr_number: ${{ github.event.issue.number }}
+          comment_body: ${{ github.event.comment.body }}
+        secrets:
+          app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
