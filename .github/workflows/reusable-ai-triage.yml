@@ -33,10 +33,6 @@ permissions:
   contents: read
   pull-requests: write
 
-concurrency:
-  group: ai-triage-${{ inputs.base_repo }}-${{ inputs.pr_number || inputs.head_sha }}
-  cancel-in-progress: true
-
 jobs:
   analyze:
     runs-on: ubuntu-latest
