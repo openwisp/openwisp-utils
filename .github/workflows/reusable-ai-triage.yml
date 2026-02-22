@@ -34,7 +34,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: ai-triage-${{ inputs.pr_number || inputs.head_sha }}
+  group: ai-triage-${{ inputs.base_repo }}-${{ inputs.pr_number || inputs.head_sha }}
   cancel-in-progress: true
 
 jobs:
@@ -61,6 +61,8 @@ jobs:
           repository: ${{ inputs.head_repo }}
           ref: ${{ inputs.head_sha }}
           path: pr_code
+          fetch-depth: 1
+          submodules: false
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -89,6 +91,7 @@ jobs:
           repomix --include "**/*.py,**/*.js,**/*.jsx,**/*.ts,**/*.tsx,**/*.yaml,**/*.yml,**/*.sh,**/*.html,**/*.css,**/*.rst,**/*.md,**/*.lua,**/Makefile,**/Dockerfile" --style xml --output ../repo_context.xml
 
       - name: Run AI Analysis
+        timeout-minutes: 5
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PR_AUTHOR: ${{ inputs.pr_author }}

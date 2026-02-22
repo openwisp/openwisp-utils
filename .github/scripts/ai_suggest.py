@@ -57,7 +57,9 @@ def main():
             print(f"Warning: Could not read repo_context.xml: {e}", file=sys.stderr)
 
     error_log = get_error_logs()
-    if "No failed logs" in error_log or error_log.startswith("Error reading logs"):
+    if error_log.startswith("No failed logs") or error_log.startswith(
+        "Error reading logs"
+    ):
         print("Skipping: No failure logs to analyse.", file=sys.stderr)
         return
 
