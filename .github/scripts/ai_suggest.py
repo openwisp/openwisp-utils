@@ -116,7 +116,7 @@ def main():
                 max_output_tokens=1000,
             ),
         )
-        if response.text:
+        if response.text and response.text.strip():
             final_comment = response.text
             if len(final_comment) > 10000:
                 final_comment = (
