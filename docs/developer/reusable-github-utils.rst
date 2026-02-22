@@ -216,7 +216,7 @@ Set up a caller workflow in your repository (e.g.,
       contents: read
 
     concurrency:
-      group: ai-triage-${{ github.repository }}-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
+      group: ai-triage-${{ github.repository }}-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_branch }}
       cancel-in-progress: true
 
     jobs:
@@ -239,20 +239,27 @@ Set up a caller workflow in your repository (e.g.,
                 exit 0
               fi
               HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
-              echo "Payload empty. Searching for PR by Commit SHA ($HEAD_SHA) in $REPO via Commits API..."
-              PR_NUMBER=$(gh api repos/$REPO/commits/$HEAD_SHA/pulls -q '.[0].number')
-              if [ -n "$PR_NUMBER" ]; then
-                 echo "Found PR #$PR_NUMBER using Commit SHA."
+              echo "Payload empty. Searching for PR via Commits API..."
+              PR_NUMBER=$(gh api repos/$REPO/commits/$HEAD_SHA/pulls -q '.[0].number' 2>/dev/null || true)
+              if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+                 echo "Found PR #$PR_NUMBER using Commits API."
                  echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
                  exit 0
               fi
-              echo "::warning::No open PR found."
+              echo "API lookup failed/empty. Scanning open PRs for matching head SHA..."
+              PR_NUMBER=$(gh pr list --repo "$REPO" --state open --limit 100 --json number,headRefOid --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n 1)
+              if [ -n "$PR_NUMBER" ]; then
+                 echo "Found PR #$PR_NUMBER by scanning open PRs."
+                 echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                 exit 0
+              fi
+              echo "::warning::No open PR found. This workflow run might not be attached to an open PR."
               exit 0
 
       call-triage-bot:
         needs: find-pr
         if: ${{ needs.find-pr.outputs.pr_number != '' }}
-        uses: openwisp/openwisp-utils/.github/workflows/reusable-ai-triage.yml@<commit_sha>
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-ai-triage.yml@master
         with:
           pr_number: ${{ needs.find-pr.outputs.pr_number }}
           head_sha: ${{ github.event.workflow_run.head_sha }}
