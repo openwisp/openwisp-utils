@@ -30,7 +30,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install "openwisp-utils[github_actions] @ git+https://github.com/openwisp/openwisp-utils.git@bots"
+      run: pip install "openwisp-utils[github_actions] @ git+https://github.com/openwisp/openwisp-utils.git@master"
 
     - name: Generate changelog entry
       id: generate

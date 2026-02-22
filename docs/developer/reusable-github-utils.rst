@@ -151,11 +151,10 @@ file at ``.github/workflows/changelog-bot.yml``:
         types: [submitted]
     jobs:
       changelog:
-        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@bots
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
         with:
           llm-model: "gemini-2.5-flash-lite" #default model
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
-
