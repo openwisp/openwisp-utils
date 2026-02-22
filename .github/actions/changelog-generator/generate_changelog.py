@@ -302,8 +302,8 @@ def build_prompt(
 
 def has_existing_changelog_comment(repo: str, pr_number: int, token: str) -> bool:
     """Check if changelog bot has already commented on this PR."""
-    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
-    comments = github_api_request(url, token)
+    endpoint = f"/repos/{repo}/issues/{pr_number}/comments"
+    comments = github_api_request(endpoint, token)
     pr_ref_pattern = rf"[`\[]#{pr_number}[\s<>\]\(]"
     for comment in comments:
         body = comment.get("body", "").strip()
