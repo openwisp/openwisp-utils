@@ -158,3 +158,4 @@ file at ``.github/workflows/changelog-bot.yml``:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
