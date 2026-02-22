@@ -1,12 +1,12 @@
+import os
+import sys
 from unittest.mock import Mock, patch
 
-import pytest
+# Add the parent directory to path for importing bot modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-try:
-    from .pr_reopen_bot import PRActivityBot, PRReopenBot
-except ImportError:
-    PRReopenBot = None
-    PRActivityBot = None
+import pytest  # noqa: E402
+from pr_reopen_bot import PRActivityBot, PRReopenBot  # noqa: E402
 
 pytestmark = pytest.mark.skipif(
     PRReopenBot is None,
@@ -21,7 +21,7 @@ class TestPRReopenBot:
         monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
         monkeypatch.setenv("GITHUB_EVENT_NAME", "pull_request_target")
 
-        with patch("openwisp_utils.bots.auto_assign.base.Github") as mock_github_cls:
+        with patch("base.Github") as mock_github_cls:
             mock_repo = Mock()
             mock_github_cls.return_value.get_repo.return_value = mock_repo
             self.mock_github = mock_github_cls
@@ -114,7 +114,7 @@ class TestPRActivityBot:
         monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
         monkeypatch.setenv("GITHUB_EVENT_NAME", "issue_comment")
 
-        with patch("openwisp_utils.bots.auto_assign.base.Github") as mock_github_cls:
+        with patch("base.Github") as mock_github_cls:
             mock_repo = Mock()
             mock_github_cls.return_value.get_repo.return_value = mock_repo
             self.mock_github = mock_github_cls

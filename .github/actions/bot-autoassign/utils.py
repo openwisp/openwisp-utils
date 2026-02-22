@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Shared utility functions for bot modules"""
 
 import re
@@ -13,6 +12,9 @@ def extract_linked_issues(pr_body):
     """
     if not pr_body:
         return []
-    issue_pattern = r"(?:fix(?:es)?|close[sd]?|resolve[sd]?|relate[sd]?\s+to)\s*:?\s*(?:[\w-]+/[\w-]+)?#(\d+)"
+    issue_pattern = (
+        r"\b(?:fix(?:e[sd])?|close[sd]?|resolve[sd]?|relate[sd]?\s+to)"
+        r"\s*:?\s*(?:[\w-]+/[\w-]+)?#(\d+)"
+    )
     matches = re.findall(issue_pattern, pr_body, re.IGNORECASE)
     return list(dict.fromkeys(int(match) for match in matches))

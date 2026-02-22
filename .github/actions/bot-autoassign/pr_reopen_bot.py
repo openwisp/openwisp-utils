@@ -1,8 +1,9 @@
 import json
 import os
 
-from .base import GitHubBot
-from .utils import extract_linked_issues
+from base import GitHubBot
+from github import GithubException
+from utils import extract_linked_issues
 
 
 class PRReopenBot(GitHubBot):
@@ -28,26 +29,30 @@ class PRReopenBot(GitHubBot):
                     current_assignees = [assignee.login for assignee in issue.assignees]
                     if current_assignees and pr_author not in current_assignees:
                         print(
-                            f'Issue #{issue_number} is assigned to others: {", ".join(current_assignees)}'
+                            f"Issue #{issue_number} is assigned to "
+                            f'others: {", ".join(current_assignees)}'
                         )
                         continue
 
                     if pr_author not in current_assignees:
                         issue.add_to_assignees(pr_author)
                         reassigned_issues.append(issue_number)
-                        print(f"Reassigned issue #{issue_number} to {pr_author}")
+                        print(f"Reassigned issue #{issue_number} " f"to {pr_author}")
 
                         welcome_message = (
-                            f"Welcome back, @{pr_author}! 🎉 This issue has been reassigned to you "
-                            f"as you've reopened PR #{pr_number}."
+                            f"Welcome back, @{pr_author}! 🎉 This issue "
+                            "has been reassigned to you as you've "
+                            f"reopened PR #{pr_number}."
                         )
                         issue.create_comment(welcome_message)
 
-                except Exception as e:
-                    if "404" in str(e):
+                except GithubException as e:
+                    if e.status == 404:
                         print(f"Issue #{issue_number} not found")
                     else:
                         print(f"Error processing issue #{issue_number}: {e}")
+                except Exception as e:
+                    print(f"Error processing issue #{issue_number}: {e}")
 
             return reassigned_issues
 
@@ -173,19 +178,23 @@ class PRActivityBot(GitHubBot):
                     if not current_assignees:
                         issue.add_to_assignees(commenter)
                         reassigned_count += 1
-                        print(f"Reassigned issue #{issue_number} to {commenter}")
+                        print(f"Reassigned issue #{issue_number} " f"to {commenter}")
 
                 except Exception as e:
                     print(f"Error reassigning issue #{issue_number}: {e}")
 
             if reassigned_count > 0:
                 encouragement_message = (
-                    f"Thanks for following up, @{commenter}! 🙌 The stale status has been removed "
-                    "and the linked issue(s) have been reassigned to you. Looking forward to your updates!"
+                    f"Thanks for following up, @{commenter}! 🙌 "
+                    "The stale status has been removed and the linked "
+                    "issue(s) have been reassigned to you. "
+                    "Looking forward to your updates!"
                 )
                 pr.create_issue_comment(encouragement_message)
 
-            print(f"Handled contributor activity, reassigned {reassigned_count} issues")
+            print(
+                "Handled contributor activity, " f"reassigned {reassigned_count} issues"
+            )
             return True
 
         except Exception as e:

@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
 """Issue Assignment Bot - Automated issue assignment and PR management"""
 
 import re
 
-from .base import GitHubBot
-from .utils import extract_linked_issues
+from base import GitHubBot
+from github import GithubException
+from utils import extract_linked_issues
 
 
 class IssueAssignmentBot(GitHubBot):
@@ -182,8 +182,9 @@ class IssueAssignmentBot(GitHubBot):
                 "- Keep the contribution process moving smoothly",
                 "",
                 (
-                    f"We look forward to your contribution! If you have any questions, feel free to "
-                    f"ask in the PR or check our [documentation]({contributing_url})."
+                    "We look forward to your contribution! If you have any questions, "
+                    "feel free to ask in the PR or check our "
+                    f"[documentation]({contributing_url})."
                 ),
                 "",
                 "Happy coding! 🚀",
@@ -229,11 +230,13 @@ class IssueAssignmentBot(GitHubBot):
                     if current_assignees:
                         if pr_author in current_assignees:
                             print(
-                                f"Issue #{issue_number} already assigned to {pr_author}"
+                                f"Issue #{issue_number} already assigned "
+                                f"to {pr_author}"
                             )
                         else:
                             print(
-                                f'Issue #{issue_number} already assigned to: {", ".join(current_assignees)}'
+                                f"Issue #{issue_number} already assigned "
+                                f'to: {", ".join(current_assignees)}'
                             )
                         continue
 
@@ -246,11 +249,13 @@ class IssueAssignmentBot(GitHubBot):
                     )
                     issue.create_comment(comment_message)
 
-                except Exception as e:
-                    if "404" in str(e):
+                except GithubException as e:
+                    if e.status == 404:
                         print(f"Issue #{issue_number} not found")
                     else:
                         print(f"Error processing issue #{issue_number}: {e}")
+                except Exception as e:
+                    print(f"Error processing issue #{issue_number}: {e}")
             return assigned_issues
         except Exception as e:
             print(f"Error in auto_assign_issues_from_pr: {e}")
@@ -277,7 +282,8 @@ class IssueAssignmentBot(GitHubBot):
                         and issue.repository.full_name != self.repository_name
                     ):
                         print(
-                            f"Issue #{issue_number} is from a different repository, skipping"
+                            f"Issue #{issue_number} is from a "
+                            "different repository, skipping"
                         )
                         continue
                     if issue.pull_request:
@@ -358,6 +364,9 @@ class IssueAssignmentBot(GitHubBot):
                     pr_number, pr_author, pr_body
                 )
                 return len(assigned_issues) > 0
+            elif action == "closed":
+                unassigned_issues = self.unassign_issues_from_pr(pr_body, pr_author)
+                return len(unassigned_issues) > 0
 
             print(f"PR action '{action}' not handled")
             return False
@@ -403,6 +412,7 @@ def main():
                 bot.load_event_payload(event_payload)
         except Exception as e:
             print(f"Could not load event payload: {e}")
+            return
 
     bot.run()
 

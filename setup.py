@@ -76,8 +76,8 @@ setup(
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",
         ],
-        "bots": [
-            "PyGithub>=2.0.0",
+        "github_actions": [
+            "PyGithub>=2.0.0,<3.0.0",
         ],
     },
     classifiers=[

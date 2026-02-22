@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: read
   issues: write
   pull-requests: write
 
@@ -26,13 +27,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -e .[bots]
+        run: pip install -e .[github_actions]
 
       - name: Run stale PR bot
         env:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
-        run: python -m openwisp_utils.bots.auto_assign stale_pr
+        run: >
+          python .github/actions/bot-autoassign/__main__.py
+          stale_pr

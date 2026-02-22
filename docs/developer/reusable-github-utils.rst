@@ -56,6 +56,73 @@ times with a 30 second delay between attempts.
     attempts, the action will exit with a non-zero status, causing the
     workflow to fail.
 
+Auto-Assignment Bot
+~~~~~~~~~~~~~~~~~~~
+
+A collection of Python scripts that automate issue and PR management for
+OpenWISP repositories. When a contributor opens a PR referencing an issue,
+the issue is automatically assigned to the PR author. It also responds to
+assignment requests with contributing guidelines, manages stale PRs
+(warning after 7 days, marking stale after 14 days, closing after 60 days
+of inactivity), and reassigns issues when stale PRs are reopened.
+
+**Secrets**
+
+- ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
+- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
+  key.
+
+**Usage Example**
+
+To enable the auto-assignment bot in any OpenWISP repository, copy the
+workflow files from ``.github/workflows/`` (``bot-autoassign-issue.yml``,
+``bot-autoassign-pr-issue-link.yml``, ``bot-autoassign-pr-reopen.yml``,
+``bot-autoassign-stale-pr.yml``):
+
+.. code-block:: yaml
+
+    name: Issue Assignment Bot
+
+    on:
+      issue_comment:
+        types: [created]
+
+    permissions:
+      contents: read
+      issues: write
+
+    jobs:
+      respond-to-assign-request:
+        runs-on: ubuntu-latest
+        if: github.event.issue.pull_request == null
+        steps:
+          - name: Generate GitHub App token
+            id: generate-token
+            uses: actions/create-github-app-token@v1
+            with:
+              app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+              private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+          - name: Checkout repository
+            uses: actions/checkout@v4
+
+          - name: Set up Python
+            uses: actions/setup-python@v5
+            with:
+              python-version: "3.12"
+
+          - name: Install dependencies
+            run: pip install PyGithub
+
+          - name: Run issue assignment bot
+            env:
+              GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+              REPOSITORY: ${{ github.repository }}
+              GITHUB_EVENT_NAME: ${{ github.event_name }}
+            run: >
+              python .github/actions/bot-autoassign/__main__.py
+              issue_assignment "$GITHUB_EVENT_PATH"
+
 GitHub Workflows
 ----------------
 

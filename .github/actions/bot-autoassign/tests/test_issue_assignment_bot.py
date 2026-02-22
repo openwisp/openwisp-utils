@@ -1,12 +1,12 @@
 import os
+import sys
 from unittest.mock import Mock, patch
 
-import pytest
+# Add the parent directory to path for importing bot modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-try:
-    from .issue_assignment_bot import IssueAssignmentBot
-except ImportError:
-    IssueAssignmentBot = None
+import pytest  # noqa: E402
+from issue_assignment_bot import IssueAssignmentBot  # noqa: E402
 
 pytestmark = pytest.mark.skipif(
     IssueAssignmentBot is None,
@@ -21,7 +21,7 @@ def bot_env(monkeypatch):
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
     monkeypatch.setenv("GITHUB_EVENT_NAME", "issue_comment")
 
-    with patch("openwisp_utils.bots.auto_assign.base.Github") as mock_github_cls:
+    with patch("base.Github") as mock_github_cls:
         mock_repo = Mock()
         mock_github_cls.return_value.get_repo.return_value = mock_repo
         yield {
@@ -88,13 +88,14 @@ class TestExtractLinkedIssues:
             ("Fixes: #42", [42]),  # colon syntax
             ("Related to #99", [99]),  # relates-to
             ("Fixes owner/repo#55", [55]),  # cross-repo
+            ("Fixed #999", [999]),
             ("No issue references here", []),
             ("", []),
             (None, []),
         ],
     )
     def test_extract_linked_issues(self, pr_body, expected, bot_env):
-        from .utils import extract_linked_issues
+        from utils import extract_linked_issues
 
         result = extract_linked_issues(pr_body)
         assert sorted(result) == sorted(expected)
@@ -264,7 +265,10 @@ class TestHandleIssueComment:
         bot.load_event_payload(
             {
                 "issue": {"number": 123, "pull_request": None},
-                "comment": {"body": "assign me please", "user": {"login": "testuser"}},
+                "comment": {
+                    "body": "assign me please",
+                    "user": {"login": "testuser"},
+                },
             }
         )
         mock_issue = Mock()
@@ -286,7 +290,10 @@ class TestHandleIssueComment:
                         "url": "https://api.github.com/repos/test/pulls/123"
                     },
                 },
-                "comment": {"body": "assign me please", "user": {"login": "testuser"}},
+                "comment": {
+                    "body": "assign me please",
+                    "user": {"login": "testuser"},
+                },
             }
         )
         assert not bot.handle_issue_comment()
@@ -296,7 +303,10 @@ class TestHandleIssueComment:
         bot.load_event_payload(
             {
                 "issue": {"number": 123, "pull_request": None},
-                "comment": {"body": "looks good!", "user": {"login": "testuser"}},
+                "comment": {
+                    "body": "looks good!",
+                    "user": {"login": "testuser"},
+                },
             }
         )
         assert not bot.handle_issue_comment()
@@ -346,6 +356,29 @@ class TestHandlePullRequest:
 
         assert bot.handle_pull_request()
 
+    def test_closed(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "closed",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_assignee = Mock()
+        mock_assignee.login = "testuser"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.assignees = [mock_assignee]
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+
+        assert bot.handle_pull_request()
+        mock_issue.remove_from_assignees.assert_called_once_with("testuser")
+
     def test_unsupported_action(self, bot_env):
         bot = IssueAssignmentBot()
         bot.load_event_payload(
@@ -368,7 +401,10 @@ class TestRun:
         bot.load_event_payload(
             {
                 "issue": {"number": 123, "pull_request": None},
-                "comment": {"body": "assign me", "user": {"login": "testuser"}},
+                "comment": {
+                    "body": "assign me",
+                    "user": {"login": "testuser"},
+                },
             }
         )
         mock_issue = Mock()

@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 """Stale PR Management Bot - Automated stale PR detection and management"""
 
 import time
 from datetime import datetime, timezone
 
-from .base import GitHubBot
-from .utils import extract_linked_issues
+from base import GitHubBot
+from utils import extract_linked_issues
 
 
 class StalePRBot(GitHubBot):
@@ -15,7 +14,14 @@ class StalePRBot(GitHubBot):
         self.DAYS_BEFORE_UNASSIGN = 14
         self.DAYS_BEFORE_CLOSE = 60
 
-    def get_days_since_activity(self, pr, last_changes_requested):
+    def get_days_since_activity(
+        self,
+        pr,
+        last_changes_requested,
+        issue_comments=None,
+        all_reviews=None,
+        review_comments=None,
+    ):
         """Calculate days since last contributor activity after changes requested"""
         if not last_changes_requested:
             return 0
@@ -35,8 +41,11 @@ class StalePRBot(GitHubBot):
                         ):
                             last_author_activity = commit_date
 
-            all_comments = list(pr.get_issue_comments())
-            comments = all_comments[-20:] if len(all_comments) > 20 else all_comments
+            if issue_comments is None:
+                issue_comments = list(pr.get_issue_comments())
+            comments = (
+                issue_comments[-20:] if len(issue_comments) > 20 else issue_comments
+            )
             for comment in comments:
                 if comment.user.login == pr_author:
                     comment_date = comment.created_at
@@ -47,6 +56,37 @@ class StalePRBot(GitHubBot):
                         ):
                             last_author_activity = comment_date
 
+            if review_comments is None:
+                review_comments = list(pr.get_review_comments())
+            all_review_comments = review_comments
+            review_comments = (
+                all_review_comments[-20:]
+                if len(all_review_comments) > 20
+                else all_review_comments
+            )
+            for comment in review_comments:
+                if comment.user.login == pr_author:
+                    comment_date = comment.created_at
+                    if comment_date > last_changes_requested:
+                        if (
+                            not last_author_activity
+                            or comment_date > last_author_activity
+                        ):
+                            last_author_activity = comment_date
+
+            if all_reviews is None:
+                all_reviews = list(pr.get_reviews())
+            reviews = all_reviews[-20:] if len(all_reviews) > 20 else all_reviews
+            for review in reviews:
+                if review.user.login == pr_author:
+                    review_date = review.submitted_at
+                    if review_date and review_date > last_changes_requested:
+                        if (
+                            not last_author_activity
+                            or review_date > last_author_activity
+                        ):
+                            last_author_activity = review_date
+
             reference_date = last_author_activity or last_changes_requested
             now = datetime.now(timezone.utc)
             return (now - reference_date).days
@@ -55,10 +95,11 @@ class StalePRBot(GitHubBot):
             print(f"Error calculating activity for PR #{pr.number}: {e}")
             return 0
 
-    def get_last_changes_requested(self, pr):
+    def get_last_changes_requested(self, pr, all_reviews=None):
         """Get the date of the most recent 'changes_requested' review"""
         try:
-            all_reviews = list(pr.get_reviews())
+            if all_reviews is None:
+                all_reviews = list(pr.get_reviews())
             reviews = all_reviews[-50:] if len(all_reviews) > 50 else all_reviews
             changes_requested_reviews = [
                 r for r in reviews if r.state == "CHANGES_REQUESTED"
@@ -74,7 +115,7 @@ class StalePRBot(GitHubBot):
             print(f"Error getting reviews for PR #{pr.number}: {e}")
             return None
 
-    def has_bot_comment(self, pr, comment_type, after_date=None):
+    def has_bot_comment(self, pr, comment_type, after_date=None, issue_comments=None):
         """Check if PR already has a specific type of bot comment using HTML markers.
 
         If ``after_date`` is provided, only considers comments posted
@@ -82,9 +123,10 @@ class StalePRBot(GitHubBot):
         suppressing new warnings after activity resumes.
         """
         try:
-            comments = list(pr.get_issue_comments())
+            if issue_comments is None:
+                issue_comments = list(pr.get_issue_comments())
             marker = f"<!-- bot:{comment_type} -->"
-            for comment in comments:
+            for comment in issue_comments:
                 if (
                     comment.user
                     and comment.user.type == "Bot"
@@ -113,7 +155,8 @@ class StalePRBot(GitHubBot):
                         and issue.repository.full_name != self.repository_name
                     ):
                         print(
-                            f"Issue #{issue_number} is from a different repository, skipping"
+                            f"Issue #{issue_number} is from a "
+                            "different repository, skipping"
                         )
                         continue
 
@@ -156,7 +199,8 @@ class StalePRBot(GitHubBot):
                 f"**{days_inactive} days of inactivity**.",
                 "After changes were requested, the PR remained inactive.",
                 "",
-                "We understand that life gets busy, and we appreciate your initial contribution! 💙",
+                "We understand that life gets busy, and we appreciate "
+                "your initial contribution! 💙",
                 "",
                 "**The door is always open** for you to come back:",
                 "- You can **reopen this PR** at any time",
@@ -169,11 +213,11 @@ class StalePRBot(GitHubBot):
                 "If you have any questions or need help,",
                 "don't hesitate to reach out. We're here to support you!",
                 "",
-                "Thank you for your interest in contributing to OpenWISP! 🙏",
+                "Thank you for your interest in contributing " "to OpenWISP! 🙏",
             ]
 
-            pr.create_issue_comment("\n".join(close_lines))
             pr.edit(state="closed")
+            pr.create_issue_comment("\n".join(close_lines))
 
             unassigned_count = self.unassign_linked_issues(pr)
             print(
@@ -198,25 +242,31 @@ class StalePRBot(GitHubBot):
                 "",
                 (
                     f"This pull request has been marked as **stale** due to "
-                    f"**{days_inactive} days of inactivity** after changes were requested."
+                    f"**{days_inactive} days of inactivity** after changes "
+                    "were requested."
                 ),
                 "",
                 (
-                    "As a result, **the linked issue(s) have been unassigned** from you to "
-                    "allow other contributors to work on it."
+                    "As a result, **the linked issue(s) have been "
+                    "unassigned** from you to allow other contributors "
+                    "to work on it."
                 ),
                 "",
-                "However, **you can still continue working on this PR**! If you push new commits",
+                "However, **you can still continue working on this PR**! "
+                "If you push new commits",
                 "or respond to the review feedback:",
                 "- The issue will be reassigned to you",
                 "- Your contribution is still very welcome",
                 "",
-                "If you need more time or have questions about the requested changes, please let us know.",
+                "If you need more time or have questions about the "
+                "requested changes, please let us know.",
                 "We're happy to help! 🤝",
                 "",
                 (
-                    f"If there's no further activity within **{self.DAYS_BEFORE_CLOSE - days_inactive} "
-                    "more days**, this PR will be automatically closed (but can be reopened anytime)."
+                    f"If there's no further activity within "
+                    f"**{self.DAYS_BEFORE_CLOSE - days_inactive} "
+                    "more days**, this PR will be automatically closed "
+                    "(but can be reopened anytime)."
                 ),
             ]
 
@@ -229,8 +279,8 @@ class StalePRBot(GitHubBot):
                 print(f"Could not add stale label: {e}")
 
             print(
-                f"Marked PR #{pr.number} as stale after {days_inactive} days, "
-                f"unassigned {unassigned_count} issues"
+                f"Marked PR #{pr.number} as stale after {days_inactive} "
+                f"days, unassigned {unassigned_count} issues"
             )
             return True
 
@@ -250,21 +300,25 @@ class StalePRBot(GitHubBot):
                 f"Hi @{pr_author} 👋,",
                 "",
                 (
-                    f"This is a friendly reminder that this pull request has had "
-                    f"**no activity for {days_inactive} days** since changes were requested."
+                    "This is a friendly reminder that this pull request "
+                    f"has had **no activity for {days_inactive} days** "
+                    "since changes were requested."
                 ),
                 "",
-                "We'd love to see this contribution merged! Please take a moment to:",
+                "We'd love to see this contribution merged! "
+                "Please take a moment to:",
                 "- Address the review feedback",
                 "- Push your changes",
-                "- Let us know if you have any questions or need clarification",
+                "- Let us know if you have any questions " "or need clarification",
                 "",
-                "If you're busy or need more time, no worries! Just leave a comment to let us know",
+                "If you're busy or need more time, no worries! "
+                "Just leave a comment to let us know",
                 "you're still working on it.",
                 "",
                 (
                     f"**Note:** within **{remaining} more days**, "
-                    "the linked issue will be unassigned to allow other contributors to work on it."
+                    "the linked issue will be unassigned to allow "
+                    "other contributors to work on it."
                 ),
                 "",
                 "Thank you for your contribution! 🙏",
@@ -285,22 +339,33 @@ class StalePRBot(GitHubBot):
             return
 
         try:
-            open_prs = list(self.repo.get_pulls(state="open"))
-            print(f"Found {len(open_prs)} open pull requests")
+            open_prs = self.repo.get_pulls(state="open")
+            print(f"Found {open_prs.totalCount} open pull requests")
 
             processed_count = 0
 
             for pr in open_prs:
                 try:
-                    last_changes_requested = self.get_last_changes_requested(pr)
+                    all_reviews = list(pr.get_reviews())
+                    last_changes_requested = self.get_last_changes_requested(
+                        pr, all_reviews
+                    )
                     if not last_changes_requested:
                         continue
 
+                    issue_comments = list(pr.get_issue_comments())
+                    review_comments = list(pr.get_review_comments())
+
                     days_inactive = self.get_days_since_activity(
-                        pr, last_changes_requested
+                        pr,
+                        last_changes_requested,
+                        issue_comments,
+                        all_reviews,
+                        review_comments,
                     )
                     print(
-                        f"PR #{pr.number}: {days_inactive} days since contributor activity"
+                        f"PR #{pr.number}: {days_inactive} days "
+                        "since contributor activity"
                     )
                     if days_inactive >= self.DAYS_BEFORE_CLOSE:
                         if self.close_stale_pr(pr, days_inactive):
@@ -308,14 +373,20 @@ class StalePRBot(GitHubBot):
 
                     elif days_inactive >= self.DAYS_BEFORE_UNASSIGN:
                         if not self.has_bot_comment(
-                            pr, "stale", after_date=last_changes_requested
+                            pr,
+                            "stale",
+                            after_date=last_changes_requested,
+                            issue_comments=issue_comments,
                         ):
                             if self.mark_pr_stale(pr, days_inactive):
                                 processed_count += 1
 
                     elif days_inactive >= self.DAYS_BEFORE_STALE_WARNING:
                         if not self.has_bot_comment(
-                            pr, "stale_warning", after_date=last_changes_requested
+                            pr,
+                            "stale_warning",
+                            after_date=last_changes_requested,
+                            issue_comments=issue_comments,
                         ):
                             if self.send_stale_warning(pr, days_inactive):
                                 processed_count += 1

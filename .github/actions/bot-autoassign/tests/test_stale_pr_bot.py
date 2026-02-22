@@ -1,12 +1,13 @@
+import os
+import sys
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
-import pytest
+# Add the parent directory to path for importing bot modules
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-try:
-    from .stale_pr_bot import StalePRBot
-except ImportError:
-    StalePRBot = None
+import pytest  # noqa: E402
+from stale_pr_bot import StalePRBot  # noqa: E402
 
 pytestmark = pytest.mark.skipif(
     StalePRBot is None,
@@ -19,7 +20,7 @@ def bot_env(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
 
-    with patch("openwisp_utils.bots.auto_assign.base.Github") as mock_github_cls:
+    with patch("base.Github") as mock_github_cls:
         mock_repo = Mock()
         mock_github_cls.return_value.get_repo.return_value = mock_repo
         yield {
@@ -50,13 +51,14 @@ class TestExtractLinkedIssues:
             ("Closes #456 and resolves #789", [456, 789]),
             ("fix #100, close #200, resolve #300", [100, 200, 300]),
             ("This PR fixes #123 and closes #123", [123]),
+            ("Fixed #999", [999]),
             ("No issue references here", []),
             ("", []),
             (None, []),
         ],
     )
     def test_extract_linked_issues(self, pr_body, expected, bot_env):
-        from .utils import extract_linked_issues
+        from utils import extract_linked_issues
 
         result = extract_linked_issues(pr_body)
         assert sorted(result) == sorted(expected)
@@ -68,7 +70,8 @@ class TestGetLastChangesRequested:
         mock_pr = Mock()
         reviews = [
             Mock(
-                state="APPROVED", submitted_at=datetime(2024, 1, 1, tzinfo=timezone.utc)
+                state="APPROVED",
+                submitted_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
             ),
             Mock(
                 state="CHANGES_REQUESTED",
@@ -94,7 +97,7 @@ class TestGetLastChangesRequested:
 
 
 class TestGetDaysSinceActivity:
-    @patch("openwisp_utils.bots.auto_assign.stale_pr_bot.datetime")
+    @patch("stale_pr_bot.datetime")
     def test_with_author_commit(self, mock_datetime, bot_env):
         mock_datetime.now.return_value = datetime(2024, 1, 10, tzinfo=timezone.utc)
         # Keep timezone constructor working
@@ -104,6 +107,8 @@ class TestGetDaysSinceActivity:
         mock_pr = Mock()
         mock_pr.user.login = "testuser"
         mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
 
         mock_commit = Mock()
         mock_commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
