@@ -1,0 +1,178 @@
+name: Backport fixes to stable branch
+
+on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        required: false
+        type: string
+        default: ""
+      pr_number:
+        required: false
+        type: number
+        default: 0
+      comment_body:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      app_id:
+        required: true
+      private_key:
+        required: true
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.extract.outputs.branches }}
+      sha: ${{ steps.extract.outputs.sha }}
+    steps:
+      - name: Extract backport targets
+        id: extract
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          COMMENT_BODY: ${{ inputs.comment_body }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -n "$COMMIT_SHA" ]; then
+            SHA="$COMMIT_SHA"
+            COMMIT_MSG=$(gh api "repos/$REPO/git/commits/$SHA" --jq '.message')
+            BRANCHES=$(echo "$COMMIT_MSG" | sed -n 's/.*\[backport[:[:space:]]\+\([^]]*\)\].*/\1/p' | tr '\n' ',' | sed 's/,$//')
+          else
+            PR_DATA=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json state,mergeCommit)
+            PR_STATE=$(echo "$PR_DATA" | jq -r '.state')
+            if [ "$PR_STATE" != "MERGED" ]; then
+              echo "PR #$PR_NUMBER is not merged, skipping"
+              echo "branches=[]" >> $GITHUB_OUTPUT
+              echo "sha=" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            SHA=$(echo "$PR_DATA" | jq -r '.mergeCommit.oid')
+            BRANCHES=$(echo "$COMMENT_BODY" | sed -n 's|.*/backport[[:space:]]\+\([^[:space:]]*\).*|\1|p' | tr '\n' ',' | sed 's/,$//')
+          fi
+
+          if [ -z "$BRANCHES" ]; then
+            echo "branches=[]" >> $GITHUB_OUTPUT
+          else
+            echo "branches=$(echo "$BRANCHES" | tr ',' '\n' | jq -R . | jq -sc .)" >> $GITHUB_OUTPUT
+          fi
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+  backport:
+    needs: parse
+    if: needs.parse.outputs.branches != '' && needs.parse.outputs.branches != '[]' && needs.parse.outputs.sha != ''
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.parse.outputs.branches) }}
+    steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.app_id }}
+          private-key: ${{ secrets.private_key }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Configure Git
+        run: |
+          git config user.name 'OpenWISP Companion'
+          git config user.email 'support@openwisp.io'
+
+      - name: Cherry-pick and create PR
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          SHA: ${{ needs.parse.outputs.sha }}
+          BRANCH: ${{ matrix.branch }}
+          REPO: ${{ github.repository }}
+        run: |
+          SHA="${{ needs.parse.outputs.sha }}"
+          if [ -z "$SHA" ]; then
+            echo "No SHA to cherry-pick, skipping"
+            exit 0
+          fi
+          if ! git check-ref-format --branch "$BRANCH" > /dev/null 2>&1; then
+            echo "::error::Invalid branch name '$BRANCH'"
+            exit 1
+          fi
+          if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "::error::Target branch '$BRANCH' does not exist"
+            exit 1
+          fi
+          if ! PR_DATA=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[0] | {number, title}'); then
+            echo "::warning::Could not fetch PR data for $SHA, proceeding with commit-based backport branch"
+            PR_DATA="null"
+          fi
+          PR_NUMBER=$(echo "$PR_DATA" | jq -r '.number // empty')
+          PR_TITLE=$(echo "$PR_DATA" | jq -r '.title // "Fix from master"')
+          if [ -z "$PR_NUMBER" ]; then
+            BACKPORT_BRANCH="backport/commit-${SHA:0:7}-to-${BRANCH}"
+            BODY="Backport of commit $SHA to \`$BRANCH\`."
+            PR_TITLE="Backport commit ${SHA:0:7} to $BRANCH"
+          else
+            BACKPORT_BRANCH="backport/${PR_NUMBER}-to-${BRANCH}"
+
+            BODY="Backport of #$PR_NUMBER to \`$BRANCH\`."
+            EXISTING=$(gh pr list --base "$BRANCH" --state open --json number,headRefName \
+              --jq ".[] | select(.headRefName | startswith(\"backport/${PR_NUMBER}-to-${BRANCH}-\")) | .number" | head -1)
+            if [ -n "$EXISTING" ]; then
+              echo "Backport PR #$EXISTING already exists"
+              gh pr comment "$PR_NUMBER" --body "Backport to \`$BRANCH\` already exists: #$EXISTING"
+              exit 0
+            fi
+          fi
+          BACKPORT_BRANCH="${BACKPORT_BRANCH}-$(date +%s)"
+          git checkout -b "$BACKPORT_BRANCH" "origin/$BRANCH"
+          CHERRY_PICK_STATUS=0
+          git cherry-pick -x "$SHA" || CHERRY_PICK_STATUS=$?
+          if [ $CHERRY_PICK_STATUS -eq 0 ]; then
+            if ! git push origin "$BACKPORT_BRANCH"; then
+              echo "::error::Failed to push $BACKPORT_BRANCH"
+              exit 1
+            fi
+            if ! gh pr create \
+                --base "$BRANCH" \
+                --head "$BACKPORT_BRANCH" \
+                --title "[backport] #${PR_NUMBER}: $PR_TITLE (to $BRANCH)" \
+                --body "$BODY"; then
+              echo "::error::Failed to create PR"
+              git push origin --delete "$BACKPORT_BRANCH" || true
+              exit 1
+            fi
+            echo "## ✅ Backport Successful" >> $GITHUB_STEP_SUMMARY
+            echo "- **Source**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target Branch**: $BRANCH" >> $GITHUB_STEP_SUMMARY
+            echo "- **Backport Branch**: $BACKPORT_BRANCH" >> $GITHUB_STEP_SUMMARY
+          elif git diff --cached --quiet; then
+            echo "Commit $SHA appears to already be in $BRANCH (empty cherry-pick)"
+            git cherry-pick --abort || true
+            exit 0
+          else
+            git cherry-pick --abort || true
+            {
+              echo "❌ Cherry-pick to \`$BRANCH\` failed due to conflicts. Please backport manually:"
+              echo ""
+              echo "\`\`\`bash"
+              echo "git fetch origin $BRANCH"
+              echo "git checkout -b $BACKPORT_BRANCH origin/$BRANCH"
+              echo "git cherry-pick -x $SHA"
+              echo "# resolve conflicts"
+              echo "git cherry-pick --continue"
+              echo "git push origin $BACKPORT_BRANCH"
+              echo "\`\`\`"
+            } > /tmp/backport-comment.md
+            [ -n "$PR_NUMBER" ] && gh pr comment "$PR_NUMBER" --body-file /tmp/backport-comment.md
+            echo "## ❌ Backport Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Source**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Target Branch**: $BRANCH" >> $GITHUB_STEP_SUMMARY
+            echo "- **Error**: Cherry-pick failed due to conflicts" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
