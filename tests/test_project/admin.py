@@ -4,11 +4,11 @@ from django.forms import ModelForm
 from django.utils.translation import gettext_lazy as _
 from openwisp_utils.admin import (
     AlwaysHasChangedMixin,
+    CopyableFieldsAdmin,
     HelpTextStackedInline,
     ReadOnlyAdmin,
     ReceiveUrlAdmin,
     TimeReadonlyAdminMixin,
-    UUIDAdmin,
 )
 from openwisp_utils.admin_theme.filters import (
     AutocompleteFilter,
@@ -80,12 +80,18 @@ class OperatorInline(HelpTextStackedInline):
 
 
 @admin.register(Project)
-class ProjectAdmin(UUIDAdmin, ReceiveUrlAdmin):
+class ProjectAdmin(CopyableFieldsAdmin, ReceiveUrlAdmin):
     inlines = [OperatorInline]
     list_display = ("name",)
     fields = ("uuid", "name", "key", "receive_url")
     readonly_fields = ("uuid", "receive_url")
     receive_url_name = "receive_project"
+    copyable_fields = ("uuid",)
+
+    def uuid(self, obj):
+        return obj.pk
+
+    uuid.short_description = _("UUID")
 
 
 class ShelfFilter(SimpleInputFilter):
