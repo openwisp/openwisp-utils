@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch  # noqa: E402
 from generate_changelog import (  # noqa: E402
     build_prompt,
     call_gemini,
+    detect_changelog_format,
     get_env_or_exit,
     get_linked_issues,
     get_pr_commits,
@@ -198,7 +199,10 @@ class TestCallGemini(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         result = call_gemini("Test prompt", "api_key")
         self.assertEqual(result, "Generated changelog")
-        mock_genai.Client.assert_called_once_with(api_key="api_key")
+        mock_genai.Client.assert_called_once()
+        call_kwargs = mock_genai.Client.call_args[1]
+        self.assertEqual(call_kwargs["api_key"], "api_key")
+        self.assertIn("http_options", call_kwargs)
         mock_client.models.generate_content.assert_called_once()
 
     @patch("generate_changelog.genai")
@@ -324,6 +328,42 @@ class TestBuildPrompt(unittest.TestCase):
         result = build_prompt(pr_details, "", [], [])
         # Body should be truncated to 2000 chars
         self.assertNotIn("x" * 3000, result)
+
+    def test_markdown_format(self):
+        pr_details = {
+            "number": 123,
+            "title": "Add feature",
+            "body": "Description",
+            "labels": [],
+            "html_url": "https://github.com/org/repo/pull/123",
+        }
+        result = build_prompt(pr_details, "diff", [], [], changelog_format="md")
+        self.assertIn("Markdown", result)
+        self.assertIn("CHANGES.md", result)
+        self.assertIn("[#123]", result)
+        self.assertIn("### Features", result)
+
+
+class TestDetectChangelogFormat(unittest.TestCase):
+    """Tests for detect_changelog_format function."""
+
+    @patch("generate_changelog.os.path.exists")
+    def test_returns_rst_when_changes_rst_exists(self, mock_exists):
+        mock_exists.side_effect = lambda f: f == "CHANGES.rst"
+        result = detect_changelog_format()
+        self.assertEqual(result, "rst")
+
+    @patch("generate_changelog.os.path.exists")
+    def test_returns_md_when_changes_md_exists(self, mock_exists):
+        mock_exists.side_effect = lambda f: f == "CHANGES.md"
+        result = detect_changelog_format()
+        self.assertEqual(result, "md")
+
+    @patch("generate_changelog.os.path.exists")
+    def test_returns_rst_when_neither_exists(self, mock_exists):
+        mock_exists.return_value = False
+        result = detect_changelog_format()
+        self.assertEqual(result, "rst")
 
 
 class TestPostGithubComment(unittest.TestCase):

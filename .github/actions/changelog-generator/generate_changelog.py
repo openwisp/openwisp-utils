@@ -155,9 +155,7 @@ def get_linked_issues(repo: str, pr_body: str, token: str) -> list:
         matches = re.findall(pattern, pr_body, re.IGNORECASE)
         issue_numbers.update(matches)
     issues = []
-    for issue_num in sorted(list(issue_numbers))[
-        :3
-    ]:  # Limit to 3 issues in sorted order
+    for issue_num in sorted(issue_numbers, key=int)[:3]:  # Limit to 3 issues
         try:
             issue_data = github_api_request(f"/repos/{repo}/issues/{issue_num}", token)
             issues.append(
@@ -230,7 +228,9 @@ def build_prompt(
         for issue in issues:
             issues_text += f"- #{issue['number']}: {issue['title']}\n"
             if issue["body"]:
-                issues_text += f"  Description: {issue['body'][:200]}...\n"
+                body = issue["body"]
+                truncated = "..." if len(body) > 200 else ""
+                issues_text += f"  Description: {body[:200]}{truncated}\n"
     commits_text = ""
     if commits:
         commits_text = "\n\nCommits:\n"
@@ -300,6 +300,19 @@ def build_prompt(
     return prompt
 
 
+def has_existing_changelog_comment(repo: str, pr_number: int, token: str) -> bool:
+    """Check if changelog bot has already commented on this PR."""
+    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
+    comments = github_api_request(url, token)
+    pr_ref_pattern = rf"[`\[]#{pr_number}[\s<>\]\(]"
+    for comment in comments:
+        body = comment.get("body", "").strip()
+        has_pr_ref = re.search(pr_ref_pattern, body) is not None
+        if has_pr_ref:
+            return True
+    return False
+
+
 def post_github_comment(repo: str, pr_number: int, comment: str, token: str) -> None:
     """Post a comment on the PR."""
     url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments"
@@ -331,6 +344,9 @@ def main():
     pr_number = int(get_env_or_exit("PR_NUMBER"))
     repo = get_env_or_exit("REPO_NAME")
     github_token = get_env_or_exit("GITHUB_TOKEN")
+    if has_existing_changelog_comment(repo, pr_number, github_token):
+        print("Changelog comment already exists, skipping.")
+        return
     api_key = get_env_or_exit("GEMINI_API_KEY")
     model = os.environ.get("LLM_MODEL", "gemini-2.5-flash-lite")
     pr_details = get_pr_details(repo, pr_number, github_token)

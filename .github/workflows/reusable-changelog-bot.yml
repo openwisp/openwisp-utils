@@ -12,13 +12,22 @@ on:
       GEMINI_API_KEY:
         description: "Google Gemini API key"
         required: true
+      OPENWISP_BOT_APP_ID:
+        description: "GitHub App ID for OpenWISP Bot"
+        required: true
+      OPENWISP_BOT_PRIVATE_KEY:
+        description: "Private key for GitHub App authentication"
+        required: true
 
 jobs:
   generate-changelog:
     # Trigger only when PR is approved
     if: |
       github.event_name == 'pull_request_review' &&
-      github.event.review.state == 'approved'
+      github.event.review.state == 'approved' &&
+      (github.event.review.author_association == 'OWNER' ||
+       github.event.review.author_association == 'MEMBER' ||
+       github.event.review.author_association == 'COLLABORATOR')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,7 +66,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: openwisp/openwisp-utils
-          ref: bots
+          ref: master
           sparse-checkout: |
             .github/actions/changelog-generator
           path: openwisp-utils-action
