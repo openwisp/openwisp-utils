@@ -76,7 +76,7 @@ jobs:
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ inputs.base_repo }}
         run: |
-          gh run view $RUN_ID --repo $REPO --log-failed > failed_logs.txt
+          gh run view $RUN_ID --repo $REPO --log-failed > failed_logs.txt || true
           if [ ! -s failed_logs.txt ]; then
             echo "No failed logs found or inaccessible run." > failed_logs.txt
           fi
