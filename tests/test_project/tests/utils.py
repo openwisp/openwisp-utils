@@ -193,6 +193,10 @@ class SeleniumTestMixin(BaseSeleniumTestMixin, TestConfigMixin):
     def wait_for_dropdown(self, filter_class):
         self.wait_for_visibility(By.CSS_SELECTOR, f".{filter_class} .filter-options")
 
+    def _js_click(self, element):
+        """Click element using JavaScript to bypass visual obstructions."""
+        self.web_driver.execute_script("arguments[0].click();", element)
+
 
 class MockUser:
     def __init__(self, is_superuser=False):

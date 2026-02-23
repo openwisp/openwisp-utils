@@ -1,6 +1,6 @@
 "use strict";
 django.jQuery(document).ready(function () {
-  // unbinding default event handlers of admin_auto_filters
+  // unbinding default event handlers of autocomplete filters (DALF)
   django.jQuery("#changelist-filter select, #grp-filters select").off("change");
   django.jQuery("#changelist-filter select, #grp-filters select").off("clear");
 
