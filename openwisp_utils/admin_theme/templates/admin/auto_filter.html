@@ -1,5 +1,6 @@
 {% load i18n %}
 <div class="ow-filter auto-filter">
-  {% include 'django-admin-autocomplete-filter/autocomplete-filter.html' %}
+  {% comment %} We use the AJAX version to match OpenWISP's current behavior {% endcomment %}
+  {% include 'admin/filter/django_admin_list_filter_ajax.html' %}
   <div class="auto-filter-choices"></div>
 </div>

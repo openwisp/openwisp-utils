@@ -11,6 +11,10 @@ from openwisp_utils.admin_theme import settings as admin_theme_settings
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig, _staticfy
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
 from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
+from django.test import TestCase, RequestFactory
+from django.contrib.admin.sites import AdminSite
+from openwisp_utils.admin_theme.filters import AutocompleteFilter
+from ..models import Book, Shelf
 
 from ..admin import ProjectAdmin, ShelfAdmin
 from ..models import (
@@ -593,3 +597,42 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, "<h2>OpenWISP Version")
             _assert_system_information(response)
+
+    class TestAutocompleteFilter(TestCase):
+        def setUp(self):
+            self.site = AdminSite()
+            self.shelf = Shelf.objects.create(name="Science Fiction")
+            self.book = Book.objects.create(name="Dune", shelf=self.shelf)
+            self.request_factory = RequestFactory()
+
+        def test_filter_choices_contains_all(self):
+            """Verify the 'All' option is correctly generated for OpenWISP templates"""
+            request = self.request_factory.get('/')
+            # Mock the field and model admin requirements
+            field = Book._meta.get_field('shelf')
+            model_admin = None 
+            
+            # Initialize filter
+            filter_inst = AutocompleteFilter(
+                field, request, {}, Book, model_admin, 'shelf'
+            )
+            
+            # Check choices
+            choices = list(filter_inst.choices(None))
+            self.assertEqual(len(choices), 1)
+            self.assertEqual(choices[0]['display'], 'All')
+            self.assertTrue(choices[0]['selected'])
+
+        def test_queryset_with_valid_id(self):
+            """Verify the filter correctly filters the queryset with a valid ID"""
+            request = self.request_factory.get('/', {'shelf__id__exact': str(self.shelf.id)})
+            field = Book._meta.get_field('shelf')
+            
+            filter_inst = AutocompleteFilter(
+                field, request, {'shelf__id__exact': str(self.shelf.id)}, Book, None, 'shelf'
+            )
+            
+            queryset = Book.objects.all()
+            filtered_qs = filter_inst.queryset(request, queryset)
+            self.assertIn(self.book, filtered_qs)
+            self.assertEqual(filtered_qs.count(), 1)
