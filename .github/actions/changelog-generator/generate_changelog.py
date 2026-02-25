@@ -300,15 +300,16 @@ def build_prompt(
     return prompt
 
 
+CHANGELOG_BOT_MARKER = "<!-- openwisp-changelog-bot -->"
+
+
 def has_existing_changelog_comment(repo: str, pr_number: int, token: str) -> bool:
     """Check if changelog bot has already commented on this PR."""
-    endpoint = f"/repos/{repo}/issues/{pr_number}/comments"
+    endpoint = f"/repos/{repo}/issues/{pr_number}/comments?per_page=50&sort=created&direction=desc"
     comments = github_api_request(endpoint, token)
-    pr_ref_pattern = rf"[`\[]#{pr_number}[\s<>\]\(]"
     for comment in comments:
-        body = comment.get("body", "").strip()
-        has_pr_ref = re.search(pr_ref_pattern, body) is not None
-        if has_pr_ref:
+        body = comment.get("body", "")
+        if CHANGELOG_BOT_MARKER in body:
             return True
     return False
 
@@ -359,7 +360,7 @@ def main():
     prompt = build_prompt(pr_details, diff, commits, issues, changelog_format)
     changelog_entry = call_gemini(prompt, api_key, model, changelog_format)
     changelog_entry = changelog_entry.strip()
-    comment = f"```{changelog_format}\n{changelog_entry}\n```"
+    comment = f"{CHANGELOG_BOT_MARKER}\n```{changelog_format}\n{changelog_entry}\n```"
     try:
         post_github_comment(repo, pr_number, comment, github_token)
     except RuntimeError as e:

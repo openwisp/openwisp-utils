@@ -9,6 +9,7 @@ import unittest  # noqa: E402
 from unittest.mock import MagicMock, patch  # noqa: E402
 
 from generate_changelog import (  # noqa: E402
+    CHANGELOG_BOT_MARKER,
     build_prompt,
     call_gemini,
     detect_changelog_format,
@@ -17,6 +18,7 @@ from generate_changelog import (  # noqa: E402
     get_pr_commits,
     get_pr_details,
     get_pr_diff,
+    has_existing_changelog_comment,
     post_github_comment,
 )
 
@@ -364,6 +366,53 @@ class TestDetectChangelogFormat(unittest.TestCase):
         mock_exists.return_value = False
         result = detect_changelog_format()
         self.assertEqual(result, "rst")
+
+
+class TestHasExistingChangelogComment(unittest.TestCase):
+    """Tests for has_existing_changelog_comment function."""
+
+    @patch("generate_changelog.github_api_request")
+    def test_returns_true_when_marker_found(self, mock_api):
+        mock_api.return_value = [
+            {"body": "Some random comment"},
+            {"body": f"{CHANGELOG_BOT_MARKER}\n```rst\nFeatures\n```"},
+        ]
+        result = has_existing_changelog_comment("org/repo", 123, "token")
+        self.assertTrue(result)
+        mock_api.assert_called_once_with(
+            "/repos/org/repo/issues/123/comments?per_page=50&sort=created&direction=desc",
+            "token",
+        )
+
+    @patch("generate_changelog.github_api_request")
+    def test_returns_false_when_marker_not_found(self, mock_api):
+        mock_api.return_value = [
+            {"body": "Some random comment"},
+            {"body": "Another comment mentioning #123"},
+        ]
+        result = has_existing_changelog_comment("org/repo", 123, "token")
+        self.assertFalse(result)
+
+    @patch("generate_changelog.github_api_request")
+    def test_returns_false_when_no_comments(self, mock_api):
+        mock_api.return_value = []
+        result = has_existing_changelog_comment("org/repo", 123, "token")
+        self.assertFalse(result)
+
+    @patch("generate_changelog.github_api_request")
+    def test_handles_empty_body(self, mock_api):
+        mock_api.return_value = [{"body": ""}, {"body": None}]
+        result = has_existing_changelog_comment("org/repo", 123, "token")
+        self.assertFalse(result)
+
+    @patch("generate_changelog.github_api_request")
+    def test_uses_pagination_params(self, mock_api):
+        mock_api.return_value = []
+        has_existing_changelog_comment("org/repo", 456, "token")
+        call_args = mock_api.call_args[0][0]
+        self.assertIn("per_page=50", call_args)
+        self.assertIn("sort=created", call_args)
+        self.assertIn("direction=desc", call_args)
 
 
 class TestPostGithubComment(unittest.TestCase):
