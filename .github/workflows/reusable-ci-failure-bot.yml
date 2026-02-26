@@ -1,4 +1,4 @@
-name: AI Triage
+name: CI Failure Bot
 
 on:
   workflow_call:
@@ -67,8 +67,7 @@ jobs:
 
       - name: Install Tools
         run: |
-          pip install google-genai==1.62.0
-          npm install -g repomix@0.3.5
+          pip install -e "trusted_scripts[github_actions]"
 
       - name: Fetch CI Logs
         env:
@@ -81,11 +80,6 @@ jobs:
             echo "No failed logs found or inaccessible run." > failed_logs.txt
           fi
 
-      - name: Pack Context
-        run: |
-          cd pr_code
-          repomix --include "**/*.py,**/*.js,**/*.jsx,**/*.ts,**/*.tsx,**/*.yaml,**/*.yml,**/*.sh,**/*.html,**/*.css,**/*.rst,**/*.md,**/*.lua,**/Makefile,**/Dockerfile" --style xml --output ../repo_context.xml
-
       - name: Run AI Analysis
         timeout-minutes: 5
         env:
@@ -93,7 +87,7 @@ jobs:
           PR_AUTHOR: ${{ inputs.pr_author }}
           COMMIT_SHA: ${{ inputs.head_sha }}
         run: |
-          python trusted_scripts/.github/scripts/ai_suggest.py > solution.md
+          python trusted_scripts/.github/actions/ci-failure-bot/analyze_failure.py > solution.md
 
       - name: Post Comment
         env:

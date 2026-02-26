@@ -29,6 +29,52 @@ def get_error_logs():
         return f"Error reading logs: {e}"
 
 
+def get_repo_context(base_dir="pr_code", max_chars=1500000):
+    if not os.path.exists(base_dir):
+        return "No repository context available."
+    ignore_dirs = {
+        ".git",
+        ".github",
+        "docs",
+        "static",
+        "locale",
+        "__pycache__",
+        "node_modules",
+        "venv",
+        ".tox",
+    }
+    allow_exts = {".py", ".js", ".jsx", ".ts", ".tsx", ".yaml", ".yml", ".sh", ".lua"}
+    allow_files = {"Dockerfile", "Makefile"}
+    context_parts = []
+    current_length = 0
+    for root, dirs, files in os.walk(base_dir):
+        dirs[:] = [d for d in dirs if d not in ignore_dirs]
+        for file in files:
+            ext = os.path.splitext(file)[1].lower()
+            if ext in allow_exts or file in allow_files:
+                filepath = os.path.join(root, file)
+                rel_path = os.path.relpath(filepath, base_dir)
+                try:
+                    with open(filepath, "r", encoding="utf-8") as f:
+                        content = f.read()
+                except UnicodeDecodeError:
+                    continue
+                file_xml = f'<file path="{rel_path}">\n{content}\n</file>\n'
+                if current_length + len(file_xml) > max_chars:
+                    remaining_space = max_chars - current_length
+                    context_parts.append(
+                        file_xml[:remaining_space]
+                        + "\n\n... [ SYSTEM WARNING: REPO CONTEXT TRUNCATED DUE TO SIZE LIMITS. ] ..."
+                    )
+                    return "".join(context_parts)
+                context_parts.append(file_xml)
+                current_length += len(file_xml)
+    if not context_parts:
+        return "No relevant source files found in repository."
+
+    return "".join(context_parts)
+
+
 def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -41,21 +87,6 @@ def main():
             retry_options=types.HttpRetryOptions(attempts=4)
         ),
     )
-
-    repo_context = "No repository context available."
-    if os.path.exists("repo_context.xml"):
-        try:
-            with open("repo_context.xml", "r", encoding="utf-8") as f:
-                repo_context = f.read()
-                MAX_REPO_CHARS = 1500000
-                if len(repo_context) > MAX_REPO_CHARS:
-                    repo_context = repo_context[:MAX_REPO_CHARS] + (
-                        "\n\n... [ SYSTEM WARNING: REPO CONTEXT "
-                        "TRUNCATED DUE TO SIZE LIMITS. ] ..."
-                    )
-        except Exception as e:
-            print(f"Warning: Could not read repo_context.xml: {e}", file=sys.stderr)
-
     error_log = get_error_logs()
     if error_log.startswith("No failed logs") or error_log.startswith(
         "Error reading logs"
@@ -63,6 +94,7 @@ def main():
         print("Skipping: No failure logs to analyse.", file=sys.stderr)
         return
 
+    repo_context = get_repo_context()
     pr_author = os.environ.get("PR_AUTHOR", "contributor")
     commit_sha = os.environ.get("COMMIT_SHA", "unknown")
     short_sha = commit_sha[:7] if commit_sha != "unknown" else "unknown"
