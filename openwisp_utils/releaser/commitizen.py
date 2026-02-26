@@ -18,7 +18,7 @@ class OpenWispCommitizen(BaseCommitizen):
         "change",
         "fix",
         "docs",
-        "test",
+        "tests",
         "ci",
         "chores",
         "qa",
