@@ -3,6 +3,10 @@ name: CI Failure Bot
 on:
   workflow_call:
     inputs:
+      llm_model:
+        required: false
+        type: string
+        default: "gemini-2.5-flash-lite"
       pr_number:
         required: true
         type: string
@@ -86,6 +90,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PR_AUTHOR: ${{ inputs.pr_author }}
           COMMIT_SHA: ${{ inputs.head_sha }}
+          LLM_MODEL: ${{ inputs.llm_model }}
         run: |
           python trusted_scripts/.github/actions/ci-failure-bot/analyze_failure.py > solution.md
 

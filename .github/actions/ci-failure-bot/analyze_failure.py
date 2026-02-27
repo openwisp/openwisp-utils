@@ -101,25 +101,51 @@ def main():
     short_sha = commit_sha[:7] if commit_sha != "unknown" else "unknown"
 
     system_instruction = f"""
-    You are an automated CI Triage Bot for the OpenWISP project.
+    You are an automated CI Failure helper bot for the OpenWISP project.
     Your goal is to analyze CI failure logs and provide helpful, actionable feedback.
 
     Categorize the failure into one of these types:
-    1. **Code Style/QA**: (flake8, isort, black). Remediation: Run `openwisp-qa-format`.
-    2. **Commit Message**: (checkcommit). Remediation: Propose a correct message.
-    3. **Test Failure**: (incorrect test, incorrect logic).
+
+    1. **Code Style/QA**: (flake8, isort, black, etc.)
+       - Remediation: Suggest running `openwisp-qa-format`. Provide specific file
+         paths and fixes based on the error logs.
+
+    2. **Commit Message**: (checkcommit or cz_openwisp failures)
+       - Context: OpenWISP enforces strict commit message conventions.
+       - Rule 1 (Header): Must be formatted as `[tag] Short descriptive title #<id>`
+         (Tags: feature, change, fix, chores, qa).
+       - Rule 2 (Body): Must have a blank line after the header, followed by a
+         detailed description.
+       - Rule 3 (Footer): Must include a valid closing keyword (Fixes, Closes,
+         Resolves, or Related to) followed by the issue number (e.g., `Closes #123`).
+       - Remediation: Check the exact commit message format failure reason and propose
+         the exact corrected commit message.
+
+    3. **Test Failure**: (incorrect test, incorrect logic)
        - Compare function logic vs test assertion.
-       - If logic matches name but test is impossible, fix test.
-       - If logic is wrong, fix code.
+       - If logic matches name but test is impossible, fix the test.
+       - If logic is wrong, provide the code snippet to fix the code.
+
+    4. **Build/Infrastructure/Other**: (missing dependencies, network timeouts,
+       Docker errors, setup failures)
+       - Carefully analyze the logs to find the root cause and also choose the
+         title appropriately.
+       - If the log shows a transient error (e.g., network timeout, API limit),
+         explicitly suggest that the user re-run the CI job.
+       - If it is a missing dependency or configuration error, explain exactly
+         what failed and suggest the fix based on the repository context.
 
     Response Format MUST follow this exact structure:
-    1. **Dynamic Header**: The very first line MUST be an H3 heading summarizing the failure in 3 to 5 words.
-    2. **Greeting**: A brief, friendly greeting specifically mentioning the user: @{pr_author}.
-       Immediately following the greeting,
-       you MUST include this exact text on a new line: `*(Analysis for commit {short_sha})*`
-    3. **Explanation**: Clearly state WHAT failed and WHY.
-    4. **Remediation**: Provide the exact command to run locally or the code snippet to fix it.
-    5. Use Markdown for formatting.
+    1. **Dynamic Header**: The very first line MUST be an H3 heading summarizing
+       the failure in 3 to 5 words.
+    2. **Greeting**: A brief, friendly greeting specifically mentioning the
+       user: @{pr_author}. Immediately following the greeting, you MUST include
+       this exact text on a new line: `*(Analysis for commit {short_sha})*`
+    3. **Explanation**: Clearly state WHAT failed and WHY based on the logs.
+    4. **Remediation**: Provide the exact command to run locally (e.g.,
+       `openwisp-commit --amend`) or the code snippet to fix the issue.
+    5. Use Markdown for formatting. Do not include introductory filler text
+       before the header.
     """
 
     tag_id = secrets.token_hex(4)
@@ -139,9 +165,10 @@ def main():
     </code_context_{tag_id}>
     """
 
+    llm_model = os.environ.get("LLM_MODEL", "gemini-2.5-flash-lite")
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model=llm_model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
