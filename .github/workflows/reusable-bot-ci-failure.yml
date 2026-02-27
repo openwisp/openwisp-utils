@@ -92,7 +92,7 @@ jobs:
           COMMIT_SHA: ${{ inputs.head_sha }}
           LLM_MODEL: ${{ inputs.llm_model }}
         run: |
-          python trusted_scripts/.github/actions/ci-failure-bot/analyze_failure.py > solution.md
+          python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 
       - name: Post Comment
         env:

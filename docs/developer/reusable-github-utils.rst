@@ -180,8 +180,8 @@ not yet merged, the workflow exits safely without failing.
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
-Automated CI Failure Triage
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Automated CI Failure Bot
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 To assist contributors with debugging, this reusable workflow leverages
 Google's Gemini API to analyze continuous integration failures in
@@ -260,7 +260,7 @@ job:
       call-ci-failure-bot:
         needs: find-pr
         if: ${{ needs.find-pr.outputs.pr_number != '' }}
-        uses: openwisp/openwisp-utils/.github/workflows/reusable-ci-failure-bot.yml@master
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
         with:
           pr_number: ${{ needs.find-pr.outputs.pr_number }}
           head_sha: ${{ github.event.workflow_run.head_sha }}

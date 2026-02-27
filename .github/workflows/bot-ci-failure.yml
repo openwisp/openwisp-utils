@@ -55,7 +55,7 @@ jobs:
   call-ci-failure-bot:
     needs: find-pr
     if: ${{ needs.find-pr.outputs.pr_number != '' }}
-    uses: openwisp/openwisp-utils/.github/workflows/reusable-ci-failure-bot.yml@master
+    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
     with:
       pr_number: ${{ needs.find-pr.outputs.pr_number }}
       head_sha: ${{ github.event.workflow_run.head_sha }}
