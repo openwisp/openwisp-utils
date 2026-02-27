@@ -198,11 +198,12 @@ rapid, consecutive commits.
 **Usage Example**
 
 Set up a caller workflow in your repository (e.g.,
-``.github/workflows/ai-triage.yml``) that monitors your primary CI job:
+``.github/workflows/ci-failure-bot.yml``) that monitors your primary CI
+job:
 
 .. code-block:: yaml
 
-    name: AI Triage (Caller)
+    name: CI Failure Bot (Caller)
 
     on:
       workflow_run:
@@ -216,7 +217,7 @@ Set up a caller workflow in your repository (e.g.,
       contents: read
 
     concurrency:
-      group: ai-triage-${{ github.repository }}-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_branch }}
+      group: ci-failure-${{ github.repository }}-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_branch }}
       cancel-in-progress: true
 
     jobs:
@@ -256,10 +257,10 @@ Set up a caller workflow in your repository (e.g.,
               echo "::warning::No open PR found. This workflow run might not be attached to an open PR."
               exit 0
 
-      call-triage-bot:
+      call-ci-failure-bot:
         needs: find-pr
         if: ${{ needs.find-pr.outputs.pr_number != '' }}
-        uses: openwisp/openwisp-utils/.github/workflows/reusable-ai-triage.yml@master
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-ci-failure-bot.yml@master
         with:
           pr_number: ${{ needs.find-pr.outputs.pr_number }}
           head_sha: ${{ github.event.workflow_run.head_sha }}

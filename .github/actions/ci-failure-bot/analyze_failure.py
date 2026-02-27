@@ -13,17 +13,18 @@ def get_error_logs():
     try:
         with open(log_file, "r", encoding="utf-8") as f:
             content = f.read()
-            MAX_CHARS = 30000
-            if len(content) <= MAX_CHARS:
+            TARGET_MAX = 30000
+            if len(content) <= TARGET_MAX:
                 return content
-            head_size = int(MAX_CHARS * 0.2)
-            tail_size = int(MAX_CHARS * 0.8)
-            head = content[:head_size]
-            tail = content[-tail_size:]
             truncation_marker = (
                 f"\n\n... [LOGS TRUNCATED: "
-                f"{len(content) - MAX_CHARS} characters removed] ...\n\n"
+                f"{len(content) - TARGET_MAX} characters removed] ...\n\n"
             )
+            actual_allowed_chars = TARGET_MAX - len(truncation_marker)
+            head_size = int(actual_allowed_chars * 0.2)
+            tail_size = int(actual_allowed_chars * 0.8)
+            head = content[:head_size]
+            tail = content[-tail_size:]
             return head + truncation_marker + tail
     except Exception as e:
         return f"Error reading logs: {e}"
@@ -78,7 +79,7 @@ def get_repo_context(base_dir="pr_code", max_chars=1500000):
 def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        print("Skipping: No API Key found.", file=sys.stderr)
+        print("::warning::Skipping: No API Key found.")
         return
 
     client = genai.Client(
@@ -91,7 +92,7 @@ def main():
     if error_log.startswith("No failed logs") or error_log.startswith(
         "Error reading logs"
     ):
-        print("Skipping: No failure logs to analyse.", file=sys.stderr)
+        print("::warning::Skipping: No failure logs to analyse.")
         return
 
     repo_context = get_repo_context()
@@ -150,6 +151,11 @@ def main():
         )
         if response.text and response.text.strip():
             final_comment = response.text
+            if "*(Analysis for commit" not in final_comment:
+                print(
+                    "::warning::LLM output failed format validation; skipping comment."
+                )
+                sys.exit(0)
             if len(final_comment) > 10000:
                 final_comment = (
                     final_comment[:10000]
@@ -158,13 +164,10 @@ def main():
             print(final_comment)
             return
         else:
-            print(
-                "Generation returned an empty response; skipping report.",
-                file=sys.stderr,
-            )
+            print("::warning::Generation returned an empty response; skipping report.")
             sys.exit(0)
     except Exception as e:
-        print(f"API Error (Max retries reached or fatal error): {e}", file=sys.stderr)
+        print(f"::warning::API Error (Max retries reached or fatal error): {e}")
         sys.exit(0)
 
 
