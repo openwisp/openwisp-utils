@@ -1,0 +1,107 @@
+name: CI Failure Bot
+
+on:
+  workflow_call:
+    inputs:
+      llm_model:
+        required: false
+        type: string
+        default: "gemini-2.5-flash-lite"
+      pr_number:
+        required: true
+        type: string
+      head_sha:
+        required: true
+        type: string
+      head_repo:
+        required: true
+        type: string
+      base_repo:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+      pr_author:
+        required: true
+        type: string
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+      APP_ID:
+        required: true
+      PRIVATE_KEY:
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Bot Token
+        id: generate-token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Checkout Reusable Workflow
+        uses: actions/checkout@v6
+        with:
+          repository: openwisp/openwisp-utils
+          ref: issues/524-ci-failure-bot # will change to master upon merge
+          path: trusted_scripts
+
+      - name: Checkout PR Code
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ inputs.head_repo }}
+          ref: ${{ inputs.head_sha }}
+          path: pr_code
+          fetch-depth: 1
+          submodules: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Tools
+        run: |
+          pip install -e "trusted_scripts[github_actions]"
+
+      - name: Fetch CI Logs
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          gh run view $RUN_ID --repo $REPO --log-failed > failed_logs.txt || true
+          if [ ! -s failed_logs.txt ]; then
+            echo "No failed logs found or inaccessible run." > failed_logs.txt
+          fi
+
+      - name: Run AI Analysis
+        timeout-minutes: 5
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PR_AUTHOR: ${{ inputs.pr_author }}
+          COMMIT_SHA: ${{ inputs.head_sha }}
+          LLM_MODEL: ${{ inputs.llm_model }}
+        run: |
+          python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
+
+      - name: Post Comment
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUM: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          if [ ! -s solution.md ]; then
+            echo "AI analysis produced no output; skipping comment."
+            exit 0
+          fi
+          gh pr comment "$PR_NUM" --repo "$REPO" --body-file solution.md

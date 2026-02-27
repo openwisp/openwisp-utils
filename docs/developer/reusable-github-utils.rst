@@ -179,3 +179,96 @@ not yet merged, the workflow exits safely without failing.
         secrets:
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+Automated CI Failure Bot
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+To assist contributors with debugging, this reusable workflow leverages
+Google's Gemini API to analyze continuous integration failures in
+real-time. Upon detecting a failed CI run, it intelligently gathers the
+relevant source code context (safely bypassing unnecessary assets)
+alongside the raw error logs. It then posts a concise summary and an
+actionable remediation plan directly to the Pull Request.
+
+This workflow is intended to be triggered via the ``workflow_run`` event
+after your primary test suite concludes. It features strict
+cross-repository concurrency locks and token limits to prevent PR spam on
+rapid, consecutive commits.
+
+**Usage Example**
+
+Set up a caller workflow in your repository (e.g.,
+``.github/workflows/ci-failure-bot.yml``) that monitors your primary CI
+job:
+
+.. code-block:: yaml
+
+    name: CI Failure Bot (Caller)
+
+    on:
+      workflow_run:
+        workflows: ["CI Build"]
+        types:
+          - completed
+
+    permissions:
+      pull-requests: write
+      actions: read
+      contents: read
+
+    concurrency:
+      group: ci-failure-${{ github.repository }}-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_branch }}
+      cancel-in-progress: true
+
+    jobs:
+      find-pr:
+        runs-on: ubuntu-latest
+        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        outputs:
+          pr_number: ${{ steps.pr.outputs.number }}
+        steps:
+          - name: Find PR Number
+            id: pr
+            env:
+              GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              REPO: ${{ github.repository }}
+            run: |
+              PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
+              if [ -n "$PR_NUMBER" ]; then
+                echo "Found PR #$PR_NUMBER from workflow payload."
+                echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                exit 0
+              fi
+              HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+              echo "Payload empty. Searching for PR via Commits API..."
+              PR_NUMBER=$(gh api repos/$REPO/commits/$HEAD_SHA/pulls -q '.[0].number' 2>/dev/null || true)
+              if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+                 echo "Found PR #$PR_NUMBER using Commits API."
+                 echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                 exit 0
+              fi
+              echo "API lookup failed/empty. Scanning open PRs for matching head SHA..."
+              PR_NUMBER=$(gh pr list --repo "$REPO" --state open --limit 100 --json number,headRefOid --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n 1)
+              if [ -n "$PR_NUMBER" ]; then
+                 echo "Found PR #$PR_NUMBER by scanning open PRs."
+                 echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                 exit 0
+              fi
+              echo "::warning::No open PR found. This workflow run might not be attached to an open PR."
+              exit 0
+
+      call-ci-failure-bot:
+        needs: find-pr
+        if: ${{ needs.find-pr.outputs.pr_number != '' }}
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
+        with:
+          pr_number: ${{ needs.find-pr.outputs.pr_number }}
+          head_sha: ${{ github.event.workflow_run.head_sha }}
+          head_repo: ${{ github.event.workflow_run.head_repository.full_name }}
+          base_repo: ${{ github.repository }}
+          run_id: ${{ github.event.workflow_run.id }}
+          pr_author: ${{ github.event.workflow_run.actor.login }}
+        secrets:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
