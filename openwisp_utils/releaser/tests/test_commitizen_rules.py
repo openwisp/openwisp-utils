@@ -33,8 +33,8 @@ def test_valid_commit_without_issue_single_line_body():
 
 
 def test_valid_commit_message_double_prefix():
-    """Valid: double prefix like [test:fix]."""
-    message = "[test:fix] Good commit message"
+    """Valid: double prefix like [tests:fix]."""
+    message = "[tests:fix] Good commit message"
     code, out, err = run_cz_check(message)
     assert code == 0, f"Expected success but got: {out + err}"
 
@@ -157,7 +157,7 @@ def test_info_includes_all_prefixes():
     assert "- change" in result.stdout
     assert "- fix" in result.stdout
     assert "- docs" in result.stdout
-    assert "- test" in result.stdout
+    assert "- tests" in result.stdout
     assert "- ci" in result.stdout
     assert "- chores" in result.stdout
     assert "- qa" in result.stdout
