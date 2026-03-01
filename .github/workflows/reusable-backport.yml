@@ -77,7 +77,7 @@ jobs:
           app-id: ${{ secrets.app_id }}
           private-key: ${{ secrets.private_key }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ steps.generate-token.outputs.token }}
