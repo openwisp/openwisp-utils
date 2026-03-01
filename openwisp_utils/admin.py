@@ -34,7 +34,16 @@ class ReadOnlyAdmin(ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        opts = self.model._meta
+        resolver_match = getattr(request, "resolver_match", None)
+        url_name = getattr(resolver_match, "url_name", None)
+        if url_name and url_name in (
+            f"{opts.app_label}_{opts.model_name}_delete",
+            f"{opts.app_label}_{opts.model_name}_change",
+            f"{opts.app_label}_{opts.model_name}_changelist",
+        ):
+            return False
+        return super().has_delete_permission(request, obj)
 
     def save_model(self, request, obj, form, change):  # pragma: nocover
         pass
