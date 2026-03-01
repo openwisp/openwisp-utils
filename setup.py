@@ -66,7 +66,7 @@ setup(
         ],
         "channels-test": [
             "pytest-asyncio>=1.3.0,<1.4.0",
-            "pytest-django>=4.10,<4.12",
+            "pytest-django>=4.10,<4.13",
         ],
         "celery": ["celery~=5.6.1"],
         "selenium": ["selenium>=4.10,<4.41"],
