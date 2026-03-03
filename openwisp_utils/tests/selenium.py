@@ -285,7 +285,10 @@ class SeleniumTestMixin:
     def hide_loading_overlay(self, html_id="loading-overlay", timeout=2, driver=None):
         """The geckodriver can't figure out the loading overlay is still fading out, so let's just hide it."""
         driver = driver or self.web_driver
-        driver.execute_script(
-            f'document.getElementById("{html_id}").style.display="none";'
+        element_exists = driver.execute_script(
+            f'var el = document.getElementById("{html_id}"); '
+            f'if (el) {{ el.style.display="none"; return true; }} return false;'
         )
-        self.wait_for_invisibility(By.ID, html_id, timeout, driver)
+        # Only wait if element exists
+        if element_exists:
+            self.wait_for_invisibility(By.ID, html_id, timeout, driver)
