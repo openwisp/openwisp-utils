@@ -164,7 +164,8 @@ def main():
     </code_context_{tag_id}>
     """
 
-    gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    raw_model = os.environ.get("GEMINI_MODEL", "").strip()
+    gemini_model = raw_model if raw_model else "gemini-2.0-flash"
     try:
         response = client.models.generate_content(
             model=gemini_model,
