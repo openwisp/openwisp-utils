@@ -164,10 +164,10 @@ def main():
     </code_context_{tag_id}>
     """
 
-    llm_model = os.environ.get("LLM_MODEL", "gemini-2.5-flash-lite")
+    gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
     try:
         response = client.models.generate_content(
-            model=llm_model,
+            model=gemini_model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,

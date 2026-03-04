@@ -3,10 +3,9 @@ name: CI Failure Bot
 on:
   workflow_call:
     inputs:
-      llm_model:
+      gemini_model:
         required: false
         type: string
-        default: "gemini-2.5-flash-lite"
       pr_number:
         required: true
         type: string
@@ -43,7 +42,7 @@ jobs:
     steps:
       - name: Generate Bot Token
         id: generate-token
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
@@ -90,7 +89,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PR_AUTHOR: ${{ inputs.pr_author }}
           COMMIT_SHA: ${{ inputs.head_sha }}
-          LLM_MODEL: ${{ inputs.llm_model }}
+          GEMINI_MODEL: ${{ inputs.gemini_model }}
         run: |
           python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 

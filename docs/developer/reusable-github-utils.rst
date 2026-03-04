@@ -198,7 +198,7 @@ rapid, consecutive commits.
 **Usage Example**
 
 Set up a caller workflow in your repository (e.g.,
-``.github/workflows/ci-failure-bot.yml``) that monitors your primary CI
+``.github/workflows/bot-ci-failure.yml``) that monitors your primary CI
 job:
 
 .. code-block:: yaml
