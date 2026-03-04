@@ -76,8 +76,8 @@ class ModelLink(BaseMenuItem):
             url = reverse(f"admin:{app_label}_{model_label}_{self.name}")
         except NoReverseMatch:
             raise NoReverseMatch(
-                f"Invalid config provided for menu.\
-                 No reverse found for the config- {self.config}"
+                f"Invalid config provided for menu."
+                f" No reverse found for the config- {self.config}"
             )
         view_perm = f"{app_label}.view_{model_label}"
         change_perm = f"{app_label}.change_{model_label}"
