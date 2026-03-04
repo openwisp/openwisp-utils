@@ -165,7 +165,7 @@ def main():
     """
 
     raw_model = os.environ.get("GEMINI_MODEL", "").strip()
-    gemini_model = raw_model if raw_model else "gemini-2.0-flash"
+    gemini_model = raw_model if raw_model else "gemini-2.5-flash-lite"
     try:
         response = client.models.generate_content(
             model=gemini_model,
