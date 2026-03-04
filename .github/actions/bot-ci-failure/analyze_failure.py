@@ -58,7 +58,7 @@ def get_repo_context(base_dir="pr_code", max_chars=1500000):
                 try:
                     with open(filepath, "r", encoding="utf-8") as f:
                         content = f.read()
-                except UnicodeDecodeError:
+                except (UnicodeDecodeError, OSError):
                     continue
                 file_xml = f'<file path="{rel_path}">\n{content}\n</file>\n'
                 if current_length + len(file_xml) > max_chars:
