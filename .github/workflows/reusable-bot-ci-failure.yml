@@ -86,11 +86,10 @@ jobs:
             echo "::error::RUN_ID is empty or null. Check the caller workflow inputs."
             exit 1
           fi
-
           set -eo pipefail
           echo "Getting failed jobs for run $RUN_ID..."
           JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
-            -q '.jobs[]? | select(.conclusion=="failure") | .id')
+            -f per_page=100 -q '.jobs[] | select(.conclusion=="failure") | .id')
           if [ -z "$JOB_IDS" ]; then
             echo "No failed jobs found." > failed_logs.txt
             exit 0
@@ -98,41 +97,30 @@ jobs:
           > failed_logs.txt
           for JOB_ID in $JOB_IDS; do
             echo "Processing job $JOB_ID"
-            FAILED_STEPS=$(gh api repos/$REPO/actions/jobs/$JOB_ID \
-              -q '.steps[] | select(.conclusion=="failure") | @base64')
-            if [ -z "$FAILED_STEPS" ]; then
-              echo "No failed steps in job $JOB_ID"
+            if ! gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
+              echo "Could not fetch logs for job $JOB_ID; skipping." >> failed_logs.txt
               continue
             fi
-            gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt
             echo "===== JOB $JOB_ID =====" >> failed_logs.txt
-            for STEP in $FAILED_STEPS; do
-              _jq() {
-                echo "$STEP" | base64 --decode | jq -r "$1"
-              }
-              STEP_NAME=$(_jq '.name')
-              START=$(_jq '.started_at')
-              END=$(_jq '.completed_at | if type=="null" then "9999-12-31T23:59:59Z" else . end')
-              echo "Extracting step: $STEP_NAME"
-              START_CLEAN=$(echo "$START" | cut -d'.' -f1)
-              END_CLEAN=$(echo "$END" | cut -d'.' -f1)
-              awk -v start="$START_CLEAN" -v end="$END_CLEAN" '
-                {
-                  ts = $1
-                  sub(/\..*/, "", ts)
-                  if (ts >= start && ts <= end)
-                    print
+            awk '
+            /##\[group\]/ {
+                buffer = $0 "\n"
+                next
+            }
+            {
+                buffer = buffer $0 "\n"
+                if (/##\[error\]/) {
+                    printf "%s\n", buffer
+                    buffer = ""
                 }
-              ' job_logs.txt >> failed_logs.txt
-              echo "" >> failed_logs.txt
-            done
+            }
+            ' job_logs.txt >> failed_logs.txt
+            echo "" >> failed_logs.txt
           done
-
           echo "::group::AI Input Debug"
           cat failed_logs.txt
           echo "::endgroup::"
-
-          if [ ! -s failed_logs.txt ]; then
+          if [ ! -s failed_logs.txt ] || ! grep -q "##\[error\]" failed_logs.txt; then
             echo "Failed jobs found but logs unavailable." > failed_logs.txt
           fi
 
