@@ -146,19 +146,22 @@ def detect_changelog_format() -> str:
 
 def get_linked_issues(repo: str, pr_body: str, token: str) -> list:
     """Extract and fetch linked issues from PR body."""
-    # Common patterns for linking issues
-    patterns = [
-        r"(?:closes?|fixes?|resolves?)\s*#(\d+)",
-        r"(?:closes?|fixes?|resolves?)\s+https://github\.com/[^/]+/[^/]+/issues/(\d+)",
-    ]
-    issue_numbers = set()
-    for pattern in patterns:
-        matches = re.findall(pattern, pr_body, re.IGNORECASE)
-        issue_numbers.update(matches)
+    local_pattern = r"(?:closes?|fixes?|resolves?)\s*#(\d+)"
+    url_pattern = (
+        r"(?:closes?|fixes?|resolves?)\s+"
+        r"https://github\.com/([^/]+/[^/]+)/issues/(\d+)"
+    )
+    issue_refs = set()
+    for match in re.finditer(url_pattern, pr_body, re.IGNORECASE):
+        issue_refs.add((match.group(1), match.group(2)))
+    for match in re.finditer(local_pattern, pr_body, re.IGNORECASE):
+        issue_refs.add((repo, match.group(1)))
     issues = []
-    for issue_num in sorted(issue_numbers, key=int)[:3]:  # Limit to 3 issues
+    for issue_repo, issue_num in sorted(issue_refs, key=lambda x: int(x[1]))[:3]:
         try:
-            issue_data = github_api_request(f"/repos/{repo}/issues/{issue_num}", token)
+            issue_data = github_api_request(
+                f"/repos/{issue_repo}/issues/{issue_num}", token
+            )
             issues.append(
                 {
                     "number": issue_num,

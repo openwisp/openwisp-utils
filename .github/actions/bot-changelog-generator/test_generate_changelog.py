@@ -185,6 +185,27 @@ class TestGetLinkedIssues(unittest.TestCase):
         )
         self.assertLessEqual(len(result), 3)
 
+    @patch("generate_changelog.github_api_request")
+    def test_extracts_url_pattern_with_external_repo(self, mock_api):
+        mock_api.return_value = {"title": "External issue", "body": "desc"}
+        body = "Fixes https://github.com/other-org/other-repo/issues/99"
+        result = get_linked_issues("org/repo", body, "token")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["number"], "99")
+        mock_api.assert_called_once_with(
+            "/repos/other-org/other-repo/issues/99", "token"
+        )
+
+    @patch("generate_changelog.github_api_request")
+    def test_url_pattern_uses_linked_repo_not_current(self, mock_api):
+        mock_api.return_value = {"title": "Issue", "body": ""}
+        body = "Closes #10\n" "Fixes https://github.com/ext-org/ext-repo/issues/20"
+        result = get_linked_issues("org/repo", body, "token")
+        self.assertEqual(len(result), 2)
+        calls = [c.args[0] for c in mock_api.call_args_list]
+        self.assertIn("/repos/org/repo/issues/10", calls)
+        self.assertIn("/repos/ext-org/ext-repo/issues/20", calls)
+
     def test_handles_empty_body(self):
         result = get_linked_issues("org/repo", "", "token")
         self.assertEqual(result, [])

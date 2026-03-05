@@ -2,11 +2,6 @@ name: Reusable Changelog Bot
 
 on:
   workflow_call:
-    inputs:
-      llm-model:
-        description: "Gemini model to use (example 'gemini-2.5-flash-lite', 'gemini-1.5-pro')"
-        required: false
-        type: string
     secrets:
       GEMINI_API_KEY:
         description: "Google Gemini API key"
@@ -67,15 +62,14 @@ jobs:
           repository: openwisp/openwisp-utils
           ref: master
           sparse-checkout: |
-            .github/actions/changelog-generator
+            .github/actions/bot-changelog-generator
           path: openwisp-utils-action
 
       - name: Generate changelog
         if: steps.check-commits.outputs.has_noteworthy == 'true'
-        uses: ./openwisp-utils-action/.github/actions/changelog-generator
+        uses: ./openwisp-utils-action/.github/actions/bot-changelog-generator
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
-          llm-model: ${{ inputs.llm-model }}
           pr-number: ${{ steps.check-commits.outputs.pr_number }}
           repo-name: ${{ github.repository }}
