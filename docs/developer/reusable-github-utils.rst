@@ -36,7 +36,7 @@ You can use this action in your workflow as follows:
         runs-on: ubuntu-latest
         steps:
           - name: Checkout code
-            uses: actions/checkout@v3
+            uses: actions/checkout@v6
 
           - name: Test
             uses: openwisp/openwisp-utils/.github/actions/retry-command@master
@@ -55,6 +55,110 @@ times with a 30 second delay between attempts.
     If the command continues to fail after the specified number of
     attempts, the action will exit with a non-zero status, causing the
     workflow to fail.
+
+Auto-Assignment Bot
+~~~~~~~~~~~~~~~~~~~
+
+A collection of Python scripts that automate issue and PR management for
+OpenWISP repositories. The bot provides the following features:
+
+- **Issue auto-assignment**: When a contributor opens a PR referencing an
+  issue (e.g., ``Fixes #123``), the issue is automatically assigned to the
+  PR author.
+- **Assignment request responses**: When someone comments asking to be
+  assigned, the bot responds with contributing guidelines explaining that
+  no assignment is needed — just open a PR.
+- **Stale PR management**: Warns PR authors after 7 days of inactivity,
+  marks stale and unassigns after 14 days, and closes after 60 days.
+- **PR reopen reassignment**: When a stale PR is reopened, linked issues
+  are reassigned back to the author.
+
+**Secrets**
+
+These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
+the ``actions/create-github-app-token`` action. The bot itself consumes
+the following environment variables at runtime: ``GITHUB_TOKEN``,
+``REPOSITORY``, and ``GITHUB_EVENT_NAME``.
+
+- ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
+- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
+  key.
+
+**Setup for Other Repositories**
+
+To enable the auto-assignment bot in another OpenWISP repository, add
+workflow files under ``.github/workflows/``. Each workflow needs to:
+
+1. Generate a GitHub App token using the OpenWISP Bot credentials.
+2. Checkout ``openwisp-utils`` to get the bot scripts.
+3. Install the ``PyGithub`` dependency.
+4. Run the appropriate bot command.
+
+Below is a complete example for the issue assignment bot. You can find all
+four workflow files in the ``openwisp-utils`` repository under
+``.github/workflows/`` (``bot-autoassign-issue.yml``,
+``bot-autoassign-pr-issue-link.yml``, ``bot-autoassign-pr-reopen.yml``,
+``bot-autoassign-stale-pr.yml``).
+
+.. code-block:: yaml
+
+    name: Issue Assignment Bot
+
+    on:
+      issue_comment:
+        types: [created]
+
+    permissions:
+      contents: read
+      issues: write
+
+    concurrency:
+      group: bot-autoassign-issue-${{ github.repository }}-${{ github.event.issue.number }}
+      cancel-in-progress: true
+
+    jobs:
+      respond-to-assign-request:
+        runs-on: ubuntu-latest
+        if: github.event.issue.pull_request == null
+        steps:
+          - name: Generate GitHub App token
+            id: generate-token
+            uses: actions/create-github-app-token@v2
+            with:
+              app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+              private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+          - name: Checkout openwisp-utils
+            uses: actions/checkout@v6
+            with:
+              repository: openwisp/openwisp-utils
+              sparse-checkout: .github/actions/bot-autoassign
+              path: openwisp-utils
+
+          - name: Set up Python
+            uses: actions/setup-python@v6
+            with:
+              python-version: "3.13"
+
+          - name: Install dependencies
+            run: pip install PyGithub
+
+          - name: Run issue assignment bot
+            env:
+              GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+              REPOSITORY: ${{ github.repository }}
+              GITHUB_EVENT_NAME: ${{ github.event_name }}
+            run: >
+              python openwisp-utils/.github/actions/bot-autoassign/__main__.py
+              issue_assignment "$GITHUB_EVENT_PATH"
+
+.. note::
+
+    The ``openwisp-utils`` repository itself uses ``pip install -e
+    .[github_actions]`` instead of ``pip install PyGithub`` since the bot
+    scripts are part of the same repository. Use the approach shown above
+    (checking out ``openwisp-utils`` and installing ``PyGithub``) when
+    setting up the bot in other repositories.
 
 GitHub Workflows
 ----------------
