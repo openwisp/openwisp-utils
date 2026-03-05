@@ -127,6 +127,11 @@ jobs:
               echo "" >> failed_logs.txt
             done
           done
+
+          echo "::group::AI Input Debug"
+          cat failed_logs.txt
+          echo "::endgroup::"
+
           if [ ! -s failed_logs.txt ]; then
             echo "Failed jobs found but logs unavailable." > failed_logs.txt
           fi
