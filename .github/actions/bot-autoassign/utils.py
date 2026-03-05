@@ -1,6 +1,8 @@
 import re
 from github import GithubException
 
+from github import GithubException
+
 
 def extract_linked_issues(pr_body):
     """Extract issue numbers from PR body.
