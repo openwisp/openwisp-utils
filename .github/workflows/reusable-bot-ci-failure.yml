@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: openwisp/openwisp-utils
-          ref: fix/ci-failure-bot
+          ref: master
           path: trusted_scripts
 
       - name: Checkout PR Code
@@ -78,6 +78,8 @@ jobs:
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ inputs.base_repo }}
         run: |
+          # Fetches failed job logs via the GitHub API (with pagination and error guards).
+          # Uses AWK to isolate the exact failure by slicing logs strictly between ##[group] and ##[error] markers.
           set -eo pipefail
           echo "Getting failed jobs for run $RUN_ID..."
           if ! JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
