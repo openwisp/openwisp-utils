@@ -78,7 +78,6 @@ setup(
         ],
         "github_actions": [
             "google-genai>=1.62.0,<2.0.0",
-            "requests",
         ],
     },
     classifiers=[

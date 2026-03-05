@@ -9,8 +9,6 @@ jobs:
   changelog:
     # Call the reusable workflow from openwisp-utils
     uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
-    with:
-      llm-model: "gemini-2.5-flash-lite"
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}

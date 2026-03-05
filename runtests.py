@@ -27,7 +27,7 @@ if __name__ == "__main__":
     pytest_exit_code = pytest.main(
         [
             "openwisp_utils/releaser/tests",
-            ".github/actions/changelog-generator",
+            ".github/actions/bot-changelog-generator",
         ]
     )
     sys.exit(pytest_exit_code)

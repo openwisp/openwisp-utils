@@ -126,11 +126,6 @@ maintainer. It analyzes the PR's title, description, code changes, and
 linked issues, then posts a properly formatted changelog entry as a
 comment on the PR.
 
-**Inputs**
-
-- ``llm-model`` (optional): The Gemini model to use. Defaults to
-  ``gemini-2.5-flash-lite``.
-
 **Secrets**
 
 - ``GEMINI_API_KEY`` (required): Google Gemini API key.
@@ -152,8 +147,6 @@ file at ``.github/workflows/changelog-bot.yml``:
     jobs:
       changelog:
         uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
-        with:
-          llm-model: "gemini-2.5-flash-lite" #default model
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
