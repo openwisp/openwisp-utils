@@ -97,14 +97,14 @@ def main():
 
     repo_context = get_repo_context()
     pr_author = os.environ.get("PR_AUTHOR", "contributor")
-    actor = os.environ.get("ACTOR", pr_author)
+    actor = os.environ.get("ACTOR", "").strip() or pr_author
     commit_sha = os.environ.get("COMMIT_SHA", "unknown")
     short_sha = commit_sha[:7] if commit_sha != "unknown" else "unknown"
 
     if pr_author.lower() == actor.lower():
         greeting = f"Hello @{pr_author},"
     else:
-        greeting = f"Hello @{pr_author} (and thanks @{actor} for the trigger),"
+        greeting = f"Hello @{pr_author} and @{actor},"
 
     system_instruction = f"""
     You are an automated CI Failure helper bot for the OpenWISP project.
