@@ -3,9 +3,6 @@ name: CI Failure Bot
 on:
   workflow_call:
     inputs:
-      gemini_model:
-        required: false
-        type: string
       pr_number:
         required: true
         type: string
@@ -22,6 +19,9 @@ on:
         required: true
         type: string
       pr_author:
+        required: true
+        type: string
+      actor:
         required: true
         type: string
     secrets:
@@ -72,15 +72,50 @@ jobs:
         run: |
           pip install -e "trusted_scripts[github_actions]"
 
-      - name: Fetch CI Logs
+      - name: Fetch Failed Steps Logs
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ inputs.base_repo }}
         run: |
-          gh run view "$RUN_ID" --repo "$REPO" --log-failed > failed_logs.txt || true
-          if [ ! -s failed_logs.txt ]; then
-            echo "No failed logs found or inaccessible run." > failed_logs.txt
+          # Fetches failed job logs via the GitHub API (with pagination and error guards).
+          # Uses AWK to isolate the exact failure by slicing logs strictly between ##[group] and ##[error] markers.
+          set -eo pipefail
+          echo "Getting failed jobs for run $RUN_ID..."
+          if ! JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
+            -q '.jobs[] | select(.conclusion=="failure") | .id'); then
+            echo "Could not fetch failed jobs for run $RUN_ID." > failed_logs.txt
+            exit 0
+          fi
+          if [ -z "$JOB_IDS" ]; then
+            echo "No failed jobs found." > failed_logs.txt
+            exit 0
+          fi
+          > failed_logs.txt
+          for JOB_ID in $JOB_IDS; do
+            echo "Processing job $JOB_ID"
+            if ! gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
+              echo "Could not fetch logs for job $JOB_ID; skipping." >> failed_logs.txt
+              continue
+            fi
+            echo "===== JOB $JOB_ID =====" >> failed_logs.txt
+            awk '
+            /##\[group\]/ {
+                buffer = $0 "\n"
+                next
+            }
+            {
+                buffer = buffer $0 "\n"
+                if (/##\[error\]/) {
+                    printf "%s\n", buffer
+                    buffer = ""
+                }
+            }
+            ' job_logs.txt >> failed_logs.txt
+            echo "" >> failed_logs.txt
+          done
+          if [ ! -s failed_logs.txt ] || ! grep -q "##\[error\]" failed_logs.txt; then
+            echo "Failed jobs found but logs unavailable." > failed_logs.txt
           fi
 
       - name: Run AI Analysis
@@ -88,8 +123,9 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PR_AUTHOR: ${{ inputs.pr_author }}
+          ACTOR: ${{ inputs.actor }}
           COMMIT_SHA: ${{ inputs.head_sha }}
-          GEMINI_MODEL: ${{ inputs.gemini_model }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
         run: |
           python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 
