@@ -1,5 +1,5 @@
 #plot-container {
-  padding: 0.625rem 2.5rem;
+  padding: 0.25rem 2.5rem;
   text-align: center;
   overflow-x: hidden;
 }
@@ -16,7 +16,7 @@
 .js-plotly-plot .quick-link-container {
   position: absolute;
   margin-top: -30px;
-  width: 460px;
+  width: 410px;
 }
 .quick-link.button.negative-top-20 {
   position: relative;
