@@ -9,7 +9,7 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
   group: bot-autoassign-pr-reopen-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number }}

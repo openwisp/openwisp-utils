@@ -306,9 +306,10 @@ class StalePRBot(GitHubBot):
             return False
         try:
             open_prs = self.repo.get_pulls(state="open")
-            print(f"Found {open_prs.totalCount}" " open pull requests")
             processed_count = 0
+            pr_count = 0
             for pr in open_prs:
+                pr_count += 1
                 try:
                     all_reviews = list(pr.get_reviews())
                     last_changes_requested = self.get_last_changes_requested(
@@ -354,7 +355,10 @@ class StalePRBot(GitHubBot):
                 except Exception as e:
                     print(f"Error processing" f" PR #{pr.number}: {e}")
                     continue
-            print(f"Processed {processed_count} stale PRs")
+            print(
+                f"Checked {pr_count} open PRs,"
+                f" processed {processed_count} stale PRs"
+            )
             return True
         except Exception as e:
             print(f"Error in process_stale_prs: {e}")
