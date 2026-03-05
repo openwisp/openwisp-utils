@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: openwisp/openwisp-utils
-          ref: issues/524-ci-failure-bot # will change to master upon merge
+          ref: master
           path: trusted_scripts
 
       - name: Checkout PR Code
