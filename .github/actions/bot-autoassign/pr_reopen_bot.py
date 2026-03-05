@@ -123,13 +123,11 @@ class PRActivityBot(GitHubBot):
                 print("Removed stale label")
             except Exception as e:
                 print(f"Could not remove stale label: {e}")
-            linked_issues = extract_linked_issues(pr.body or "")
             reassigned_count = 0
-            for issue_number in linked_issues:
+            for issue_number, issue in get_valid_linked_issues(
+                self.repo, self.repository_name, pr.body or ""
+            ):
                 try:
-                    issue = self.repo.get_issue(issue_number)
-                    if issue.pull_request:
-                        continue
                     current_assignees = [assignee.login for assignee in issue.assignees]
                     if not current_assignees:
                         issue.add_to_assignees(commenter)

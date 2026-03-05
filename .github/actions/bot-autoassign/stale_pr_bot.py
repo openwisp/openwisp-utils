@@ -179,8 +179,8 @@ class StalePRBot(GitHubBot):
                 "",
                 ("Thank you for your interest in" " contributing to OpenWISP! 🙏"),
             ]
-            pr.edit(state="closed")
             pr.create_issue_comment("\n".join(close_lines))
+            pr.edit(state="closed")
             unassigned_count = self.unassign_linked_issues(pr)
             print(
                 f"Closed PR #{pr.number} after"

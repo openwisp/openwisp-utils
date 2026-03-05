@@ -1,4 +1,5 @@
 import re
+from github import GithubException
 
 
 def extract_linked_issues(pr_body):
@@ -38,8 +39,6 @@ def get_valid_linked_issues(repo, repository_name, pr_body):
                 continue
             yield issue_number, issue
         except Exception as e:
-            from github import GithubException
-
             if isinstance(e, GithubException) and e.status == 404:
                 print(f"Issue #{issue_number} not found")
             else:

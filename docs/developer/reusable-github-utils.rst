@@ -91,7 +91,7 @@ workflow files under ``.github/workflows/``. Each workflow needs to:
 
 1. Generate a GitHub App token using the OpenWISP Bot credentials.
 2. Checkout ``openwisp-utils`` to get the bot scripts.
-3. Install the ``PyGithub`` dependency.
+3. Install the bot dependencies via ``pip install -e .[github_actions]``.
 4. Run the appropriate bot command.
 
 Below is a complete example for the issue assignment bot. You can find all
@@ -132,7 +132,6 @@ four workflow files in the ``openwisp-utils`` repository under
             uses: actions/checkout@v6
             with:
               repository: openwisp/openwisp-utils
-              sparse-checkout: .github/actions/bot-autoassign
               path: openwisp-utils
 
           - name: Set up Python
@@ -141,7 +140,7 @@ four workflow files in the ``openwisp-utils`` repository under
               python-version: "3.13"
 
           - name: Install dependencies
-            run: pip install PyGithub
+            run: pip install -e openwisp-utils/.[github_actions]
 
           - name: Run issue assignment bot
             env:
@@ -151,14 +150,6 @@ four workflow files in the ``openwisp-utils`` repository under
             run: >
               python openwisp-utils/.github/actions/bot-autoassign/__main__.py
               issue_assignment "$GITHUB_EVENT_PATH"
-
-.. note::
-
-    The ``openwisp-utils`` repository itself uses ``pip install -e
-    .[github_actions]`` instead of ``pip install PyGithub`` since the bot
-    scripts are part of the same repository. Use the approach shown above
-    (checking out ``openwisp-utils`` and installing ``PyGithub``) when
-    setting up the bot in other repositories.
 
 GitHub Workflows
 ----------------
