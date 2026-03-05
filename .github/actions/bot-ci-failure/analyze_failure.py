@@ -97,8 +97,14 @@ def main():
 
     repo_context = get_repo_context()
     pr_author = os.environ.get("PR_AUTHOR", "contributor")
+    actor = os.environ.get("ACTOR", pr_author)
     commit_sha = os.environ.get("COMMIT_SHA", "unknown")
     short_sha = commit_sha[:7] if commit_sha != "unknown" else "unknown"
+
+    if pr_author.lower() == actor.lower():
+        greeting = f"Hello @{pr_author},"
+    else:
+        greeting = f"Hello @{pr_author} (and thanks @{actor} for the trigger),"
 
     system_instruction = f"""
     You are an automated CI Failure helper bot for the OpenWISP project.
@@ -137,8 +143,7 @@ def main():
     Response Format MUST follow this exact structure:
     1. **Dynamic Header**: The very first line MUST be an H3 heading summarizing
        all failures in 3 to 7 words.
-    2. **Greeting**: A brief, friendly greeting specifically mentioning the
-       user: @{pr_author}. Immediately following the greeting, you MUST include
+    2. **Greeting**: {greeting} Immediately following the greeting, you MUST include
        this exact text on a new line: `*(Analysis for commit {short_sha})*`
     3. **Failures & Remediation**: For EACH failure identified:
        - **Explanation**: Clearly state WHAT failed and WHY.

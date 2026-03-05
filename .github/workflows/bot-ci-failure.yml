@@ -63,6 +63,7 @@ jobs:
       base_repo: ${{ github.repository }}
       run_id: ${{ github.event.workflow_run.id }}
       pr_author: ${{ github.event.workflow_run.actor.login }}
+      actor: ${{ github.actor }}
     secrets:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}

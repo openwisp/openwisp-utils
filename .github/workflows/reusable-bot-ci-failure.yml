@@ -3,9 +3,6 @@ name: CI Failure Bot
 on:
   workflow_call:
     inputs:
-      gemini_model:
-        required: false
-        type: string
       pr_number:
         required: true
         type: string
@@ -22,6 +19,9 @@ on:
         required: true
         type: string
       pr_author:
+        required: true
+        type: string
+      actor:
         required: true
         type: string
     secrets:
@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: openwisp/openwisp-utils
-          ref: master
+          ref: fix/ci-failure-bot
           path: trusted_scripts
 
       - name: Checkout PR Code
@@ -72,15 +72,54 @@ jobs:
         run: |
           pip install -e "trusted_scripts[github_actions]"
 
-      - name: Fetch CI Logs
+      - name: Fetch Failed Steps Logs
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ inputs.base_repo }}
         run: |
-          gh run view "$RUN_ID" --repo "$REPO" --log-failed > failed_logs.txt || true
+          set -eo pipefail
+          echo "Getting failed jobs for run $RUN_ID..."
+          JOB_IDS=$(gh api repos/$REPO/actions/runs/$RUN_ID/jobs \
+            -q '.jobs[] | select(.conclusion=="failure") | .id')
+          if [ -z "$JOB_IDS" ]; then
+            echo "No failed jobs found." > failed_logs.txt
+            exit 0
+          fi
+          > failed_logs.txt
+          for JOB_ID in $JOB_IDS; do
+            echo "Processing job $JOB_ID"
+            FAILED_STEPS=$(gh api repos/$REPO/actions/jobs/$JOB_ID \
+              -q '.steps[] | select(.conclusion=="failure") | @base64')
+            if [ -z "$FAILED_STEPS" ]; then
+              echo "No failed steps in job $JOB_ID"
+              continue
+            fi
+            gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt
+            echo "===== JOB $JOB_ID =====" >> failed_logs.txt
+            for STEP in $FAILED_STEPS; do
+              _jq() {
+                echo "$STEP" | base64 --decode | jq -r "$1"
+              }
+              STEP_NAME=$(_jq '.name')
+              START=$(_jq '.started_at')
+              END=$(_jq '.completed_at | if type=="null" then "9999-12-31T23:59:59Z" else . end')
+              echo "Extracting step: $STEP_NAME"
+              START_CLEAN=$(echo $START | cut -d'.' -f1)
+              END_CLEAN=$(echo $END | cut -d'.' -f1)
+              awk -v start="$START_CLEAN" -v end="$END_CLEAN" '
+                {
+                  ts = $1
+                  sub(/\..*/, "", ts)
+                  if (ts >= start && ts <= end)
+                    print
+                }
+              ' job_logs.txt >> failed_logs.txt
+              echo "" >> failed_logs.txt
+            done
+          done
           if [ ! -s failed_logs.txt ]; then
-            echo "No failed logs found or inaccessible run." > failed_logs.txt
+            echo "Failed jobs found but logs unavailable." > failed_logs.txt
           fi
 
       - name: Run AI Analysis
@@ -88,8 +127,9 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PR_AUTHOR: ${{ inputs.pr_author }}
+          ACTOR: ${{ inputs.actor }}
           COMMIT_SHA: ${{ inputs.head_sha }}
-          GEMINI_MODEL: ${{ inputs.gemini_model }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
         run: |
           python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 
