@@ -105,8 +105,8 @@ jobs:
               START=$(_jq '.started_at')
               END=$(_jq '.completed_at | if type=="null" then "9999-12-31T23:59:59Z" else . end')
               echo "Extracting step: $STEP_NAME"
-              START_CLEAN=$(echo $START | cut -d'.' -f1)
-              END_CLEAN=$(echo $END | cut -d'.' -f1)
+              START_CLEAN=$(echo "$START" | cut -d'.' -f1)
+              END_CLEAN=$(echo "$END" | cut -d'.' -f1)
               awk -v start="$START_CLEAN" -v end="$END_CLEAN" '
                 {
                   ts = $1
