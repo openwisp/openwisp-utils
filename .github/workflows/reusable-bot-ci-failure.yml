@@ -78,18 +78,13 @@ jobs:
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ inputs.base_repo }}
         run: |
-          echo "::group::Debug Environment"
-          echo "Target REPO: $REPO"
-          echo "Target RUN_ID: $RUN_ID"
-          echo "::endgroup::"
-          if [ -z "$RUN_ID" ] || [ "$RUN_ID" == "null" ]; then
-            echo "::error::RUN_ID is empty or null. Check the caller workflow inputs."
-            exit 1
-          fi
           set -eo pipefail
           echo "Getting failed jobs for run $RUN_ID..."
-          JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
-            -q '.jobs[] | select(.conclusion=="failure") | .id')
+          if ! JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
+            -q '.jobs[] | select(.conclusion=="failure") | .id'); then
+            echo "Could not fetch failed jobs for run $RUN_ID." > failed_logs.txt
+            exit 0
+          fi
           if [ -z "$JOB_IDS" ]; then
             echo "No failed jobs found." > failed_logs.txt
             exit 0
@@ -117,9 +112,6 @@ jobs:
             ' job_logs.txt >> failed_logs.txt
             echo "" >> failed_logs.txt
           done
-          echo "::group::AI Input Debug"
-          cat failed_logs.txt
-          echo "::endgroup::"
           if [ ! -s failed_logs.txt ] || ! grep -q "##\[error\]" failed_logs.txt; then
             echo "Failed jobs found but logs unavailable." > failed_logs.txt
           fi
