@@ -68,7 +68,7 @@ jobs:
         run: |
           pip install -U pip wheel setuptools
           pip install -U -r requirements-test.txt
-          pip install -e .[qa,rest,selenium,releaser]
+          pip install -e .[qa,rest,selenium,releaser,github_actions]
           pip install ${{ matrix.django-version }}
           sudo npm install -g prettier
 
