@@ -543,7 +543,10 @@ class TestValidateChangelogOutput(unittest.TestCase):
         self.assertFalse(result)
 
     def test_rejects_script_injection(self):
-        text = "[feature] Added <script>alert('xss')</script>\n\n`#123 <https://github.com/org/repo/pull/123>`_"
+        text = (
+            "[feature] Added <script>alert('xss')</script>\n\n"
+            "`#123 <https://github.com/org/repo/pull/123>`_"
+        )
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
 
