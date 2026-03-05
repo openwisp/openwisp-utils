@@ -89,7 +89,7 @@ jobs:
           set -eo pipefail
           echo "Getting failed jobs for run $RUN_ID..."
           JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
-            -f per_page=100 -q '.jobs[] | select(.conclusion=="failure") | .id')
+            -q '.jobs[] | select(.conclusion=="failure") | .id')
           if [ -z "$JOB_IDS" ]; then
             echo "No failed jobs found." > failed_logs.txt
             exit 0
