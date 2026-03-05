@@ -43,14 +43,21 @@ def get_repo_context(base_dir="pr_code", max_chars=1500000):
         "node_modules",
         "venv",
         ".tox",
+        "env",
     }
     allow_exts = {".py", ".js", ".jsx", ".ts", ".tsx", ".yaml", ".yml", ".sh", ".lua"}
     allow_files = {"Dockerfile", "Makefile"}
+    sensitive_exts = {".pem", ".key", ".crt", ".p12"}
     context_parts = []
     current_length = 0
     for root, dirs, files in os.walk(base_dir):
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
         for file in files:
+            if (
+                file.startswith(".env")
+                or os.path.splitext(file)[1].lower() in sensitive_exts
+            ):
+                continue
             ext = os.path.splitext(file)[1].lower()
             if ext in allow_exts or file in allow_files:
                 filepath = os.path.join(root, file)
