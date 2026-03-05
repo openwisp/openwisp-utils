@@ -78,6 +78,15 @@ jobs:
           RUN_ID: ${{ inputs.run_id }}
           REPO: ${{ inputs.base_repo }}
         run: |
+          echo "::group::Debug Environment"
+          echo "Target REPO: $REPO"
+          echo "Target RUN_ID: $RUN_ID"
+          echo "::endgroup::"
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" == "null" ]; then
+            echo "::error::RUN_ID is empty or null. Check the caller workflow inputs."
+            exit 1
+          fi
+
           set -eo pipefail
           echo "Getting failed jobs for run $RUN_ID..."
           JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
