@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: openwisp/openwisp-utils
-          ref: fix/fix-tagging-failure-bot
+          ref: master
           path: trusted_scripts
 
       - name: Checkout PR Code
