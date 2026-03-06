@@ -16,19 +16,26 @@ on:
 jobs:
   replicate:
     runs-on: ubuntu-latest
+    permissions:
+      # required for check-out and push
+      contents: write
+      # required for getting an authentication token
+      id-token: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        # Use actions/checkout@v4, the current major version
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history so rebase can work without a separate fetch step
+          fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
+          # Cache pip dependencies for faster subsequent runs
+          cache: 'pip'
 
       - name: Install package if required
         if: ${{ inputs.install_package }}
@@ -50,12 +57,13 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Rebase changes onto version branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pass the version from the previous step into the environment
+          VERSION: ${{ env.VERSION }}
         run: |
-          if git ls-remote --heads origin $VERSION | grep -sw $VERSION; then
-            git fetch origin --unshallow
-            git checkout -b $VERSION origin/$VERSION
-            git rebase origin/master
-          else
-            git checkout -b $VERSION
-          fi
-          git push origin $VERSION
+          # Create the version branch locally, tracking the remote if it exists
+          git branch $VERSION origin/$VERSION || true
+          git checkout $VERSION
+          git rebase origin/master
+          git push origin $VERSION --force-with-lease
