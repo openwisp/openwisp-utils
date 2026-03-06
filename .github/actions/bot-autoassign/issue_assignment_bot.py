@@ -316,8 +316,8 @@ class IssueAssignmentBot(GitHubBot):
                 # We consider the event handled even if no issues were linked
                 return True
             elif action == "closed":
-                unassigned_issues = self.unassign_issues_from_pr(pr_body, pr_author)
-                return len(unassigned_issues) > 0
+                self.unassign_issues_from_pr(pr_body, pr_author)
+                return True
             print(f"PR action '{action}' not handled")
             return False
         except Exception as e:
@@ -356,8 +356,9 @@ def main():
                 bot.load_event_payload(event_payload)
         except Exception as e:
             print(f"Could not load event payload: {e}")
-            return
-    bot.run()
+            return 1
+    result = bot.run()
+    return 0 if result else 1
 
 
 if __name__ == "__main__":

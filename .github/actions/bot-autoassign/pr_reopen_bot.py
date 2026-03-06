@@ -182,11 +182,14 @@ def main():
             else:
                 bot = PRReopenBot()
             bot.load_event_payload(event_payload)
-            bot.run()
+            result = bot.run()
+            return 0 if result else 1
         except Exception as e:
             print(f"Error running bot: {e}")
+            return 1
     else:
         print("Usage: python pr_reopen_bot.py" " <event_payload.json>")
+        return 1
 
 
 if __name__ == "__main__":

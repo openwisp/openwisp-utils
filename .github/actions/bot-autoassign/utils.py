@@ -14,7 +14,7 @@ def extract_linked_issues(pr_body):
         return []
     issue_pattern = (
         r"\b(?:fix(?:e[sd])?|close[sd]?|resolve[sd]?|relate[sd]?\s+to)"
-        r"\s*:?\s*(?:[\w-]+/[\w-]+)?#(\d+)"
+        r"\s*:?\s*(?![\w-]+/[\w-]+#)#(\d+)"
     )
     matches = re.findall(issue_pattern, pr_body, re.IGNORECASE)
     return list(dict.fromkeys(int(match) for match in matches))
