@@ -74,6 +74,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+        # The pr_reopen bot type handles both PR reopen and issue comment (PR activity) events
         run: >
           python .github/actions/bot-autoassign/__main__.py
           pr_reopen "$GITHUB_EVENT_PATH"

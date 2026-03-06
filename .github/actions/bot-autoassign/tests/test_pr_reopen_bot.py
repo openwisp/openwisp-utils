@@ -6,7 +6,12 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest  # noqa: E402
-from pr_reopen_bot import PRActivityBot, PRReopenBot  # noqa: E402
+
+try:
+    from pr_reopen_bot import PRActivityBot, PRReopenBot  # noqa: E402
+except ImportError:
+    PRReopenBot = None
+    PRActivityBot = None
 
 pytestmark = pytest.mark.skipif(
     PRReopenBot is None,

@@ -351,7 +351,7 @@ class StalePRBot(GitHubBot):
                         ):
                             if self.send_stale_warning(pr, days_inactive):
                                 processed_count += 1
-                    time.sleep(0.1)
+                    time.sleep(0.5)
                 except Exception as e:
                     print(f"Error processing" f" PR #{pr.number}: {e}")
                     continue

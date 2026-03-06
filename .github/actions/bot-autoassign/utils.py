@@ -1,5 +1,4 @@
 import re
-from github import GithubException
 
 from github import GithubException
 

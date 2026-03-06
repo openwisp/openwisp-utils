@@ -6,7 +6,11 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest  # noqa: E402
-from issue_assignment_bot import IssueAssignmentBot  # noqa: E402
+
+try:
+    from issue_assignment_bot import IssueAssignmentBot  # noqa: E402
+except ImportError:
+    IssueAssignmentBot = None
 
 pytestmark = pytest.mark.skipif(
     IssueAssignmentBot is None,
@@ -159,6 +163,7 @@ class TestAutoAssignIssuesFromPR:
         mock_issue.body = "Test body"
         mock_issue.pull_request = None
         mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
         bot_env["repo"].get_issue.return_value = mock_issue
         assigned = bot.auto_assign_issues_from_pr(
             100, "testuser", "This PR fixes #123 and closes #456"
@@ -186,6 +191,7 @@ class TestAutoAssignIssuesFromPR:
         bot = IssueAssignmentBot()
         mock_issue = Mock()
         mock_issue.pull_request = {"url": "https://api.github.com/repos/test/pulls/123"}
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
         bot_env["repo"].get_issue.return_value = mock_issue
         assigned = bot.auto_assign_issues_from_pr(100, "testuser", "Fixes #123")
         assert len(assigned) == 0
@@ -197,6 +203,7 @@ class TestAutoAssignIssuesFromPR:
         mock_issue = Mock()
         mock_issue.pull_request = None
         mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
         bot_env["repo"].get_issue.return_value = mock_issue
         assigned = bot.auto_assign_issues_from_pr(
             100, "testuser", issue_refs, max_issues=10
@@ -320,6 +327,7 @@ class TestHandlePullRequest:
         mock_issue = Mock()
         mock_issue.pull_request = None
         mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.handle_pull_request()
         mock_issue.add_to_assignees.assert_called_once_with("testuser")
@@ -339,6 +347,7 @@ class TestHandlePullRequest:
         mock_issue = Mock()
         mock_issue.pull_request = None
         mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.handle_pull_request()
 
@@ -415,6 +424,7 @@ class TestRun:
         mock_issue = Mock()
         mock_issue.pull_request = None
         mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.run()
 

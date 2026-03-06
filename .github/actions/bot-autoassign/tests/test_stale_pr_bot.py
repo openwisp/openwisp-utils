@@ -7,7 +7,11 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest  # noqa: E402
-from stale_pr_bot import StalePRBot  # noqa: E402
+
+try:
+    from stale_pr_bot import StalePRBot  # noqa: E402
+except ImportError:
+    StalePRBot = None
 
 pytestmark = pytest.mark.skipif(
     StalePRBot is None,

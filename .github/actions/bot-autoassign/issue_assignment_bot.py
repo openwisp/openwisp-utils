@@ -211,6 +211,15 @@ class IssueAssignmentBot(GitHubBot):
             for issue_number in linked_issues:
                 try:
                     issue = self.repo.get_issue(issue_number)
+                    if (
+                        hasattr(issue, "repository")
+                        and issue.repository.full_name != self.repository_name
+                    ):
+                        print(
+                            f"Issue #{issue_number} is from a different"
+                            " repository, skipping"
+                        )
+                        continue
                     if issue.pull_request:
                         print(f"#{issue_number} is a pull request," " skipping")
                         continue
@@ -303,10 +312,9 @@ class IssueAssignmentBot(GitHubBot):
                 print("Missing required PR data")
                 return False
             if action in ["opened", "reopened"]:
-                assigned_issues = self.auto_assign_issues_from_pr(
-                    pr_number, pr_author, pr_body
-                )
-                return len(assigned_issues) > 0
+                self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
+                # We consider the event handled even if no issues were linked
+                return True
             elif action == "closed":
                 unassigned_issues = self.unassign_issues_from_pr(pr_body, pr_author)
                 return len(unassigned_issues) > 0

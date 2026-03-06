@@ -2,7 +2,7 @@ import json
 import os
 
 from base import GitHubBot
-from utils import extract_linked_issues, get_valid_linked_issues
+from utils import get_valid_linked_issues
 
 
 class PRReopenBot(GitHubBot):
