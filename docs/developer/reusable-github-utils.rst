@@ -303,7 +303,7 @@ file at ``.github/workflows/changelog-bot.yml``:
         types: [submitted]
     jobs:
       changelog:
-        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-changelog.yml@master
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
