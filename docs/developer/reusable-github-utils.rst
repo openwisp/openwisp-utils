@@ -116,42 +116,6 @@ example:
         git reset --hard origin/master
         git push origin $VERSION --force-with-lease
 
-Changelog Bot
-~~~~~~~~~~~~~
-
-This workflow automatically generates changelog entry suggestions for Pull
-Requests using Google Gemini. It gets triggered when a PR with a title
-prefixed with ``[feature]``, ``[fix]``, or ``[change]`` is approved by a
-maintainer. It analyzes the PR's title, description, code changes, and
-linked issues, then posts a properly formatted changelog entry as a
-comment on the PR.
-
-**Secrets**
-
-- ``GEMINI_API_KEY`` (required): Google Gemini API key.
-- ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
-- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
-  key.
-
-**Usage Example**
-
-To enable the changelog bot in any OpenWISP repository, create a workflow
-file at ``.github/workflows/changelog-bot.yml``:
-
-.. code-block:: yaml
-
-    name: Changelog Bot
-    on:
-      pull_request_review:
-        types: [submitted]
-    jobs:
-      changelog:
-        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
-        secrets:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
-
 Backport Fixes to Stable Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -308,3 +272,39 @@ job:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+Changelog Bot
+~~~~~~~~~~~~~
+
+This workflow automatically generates changelog entry suggestions for Pull
+Requests using Google Gemini. It gets triggered when a PR with a title
+prefixed with ``[feature]``, ``[fix]``, or ``[change]`` is approved by a
+maintainer. It analyzes the PR's title, description, code changes, and
+linked issues, then posts a properly formatted changelog entry as a
+comment on the PR.
+
+**Secrets**
+
+- ``GEMINI_API_KEY`` (required): Google Gemini API key.
+- ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
+- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
+  key.
+
+**Usage Example**
+
+To enable the changelog bot in any OpenWISP repository, create a workflow
+file at ``.github/workflows/changelog-bot.yml``:
+
+.. code-block:: yaml
+
+    name: Changelog Bot
+    on:
+      pull_request_review:
+        types: [submitted]
+    jobs:
+      changelog:
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-changelog-bot.yml@master
+        secrets:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}

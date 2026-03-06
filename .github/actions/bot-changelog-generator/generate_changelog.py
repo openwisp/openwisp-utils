@@ -27,6 +27,7 @@ import re
 import secrets
 import subprocess
 import sys
+from html import escape
 
 from google import genai
 from google.genai import types
@@ -66,7 +67,7 @@ def github_api_request(endpoint: str, token: str) -> dict:
         return response.json()
     except RequestException as e:
         error_msg = str(e)
-        error_msg = re.sub(r"Bearer\s+[a-zA-Z0-9_-]+", "Bearer ***", error_msg)
+        error_msg = re.sub(r"Bearer\s+\S+", "Bearer ***", error_msg)
         print(f"GitHub API error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
@@ -207,8 +208,8 @@ def call_gemini(
         return response.text
     except Exception as e:
         error_msg = str(e)
-        error_msg = re.sub(r"key=[a-zA-Z0-9_-]+", "key=***", error_msg)
-        error_msg = re.sub(r"Bearer\s+[a-zA-Z0-9_-]+", "Bearer ***", error_msg)
+        error_msg = re.sub(r"key=\S+", "key=***", error_msg)
+        error_msg = re.sub(r"Bearer\s+\S+", "Bearer ***", error_msg)
         print(f"Gemini API error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
@@ -230,29 +231,39 @@ def build_prompt(
     diff_tag = secrets.token_hex(4)
     commits_tag = secrets.token_hex(4)
     issues_tag = secrets.token_hex(4)
-    pr_url = pr_details.get("html_url") or ""
+    pr_url = escape(pr_details.get("html_url") or "", quote=False)
     pr_number = pr_details["number"]
+    safe_pr_title = escape(pr_details.get("title", ""), quote=False)
+    safe_pr_body = escape(
+        pr_details["body"][:2000] if pr_details["body"] else "No description provided.",
+        quote=False,
+    )
+    safe_diff = escape(diff if diff else "Diff not available.", quote=False)
     issues_text = ""
     if issues:
         issues_section = ""
         for issue in issues:
-            issues_section += f"- #{issue['number']}: {issue['title']}\n"
+            issue_title = escape(issue.get("title", ""), quote=False)
+            issues_section += f"- #{issue['number']}: {issue_title}\n"
             if issue["body"]:
                 body = issue["body"]
                 truncated = "..." if len(body) > 200 else ""
-                issues_section += f"  Description: {body[:200]}{truncated}\n"
+                safe_body_excerpt = escape(body[:200], quote=False)
+                issues_section += f"  Description: {safe_body_excerpt}{truncated}\n"
         issues_text = f"\n\n<linked_issues_{issues_tag}>\n{issues_section}</linked_issues_{issues_tag}>"
     commits_text = ""
     if commits:
         commits_section = ""
         for commit in commits:
-            commits_section += f"- {commit['sha']}: {commit['message']}\n"
+            safe_commit_message = escape(commit.get("message", ""), quote=False)
+            commits_section += f"- {commit['sha']}: {safe_commit_message}\n"
         commits_text = (
             f"\n\n<commits_{commits_tag}>\n{commits_section}</commits_{commits_tag}>"
         )
     labels_text = ""
     if pr_details["labels"]:
-        labels_text = f"\nLabels: {', '.join(pr_details['labels'])}"
+        safe_labels = [escape(label, quote=False) for label in pr_details["labels"]]
+        labels_text = f"\nLabels: {', '.join(safe_labels)}"
     if changelog_format == "md":
         format_name = "Markdown"
         file_name = "CHANGES.md"
@@ -319,18 +330,18 @@ def build_prompt(
     # User data (unprivileged context)
     user_data_prompt = f"""<user_data>
     <pr_data_{pr_data_tag}>
-    PR #{pr_number}: {pr_details['title']}
+    PR #{pr_number}: {safe_pr_title}
     PR URL: {pr_url}
     {labels_text}
     PR Description:
-    {pr_details['body'][:2000] if pr_details['body'] else 'No description provided.'}
+    {safe_pr_body}
     </pr_data_{pr_data_tag}>
     {issues_text}
     {commits_text}
     <code_diff_{diff_tag}>
     Code Changes (diff):
     ```
-    {diff if diff else 'Diff not available.'}
+    {safe_diff}
     ```
     </code_diff_{diff_tag}>
     </user_data>"""
@@ -457,7 +468,7 @@ def main():
         post_github_comment(repo, pr_number, comment, github_token)
     except RuntimeError as e:
         error_msg = str(e)
-        error_msg = re.sub(r"Bearer\s+[a-zA-Z0-9_-]+", "Bearer ***", error_msg)
+        error_msg = re.sub(r"Bearer\s+\S+", "Bearer ***", error_msg)
         print(f"Error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
