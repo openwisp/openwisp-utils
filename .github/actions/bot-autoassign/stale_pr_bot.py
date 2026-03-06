@@ -25,7 +25,10 @@ class StalePRBot(GitHubBot):
         try:
             pr_author = pr.user.login
             last_author_activity = None
-            commits = list(pr.get_commits()[:50])
+            commits = []
+            for commit in pr.get_commits():
+                commits.append(commit)
+            commits = commits[-50:]
             for commit in commits:
                 commit_date = commit.commit.author.date
                 if commit_date > last_changes_requested:
@@ -179,8 +182,15 @@ class StalePRBot(GitHubBot):
                 "",
                 ("Thank you for your interest in" " contributing to OpenWISP! 🙏"),
             ]
-            pr.create_issue_comment("\n".join(close_lines))
-            pr.edit(state="closed")
+            try:
+                pr.create_issue_comment("\n".join(close_lines))
+            except Exception as comment_error:
+                print(
+                    f"Warning: Could not post closing comment"
+                    f" on PR #{pr.number}: {comment_error}"
+                )
+            finally:
+                pr.edit(state="closed")
             unassigned_count = self.unassign_linked_issues(pr)
             print(
                 f"Closed PR #{pr.number} after"
@@ -380,7 +390,8 @@ class StalePRBot(GitHubBot):
 
 def main():
     bot = StalePRBot()
-    bot.run()
+    result = bot.run()
+    return 0 if result else 1
 
 
 if __name__ == "__main__":

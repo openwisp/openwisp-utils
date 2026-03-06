@@ -90,7 +90,7 @@ class TestExtractLinkedIssues:
             ("This PR fixes #123 and closes #123", [123]),  # dedup
             ("Fixes: #42", [42]),  # colon syntax
             ("Related to #99", [99]),  # relates-to
-            ("Fixes owner/repo#55", [55]),  # cross-repo (filtered at runtime)
+            ("Fixes owner/repo#55", []),  # cross-repo refs are ignored
             ("Fixed #999", [999]),
             ("No issue references here", []),
             ("", []),
