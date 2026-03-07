@@ -185,8 +185,13 @@ following example:
 ---------------------------------------------------------
 
 The ``admin_theme`` sub app of this package provides an auto complete
-filter that uses the *django-autocomplete* widget to load filter data
+filter that uses Django's native autocomplete widget to load filter data
 asynchronously.
+
+This filter is powered by `django-admin-list-filter (dalf)
+<https://github.com/vigo/django-admin-list-filter>`_, a lightweight and
+actively maintained library that uses Django's built-in admin autocomplete
+infrastructure.
 
 This filter can be helpful when the number of objects is too large to load
 all at once which may cause the slow loading of the page.
@@ -194,28 +199,26 @@ all at once which may cause the slow loading of the page.
 .. code-block:: python
 
     from django.contrib import admin
+    from dalf.admin import DALFModelAdmin
     from openwisp_utils.admin_theme.filters import AutocompleteFilter
     from my_app.models import MyModel, MyOtherModel
 
 
-    class MyAutoCompleteFilter(AutocompleteFilter):
-        field_name = "field"
-        parameter_name = "field_id"
-        title = _("My Field")
-
-
     @admin.register(MyModel)
-    class MyModelAdmin(admin.ModelAdmin):
-        list_filter = [MyAutoCompleteFilter, ...]
+    class MyModelAdmin(DALFModelAdmin):
+        list_filter = [
+            ("field", AutocompleteFilter),
+            # ... other filters
+        ]
 
 
     @admin.register(MyOtherModel)
     class MyOtherModelAdmin(admin.ModelAdmin):
-        search_fields = ["id"]
+        # The related model must have search_fields defined
+        search_fields = ["name", "id"]
 
-To customize or know more about it, please refer to the
-`django-admin-autocomplete-filter documentation
-<https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_.
+For more details, see the `django-admin-list-filter documentation
+<https://github.com/vigo/django-admin-list-filter>`_.
 
 Customizing the Submit Row in OpenWISP Admin
 --------------------------------------------

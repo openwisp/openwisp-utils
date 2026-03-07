@@ -1,10 +1,9 @@
-from admin_auto_filters.filters import AutocompleteFilter as BaseAutocompleteFilter
+from dalf.admin import DALFRelatedFieldAjax
 from django.contrib import messages
 from django.contrib.admin.filters import FieldListFilter, SimpleListFilter
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db.models.fields import CharField, UUIDField
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 
@@ -28,9 +27,9 @@ class InputFilterMixin:
         yield all_choice
 
     def value(self):
-        """Returns the querystring for this filter
+        """Return the querystring for this filter.
 
-        If no querystring was supllied, will return None.
+        If no querystring was supplied, will return None.
         """
         return self.used_parameters.get(self.parameter_name)
 
@@ -92,29 +91,70 @@ class InputFilter(InputFilterMixin, FieldListFilter):
         return [self.lookup_kwarg, self.lookup_kwarg_isnull]
 
 
-class AutocompleteFilter(BaseAutocompleteFilter):
+class AutocompleteFilter(DALFRelatedFieldAjax):
+    """AutocompleteFilter for Django admin using DALF.
+
+    This filter provides autocomplete functionality for foreign key and
+    many-to-many relationships using Django's native admin autocomplete
+    infrastructure.
+
+    Usage:
+        .. code-block:: python
+
+            class MyFilter(AutocompleteFilter):
+                title = "My Field"
+                field_name = "my_field"
+                parameter_name = "my_field__id"
+    """
+
     template = "admin/auto_filter.html"
-    widget_attrs = {
-        "data-dropdown-css-class": "ow2-autocomplete-dropdown",
-        "data-empty-label": "-",
-    }
 
-    class Media:
-        css = {
-            "screen": ("admin/css/ow-auto-filter.css",),
-        }
-        js = BaseAutocompleteFilter.Media.js + ("admin/js/ow-auto-filter.js",)
-
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse("admin:ow-auto-filter")
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, field, request, params, model, model_admin, field_path):
         try:
-            return super().__init__(*args, **kwargs)
-        except ValidationError:
-            None
+            super().__init__(field, request, params, model, model_admin, field_path)
+        except (ValidationError, ValueError) as e:
+            # If there's a validation error (e.g., invalid UUID), initialize without error
+            # but store the error to display later
+            self._init_error = e
+            # Initialize basic attributes manually to prevent AttributeError
+            self.field = field
+            self.field_path = field_path
+            self.title = getattr(field, "verbose_name", field_path)
+            self.used_parameters = {}
+            # Required for Django's filter protocol
+            try:
+                from django.contrib.admin.filters import FieldListFilter
+
+                # Call the grandparent's __init__ to set up basic filter infrastructure
+                FieldListFilter.__init__(
+                    self, field, request, params, model, model_admin, field_path
+                )
+            except Exception:
+                pass
+
+    def expected_parameters(self):
+        """Return expected parameters for this filter."""
+        if hasattr(self, "_init_error"):
+            return []
+        return super().expected_parameters()
+
+    def choices(self, changelist):
+        """Return choices for this filter."""
+        if hasattr(self, "_init_error"):
+            # Return empty choices if initialization failed
+            return []
+        return super().choices(changelist)
 
     def queryset(self, request, queryset):
+        # If there was an initialization error, show it and return unfiltered queryset
+        if hasattr(self, "_init_error"):
+            if isinstance(self._init_error, ValidationError):
+                error_msg = " ".join(self._init_error.messages)
+            else:
+                error_msg = str(self._init_error)
+            messages.error(request, error_msg)
+            return queryset
+
         try:
             return super().queryset(request, queryset)
         except ValidationError as e:

@@ -1,5 +1,22 @@
 {% load i18n %}
-<div class="ow-filter auto-filter">
-  {% include 'django-admin-autocomplete-filter/autocomplete-filter.html' %}
-  <div class="auto-filter-choices"></div>
+<div class="ow-filter ow-autocomplete-filter">
+  {% with params=choices|last %}
+  <div class="filter-title">
+    <h3>{% blocktranslate with filter_title=title %} By {{ filter_title }} {% endblocktranslate %}</h3>
+    <input class="djal-selected-value" type="hidden" value="{{ params.selected_value|default_if_none:'' }}" />
+    <input class="djal-selected-text" type="hidden" value="{{ params.selected_text|default_if_none:'' }}" />
+    <select
+      class="django-admin-list-filter-ajax"
+      data-ajax-url="{{ params.ajax_url }}"
+      data-app-label="{{ params.app_label }}"
+      data-model-name="{{ params.model_name }}"
+      data-lookup-kwarg="{{ params.lookup_kwarg }}"
+      data-theme="admin-autocomplete"
+      data-field-name="{{ params.field_name }}"></select>
+  </div>
+  <div class="filter-options">
+    <!-- Hidden anchor for filter button to detect changes -->
+    <a name="{{ params.lookup_kwarg }}" parameter_name="{{ params.lookup_kwarg }}"></a>
+  </div>
+  {% endwith %}
 </div>

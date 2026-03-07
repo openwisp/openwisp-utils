@@ -22,7 +22,7 @@ Make sure ``openwisp_utils.admin_theme`` is listed in ``INSTALLED_APPS``
         "django.contrib.staticfiles",
         "openwisp_utils.admin_theme",  # <----- add this
         # add when using autocomplete filter
-        "admin_auto_filters",  # <----- add this
+        "dalf",  # <----- add this (django-admin-list-filter)
         "django.contrib.sites",
         # admin
         "django.contrib.admin",
