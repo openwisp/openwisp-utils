@@ -216,7 +216,11 @@ class IssueAssignmentBot(GitHubBot):
                 if len(assigned_issues) >= max_issues:
                     break
                 try:
-                    current_assignees = [assignee.login for assignee in issue.assignees]
+                    current_assignees = [
+                        assignee.login
+                        for assignee in issue.assignees
+                        if hasattr(assignee, "login")
+                    ]
                     if current_assignees:
                         if pr_author in current_assignees:
                             print(

@@ -13,7 +13,11 @@ class PRReopenBot(GitHubBot):
                 self.repo, self.repository_name, pr_body
             ):
                 try:
-                    current_assignees = [assignee.login for assignee in issue.assignees]
+                    current_assignees = [
+                        assignee.login
+                        for assignee in issue.assignees
+                        if hasattr(assignee, "login")
+                    ]
                     if current_assignees and pr_author not in current_assignees:
                         print(
                             f"Issue #{issue_number} is assigned"
@@ -111,7 +115,7 @@ class PRActivityBot(GitHubBot):
                 print("Comment is on an issue," " not a PR, skipping")
                 return False
             pr = self.repo.get_pull(pr_number)
-            if commenter != pr.user.login:
+            if not pr.user or commenter != pr.user.login:
                 print("Comment not from PR author, skipping")
                 return False
             labels = [label.name for label in pr.get_labels()]
@@ -128,7 +132,11 @@ class PRActivityBot(GitHubBot):
                 self.repo, self.repository_name, pr.body or ""
             ):
                 try:
-                    current_assignees = [assignee.login for assignee in issue.assignees]
+                    current_assignees = [
+                        assignee.login
+                        for assignee in issue.assignees
+                        if hasattr(assignee, "login")
+                    ]
                     if not current_assignees:
                         issue.add_to_assignees(commenter)
                         reassigned_count += 1

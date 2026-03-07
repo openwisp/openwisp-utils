@@ -1,4 +1,5 @@
 import time
+from collections import deque
 from datetime import datetime, timezone
 
 from base import GitHubBot
@@ -23,12 +24,11 @@ class StalePRBot(GitHubBot):
         if not last_changes_requested:
             return 0
         try:
-            pr_author = pr.user.login
+            pr_author = pr.user.login if pr.user else None
+            if not pr_author:
+                return 0
             last_author_activity = None
-            commits = []
-            for commit in pr.get_commits():
-                commits.append(commit)
-            commits = commits[-50:]
+            commits = deque(pr.get_commits(), maxlen=50)
             for commit in commits:
                 commit_date = commit.commit.author.date
                 if commit_date > last_changes_requested:
@@ -44,7 +44,7 @@ class StalePRBot(GitHubBot):
                 issue_comments[-20:] if len(issue_comments) > 20 else issue_comments
             )
             for comment in comments:
-                if comment.user.login == pr_author:
+                if comment.user and comment.user.login == pr_author:
                     comment_date = comment.created_at
                     if comment_date > last_changes_requested:
                         if (
@@ -61,7 +61,7 @@ class StalePRBot(GitHubBot):
                 else all_review_comments
             )
             for comment in review_comments:
-                if comment.user.login == pr_author:
+                if comment.user and comment.user.login == pr_author:
                     comment_date = comment.created_at
                     if comment_date > last_changes_requested:
                         if (
@@ -73,7 +73,7 @@ class StalePRBot(GitHubBot):
                 all_reviews = list(pr.get_reviews())
             reviews = all_reviews[-20:] if len(all_reviews) > 20 else all_reviews
             for review in reviews:
-                if review.user.login == pr_author:
+                if review.user and review.user.login == pr_author:
                     review_date = review.submitted_at
                     if review_date and review_date > last_changes_requested:
                         if (
@@ -130,7 +130,9 @@ class StalePRBot(GitHubBot):
 
     def unassign_linked_issues(self, pr):
         try:
-            pr_author = pr.user.login
+            pr_author = pr.user.login if pr.user else None
+            if not pr_author:
+                return False
             unassigned_issues = unassign_linked_issues_helper(
                 self.repo, self.repository_name, pr.body or "", pr_author
             )
@@ -144,7 +146,9 @@ class StalePRBot(GitHubBot):
             print(f"PR #{pr.number} is already closed, skipping")
             return False
         try:
-            pr_author = pr.user.login
+            pr_author = pr.user.login if pr.user else None
+            if not pr_author:
+                return False
             close_lines = [
                 "<!-- bot:closed -->",
                 f"Hi @{pr_author} 👋,",
@@ -204,7 +208,9 @@ class StalePRBot(GitHubBot):
 
     def mark_pr_stale(self, pr, days_inactive):
         try:
-            pr_author = pr.user.login
+            pr_author = pr.user.login if pr.user else None
+            if not pr_author:
+                return False
             unassign_lines = [
                 "<!-- bot:stale -->",
                 f"Hi @{pr_author} 👋,",
@@ -265,7 +271,9 @@ class StalePRBot(GitHubBot):
 
     def send_stale_warning(self, pr, days_inactive):
         try:
-            pr_author = pr.user.login
+            pr_author = pr.user.login if pr.user else None
+            if not pr_author:
+                return False
             remaining = self.DAYS_BEFORE_UNASSIGN - days_inactive
             warning_lines = [
                 "<!-- bot:stale_warning -->",
