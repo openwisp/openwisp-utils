@@ -119,6 +119,40 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             ["id", "session_id", "username", "start_time", "stop_time"],
         )
 
+    def test_readonlyadmin_has_delete_permission(self):
+        modeladmin = ReadOnlyAdmin(RadiusAccounting, AdminSite())
+
+        with self.subTest("changelist URL returns False"):
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_changelist")
+            ).wsgi_request
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+        with self.subTest("change URL returns False"):
+            obj = self._create_radius_accounting(username="test", session_id="1")
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_change", args=[obj.pk])
+            ).wsgi_request
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+        with self.subTest("cascade delete from unrelated URL returns True"):
+            # Simulate being called from a parent model's delete
+            # confirmation (cascade), not from the model's own views.
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_changelist")
+            ).wsgi_request
+            mock_resolver = MagicMock()
+            mock_resolver.url_name = "index"
+            request.resolver_match = mock_resolver
+            self.assertTrue(modeladmin.has_delete_permission(request))
+
+        with self.subTest("no resolver_match returns True"):
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_changelist")
+            ).wsgi_request
+            request.resolver_match = None
+            self.assertTrue(modeladmin.has_delete_permission(request))
+
     def test_context_processor(self):
         url = reverse("admin:index")
         response = self.client.get(url)
