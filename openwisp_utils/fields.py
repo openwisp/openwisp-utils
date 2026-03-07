@@ -48,14 +48,13 @@ class FallbackMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.fallback = kwargs.pop("fallback")
+        self.fallback = kwargs.pop("fallback", None)
         opts = dict(blank=True, null=True, default=None)
         opts.update(kwargs)
         super().__init__(*args, **opts)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
-        kwargs["fallback"] = self.fallback
         return (name, path, args, kwargs)
 
     def from_db_value(self, value, expression, connection):

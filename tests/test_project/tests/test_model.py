@@ -180,3 +180,9 @@ class TestFallbackFields(CreateMixin, TestCase):
             book.save(update_fields=["price"])
             book.refresh_from_db(fields=["price"])
             self.assertEqual(book.price, 56)
+
+    def test_fallback_field_deconstruct(self):
+        field = OrganizationRadiusSettings._meta.get_field("is_active")
+        name, path, args, kwargs = field.deconstruct()
+        self.assertNotIn("fallback", kwargs)
+
