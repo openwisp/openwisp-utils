@@ -1,8 +1,11 @@
 import re
 
 from base import GitHubBot
-from github import GithubException
-from utils import extract_linked_issues, unassign_linked_issues_helper
+from utils import (
+    extract_linked_issues,
+    get_valid_linked_issues,
+    unassign_linked_issues_helper,
+)
 
 
 class IssueAssignmentBot(GitHubBot):
@@ -206,23 +209,13 @@ class IssueAssignmentBot(GitHubBot):
                     f" processing first {max_issues}"
                     " to avoid rate limits"
                 )
-                linked_issues = sorted(linked_issues)[:max_issues]
             assigned_issues = []
-            for issue_number in linked_issues:
+            for issue_number, issue in get_valid_linked_issues(
+                self.repo, self.repository_name, pr_body
+            ):
+                if len(assigned_issues) >= max_issues:
+                    break
                 try:
-                    issue = self.repo.get_issue(issue_number)
-                    if (
-                        hasattr(issue, "repository")
-                        and issue.repository.full_name != self.repository_name
-                    ):
-                        print(
-                            f"Issue #{issue_number} is from a different"
-                            " repository, skipping"
-                        )
-                        continue
-                    if issue.pull_request:
-                        print(f"#{issue_number} is a pull request," " skipping")
-                        continue
                     current_assignees = [assignee.login for assignee in issue.assignees]
                     if current_assignees:
                         if pr_author in current_assignees:
@@ -247,11 +240,6 @@ class IssueAssignmentBot(GitHubBot):
                         " to address it. 🎯"
                     )
                     issue.create_comment(comment_message)
-                except GithubException as e:
-                    if e.status == 404:
-                        print(f"Issue #{issue_number} not found")
-                    else:
-                        print(f"Error processing issue" f" #{issue_number}: {e}")
                 except Exception as e:
                     print(f"Error processing issue" f" #{issue_number}: {e}")
             return assigned_issues

@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: bot-autoassign-pr-reopen-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   reassign-on-reopen:

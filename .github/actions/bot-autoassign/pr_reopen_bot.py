@@ -68,9 +68,9 @@ class PRReopenBot(GitHubBot):
                 return False
             print(f"Handling PR #{pr_number}" f" reopen by {pr_author}")
             reassigned = self.reassign_issues_to_author(pr_number, pr_author, pr_body)
-            label_removed = self.remove_stale_label(pr_number)
+            self.remove_stale_label(pr_number)
             print(f"Reassigned {len(reassigned)}" f" issues to {pr_author}")
-            return len(reassigned) > 0 or label_removed
+            return True
         except Exception as e:
             print(f"Error handling PR reopen: {e}")
             return False
