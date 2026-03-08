@@ -106,7 +106,9 @@ class TestMain(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     def test_exits_early_without_api_key(self, mock_print):
         main()
-        mock_print.assert_any_call("::warning::Skipping: No API Key found.")
+        mock_print.assert_any_call(
+            "::warning::Skipping: No API Key found.", file=sys.stderr
+        )
 
     @patch("builtins.print")
     @patch("analyze_failure.get_error_logs")
@@ -114,7 +116,9 @@ class TestMain(unittest.TestCase):
     def test_exits_early_without_failed_logs(self, mock_get_logs, mock_print):
         mock_get_logs.return_value = "No failed logs found."
         main()
-        mock_print.assert_any_call("::warning::Skipping: No failure logs to analyse.")
+        mock_print.assert_any_call(
+            "::warning::Skipping: No failure logs to analyse.", file=sys.stderr
+        )
 
     @patch("builtins.print")
     @patch("analyze_failure.genai")
@@ -169,7 +173,8 @@ class TestMain(unittest.TestCase):
             main()
         self.assertEqual(context.exception.code, 0)
         mock_print.assert_any_call(
-            "::warning::LLM output failed format validation; skipping comment."
+            "::warning::LLM output failed format validation; skipping comment.",
+            file=sys.stderr,
         )
 
     @patch("builtins.print")
@@ -190,7 +195,8 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit):
             main()
         mock_print.assert_any_call(
-            "::warning::Generation returned an empty response; skipping report."
+            "::warning::Generation returned an empty response; skipping report.",
+            file=sys.stderr,
         )
 
     @patch("builtins.print")
@@ -207,7 +213,8 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit):
             main()
         mock_print.assert_any_call(
-            "::warning::API Error (Max retries reached or fatal error): Quota Exceeded"
+            "::warning::API Error (Max retries reached or fatal error): Quota Exceeded",
+            file=sys.stderr,
         )
 
     @patch("builtins.print")
