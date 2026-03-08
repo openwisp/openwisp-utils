@@ -273,7 +273,7 @@ class IssueAssignmentBot(GitHubBot):
         try:
             if self.event_payload.get("issue", {}).get("pull_request"):
                 print("Comment is on a PR, not an issue - skipping")
-                return False
+                return True
             comment = self.event_payload.get("comment", {})
             issue = self.event_payload.get("issue", {})
             comment_body = comment.get("body", "")
@@ -285,7 +285,7 @@ class IssueAssignmentBot(GitHubBot):
             if self.is_assignment_request(comment_body):
                 return self.respond_to_assignment_request(issue_number, commenter)
             print("Comment does not contain assignment request")
-            return False
+            return True
         except Exception as e:
             print(f"Error handling issue comment: {e}")
             return False
@@ -311,7 +311,7 @@ class IssueAssignmentBot(GitHubBot):
                 self.unassign_issues_from_pr(pr_body, pr_author)
                 return True
             print(f"PR action '{action}' not handled")
-            return False
+            return True
         except Exception as e:
             print(f"Error handling pull request: {e}")
             return False
@@ -328,7 +328,7 @@ class IssueAssignmentBot(GitHubBot):
                 return self.handle_pull_request()
             else:
                 print(f"Event type '{self.event_name}'" " not supported")
-                return False
+                return True
         except Exception as e:
             print(f"Error in main execution: {e}")
             return False

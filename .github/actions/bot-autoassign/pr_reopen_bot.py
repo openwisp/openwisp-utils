@@ -89,7 +89,7 @@ class PRReopenBot(GitHubBot):
                 return self.handle_pr_reopen()
             else:
                 print(f"Event type '{self.event_name}'" " not supported")
-                return False
+                return True
         except Exception as e:
             print(f"Error in main execution: {e}")
             return False
@@ -113,15 +113,15 @@ class PRActivityBot(GitHubBot):
                 return False
             if not issue_data.get("pull_request"):
                 print("Comment is on an issue," " not a PR, skipping")
-                return False
+                return True
             pr = self.repo.get_pull(pr_number)
             if not pr.user or commenter != pr.user.login:
                 print("Comment not from PR author, skipping")
-                return False
+                return True
             labels = [label.name for label in pr.get_labels()]
             if "stale" not in labels:
                 print("PR is not stale, skipping")
-                return False
+                return True
             try:
                 pr.remove_from_labels("stale")
                 print("Removed stale label")
@@ -169,7 +169,7 @@ class PRActivityBot(GitHubBot):
                 return self.handle_contributor_activity()
             else:
                 print(f"Event type '{self.event_name}'" " not supported")
-                return False
+                return True
         except Exception as e:
             print(f"Error in main execution: {e}")
             return False

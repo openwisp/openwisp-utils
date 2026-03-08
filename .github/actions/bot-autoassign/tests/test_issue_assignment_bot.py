@@ -291,7 +291,7 @@ class TestHandleIssueComment:
                 },
             }
         )
-        assert not bot.handle_issue_comment()
+        assert bot.handle_issue_comment()
 
     def test_non_assignment_comment(self, bot_env):
         bot = IssueAssignmentBot()
@@ -304,7 +304,7 @@ class TestHandleIssueComment:
                 },
             }
         )
-        assert not bot.handle_issue_comment()
+        assert bot.handle_issue_comment()
 
     def test_no_payload(self, bot_env):
         bot = IssueAssignmentBot()
@@ -385,7 +385,7 @@ class TestHandlePullRequest:
                 },
             }
         )
-        assert not bot.handle_pull_request()
+        assert bot.handle_pull_request()
 
 
 class TestRun:
@@ -431,7 +431,7 @@ class TestRun:
     def test_unsupported_event(self, bot_env):
         bot = IssueAssignmentBot()
         bot.event_name = "push"
-        assert not bot.run()
+        assert bot.run()
 
     def test_no_github_client(self, bot_env):
         bot = IssueAssignmentBot()

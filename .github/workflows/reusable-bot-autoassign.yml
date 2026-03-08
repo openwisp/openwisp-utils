@@ -1,0 +1,52 @@
+name: Reusable Bot Autoassign
+
+on:
+  workflow_call:
+    inputs:
+      bot_command:
+        required: true
+        type: string
+        description: "The bot to execute (e.g., 'issue_assignment', 'pr_reopen', 'stale_pr')"
+    secrets:
+      OPENWISP_BOT_APP_ID:
+        required: true
+      OPENWISP_BOT_PRIVATE_KEY:
+        required: true
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+      - name: Checkout openwisp-utils
+        uses: actions/checkout@v6
+        with:
+          repository: openwisp/openwisp-utils
+          ref: master
+          path: openwisp-utils
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -e openwisp-utils/.[github_actions]
+
+      - name: Execute bot script
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: >
+          if [ -n "$GITHUB_EVENT_PATH" ]; then
+            python openwisp-utils/.github/actions/bot-autoassign/__main__.py ${{ inputs.bot_command }} "$GITHUB_EVENT_PATH"
+          else
+            python openwisp-utils/.github/actions/bot-autoassign/__main__.py ${{ inputs.bot_command }}
+          fi
