@@ -44,9 +44,10 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-        run: >
+          BOT_COMMAND: ${{ inputs.bot_command }}
+        run: |
           if [ -n "$GITHUB_EVENT_PATH" ]; then
-            python openwisp-utils/.github/actions/bot-autoassign/__main__.py ${{ inputs.bot_command }} "$GITHUB_EVENT_PATH"
+            python openwisp-utils/.github/actions/bot-autoassign/__main__.py "$BOT_COMMAND" "$GITHUB_EVENT_PATH"
           else
-            python openwisp-utils/.github/actions/bot-autoassign/__main__.py ${{ inputs.bot_command }}
+            python openwisp-utils/.github/actions/bot-autoassign/__main__.py "$BOT_COMMAND"
           fi
