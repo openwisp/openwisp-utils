@@ -1,8 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from django.contrib.admin.sites import AdminSite
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Permission, User
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 from django.urls import reverse
@@ -21,8 +20,6 @@ from ..models import (
     Shelf,
 )
 from . import AdminTestMixin, CreateMixin
-
-User = get_user_model()
 
 
 class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
@@ -135,6 +132,13 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             ).wsgi_request
             self.assertFalse(modeladmin.has_delete_permission(request))
 
+        with self.subTest("delete URL returns False"):
+            obj = self._create_radius_accounting(username="delete-test", session_id="2")
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_delete", args=[obj.pk])
+            ).wsgi_request
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
         with self.subTest("cascade delete from unrelated URL returns True"):
             # Simulate being called from a parent model's delete
             # confirmation (cascade), not from the model's own views.
@@ -152,6 +156,21 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             ).wsgi_request
             request.resolver_match = None
             self.assertTrue(modeladmin.has_delete_permission(request))
+
+        with self.subTest("cascade delete without child permission returns False"):
+            user = User.objects.create(
+                username="readonly-staff",
+                password="pass",
+                is_staff=True,
+                is_superuser=False,
+            )
+            self.client.force_login(user)
+            request = self.client.get(reverse("admin:index")).wsgi_request
+
+            mock_resolver = MagicMock()
+            mock_resolver.url_name = "index"
+            request.resolver_match = mock_resolver
+            self.assertFalse(modeladmin.has_delete_permission(request))
 
     def test_context_processor(self):
         url = reverse("admin:index")
