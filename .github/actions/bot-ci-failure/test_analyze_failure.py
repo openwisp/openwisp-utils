@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 import unittest
 from unittest.mock import MagicMock, mock_open, patch
 
@@ -60,13 +61,15 @@ class TestGetRepoContext(unittest.TestCase):
     ):
         mock_exists.return_value = True
         mock_walk.return_value = [
-            ("pr_code", ["docs"], ["main.py", "style.css", "Dockerfile"]),
+            ("pr_code", ["docs", "lib"], ["main.py", "style.css", "Dockerfile"]),
+            ("pr_code/lib", [], ["ignored.py"]),
         ]
         result = get_repo_context("pr_code")
         self.assertIn('<file path="main.py">', result)
         self.assertIn('<file path="Dockerfile">', result)
         self.assertIn("print('hello')", result)
         self.assertNotIn('<file path="style.css">', result)
+        self.assertNotIn('<file path="lib/ignored.py">', result)
 
     @patch("analyze_failure.os.path.exists")
     @patch("analyze_failure.os.walk")
@@ -97,6 +100,31 @@ class TestGetRepoContext(unittest.TestCase):
         ]
         result = get_repo_context("pr_code")
         self.assertEqual(result, "No relevant source files found in repository.")
+
+    def test_lib_exclusion(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with open(os.path.join(temp_dir, "main.py"), "w") as f:
+                f.write("print('included')")
+            lib_dir = os.path.join(temp_dir, "lib")
+            os.makedirs(lib_dir)
+            with open(os.path.join(lib_dir, "ignored.py"), "w") as f:
+                f.write("print('ignored')")
+            deep_lib_dir = os.path.join(
+                temp_dir,
+                "openwisp_controller",
+                "config",
+                "static",
+                "config",
+                "js",
+                "lib",
+            )
+            os.makedirs(deep_lib_dir)
+            with open(os.path.join(deep_lib_dir, "jquery.js"), "w") as f:
+                f.write("console.log('massive library ignored')")
+            result = get_repo_context(temp_dir)
+            self.assertIn("main.py", result)
+            self.assertNotIn("ignored.py", result)
+            self.assertNotIn("jquery.js", result)
 
 
 class TestMain(unittest.TestCase):
