@@ -181,7 +181,6 @@ def call_gemini(
     system_instruction: str,
     api_key: str,
     model: str,
-    changelog_format: str = "rst",
 ) -> str:
     """Call Google Gemini API to generate changelog using google-genai SDK."""
     client = genai.Client(
@@ -378,7 +377,6 @@ def validate_changelog_output(text: str, changelog_format: str) -> bool:
     suspicious_patterns = [
         r"ignore\s+previous\s+instructions",
         r"ignore_[a-z_]*instructions",
-        r"new\s+task",
         r"system\s*:",
         r"<script",
         r"javascript:",
