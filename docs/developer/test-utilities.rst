@@ -234,13 +234,16 @@ Methods
 ~~~~~~~
 
 - ``setUpClass()`` (``@classmethod``): Initializes the Selenium WebDriver
-  with Firefox and applies custom settings to improve test reliability. -
-  Uses the ``SELENIUM_HEADLESS`` environment variable to determine whether
-  to run in headless mode. - Uses the ``GECKO_BIN`` environment variable
-  to specify a custom Firefox binary location. - Uses the ``GECKO_LOG``
-  environment variable to enable GeckoDriver logging to
-  ``geckodriver.log``. - Configures preferences to disable hardware
-  acceleration and increase timeouts.
+  with Firefox and applies custom settings to improve test reliability.
+
+  - Uses the ``SELENIUM_HEADLESS`` environment variable to determine
+    whether to run in headless mode.
+  - Uses the ``GECKO_BIN`` environment variable to specify a custom
+    Firefox binary location.
+  - Uses the ``GECKO_LOG`` environment variable to enable GeckoDriver
+    logging to ``geckodriver.log``. - Configures preferences to disable
+    hardware acceleration and increase timeouts.
+
 - ``tearDownClass()`` (``@classmethod``): Quits the Selenium WebDriver to
   clean up resources after the test class has finished executing.
 - ``open(url, driver=None, timeout=5)``: Opens a URL in the browser. -

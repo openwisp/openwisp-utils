@@ -68,7 +68,7 @@ jobs:
         run: |
           pip install -U pip wheel setuptools
           pip install -U -r requirements-test.txt
-          pip install -e .[qa,rest,selenium,releaser]
+          pip install -e .[qa,rest,selenium,releaser,github_actions]
           pip install ${{ matrix.django-version }}
           sudo npm install -g prettier
 
@@ -94,6 +94,7 @@ jobs:
           format: cobertura
           flag-name: python-${{ matrix.python-version }}-${{ matrix.django-version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-error: false
 
   coveralls:
     needs: build
@@ -103,3 +104,4 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           parallel-finished: true
+          fail-on-error: false
