@@ -78,6 +78,7 @@ setup(
         ],
         "github_actions": [
             "google-genai>=1.62.0,<2.0.0",
+            "PyGithub>=2.0.0,<3.0.0",
         ],
     },
     classifiers=[
