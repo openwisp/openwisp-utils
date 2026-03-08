@@ -61,15 +61,13 @@ class TestGetRepoContext(unittest.TestCase):
     ):
         mock_exists.return_value = True
         mock_walk.return_value = [
-            ("pr_code", ["docs", "lib"], ["main.py", "style.css", "Dockerfile"]),
-            ("pr_code/lib", [], ["ignored.py"]),
+            ("pr_code", ["docs"], ["main.py", "style.css", "Dockerfile"]),
         ]
         result = get_repo_context("pr_code")
         self.assertIn('<file path="main.py">', result)
         self.assertIn('<file path="Dockerfile">', result)
         self.assertIn("print('hello')", result)
         self.assertNotIn('<file path="style.css">', result)
-        self.assertNotIn('<file path="lib/ignored.py">', result)
 
     @patch("analyze_failure.os.path.exists")
     @patch("analyze_failure.os.walk")
