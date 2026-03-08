@@ -123,6 +123,8 @@ class TestGetRepoContext(unittest.TestCase):
             self.assertIn("main.py", result)
             self.assertNotIn("ignored.py", result)
             self.assertNotIn("jquery.js", result)
+            self.assertNotIn("print('ignored')", result)
+            self.assertNotIn("massive library ignored", result)
 
 
 class TestMain(unittest.TestCase):
