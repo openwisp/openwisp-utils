@@ -106,7 +106,7 @@ class TestMain(unittest.TestCase):
     @patch.dict(os.environ, {}, clear=True)
     def test_exits_early_without_api_key(self, mock_print):
         main()
-        mock_print.assert_any_call(
+        mock_print.assert_called_once_with(
             "::warning::Skipping: No API Key found.", file=sys.stderr
         )
 
@@ -116,7 +116,7 @@ class TestMain(unittest.TestCase):
     def test_exits_early_without_failed_logs(self, mock_get_logs, mock_print):
         mock_get_logs.return_value = "No failed logs found."
         main()
-        mock_print.assert_any_call(
+        mock_print.assert_called_once_with(
             "::warning::Skipping: No failure logs to analyse.", file=sys.stderr
         )
 
@@ -144,7 +144,7 @@ class TestMain(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         main()
-        mock_print.assert_any_call(
+        mock_print.assert_called_once_with(
             "### Test Failed\n"
             "Hello @testuser\n"
             "*(Analysis for commit abc1234)*\n"
@@ -172,7 +172,7 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit) as context:
             main()
         self.assertEqual(context.exception.code, 0)
-        mock_print.assert_any_call(
+        mock_print.assert_called_once_with(
             "::warning::LLM output failed format validation; skipping comment.",
             file=sys.stderr,
         )
@@ -194,7 +194,7 @@ class TestMain(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         with self.assertRaises(SystemExit):
             main()
-        mock_print.assert_any_call(
+        mock_print.assert_called_once_with(
             "::warning::Generation returned an empty response; skipping report.",
             file=sys.stderr,
         )
@@ -212,7 +212,7 @@ class TestMain(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         with self.assertRaises(SystemExit):
             main()
-        mock_print.assert_any_call(
+        mock_print.assert_called_once_with(
             "::warning::API Error (Max retries reached or fatal error): Quota Exceeded",
             file=sys.stderr,
         )
@@ -237,6 +237,7 @@ class TestMain(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         main()
+        self.assertEqual(mock_print.call_count, 1)
         printed_text = mock_print.call_args[0][0]
         self.assertIn(
             "*(Warning: Output truncated due to length limits)*", printed_text
