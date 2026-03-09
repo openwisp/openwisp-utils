@@ -86,70 +86,126 @@ the following environment variables at runtime: ``GITHUB_TOKEN``,
 
 **Setup for Other Repositories**
 
-To enable the auto-assignment bot in another OpenWISP repository, add
-workflow files under ``.github/workflows/``. Each workflow needs to:
+To enable the auto-assignment bot in another OpenWISP repository, you must
+create four workflow files under ``.github/workflows/`` that call the
+reusable GitHub Workflow. This reusable workflow automatically handles
+token generation, environment setup, and executing the bot scripts.
 
-1. Generate a GitHub App token using the OpenWISP Bot credentials.
-2. Checkout ``openwisp-utils`` to get the bot scripts.
-3. Install the bot dependencies via ``pip install -e .[github_actions]``.
-4. Run the appropriate bot command.
-
-Below is a complete example for the issue assignment bot. You can find all
-four workflow files in the ``openwisp-utils`` repository under
-``.github/workflows/`` (``bot-autoassign-issue.yml``,
+You can find the required workflow files (``bot-autoassign-issue.yml``,
 ``bot-autoassign-pr-issue-link.yml``, ``bot-autoassign-pr-reopen.yml``,
-``bot-autoassign-stale-pr.yml``).
+``bot-autoassign-stale-pr.yml``) in the ``openwisp-utils`` repository. It
+is recommended to simply copy them to your repository, or recreate them
+using the following examples.
+
+**1. Issue Assignment Bot**
+(``.github/workflows/bot-autoassign-issue.yml``)
 
 .. code-block:: yaml
 
     name: Issue Assignment Bot
-
     on:
       issue_comment:
         types: [created]
-
     permissions:
       contents: read
       issues: write
-
     concurrency:
       group: bot-autoassign-issue-${{ github.repository }}-${{ github.event.issue.number }}
       cancel-in-progress: true
-
     jobs:
       respond-to-assign-request:
-        runs-on: ubuntu-latest
         if: github.event.issue.pull_request == null
-        steps:
-          - name: Generate GitHub App token
-            id: generate-token
-            uses: actions/create-github-app-token@v2
-            with:
-              app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
-              private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: issue_assignment
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
-          - name: Checkout openwisp-utils
-            uses: actions/checkout@v6
-            with:
-              repository: openwisp/openwisp-utils
-              path: openwisp-utils
+**2. PR Issue Link**
+(``.github/workflows/bot-autoassign-pr-issue-link.yml``)
 
-          - name: Set up Python
-            uses: actions/setup-python@v6
-            with:
-              python-version: "3.13"
+.. code-block:: yaml
 
-          - name: Install dependencies
-            run: pip install -e openwisp-utils/.[github_actions]
+    name: PR Issue Auto-Assignment
+    on:
+      pull_request_target:
+        types: [opened, reopened, closed]
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    concurrency:
+      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    jobs:
+      auto-assign-issue:
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: issue_assignment
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
-          - name: Run issue assignment bot
-            env:
-              GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
-              REPOSITORY: ${{ github.repository }}
-              GITHUB_EVENT_NAME: ${{ github.event_name }}
-            run: >
-              python openwisp-utils/.github/actions/bot-autoassign/__main__.py
-              issue_assignment "$GITHUB_EVENT_PATH"
+**3. PR Reopen** (``.github/workflows/bot-autoassign-pr-reopen.yml``)
+
+.. code-block:: yaml
+
+    name: PR Reopen Reassignment
+    on:
+      pull_request_target:
+        types: [reopened]
+      issue_comment:
+        types: [created]
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: bot-autoassign-pr-reopen-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    jobs:
+      reassign-on-reopen:
+        if: github.event_name == 'pull_request_target' && github.event.action == 'reopened'
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: pr_reopen
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+      handle-pr-activity:
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.issue.user.login == github.event.comment.user.login
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: pr_reopen
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+**4. Stale PR** (``.github/workflows/bot-autoassign-stale-pr.yml``)
+
+.. code-block:: yaml
+
+    name: Stale PR Management
+    on:
+      schedule:
+        - cron: "0 0 * * *"
+      workflow_dispatch:
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: bot-autoassign-stale-pr-${{ github.repository }}
+      cancel-in-progress: false
+    jobs:
+      manage-stale-prs-python:
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: stale_pr
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 GitHub Workflows
 ----------------
