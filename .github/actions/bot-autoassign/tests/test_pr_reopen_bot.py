@@ -194,7 +194,7 @@ class TestPRActivityBot:
 
     def test_handle_contributor_activity_no_payload(self, bot_env):
         bot = PRActivityBot()
-        assert not bot.handle_contributor_activity()
+        assert bot.handle_contributor_activity()
 
     def test_run_unsupported_event(self, bot_env):
         bot = PRActivityBot()

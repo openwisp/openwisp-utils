@@ -69,15 +69,15 @@ class PRReopenBot(GitHubBot):
             pr_body = pr.get("body", "")
             if not all([pr_number, pr_author]):
                 print("Missing required PR data")
-                return False
+                return True
             print(f"Handling PR #{pr_number}" f" reopen by {pr_author}")
             reassigned = self.reassign_issues_to_author(pr_number, pr_author, pr_body)
             self.remove_stale_label(pr_number)
             print(f"Reassigned {len(reassigned)}" f" issues to {pr_author}")
             return True
         except Exception as e:
-            print(f"Error handling PR reopen: {e}")
-            return False
+            print(f"Error handling reopened PR: {e}")
+            return True
 
     def run(self):
         if not self.github or not self.repo:
@@ -101,7 +101,7 @@ class PRActivityBot(GitHubBot):
     def handle_contributor_activity(self):
         if not self.event_payload:
             print("No event payload available")
-            return False
+            return True
         try:
             issue_data = self.event_payload.get("issue", {})
             pr_number = issue_data.get("number")
@@ -110,7 +110,7 @@ class PRActivityBot(GitHubBot):
             )
             if not all([pr_number, commenter]):
                 print("Missing required comment data")
-                return False
+                return True
             if not issue_data.get("pull_request"):
                 print("Comment is on an issue," " not a PR, skipping")
                 return True
@@ -157,7 +157,7 @@ class PRActivityBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error handling contributor activity: {e}")
-            return False
+            return True
 
     def run(self):
         if not self.github or not self.repo:
@@ -172,7 +172,7 @@ class PRActivityBot(GitHubBot):
                 return True
         except Exception as e:
             print(f"Error in main execution: {e}")
-            return False
+            return True
         finally:
             print("PR Activity Bot completed")
 

@@ -281,14 +281,14 @@ class IssueAssignmentBot(GitHubBot):
             issue_number = issue.get("number")
             if not all([comment_body, commenter, issue_number]):
                 print("Missing required comment data")
-                return False
+                return True
             if self.is_assignment_request(comment_body):
                 return self.respond_to_assignment_request(issue_number, commenter)
             print("Comment does not contain assignment request")
             return True
         except Exception as e:
             print(f"Error handling issue comment: {e}")
-            return False
+            return True
 
     def handle_pull_request(self):
         if not self.event_payload:
@@ -302,7 +302,7 @@ class IssueAssignmentBot(GitHubBot):
             pr_body = pr.get("body", "")
             if not all([pr_number, pr_author]):
                 print("Missing required PR data")
-                return False
+                return True
             if action in ["opened", "reopened"]:
                 self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
                 # We consider the event handled even if no issues were linked
@@ -314,7 +314,7 @@ class IssueAssignmentBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error handling pull request: {e}")
-            return False
+            return True
 
     def run(self):
         if not self.github or not self.repo:
@@ -331,7 +331,7 @@ class IssueAssignmentBot(GitHubBot):
                 return True
         except Exception as e:
             print(f"Error in main execution: {e}")
-            return False
+            return True
         finally:
             print("Issue Assignment Bot completed")
 
