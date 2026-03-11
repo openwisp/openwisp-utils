@@ -177,10 +177,11 @@ class TestExtractFailedTests(unittest.TestCase):
         self.assertIn("FAIL: test_one", result)
         self.assertNotIn("ok test_two", result)
 
-    def test_returns_body_when_no_separators(self):
+    def test_wraps_body_with_separators_when_no_original_separators(self):
         body = "some plain text with a FAIL: marker"
         result = _extract_failed_tests(body)
-        self.assertIn("FAIL:", result)
+        sep = "=" * 70
+        self.assertEqual(result, f"\n{sep}\n{body}\n{sep}\n")
 
 
 class TestProcessErrorLogs(unittest.TestCase):
