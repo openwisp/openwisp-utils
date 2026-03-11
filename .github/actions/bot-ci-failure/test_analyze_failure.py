@@ -164,11 +164,9 @@ class TestExtractFailedTests(unittest.TestCase):
 
     def test_extracts_only_failed_blocks(self):
         body = (
-            "setup stuff\n"
-            + "=" * 70
-            + "\nFAIL: test_one (app.tests)\n"
+            "setup stuff\n" + "=" * 70 + "\nFAIL: test_one (app.tests)\n"
             "Traceback (most recent call last):\n"
-            "  File \"test.py\", line 5\n"
+            '  File "test.py", line 5\n'
             "AssertionError: False is not true\n"
             + "=" * 70
             + "\nok test_two (app.tests)\n"
@@ -216,17 +214,14 @@ class TestProcessErrorLogs(unittest.TestCase):
         content = (
             "===== JOB 400 =====\n"
             "Traceback (most recent call last):\n"
-            "  File \"x.py\", line 1\n"
+            '  File "x.py", line 1\n'
             "AssertionError\n"
         )
         _, tests_failed = process_error_logs(content)
         self.assertTrue(tests_failed)
 
     def test_tests_failed_false_on_qa_only(self):
-        content = (
-            "===== JOB 500 =====\n"
-            "checkcommit: bad commit message\n"
-        )
+        content = "===== JOB 500 =====\n" "checkcommit: bad commit message\n"
         _, tests_failed = process_error_logs(content)
         self.assertFalse(tests_failed)
 

@@ -6,7 +6,6 @@ import sys
 from google import genai
 from google.genai import types
 
-
 # Keywords that indicate an automated test failure (as opposed to
 # QA-only / commit-message-only failures).
 TEST_FAILURE_MARKERS = (
@@ -15,16 +14,13 @@ TEST_FAILURE_MARKERS = (
     "FAILED (",
     "Traceback (most recent call last):",
     "AssertionError",
-    "AssertionError",
 )
 
 
 def _remove_geckodriver_lines(text):
     """Strip lines that reference geckodriver.log from log output."""
     return "\n".join(
-        line
-        for line in text.splitlines()
-        if "geckodriver.log" not in line.lower()
+        line for line in text.splitlines() if "geckodriver.log" not in line.lower()
     )
 
 
