@@ -281,7 +281,7 @@ class IssueAssignmentBot(GitHubBot):
             issue_number = issue.get("number")
             if not all([comment_body, commenter, issue_number]):
                 print("Missing required comment data")
-                return True
+                return False
             if self.is_assignment_request(comment_body):
                 return self.respond_to_assignment_request(issue_number, commenter)
             print("Comment does not contain assignment request")
@@ -302,7 +302,7 @@ class IssueAssignmentBot(GitHubBot):
             pr_body = pr.get("body", "")
             if not all([pr_number, pr_author]):
                 print("Missing required PR data")
-                return True
+                return False
             if action in ["opened", "reopened"]:
                 self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
                 # We consider the event handled even if no issues were linked

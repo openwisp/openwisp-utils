@@ -69,7 +69,7 @@ class PRReopenBot(GitHubBot):
             pr_body = pr.get("body", "")
             if not all([pr_number, pr_author]):
                 print("Missing required PR data")
-                return True
+                return False
             print(f"Handling PR #{pr_number}" f" reopen by {pr_author}")
             reassigned = self.reassign_issues_to_author(pr_number, pr_author, pr_body)
             self.remove_stale_label(pr_number)
@@ -110,7 +110,7 @@ class PRActivityBot(GitHubBot):
             )
             if not all([pr_number, commenter]):
                 print("Missing required comment data")
-                return True
+                return False
             if not issue_data.get("pull_request"):
                 print("Comment is on an issue," " not a PR, skipping")
                 return True

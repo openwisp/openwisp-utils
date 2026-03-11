@@ -148,7 +148,7 @@ class StalePRBot(GitHubBot):
         try:
             pr_author = pr.user.login if pr.user else None
             if not pr_author:
-                return True
+                return False
             close_lines = [
                 "<!-- bot:closed -->",
                 f"Hi @{pr_author} 👋,",
@@ -210,7 +210,7 @@ class StalePRBot(GitHubBot):
         try:
             pr_author = pr.user.login if pr.user else None
             if not pr_author:
-                return True
+                return False
             unassign_lines = [
                 "<!-- bot:stale -->",
                 f"Hi @{pr_author} 👋,",
@@ -273,7 +273,7 @@ class StalePRBot(GitHubBot):
         try:
             pr_author = pr.user.login if pr.user else None
             if not pr_author:
-                return True
+                return False
             remaining = self.DAYS_BEFORE_UNASSIGN - days_inactive
             warning_lines = [
                 "<!-- bot:stale_warning -->",
