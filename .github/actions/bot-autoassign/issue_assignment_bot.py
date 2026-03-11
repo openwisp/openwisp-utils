@@ -288,7 +288,7 @@ class IssueAssignmentBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error handling issue comment: {e}")
-            return True
+            return False
 
     def handle_pull_request(self):
         if not self.event_payload:
@@ -314,7 +314,7 @@ class IssueAssignmentBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error handling pull request: {e}")
-            return True
+            return False
 
     def run(self):
         if not self.github or not self.repo:
@@ -331,7 +331,7 @@ class IssueAssignmentBot(GitHubBot):
                 return True
         except Exception as e:
             print(f"Error in main execution: {e}")
-            return True
+            return False
         finally:
             print("Issue Assignment Bot completed")
 

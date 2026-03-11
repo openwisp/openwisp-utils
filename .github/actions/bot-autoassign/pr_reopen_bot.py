@@ -77,7 +77,7 @@ class PRReopenBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error handling reopened PR: {e}")
-            return True
+            return False
 
     def run(self):
         if not self.github or not self.repo:
@@ -101,7 +101,7 @@ class PRActivityBot(GitHubBot):
     def handle_contributor_activity(self):
         if not self.event_payload:
             print("No event payload available")
-            return True
+            return False
         try:
             issue_data = self.event_payload.get("issue", {})
             pr_number = issue_data.get("number")
@@ -157,7 +157,7 @@ class PRActivityBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error handling contributor activity: {e}")
-            return True
+            return False
 
     def run(self):
         if not self.github or not self.repo:
@@ -172,7 +172,7 @@ class PRActivityBot(GitHubBot):
                 return True
         except Exception as e:
             print(f"Error in main execution: {e}")
-            return True
+            return False
         finally:
             print("PR Activity Bot completed")
 

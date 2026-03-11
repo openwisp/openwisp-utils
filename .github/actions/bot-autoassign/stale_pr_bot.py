@@ -204,7 +204,7 @@ class StalePRBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error closing PR #{pr.number}: {e}")
-            return True
+            return False
 
     def mark_pr_stale(self, pr, days_inactive):
         try:
@@ -267,7 +267,7 @@ class StalePRBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error marking PR #{pr.number}" f" as stale: {e}")
-            return True
+            return False
 
     def send_stale_warning(self, pr, days_inactive):
         try:
@@ -316,12 +316,12 @@ class StalePRBot(GitHubBot):
             return True
         except Exception as e:
             print("Error sending warning" f" for PR #{pr.number}: {e}")
-            return True
+            return False
 
     def process_stale_prs(self):
         if not self.repo:
             print("GitHub repository not initialized")
-            return True
+            return False
         try:
             open_prs = self.repo.get_pulls(state="open")
             processed_count = 0
@@ -381,7 +381,7 @@ class StalePRBot(GitHubBot):
             return True
         except Exception as e:
             print(f"Error in process_stale_prs: {e}")
-            return True
+            return False
 
     def run(self):
         if not self.github or not self.repo:
@@ -392,7 +392,7 @@ class StalePRBot(GitHubBot):
             return self.process_stale_prs()
         except Exception as e:
             print(f"Error in main execution: {e}")
-            return True
+            return False
         finally:
             print("Stale PR Management Bot completed")
 
