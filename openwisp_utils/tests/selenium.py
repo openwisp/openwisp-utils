@@ -54,8 +54,15 @@ class SeleniumTestMixin:
             )
             super()._setup_and_call(result, debug)
             # IMPORTANT: a skip is not a success; propagate it as a skip and stop.
-            if getattr(result, "skipped", None):
-                for _, reason in result.skipped:
+            skip_reasons = []
+            if hasattr(result, "events"):
+                skip_reasons = [
+                    event[2] for event in result.events if event[0] == "addSkip"
+                ]
+            elif getattr(result, "skipped", None):
+                skip_reasons = [reason for _, reason in result.skipped]
+            if skip_reasons:
+                for reason in skip_reasons:
                     original_result.addSkip(self, reason)
                 if hasattr(original_result, "events") and hasattr(result, "events"):
                     original_result.events = result.events
