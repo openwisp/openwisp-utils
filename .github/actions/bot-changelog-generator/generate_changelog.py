@@ -448,7 +448,7 @@ def main():
         pr_details, diff, commits, issues, changelog_format
     )
     changelog_entry = call_gemini(
-        user_data_prompt, system_instruction, api_key, model, changelog_format
+        user_data_prompt, system_instruction, api_key, model
     )
     changelog_entry = changelog_entry.strip()
 
