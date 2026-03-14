@@ -63,8 +63,8 @@ class SeleniumTestMixin:
             if skip_reasons:
                 for reason in skip_reasons:
                     original_result.addSkip(self, reason)
-                if hasattr(original_result, "events") and hasattr(result, "events"):
-                    original_result.events = result.events
+                if hasattr(original_result, "events"):
+                    original_result.stopTest(self)
                 return
             if result.wasSuccessful():
                 if attempt == 0:
