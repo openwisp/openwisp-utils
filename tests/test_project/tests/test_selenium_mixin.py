@@ -11,14 +11,6 @@ class TestSeleniumMixinSkipHandling(SimpleTestCase):
             retry_max = 0
             retry_delay = 0
 
-            @classmethod
-            def setUpClass(cls):
-                pass
-
-            @classmethod
-            def tearDownClass(cls):
-                pass
-
             @skip("skip propagation regression test")
             def test_skip(self):
                 pass
