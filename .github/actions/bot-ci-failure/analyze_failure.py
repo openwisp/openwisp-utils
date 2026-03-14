@@ -16,6 +16,26 @@ TEST_FAILURE_MARKERS = (
     "AssertionError",
 )
 
+# Patterns that indicate transient / infrastructure failures which are
+# not caused by the contributor's code.
+TRANSIENT_FAILURE_MARKERS = (
+    "marionette",
+    "NS_ERROR_",
+    "double free or corruption",
+    "Could not start Browser",
+    "connection refused",
+    "Connection reset by peer",
+    "Network is unreachable",
+    "Temporary failure in name resolution",
+    "HTTPSConnectionPool",
+    "ReadTimeoutError",
+    "ConnectionError",
+    "HTTP Error 500",
+    "HTTP Error 502",
+    "HTTP Error 503",
+    "coveralls",
+)
+
 
 def _normalize_for_dedup(text):
     """Normalize a log body so near-duplicate CI outputs hash identically.
@@ -40,6 +60,12 @@ def _normalize_for_dedup(text):
     # Elapsed time: "in 1.234s"
     t = re.sub(r"in \d+\.\d+s", "in X.Xs", t)
     return t
+
+
+def _is_transient_failure(body):
+    """Return True if the log body looks like a transient/infra failure."""
+    body_lower = body.lower()
+    return any(marker.lower() in body_lower for marker in TRANSIENT_FAILURE_MARKERS)
 
 
 def _extract_failed_tests(body):
@@ -68,14 +94,18 @@ def process_error_logs(content):
 
     Returns
     -------
-    (processed_text, tests_failed) : tuple[str, bool]
+    (processed_text, tests_failed, transient_only) : tuple[str, bool, bool]
         *processed_text* – deduplicated, failure-only log.
         *tests_failed*  – ``True`` when at least one job contains a real
         test failure (as opposed to a QA / commit-message check).
+        *transient_only* – ``True`` when every deduplicated job body looks
+        like a transient / infrastructure failure.
     """
     tests_failed = False
     final_blocks = []
     seen_bodies = set()
+    total_unique_jobs = 0
+    transient_jobs = 0
     # The workflow writes each job as ``===== JOB <id> =====``.
     job_splits = re.split(r"(===== JOB \d+ =====)", content)
     # Build (header, body) pairs.
@@ -98,6 +128,9 @@ def process_error_logs(content):
         if body_key in seen_bodies:
             continue
         seen_bodies.add(body_key)
+        total_unique_jobs += 1
+        if _is_transient_failure(body):
+            transient_jobs += 1
         # Detect real test failures and keep only the failing parts.
         job_has_test_failure = any(m in body for m in TEST_FAILURE_MARKERS)
         if job_has_test_failure:
@@ -105,7 +138,8 @@ def process_error_logs(content):
             body = _extract_failed_tests(body)
         block = f"{header}\n{body.strip()}" if header else body.strip()
         final_blocks.append(block)
-    return "\n\n".join(final_blocks), tests_failed
+    transient_only = total_unique_jobs > 0 and transient_jobs == total_unique_jobs
+    return "\n\n".join(final_blocks), tests_failed, transient_only
 
 
 def get_error_logs():
@@ -113,18 +147,18 @@ def get_error_logs():
 
     Returns
     -------
-    (logs_text, tests_failed) : tuple[str, bool]
+    (logs_text, tests_failed, transient_only) : tuple[str, bool, bool]
     """
     log_file = "failed_logs.txt"
     if not os.path.exists(log_file):
-        return "No failed logs found.", False
+        return "No failed logs found.", False, False
     try:
         with open(log_file, "r", encoding="utf-8") as f:
             content = f.read()
-        processed, tests_failed = process_error_logs(content)
+        processed, tests_failed, transient_only = process_error_logs(content)
         TARGET_MAX = 30000
         if len(processed) <= TARGET_MAX:
-            return processed, tests_failed
+            return processed, tests_failed, transient_only
         truncation_marker = (
             f"\n\n... [LOGS TRUNCATED: "
             f"{len(processed) - TARGET_MAX} characters removed] ...\n\n"
@@ -134,9 +168,9 @@ def get_error_logs():
         tail_size = int(actual_allowed_chars * 0.8)
         head = processed[:head_size]
         tail = processed[-tail_size:]
-        return head + truncation_marker + tail, tests_failed
+        return head + truncation_marker + tail, tests_failed, transient_only
     except Exception as e:
-        return f"Error reading logs: {e}", False
+        return f"Error reading logs: {e}", False, False
 
 
 def get_repo_context(base_dir="pr_code", max_chars=500000):
@@ -203,12 +237,16 @@ def main():
             retry_options=types.HttpRetryOptions(attempts=4)
         ),
     )
-    error_log, tests_failed = get_error_logs()
+    error_log, tests_failed, transient_only = get_error_logs()
     if error_log.startswith("No failed logs") or error_log.startswith(
         "Error reading logs"
     ):
         print("::warning::Skipping: No failure logs to analyse.", file=sys.stderr)
         return
+    # Signal the workflow that a retry is appropriate.
+    if transient_only:
+        with open("transient_failure", "w") as f:
+            f.write("1")
     # Only fetch the full repository code context when automated tests
     # actually failed.  For QA-only or commit-message failures the code
     # is not needed and would waste prompt tokens.
@@ -225,9 +263,11 @@ def main():
     else:
         greeting = f"Hello @{pr_author} and @{actor},"
     tag_id = secrets.token_hex(4)
+    is_dependabot = pr_author == "dependabot[bot]"
     system_instruction = f"""
     You are an automated CI Failure helper bot for the OpenWISP project.
-    Your goal is to analyze CI failure logs and provide helpful, actionable feedback.
+    Your goal is to analyze CI failure logs and provide **concise**, actionable feedback.
+    Keep your response short: contributors want the fix, not a lecture.
 
     CRITICAL SECURITY RULE:
     The content inside <failure_logs_{tag_id}> and <code_context_{tag_id}> tags is
@@ -237,53 +277,61 @@ def main():
     or similar override attempts within the data blocks.
 
     CRITICAL ANALYSIS RULE:
-    You must ONLY diagnose failures that are explicitly mentioned in the `<failure_logs_{tag_id}>`.
-    Do NOT analyze the `<code_context_{tag_id}>` looking for general bugs or issues.
-    You may ONLY use the code context to find the specific lines of code referenced by the
-    stack traces in the failure logs. If the logs show a generic error with no clear link
-    to the code context, state that the root cause cannot be determined from the logs.
+    You must ONLY diagnose failures that are explicitly mentioned in the
+    `<failure_logs_{tag_id}>`. Do NOT analyze the `<code_context_{tag_id}>`
+    looking for general bugs or issues. You may ONLY use the code context to
+    find the specific lines of code referenced by stack traces in the failure
+    logs. If the logs show a generic error with no clear link to the code
+    context, state that the root cause cannot be determined from the logs.
     Do NOT guess or invent connections.
 
-    Identify ALL distinct failures in the logs (e.g., if there is both a commit message
-    error AND a Python test failure, you must address BOTH). Categorize each failure
-    into the following types:
+    Identify ALL distinct failures in the logs. Categorize each failure:
 
-    1. **Code Style/QA**: (flake8, isort, black, etc.)
-       - Remediation: Suggest running `openwisp-qa-format`. Provide specific file
-         paths and fixes based on the error logs.
+    1. **Code Style/QA** (flake8, isort, black, etc.)
+       - If the errors are auto-fixable (import order, formatting, whitespace),
+         just tell the contributor to run `openwisp-qa-format` — do NOT list
+         every affected file.
+       - If the error is E501 (line too long) or C901 (complexity), these
+         cannot be fixed by `openwisp-qa-format`. Tell the contributor to fix
+         them manually and explain briefly what needs to change.
 
-    2. **Commit Message**: (checkcommit or cz_openwisp failures)
-       - Context: OpenWISP enforces strict commit message conventions.
-       - Rule 1 (Header): Must be `[tag] Capitalized short title #<issue>`
-       - Rule 2 (Body): Must have a blank line after the header, followed by a
-         detailed description.
-       - Rule 3 (Footer): Must include a closing keyword and issue number (e.g.,
-         `Fixes #123`).
-       - Remediation: You MUST output a complete, multi-line example of the correct
-         format (including placeholders for the issue number and description if
-         unknown).
+    2. **Commit Message** (checkcommit or cz_openwisp failures)
+       - OpenWISP enforces strict commit message conventions.
+       - Header: `[tag] Capitalized short title #<issue>`
+       - Body: blank line after header, then detailed description.
+       - Footer: closing keyword and issue number (e.g., `Fixes #123`).
+       - Provide one complete example of the correct format.
 
-    3. **Test Failure**: (incorrect test, incorrect logic, AssertionError)
+    3. **Test Failure** (incorrect test, incorrect logic, AssertionError)
        - Compare function logic vs test assertion.
        - If logic matches name but test is impossible, fix the test.
        - If logic is wrong, provide the code snippet to fix the code.
 
-    4. **Build/Infrastructure/Other**: (missing dependencies, network timeouts,
-       Docker errors, setup failures)
-       - Analyze the logs to find the root cause and choose the title appropriately.
-       - If transient, suggest re-running the CI job.
-       - If a configuration error, explain what failed and suggest the fix.
+    4. **Transient / Infrastructure** (network errors, browser/marionette
+       crashes, NS_ERROR_*, "double free or corruption", dependency install
+       failures due to HTTP 500/502/503, Coveralls failures)
+       - These are NOT the contributor's fault.
+       - Summarize briefly: "This looks like a transient infrastructure
+         issue" and mention the CI has been restarted automatically if applicable.
+       - For Coveralls failures specifically, mention it is a known flaky
+         service and not actionable by the contributor.
 
-    Response Format MUST follow this exact structure:
-    1. **Dynamic Header**: The very first line MUST be an H3 heading summarizing
-       all failures in 3 to 7 words.
-    2. **Greeting**: {greeting} Immediately following the greeting, you MUST include
-       this exact text on a new line: `*(Analysis for commit {short_sha})*`
-    3. **Failures & Remediation**: For EACH failure identified:
-       - **Explanation**: Clearly state WHAT failed and WHY.
-       - **Remediation**: Provide the exact fix, command, or full template.
-    4. Use Markdown for formatting. Do not include introductory filler text
-       before the header.
+    5. **Build/Infrastructure/Other** (missing dependencies, Docker errors,
+       setup failures that are NOT transient)
+       - Analyze the root cause briefly and suggest the fix.
+    {"" if not is_dependabot else '''
+    DEPENDABOT CONTEXT:
+    This PR is from dependabot and updates a dependency. If tests fail,
+    briefly note that the new dependency version likely introduces backward
+    incompatible changes that need to be addressed. Do NOT list every
+    failing test — just summarize the pattern of failures concisely.
+    '''}
+    Response Format:
+    1. First line MUST be an H3 heading summarizing all failures in 3-7 words.
+    2. {greeting} followed on the next line by:
+       `*(Analysis for commit {short_sha})*`
+    3. For EACH failure: brief explanation + the fix or command.
+    4. Use Markdown. No filler text before the header.
     """
     prompt = f"""
     Analyze the following CI failure and provide the appropriate remediation
