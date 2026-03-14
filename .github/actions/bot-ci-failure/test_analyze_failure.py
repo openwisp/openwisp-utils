@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from analyze_failure import (  # noqa: E402
     _extract_failed_tests,
+    _normalize_for_dedup,
     _remove_geckodriver_lines,
     get_error_logs,
     get_repo_context,
@@ -231,6 +232,66 @@ class TestProcessErrorLogs(unittest.TestCase):
         text, tests_failed = process_error_logs(content)
         self.assertEqual(text, content)
         self.assertFalse(tests_failed)
+
+
+class TestNormalizeForDedup(unittest.TestCase):
+    """Tests for _normalize_for_dedup."""
+
+    def test_strips_python_version(self):
+        a = _normalize_for_dedup("platform linux -- Python 3.10.5, pytest-7.2.0")
+        b = _normalize_for_dedup("platform linux -- Python 3.11.2, pytest-8.1.0")
+        self.assertEqual(a, b)
+
+    def test_strips_timestamps(self):
+        a = _normalize_for_dedup("Error at 2024-03-14 10:23:45 in module")
+        b = _normalize_for_dedup("Error at 2025-01-01 00:00:00 in module")
+        self.assertEqual(a, b)
+
+    def test_strips_elapsed_time(self):
+        a = _normalize_for_dedup("Ran 42 tests in 1.234s")
+        b = _normalize_for_dedup("Ran 42 tests in 9.876s")
+        self.assertEqual(a, b)
+
+    def test_strips_platform_line(self):
+        result = _normalize_for_dedup(
+            "platform linux -- Python 3.10.5, pytest-7.2.0, py-1.11.0"
+        )
+        self.assertIn("PLATFORM_LINE", result)
+        self.assertNotIn("linux", result)
+
+    def test_preserves_test_names(self):
+        result = _normalize_for_dedup("FAIL: test_login (auth.tests.LoginTest)")
+        self.assertIn("test_login", result)
+        self.assertIn("auth.tests.LoginTest", result)
+
+    def test_preserves_line_numbers_in_tracebacks(self):
+        result = _normalize_for_dedup('  File "test.py", line 42, in test_foo')
+        self.assertIn("line 42", result)
+
+    def test_dedup_integration_near_identical_jobs(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "platform linux -- Python 3.10.5, pytest-7.2.0\n"
+            "FAIL: test_foo\nAssertionError\n"
+            "Ran 5 tests in 1.234s\n"
+            "===== JOB 200 =====\n"
+            "platform linux -- Python 3.11.2, pytest-8.1.0\n"
+            "FAIL: test_foo\nAssertionError\n"
+            "Ran 5 tests in 2.567s\n"
+        )
+        text, _ = process_error_logs(content)
+        self.assertEqual(text.count("FAIL: test_foo"), 1)
+
+    def test_dedup_keeps_genuinely_different_failures(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "FAIL: test_foo\nAssertionError\n"
+            "===== JOB 200 =====\n"
+            "FAIL: test_bar\nAssertionError\n"
+        )
+        text, _ = process_error_logs(content)
+        self.assertIn("FAIL: test_foo", text)
+        self.assertIn("FAIL: test_bar", text)
 
 
 class TestMain(unittest.TestCase):

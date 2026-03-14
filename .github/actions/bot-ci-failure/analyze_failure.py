@@ -24,6 +24,31 @@ def _remove_geckodriver_lines(text):
     )
 
 
+def _normalize_for_dedup(text):
+    """Normalize a log body so near-duplicate CI outputs hash identically.
+
+    Strips version strings, timestamps, and platform info that differ
+    across matrix jobs but do not represent genuinely different failures.
+    The original body is NOT modified -- this is used only for the dedup key.
+    """
+    t = text
+    # Python version: "Python 3.10.5" -> "Python X"
+    t = re.sub(r"Python \d+\.\d+(?:\.\d+)?", "Python X", t)
+    # pytest/tool versions: "pytest-7.2.0" -> "pytest-X"
+    t = re.sub(
+        r"(pytest|django|pip|setuptools|wheel)-\d+[\d.]*", r"\1-X", t, flags=re.I
+    )
+    # Generic semver-like version numbers (e.g., "7.2.0") preceded by - or /
+    t = re.sub(r"(?<=[-/])\d+\.\d+(?:\.\d+)+", "X", t)
+    # Timestamps: 2024-03-14 10:23:45 or 2024-03-14T10:23:45
+    t = re.sub(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}", "TIMESTAMP", t)
+    # "platform linux -- Python X, pytest-X, ..." entire line
+    t = re.sub(r"^platform\s+\S+\s+--\s+.*$", "PLATFORM_LINE", t, flags=re.MULTILINE)
+    # Elapsed time: "in 1.234s"
+    t = re.sub(r"in \d+\.\d+s", "in X.Xs", t)
+    return t
+
+
 def _extract_failed_tests(body):
     """Return only the failing test sections from a test-runner log.
 
@@ -83,7 +108,7 @@ def process_error_logs(content):
         body = _remove_geckodriver_lines(body)
 
         # 2. Deduplicate – skip if we already saw an identical body.
-        body_key = body.strip()
+        body_key = _normalize_for_dedup(body.strip())
         if body_key in seen_bodies:
             continue
         seen_bodies.add(body_key)
