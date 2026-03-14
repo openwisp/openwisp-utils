@@ -91,6 +91,12 @@ create four workflow files under ``.github/workflows/`` that call the
 reusable GitHub Workflow. This reusable workflow automatically handles
 token generation, environment setup, and executing the bot scripts.
 
+.. note::
+
+    Each caller workflow must declare its own ``permissions`` block.
+    GitHub Actions reusable workflows inherit permissions from the caller,
+    so the reusable workflow cannot set them on its own.
+
 You can find the required workflow files (``bot-autoassign-issue.yml``,
 ``bot-autoassign-pr-issue-link.yml``, ``bot-autoassign-pr-reopen.yml``,
 ``bot-autoassign-stale-pr.yml``) in the ``openwisp-utils`` repository. It
