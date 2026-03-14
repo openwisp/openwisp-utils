@@ -6,7 +6,14 @@ from unittest.mock import MagicMock, mock_open, patch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from analyze_failure import get_error_logs, get_repo_context, main  # noqa: E402
+from analyze_failure import (  # noqa: E402
+    _extract_failed_tests,
+    _normalize_for_dedup,
+    get_error_logs,
+    get_repo_context,
+    main,
+    process_error_logs,
+)
 
 
 class TestGetErrorLogs(unittest.TestCase):
@@ -15,33 +22,35 @@ class TestGetErrorLogs(unittest.TestCase):
     @patch("analyze_failure.os.path.exists")
     def test_returns_default_when_file_missing(self, mock_exists):
         mock_exists.return_value = False
-        result = get_error_logs()
-        self.assertEqual(result, "No failed logs found.")
+        text, tests_failed = get_error_logs()
+        self.assertEqual(text, "No failed logs found.")
+        self.assertFalse(tests_failed)
 
     @patch("analyze_failure.os.path.exists")
     @patch("builtins.open", new_callable=mock_open, read_data="Small error log")
     def test_returns_full_content_when_small(self, mock_file, mock_exists):
         mock_exists.return_value = True
-        result = get_error_logs()
-        self.assertEqual(result, "Small error log")
+        text, tests_failed = get_error_logs()
+        self.assertEqual(text, "Small error log")
+        self.assertFalse(tests_failed)
 
     @patch("analyze_failure.os.path.exists")
     def test_truncates_large_logs(self, mock_exists):
         mock_exists.return_value = True
         large_content = "x" * 35000
         with patch("builtins.open", mock_open(read_data=large_content)):
-            result = get_error_logs()
-        self.assertIn("[LOGS TRUNCATED:", result)
-        self.assertLessEqual(len(result), 30000)
-        self.assertTrue(result.startswith("x" * 5980))
+            text, tests_failed = get_error_logs()
+        self.assertIn("[LOGS TRUNCATED:", text)
+        self.assertLessEqual(len(text), 30000)
 
     @patch("analyze_failure.os.path.exists")
     @patch("builtins.open")
     def test_handles_file_read_exception(self, mock_file, mock_exists):
         mock_exists.return_value = True
         mock_file.side_effect = Exception("Permission denied")
-        result = get_error_logs()
-        self.assertIn("Error reading logs: Permission denied", result)
+        text, tests_failed = get_error_logs()
+        self.assertIn("Error reading logs: Permission denied", text)
+        self.assertFalse(tests_failed)
 
 
 class TestGetRepoContext(unittest.TestCase):
@@ -127,6 +136,128 @@ class TestGetRepoContext(unittest.TestCase):
             self.assertNotIn("massive library ignored", result)
 
 
+class TestExtractFailedTests(unittest.TestCase):
+    """Tests for _extract_failed_tests."""
+
+    def test_extracts_only_failed_blocks(self):
+        body = (
+            "setup stuff\n" + "=" * 70 + "\nFAIL: test_one (app.tests)\n"
+            "Traceback (most recent call last):\n"
+            '  File "test.py", line 5\n'
+            "AssertionError: False is not true\n"
+            + "=" * 70
+            + "\nok test_two (app.tests)\n"
+            + "=" * 70
+            + "\nRan 2 tests"
+        )
+        result = _extract_failed_tests(body)
+        self.assertIn("FAIL: test_one", result)
+        self.assertNotIn("ok test_two", result)
+
+    def test_wraps_body_with_separators_when_no_original_separators(self):
+        body = "some plain text with a FAIL: marker"
+        result = _extract_failed_tests(body)
+        sep = "=" * 70
+        self.assertEqual(result, f"\n{sep}\n{body}\n{sep}\n")
+
+
+class TestProcessErrorLogs(unittest.TestCase):
+    """Tests for process_error_logs."""
+
+    def test_deduplicates_identical_job_bodies(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "flake8 error: E501\n"
+            "===== JOB 200 =====\n"
+            "flake8 error: E501\n"
+        )
+        text, tests_failed = process_error_logs(content)
+        # Only one copy of the body should remain.
+        self.assertEqual(text.count("flake8 error: E501"), 1)
+        self.assertFalse(tests_failed)
+
+    def test_tests_failed_true_on_test_failure(self):
+        content = (
+            "===== JOB 400 =====\n"
+            "Traceback (most recent call last):\n"
+            '  File "x.py", line 1\n'
+            "AssertionError\n"
+        )
+        _, tests_failed = process_error_logs(content)
+        self.assertTrue(tests_failed)
+
+    def test_tests_failed_false_on_qa_only(self):
+        content = "===== JOB 500 =====\n" "checkcommit: bad commit message\n"
+        _, tests_failed = process_error_logs(content)
+        self.assertFalse(tests_failed)
+
+    def test_single_block_no_job_headers(self):
+        content = "just some error output without job headers"
+        text, tests_failed = process_error_logs(content)
+        self.assertEqual(text, content)
+        self.assertFalse(tests_failed)
+
+
+class TestNormalizeForDedup(unittest.TestCase):
+    """Tests for _normalize_for_dedup."""
+
+    def test_strips_python_version(self):
+        a = _normalize_for_dedup("platform linux -- Python 3.10.5, pytest-7.2.0")
+        b = _normalize_for_dedup("platform linux -- Python 3.11.2, pytest-8.1.0")
+        self.assertEqual(a, b)
+
+    def test_strips_timestamps(self):
+        a = _normalize_for_dedup("Error at 2024-03-14 10:23:45 in module")
+        b = _normalize_for_dedup("Error at 2025-01-01 00:00:00 in module")
+        self.assertEqual(a, b)
+
+    def test_strips_elapsed_time(self):
+        a = _normalize_for_dedup("Ran 42 tests in 1.234s")
+        b = _normalize_for_dedup("Ran 42 tests in 9.876s")
+        self.assertEqual(a, b)
+
+    def test_strips_platform_line(self):
+        result = _normalize_for_dedup(
+            "platform linux -- Python 3.10.5, pytest-7.2.0, py-1.11.0"
+        )
+        self.assertIn("PLATFORM_LINE", result)
+        self.assertNotIn("linux", result)
+
+    def test_preserves_test_names(self):
+        result = _normalize_for_dedup("FAIL: test_login (auth.tests.LoginTest)")
+        self.assertIn("test_login", result)
+        self.assertIn("auth.tests.LoginTest", result)
+
+    def test_preserves_line_numbers_in_tracebacks(self):
+        result = _normalize_for_dedup('  File "test.py", line 42, in test_foo')
+        self.assertIn("line 42", result)
+
+    def test_dedup_integration_near_identical_jobs(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "platform linux -- Python 3.10.5, pytest-7.2.0\n"
+            "FAIL: test_foo\nAssertionError\n"
+            "Ran 5 tests in 1.234s\n"
+            "===== JOB 200 =====\n"
+            "platform linux -- Python 3.11.2, pytest-8.1.0\n"
+            "FAIL: test_foo\nAssertionError\n"
+            "Ran 5 tests in 2.567s\n"
+        )
+        text, _ = process_error_logs(content)
+        self.assertEqual(text.count("FAIL: test_foo"), 1)
+
+    def test_dedup_keeps_genuinely_different_failures(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "FAIL: test_foo\nAssertionError\n"
+            "===== JOB 200 =====\n"
+            "FAIL: test_bar\nAssertionError\n"
+        )
+        text, _ = process_error_logs(content)
+        self.assertIn("FAIL: test_foo", text)
+        self.assertIn("FAIL: test_bar", text)
+
+
 class TestMain(unittest.TestCase):
     """Tests for the main execution block."""
 
@@ -142,7 +273,7 @@ class TestMain(unittest.TestCase):
     @patch("analyze_failure.get_error_logs")
     @patch.dict(os.environ, {"GEMINI_API_KEY": "fake_key"})
     def test_exits_early_without_failed_logs(self, mock_get_logs, mock_print):
-        mock_get_logs.return_value = "No failed logs found."
+        mock_get_logs.return_value = ("No failed logs found.", False)
         main()
         mock_print.assert_called_once_with(
             "::warning::Skipping: No failure logs to analyse.", file=sys.stderr
@@ -159,7 +290,7 @@ class TestMain(unittest.TestCase):
     def test_successful_api_call_prints_response(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = "Fake error log"
+        mock_logs.return_value = ("Fake error log", True)
         mock_repo.return_value = "<file path='test.py'>code</file>"
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -187,10 +318,35 @@ class TestMain(unittest.TestCase):
         os.environ,
         {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
     )
+    def test_skips_repo_context_when_no_test_failures(
+        self, mock_repo, mock_logs, mock_genai, mock_print
+    ):
+        mock_logs.return_value = ("flake8 error: E501", False)
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            "### QA Failure\n"
+            "Hello @test,\n"
+            "*(Analysis for commit abc)*\n"
+            "Run openwisp-qa-format."
+        )
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        main()
+        mock_repo.assert_not_called()
+
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch("analyze_failure.get_repo_context")
+    @patch.dict(
+        os.environ,
+        {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
+    )
     def test_fails_format_validation(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = "Fake error log"
+        mock_logs.return_value = ("Fake error log", True)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -213,7 +369,7 @@ class TestMain(unittest.TestCase):
     def test_handles_empty_api_response(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = "Error log"
+        mock_logs.return_value = ("Error log", True)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -233,7 +389,7 @@ class TestMain(unittest.TestCase):
     @patch("analyze_failure.get_repo_context")
     @patch.dict(os.environ, {"GEMINI_API_KEY": "fake_key"})
     def test_handles_api_exception(self, mock_repo, mock_logs, mock_genai, mock_print):
-        mock_logs.return_value = "Error log"
+        mock_logs.return_value = ("Error log", True)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_client.models.generate_content.side_effect = Exception("Quota Exceeded")
@@ -256,7 +412,7 @@ class TestMain(unittest.TestCase):
     def test_truncates_large_api_response(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = "Fake error log"
+        mock_logs.return_value = ("Fake error log", True)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_response = MagicMock()

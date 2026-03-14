@@ -1,33 +1,142 @@
 import os
+import re
 import secrets
 import sys
 
 from google import genai
 from google.genai import types
 
+# Keywords that indicate an automated test failure (as opposed to
+# QA-only / commit-message-only failures).
+TEST_FAILURE_MARKERS = (
+    "FAIL:",
+    "ERROR:",
+    "FAILED (",
+    "Traceback (most recent call last):",
+    "AssertionError",
+)
+
+
+def _normalize_for_dedup(text):
+    """Normalize a log body so near-duplicate CI outputs hash identically.
+
+    Strips version strings, timestamps, and platform info that differ
+    across matrix jobs but do not represent genuinely different failures.
+    The original body is NOT modified -- this is used only for the dedup key.
+    """
+    t = text
+    # Python version: "Python 3.10.5" -> "Python X"
+    t = re.sub(r"Python \d+\.\d+(?:\.\d+)?", "Python X", t)
+    # pytest/tool versions: "pytest-7.2.0" -> "pytest-X"
+    t = re.sub(
+        r"(pytest|django|pip|setuptools|wheel)-\d+[\d.]*", r"\1-X", t, flags=re.I
+    )
+    # Generic semver-like version numbers (e.g., "7.2.0") preceded by - or /
+    t = re.sub(r"(?<=[-/])\d+\.\d+(?:\.\d+)+", "X", t)
+    # Timestamps: 2024-03-14 10:23:45 or 2024-03-14T10:23:45
+    t = re.sub(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}", "TIMESTAMP", t)
+    # "platform linux -- Python X, pytest-X, ..." entire line
+    t = re.sub(r"^platform\s+\S+\s+--\s+.*$", "PLATFORM_LINE", t, flags=re.MULTILINE)
+    # Elapsed time: "in 1.234s"
+    t = re.sub(r"in \d+\.\d+s", "in X.Xs", t)
+    return t
+
+
+def _extract_failed_tests(body):
+    """Return only the failing test sections from a test-runner log.
+
+    Keeps every block that sits between two separator lines (====…)
+    and contains at least one failure marker.
+    """
+    # Split on the "======…" separators that unittest / pytest emit.
+    blocks = re.split(r"(?:={50,})", body)
+    failed = [
+        block.strip()
+        for block in blocks
+        if any(m in block for m in TEST_FAILURE_MARKERS)
+    ]
+    if failed:
+        sep = "\n" + "=" * 70 + "\n"
+        return sep + sep.join(failed) + sep
+    # If we couldn't isolate individual blocks, return the whole body
+    # so the LLM still has something to work with.
+    return body
+
+
+def process_error_logs(content):
+    """Post-process raw CI logs.
+
+    Returns
+    -------
+    (processed_text, tests_failed) : tuple[str, bool]
+        *processed_text* – deduplicated, failure-only log.
+        *tests_failed*  – ``True`` when at least one job contains a real
+        test failure (as opposed to a QA / commit-message check).
+    """
+    tests_failed = False
+    final_blocks = []
+    seen_bodies = set()
+    # The workflow writes each job as ``===== JOB <id> =====``.
+    job_splits = re.split(r"(===== JOB \d+ =====)", content)
+    # Build (header, body) pairs.
+    jobs = []
+    if len(job_splits) > 1:
+        preamble = job_splits[0].strip()
+        if preamble:
+            jobs.append(("", preamble))
+        for i in range(1, len(job_splits), 2):
+            header = job_splits[i]
+            body = job_splits[i + 1] if i + 1 < len(job_splits) else ""
+            jobs.append((header, body))
+    else:
+        jobs = [("", content)]
+    for header, body in jobs:
+        if not body.strip():
+            continue
+        # Deduplicate – skip if we already saw a near-identical body.
+        body_key = _normalize_for_dedup(body.strip())
+        if body_key in seen_bodies:
+            continue
+        seen_bodies.add(body_key)
+        # Detect real test failures and keep only the failing parts.
+        job_has_test_failure = any(m in body for m in TEST_FAILURE_MARKERS)
+        if job_has_test_failure:
+            tests_failed = True
+            body = _extract_failed_tests(body)
+        block = f"{header}\n{body.strip()}" if header else body.strip()
+        final_blocks.append(block)
+    return "\n\n".join(final_blocks), tests_failed
+
 
 def get_error_logs():
+    """Read and process CI failure logs.
+
+    Returns
+    -------
+    (logs_text, tests_failed) : tuple[str, bool]
+    """
     log_file = "failed_logs.txt"
     if not os.path.exists(log_file):
-        return "No failed logs found."
+        return "No failed logs found.", False
     try:
         with open(log_file, "r", encoding="utf-8") as f:
             content = f.read()
-            TARGET_MAX = 30000
-            if len(content) <= TARGET_MAX:
-                return content
-            truncation_marker = (
-                f"\n\n... [LOGS TRUNCATED: "
-                f"{len(content) - TARGET_MAX} characters removed] ...\n\n"
-            )
-            actual_allowed_chars = TARGET_MAX - len(truncation_marker)
-            head_size = int(actual_allowed_chars * 0.2)
-            tail_size = int(actual_allowed_chars * 0.8)
-            head = content[:head_size]
-            tail = content[-tail_size:]
-            return head + truncation_marker + tail
+        processed, tests_failed = process_error_logs(content)
+        TARGET_MAX = 30000
+        if len(processed) <= TARGET_MAX:
+            return processed, tests_failed
+        truncation_marker = (
+            f"\n\n... [LOGS TRUNCATED: "
+            f"{len(processed) - TARGET_MAX} characters removed] ...\n\n"
+        )
+        actual_allowed_chars = TARGET_MAX - len(truncation_marker)
+        head_size = int(actual_allowed_chars * 0.2)
+        tail_size = int(actual_allowed_chars * 0.8)
+        head = processed[:head_size]
+        tail = processed[-tail_size:]
+        return head + truncation_marker + tail, tests_failed
     except Exception as e:
-        return f"Error reading logs: {e}"
+        return f"Error reading logs: {e}", False
 
 
 def get_repo_context(base_dir="pr_code", max_chars=500000):
@@ -80,7 +189,6 @@ def get_repo_context(base_dir="pr_code", max_chars=500000):
                 current_length += len(file_xml)
     if not context_parts:
         return "No relevant source files found in repository."
-
     return "".join(context_parts)
 
 
@@ -89,33 +197,34 @@ def main():
     if not api_key:
         print("::warning::Skipping: No API Key found.", file=sys.stderr)
         return
-
     client = genai.Client(
         api_key=api_key,
         http_options=types.HttpOptions(
             retry_options=types.HttpRetryOptions(attempts=4)
         ),
     )
-    error_log = get_error_logs()
+    error_log, tests_failed = get_error_logs()
     if error_log.startswith("No failed logs") or error_log.startswith(
         "Error reading logs"
     ):
         print("::warning::Skipping: No failure logs to analyse.", file=sys.stderr)
         return
-
-    repo_context = get_repo_context()
+    # Only fetch the full repository code context when automated tests
+    # actually failed.  For QA-only or commit-message failures the code
+    # is not needed and would waste prompt tokens.
+    if tests_failed:
+        repo_context = get_repo_context()
+    else:
+        repo_context = "Code context omitted (no test failures detected)."
     pr_author = os.environ.get("PR_AUTHOR", "contributor")
     actor = os.environ.get("ACTOR", "").strip() or pr_author
     commit_sha = os.environ.get("COMMIT_SHA", "unknown")
     short_sha = commit_sha[:7] if commit_sha != "unknown" else "unknown"
-
     if pr_author.lower() == actor.lower():
         greeting = f"Hello @{pr_author},"
     else:
         greeting = f"Hello @{pr_author} and @{actor},"
-
     tag_id = secrets.token_hex(4)
-
     system_instruction = f"""
     You are an automated CI Failure helper bot for the OpenWISP project.
     Your goal is to analyze CI failure logs and provide helpful, actionable feedback.
@@ -176,7 +285,6 @@ def main():
     4. Use Markdown for formatting. Do not include introductory filler text
        before the header.
     """
-
     prompt = f"""
     Analyze the following CI failure and provide the appropriate remediation
     according to your instructions.
@@ -191,7 +299,6 @@ def main():
     {repo_context}
     </code_context_{tag_id}>
     """
-
     raw_model = os.environ.get("GEMINI_MODEL", "").strip()
     gemini_model = raw_model if raw_model else "gemini-2.5-flash-lite"
     try:
