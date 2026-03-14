@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from analyze_failure import (  # noqa: E402
     _extract_failed_tests,
+    _fix_markdown_rendering,
     _is_transient_failure,
     _normalize_for_dedup,
     get_error_logs,
@@ -318,6 +319,67 @@ class TestNormalizeForDedup(unittest.TestCase):
         self.assertIn("FAIL: test_bar", text)
 
 
+class TestFixMarkdownRendering(unittest.TestCase):
+    """Tests for _fix_markdown_rendering function."""
+
+    def test_strips_wrapping_code_fences(self):
+        text = "```markdown\n### Title\nBody\n```"
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(result, "### Title\nBody")
+
+    def test_strips_indentation_outside_code_blocks(self):
+        text = (
+            "### Title\n"
+            "    This is indented 4 spaces\n"
+            "        This is indented 8 spaces\n"
+            "Normal line"
+        )
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(
+            result,
+            "### Title\n"
+            "This is indented 4 spaces\n"
+            "This is indented 8 spaces\n"
+            "Normal line",
+        )
+
+    def test_preserves_indentation_inside_code_blocks(self):
+        text = (
+            "Some text\n"
+            "```python\n"
+            "    def foo():\n"
+            "        return bar\n"
+            "```\n"
+            "    More text outside"
+        )
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(
+            result,
+            "Some text\n"
+            "```python\n"
+            "    def foo():\n"
+            "        return bar\n"
+            "```\n"
+            "More text outside",
+        )
+
+    def test_handles_mixed_fences_and_indentation(self):
+        text = (
+            "```\n"
+            "### Title\n"
+            "    * **Item**: Indented explanation\n"
+            "        ```\n"
+            "        code here\n"
+            "        ```\n"
+            "    More indented text\n"
+            "```"
+        )
+        result = _fix_markdown_rendering(text)
+        # Outer fences stripped, inner content processed
+        self.assertNotIn("    * **Item**", result)
+        self.assertIn("* **Item**", result)
+
+
 class TestMain(unittest.TestCase):
     """Tests for the main execution block."""
 
@@ -359,6 +421,43 @@ class TestMain(unittest.TestCase):
             "Hello @testuser\n"
             "*(Analysis for commit abc1234)*\n"
             "Here is the fix."
+        )
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        main()
+        mock_print.assert_called_once_with(
+            "### Test Failed\n"
+            "Hello @testuser\n"
+            "*(Analysis for commit abc1234)*\n"
+            "Here is the fix."
+        )
+
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch("analyze_failure.get_repo_context")
+    @patch.dict(
+        os.environ,
+        {
+            "GEMINI_API_KEY": "fake_key",
+            "PR_AUTHOR": "testuser",
+            "COMMIT_SHA": "abc1234",
+        },
+    )
+    def test_strips_wrapping_code_fences(
+        self, mock_repo, mock_logs, mock_genai, mock_print
+    ):
+        mock_logs.return_value = ("Fake error log", True, False)
+        mock_repo.return_value = "<file path='test.py'>code</file>"
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            "```markdown\n"
+            "### Test Failed\n"
+            "Hello @testuser\n"
+            "*(Analysis for commit abc1234)*\n"
+            "Here is the fix.\n"
+            "```"
         )
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client

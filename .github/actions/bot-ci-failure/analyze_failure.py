@@ -226,6 +226,38 @@ def get_repo_context(base_dir="pr_code", max_chars=500000):
     return "".join(context_parts)
 
 
+def _fix_markdown_rendering(text):
+    """Fix LLM output that GitHub would render as preformatted text.
+
+    Two problems are addressed:
+    1. The entire response wrapped in triple-backtick code fences.
+    2. Lines indented with 4+ spaces outside of fenced code blocks,
+       which GitHub markdown renders as <pre> blocks.
+    """
+    # 1. Strip wrapping code fences.
+    if text.startswith("```"):
+        text = re.sub(r"^```[^\n]*\n?", "", text, count=1)
+        text = re.sub(r"\n?```\s*$", "", text)
+    # 2. Remove leading indentation outside fenced code blocks.
+    # Walk line-by-line, tracking whether we are inside a ``` block.
+    lines = text.split("\n")
+    result = []
+    in_fence = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            result.append(line)
+        elif in_fence:
+            # Preserve indentation inside code blocks.
+            result.append(line)
+        else:
+            # Outside code blocks, strip leading spaces that would
+            # trigger GitHub's indented-code-block rendering.
+            result.append(line.lstrip())
+    return "\n".join(result)
+
+
 def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -360,7 +392,7 @@ def main():
             ),
         )
         if response.text and response.text.strip():
-            final_comment = response.text
+            final_comment = _fix_markdown_rendering(response.text.strip())
             if "*(Analysis for commit" not in final_comment:
                 print(
                     "::warning::LLM output failed format validation; skipping comment.",
