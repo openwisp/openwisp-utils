@@ -318,6 +318,31 @@ class TestMain(unittest.TestCase):
         os.environ,
         {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
     )
+    def test_skips_repo_context_when_no_test_failures(
+        self, mock_repo, mock_logs, mock_genai, mock_print
+    ):
+        mock_logs.return_value = ("flake8 error: E501", False)
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            "### QA Failure\n"
+            "Hello @test,\n"
+            "*(Analysis for commit abc)*\n"
+            "Run openwisp-qa-format."
+        )
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        main()
+        mock_repo.assert_not_called()
+
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch("analyze_failure.get_repo_context")
+    @patch.dict(
+        os.environ,
+        {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
+    )
     def test_fails_format_validation(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
