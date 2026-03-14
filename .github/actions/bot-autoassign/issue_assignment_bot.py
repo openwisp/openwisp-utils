@@ -308,7 +308,10 @@ class IssueAssignmentBot(GitHubBot):
                 # We consider the event handled even if no issues were linked
                 return True
             elif action == "closed":
-                self.unassign_issues_from_pr(pr_body, pr_author)
+                if pr.get("merged", False):
+                    print(f"PR #{pr_number} was merged, keeping issue assignments")
+                else:
+                    self.unassign_issues_from_pr(pr_body, pr_author)
                 return True
             print(f"PR action '{action}' not handled")
             return True

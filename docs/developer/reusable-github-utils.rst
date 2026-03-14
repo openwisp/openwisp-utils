@@ -146,6 +146,7 @@ using the following examples.
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
+        if: github.event.action != 'closed' || github.event.pull_request.merged == false
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: issue_assignment

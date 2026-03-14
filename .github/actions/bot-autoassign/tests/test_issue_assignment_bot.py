@@ -373,6 +373,22 @@ class TestHandlePullRequest:
         assert bot.handle_pull_request()
         mock_issue.remove_from_assignees.assert_called_once_with("testuser")
 
+    def test_merged_does_not_unassign(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "closed",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                    "merged": True,
+                },
+            }
+        )
+        assert bot.handle_pull_request()
+        bot_env["repo"].get_issue.assert_not_called()
+
     def test_unsupported_action(self, bot_env):
         bot = IssueAssignmentBot()
         bot.load_event_payload(
