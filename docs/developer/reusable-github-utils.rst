@@ -352,6 +352,14 @@ relevant source code context (safely bypassing unnecessary assets)
 alongside the raw error logs. It then posts a concise summary and an
 actionable remediation plan directly to the Pull Request.
 
+When the bot detects that all failures are transient (e.g., network
+errors, browser crashes, Coveralls flakiness), it automatically re-runs
+the failed jobs up to 3 times and posts a short notification instead of
+the full analysis. This requires ``actions: write`` permission in the
+caller workflow. If the permission is not granted (e.g., in repositories
+that haven't updated their caller workflow yet), the auto-retry is skipped
+gracefully and the full analysis is posted instead.
+
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
 cross-repository concurrency locks and token limits to prevent PR spam on
@@ -375,7 +383,7 @@ job:
 
     permissions:
       pull-requests: write
-      actions: read
+      actions: write
       contents: read
 
     concurrency:
