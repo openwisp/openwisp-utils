@@ -97,11 +97,7 @@ token generation, environment setup, and executing the bot scripts.
     GitHub Actions reusable workflows inherit permissions from the caller,
     so the reusable workflow cannot set them on its own.
 
-You can find the required workflow files (``bot-autoassign-issue.yml``,
-``bot-autoassign-pr-issue-link.yml``, ``bot-autoassign-pr-reopen.yml``,
-``bot-autoassign-stale-pr.yml``) in the ``openwisp-utils`` repository. It
-is recommended to simply copy them to your repository, or recreate them
-using the following examples.
+Create the following workflow files in your repository.
 
 **1. Issue Assignment Bot**
 (``.github/workflows/bot-autoassign-issue.yml``)
@@ -188,6 +184,14 @@ using the following examples.
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+.. note::
+
+    Both jobs use ``bot_command: pr_reopen``. The ``pr_reopen`` command
+    dispatches to ``PRReopenBot`` on ``pull_request_target`` events (to
+    reassign issues when a PR is reopened) and to ``PRActivityBot`` on
+    ``issue_comment`` events (to remove the stale label when the PR author
+    comments on their stale PR).
 
 **4. Stale PR** (``.github/workflows/bot-autoassign-stale-pr.yml``)
 
