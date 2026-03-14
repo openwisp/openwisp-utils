@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   auto-assign-issue:
+    if: github.event.action != 'closed' || github.event.pull_request.merged == false
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token

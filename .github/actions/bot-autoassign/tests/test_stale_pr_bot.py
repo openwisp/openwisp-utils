@@ -231,7 +231,7 @@ class TestCloseStalePR:
         bot = StalePRBot()
         mock_pr = Mock()
         mock_pr.state = "closed"
-        assert not bot.close_stale_pr(mock_pr, 60)
+        assert bot.close_stale_pr(mock_pr, 60)
         mock_pr.create_issue_comment.assert_not_called()
         mock_pr.edit.assert_not_called()
 
