@@ -9,7 +9,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from analyze_failure import (  # noqa: E402
     _extract_failed_tests,
     _normalize_for_dedup,
-    _remove_geckodriver_lines,
     get_error_logs,
     get_repo_context,
     main,
@@ -137,29 +136,6 @@ class TestGetRepoContext(unittest.TestCase):
             self.assertNotIn("massive library ignored", result)
 
 
-class TestRemoveGeckodriverLines(unittest.TestCase):
-    """Tests for _remove_geckodriver_lines."""
-
-    def test_removes_geckodriver_log_lines(self):
-        text = (
-            "Normal log line\n"
-            "geckodriver.log: some trace\n"
-            "Another normal line\n"
-            "Reading geckodriver.log output\n"
-            "Final line"
-        )
-        result = _remove_geckodriver_lines(text)
-        self.assertNotIn("geckodriver.log", result)
-        self.assertIn("Normal log line", result)
-        self.assertIn("Another normal line", result)
-        self.assertIn("Final line", result)
-
-    def test_no_geckodriver_lines(self):
-        text = "line1\nline2\nline3"
-        result = _remove_geckodriver_lines(text)
-        self.assertEqual(result, text)
-
-
 class TestExtractFailedTests(unittest.TestCase):
     """Tests for _extract_failed_tests."""
 
@@ -199,18 +175,6 @@ class TestProcessErrorLogs(unittest.TestCase):
         # Only one copy of the body should remain.
         self.assertEqual(text.count("flake8 error: E501"), 1)
         self.assertFalse(tests_failed)
-
-    def test_removes_geckodriver_from_jobs(self):
-        content = (
-            "===== JOB 300 =====\n"
-            "Running tests...\n"
-            "geckodriver.log: trace info\n"
-            "FAIL: test_x\n"
-        )
-        text, tests_failed = process_error_logs(content)
-        self.assertNotIn("geckodriver.log", text)
-        self.assertIn("FAIL: test_x", text)
-        self.assertTrue(tests_failed)
 
     def test_tests_failed_true_on_test_failure(self):
         content = (

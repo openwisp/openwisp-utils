@@ -17,13 +17,6 @@ TEST_FAILURE_MARKERS = (
 )
 
 
-def _remove_geckodriver_lines(text):
-    """Strip lines that reference geckodriver.log from log output."""
-    return "\n".join(
-        line for line in text.splitlines() if "geckodriver.log" not in line.lower()
-    )
-
-
 def _normalize_for_dedup(text):
     """Normalize a log body so near-duplicate CI outputs hash identically.
 
@@ -76,17 +69,15 @@ def process_error_logs(content):
     Returns
     -------
     (processed_text, tests_failed) : tuple[str, bool]
-        *processed_text* – deduplicated, geckodriver-free, failure-only log.
+        *processed_text* – deduplicated, failure-only log.
         *tests_failed*  – ``True`` when at least one job contains a real
         test failure (as opposed to a QA / commit-message check).
     """
     tests_failed = False
     final_blocks = []
     seen_bodies = set()
-
     # The workflow writes each job as ``===== JOB <id> =====``.
     job_splits = re.split(r"(===== JOB \d+ =====)", content)
-
     # Build (header, body) pairs.
     jobs = []
     if len(job_splits) > 1:
@@ -99,29 +90,21 @@ def process_error_logs(content):
             jobs.append((header, body))
     else:
         jobs = [("", content)]
-
     for header, body in jobs:
         if not body.strip():
             continue
-
-        # 1. Remove geckodriver noise.
-        body = _remove_geckodriver_lines(body)
-
-        # 2. Deduplicate – skip if we already saw an identical body.
+        # Deduplicate – skip if we already saw a near-identical body.
         body_key = _normalize_for_dedup(body.strip())
         if body_key in seen_bodies:
             continue
         seen_bodies.add(body_key)
-
-        # 3. Detect real test failures and keep only the failing parts.
+        # Detect real test failures and keep only the failing parts.
         job_has_test_failure = any(m in body for m in TEST_FAILURE_MARKERS)
         if job_has_test_failure:
             tests_failed = True
             body = _extract_failed_tests(body)
-
         block = f"{header}\n{body.strip()}" if header else body.strip()
         final_blocks.append(block)
-
     return "\n\n".join(final_blocks), tests_failed
 
 
@@ -138,9 +121,7 @@ def get_error_logs():
     try:
         with open(log_file, "r", encoding="utf-8") as f:
             content = f.read()
-
         processed, tests_failed = process_error_logs(content)
-
         TARGET_MAX = 30000
         if len(processed) <= TARGET_MAX:
             return processed, tests_failed
@@ -208,7 +189,6 @@ def get_repo_context(base_dir="pr_code", max_chars=500000):
                 current_length += len(file_xml)
     if not context_parts:
         return "No relevant source files found in repository."
-
     return "".join(context_parts)
 
 
@@ -217,7 +197,6 @@ def main():
     if not api_key:
         print("::warning::Skipping: No API Key found.", file=sys.stderr)
         return
-
     client = genai.Client(
         api_key=api_key,
         http_options=types.HttpOptions(
@@ -230,7 +209,6 @@ def main():
     ):
         print("::warning::Skipping: No failure logs to analyse.", file=sys.stderr)
         return
-
     # Only fetch the full repository code context when automated tests
     # actually failed.  For QA-only or commit-message failures the code
     # is not needed and would waste prompt tokens.
@@ -242,14 +220,11 @@ def main():
     actor = os.environ.get("ACTOR", "").strip() or pr_author
     commit_sha = os.environ.get("COMMIT_SHA", "unknown")
     short_sha = commit_sha[:7] if commit_sha != "unknown" else "unknown"
-
     if pr_author.lower() == actor.lower():
         greeting = f"Hello @{pr_author},"
     else:
         greeting = f"Hello @{pr_author} and @{actor},"
-
     tag_id = secrets.token_hex(4)
-
     system_instruction = f"""
     You are an automated CI Failure helper bot for the OpenWISP project.
     Your goal is to analyze CI failure logs and provide helpful, actionable feedback.
@@ -310,7 +285,6 @@ def main():
     4. Use Markdown for formatting. Do not include introductory filler text
        before the header.
     """
-
     prompt = f"""
     Analyze the following CI failure and provide the appropriate remediation
     according to your instructions.
@@ -325,7 +299,6 @@ def main():
     {repo_context}
     </code_context_{tag_id}>
     """
-
     raw_model = os.environ.get("GEMINI_MODEL", "").strip()
     gemini_model = raw_model if raw_model else "gemini-2.5-flash-lite"
     try:
