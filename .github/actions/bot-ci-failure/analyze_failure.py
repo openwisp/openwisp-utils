@@ -130,10 +130,10 @@ def process_error_logs(content):
             continue
         seen_bodies.add(body_key)
         total_unique_jobs += 1
-        if _is_transient_failure(body):
+        job_has_test_failure = any(m in body for m in TEST_FAILURE_MARKERS)
+        if _is_transient_failure(body) and not job_has_test_failure:
             transient_jobs += 1
         # Detect real test failures and keep only the failing parts.
-        job_has_test_failure = any(m in body for m in TEST_FAILURE_MARKERS)
         if job_has_test_failure:
             tests_failed = True
             body = _extract_failed_tests(body)
@@ -255,7 +255,11 @@ def _fix_markdown_rendering(text):
         else:
             # Outside code blocks, strip leading spaces that would
             # trigger GitHub's indented-code-block rendering.
-            result.append(line.lstrip())
+            indent = len(line) - len(line.lstrip(" "))
+            if indent >= 4:
+                result.append(line[4:])
+            else:
+                result.append(line)
     return "\n".join(result)
 
 
