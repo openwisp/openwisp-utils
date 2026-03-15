@@ -246,7 +246,7 @@ def _fix_markdown_rendering(text):
     in_fence = False
     for line in lines:
         stripped = line.strip()
-        if stripped.startswith("```"):
+        if stripped.startswith("```") and len(line) - len(line.lstrip()) < 4:
             in_fence = not in_fence
             result.append(line)
         elif in_fence:
