@@ -27,6 +27,7 @@ TRANSIENT_FAILURE_MARKERS = (
     "Connection reset by peer",
     "Network is unreachable",
     "Temporary failure in name resolution",
+    "selenium.common.exceptions.InvalidSessionIdException",
     "HTTPSConnectionPool",
     "ReadTimeoutError",
     "ConnectionError",
