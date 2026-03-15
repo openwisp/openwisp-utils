@@ -255,11 +255,7 @@ def _fix_markdown_rendering(text):
         else:
             # Outside code blocks, strip leading spaces that would
             # trigger GitHub's indented-code-block rendering.
-            indent = len(line) - len(line.lstrip(" "))
-            if indent >= 4:
-                result.append(line[4:])
-            else:
-                result.append(line)
+            result.append(line.lstrip())
     return "\n".join(result)
 
 
