@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 # Add the parent directory to path for importing bot modules
@@ -139,6 +139,8 @@ class TestIsWaitingForMaintainer:
         # Maintainer reviewed after contributor's commit
         review = Mock()
         review.user.login = "maintainer"
+        review.user.type = "User"
+        review.author_association = "MEMBER"
         review.submitted_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
         pr.get_reviews.return_value = [review]
         assert bot.is_waiting_for_maintainer(pr, last_cr) is False
@@ -155,6 +157,7 @@ class TestIsWaitingForMaintainer:
         comment = Mock()
         comment.user.login = "maintainer"
         comment.user.type = "User"
+        comment.author_association = "COLLABORATOR"
         comment.created_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
         pr.get_issue_comments.return_value = [comment]
         assert bot.is_waiting_for_maintainer(pr, last_cr) is False
@@ -179,8 +182,48 @@ class TestIsWaitingForMaintainer:
         bot_comment = Mock()
         bot_comment.user.login = "github-actions[bot]"
         bot_comment.user.type = "Bot"
+        bot_comment.author_association = "NONE"
         bot_comment.created_at = datetime(2024, 1, 6, tzinfo=timezone.utc)
         pr.get_issue_comments.return_value = [bot_comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_non_maintainer_comment_ignored(self, bot_env):
+        """A random community member commenting should not count as maintainer."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        comment = Mock()
+        comment.user.login = "random_user"
+        comment.user.type = "User"
+        comment.author_association = "NONE"
+        comment.created_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        pr.get_issue_comments.return_value = [comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_many_events_does_not_miss_contributor_activity(self, bot_env):
+        """Contributor activity must be found even with many subsequent events."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        # Contributor pushed a commit early on
+        contributor_commit = Mock()
+        contributor_commit.commit.author.date = datetime(
+            2024, 1, 2, tzinfo=timezone.utc
+        )
+        contributor_commit.author.login = "contributor"
+        # 60 subsequent commits from CI/other (not from contributor)
+        base = datetime(2024, 1, 3, tzinfo=timezone.utc)
+        other_commits = []
+        for i in range(60):
+            c = Mock()
+            c.commit.author.date = base + timedelta(days=i)
+            c.author.login = "ci-bot"
+            other_commits.append(c)
+        pr.get_commits.return_value = [contributor_commit] + other_commits
         assert bot.is_waiting_for_maintainer(pr, last_cr) is True
 
 

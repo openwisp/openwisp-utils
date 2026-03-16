@@ -1,9 +1,11 @@
 import time
-from collections import deque
 from datetime import datetime, timezone
 
 from base import GitHubBot
 from utils import unassign_linked_issues_helper
+
+# GitHub author_association values that represent project maintainers.
+MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 
 
 class StalePRBot(GitHubBot):
@@ -29,8 +31,7 @@ class StalePRBot(GitHubBot):
         if not pr_author:
             return None
         last_activity = None
-        commits = deque(pr.get_commits(), maxlen=50)
-        for commit in commits:
+        for commit in pr.get_commits():
             commit_date = commit.commit.author.date
             if commit_date > after_date:
                 if commit.author and commit.author.login == pr_author:
@@ -38,8 +39,7 @@ class StalePRBot(GitHubBot):
                         last_activity = commit_date
         if issue_comments is None:
             issue_comments = list(pr.get_issue_comments())
-        comments = issue_comments[-20:] if len(issue_comments) > 20 else issue_comments
-        for comment in comments:
+        for comment in issue_comments:
             if comment.user and comment.user.login == pr_author:
                 comment_date = comment.created_at
                 if comment_date > after_date:
@@ -47,10 +47,7 @@ class StalePRBot(GitHubBot):
                         last_activity = comment_date
         if review_comments is None:
             review_comments = list(pr.get_review_comments())
-        trimmed = (
-            review_comments[-20:] if len(review_comments) > 20 else review_comments
-        )
-        for comment in trimmed:
+        for comment in review_comments:
             if comment.user and comment.user.login == pr_author:
                 comment_date = comment.created_at
                 if comment_date > after_date:
@@ -58,8 +55,7 @@ class StalePRBot(GitHubBot):
                         last_activity = comment_date
         if all_reviews is None:
             all_reviews = list(pr.get_reviews())
-        reviews = all_reviews[-20:] if len(all_reviews) > 20 else all_reviews
-        for review in reviews:
+        for review in all_reviews:
             if review.user and review.user.login == pr_author:
                 review_date = review.submitted_at
                 if review_date and review_date > after_date:
@@ -118,39 +114,39 @@ class StalePRBot(GitHubBot):
             )
             if not last_author_activity:
                 return False
-            # Check for any non-author activity after the contributor's last action.
+            # Check for maintainer activity after the contributor's last action.
+            # Only OWNER / MEMBER / COLLABORATOR responses count; random
+            # community comments and bot messages do not.
             if issue_comments is None:
                 issue_comments = list(pr.get_issue_comments())
-            comments = (
-                issue_comments[-20:] if len(issue_comments) > 20 else issue_comments
-            )
-            for comment in comments:
+            for comment in issue_comments:
                 if (
                     comment.user
                     and comment.user.login != pr_author
                     and comment.user.type != "Bot"
+                    and getattr(comment, "author_association", None) in MAINTAINER_ROLES
                     and comment.created_at > last_author_activity
                 ):
                     return False
             if review_comments is None:
                 review_comments = list(pr.get_review_comments())
-            trimmed = (
-                review_comments[-20:] if len(review_comments) > 20 else review_comments
-            )
-            for comment in trimmed:
+            for comment in review_comments:
                 if (
                     comment.user
                     and comment.user.login != pr_author
+                    and comment.user.type != "Bot"
+                    and getattr(comment, "author_association", None) in MAINTAINER_ROLES
                     and comment.created_at > last_author_activity
                 ):
                     return False
             if all_reviews is None:
                 all_reviews = list(pr.get_reviews())
-            reviews = all_reviews[-20:] if len(all_reviews) > 20 else all_reviews
-            for review in reviews:
+            for review in all_reviews:
                 if (
                     review.user
                     and review.user.login != pr_author
+                    and review.user.type != "Bot"
+                    and getattr(review, "author_association", None) in MAINTAINER_ROLES
                     and review.submitted_at
                     and review.submitted_at > last_author_activity
                 ):
@@ -164,9 +160,8 @@ class StalePRBot(GitHubBot):
         try:
             if all_reviews is None:
                 all_reviews = list(pr.get_reviews())
-            reviews = all_reviews[-50:] if len(all_reviews) > 50 else all_reviews
             changes_requested_reviews = [
-                r for r in reviews if r.state == "CHANGES_REQUESTED"
+                r for r in all_reviews if r.state == "CHANGES_REQUESTED"
             ]
             if not changes_requested_reviews:
                 return None
