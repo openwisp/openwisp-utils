@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 # Add the parent directory to path for importing bot modules
@@ -102,6 +102,129 @@ class TestGetDaysSinceActivity:
         bot = StalePRBot()
         mock_pr = Mock()
         assert bot.get_days_since_activity(mock_pr, None) == 0
+
+
+class TestIsWaitingForMaintainer:
+    def _make_pr(self, author="contributor"):
+        mock_pr = Mock()
+        mock_pr.number = 1
+        mock_pr.user.login = author
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        return mock_pr
+
+    def test_contributor_responded_no_maintainer_since(self, bot_env):
+        """Contributor pushed after changes requested, no maintainer response."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        # Contributor pushed a commit after changes were requested
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_contributor_responded_maintainer_reviewed(self, bot_env):
+        """Contributor pushed, then maintainer submitted a review."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        # Maintainer reviewed after contributor's commit
+        review = Mock()
+        review.user.login = "maintainer"
+        review.user.type = "User"
+        review.author_association = "MEMBER"
+        review.submitted_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        pr.get_reviews.return_value = [review]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is False
+
+    def test_contributor_responded_maintainer_commented(self, bot_env):
+        """Contributor pushed, then maintainer left an issue comment."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        comment = Mock()
+        comment.user.login = "maintainer"
+        comment.user.type = "User"
+        comment.author_association = "COLLABORATOR"
+        comment.created_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        pr.get_issue_comments.return_value = [comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is False
+
+    def test_contributor_never_responded(self, bot_env):
+        """No contributor activity after changes requested → not waiting."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is False
+
+    def test_bot_comments_are_ignored(self, bot_env):
+        """Bot comments should not count as maintainer activity."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        # Only a bot comment exists after contributor's activity
+        bot_comment = Mock()
+        bot_comment.user.login = "github-actions[bot]"
+        bot_comment.user.type = "Bot"
+        bot_comment.author_association = "NONE"
+        bot_comment.created_at = datetime(2024, 1, 6, tzinfo=timezone.utc)
+        pr.get_issue_comments.return_value = [bot_comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_non_maintainer_comment_ignored(self, bot_env):
+        """A random community member commenting should not count as maintainer."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        comment = Mock()
+        comment.user.login = "random_user"
+        comment.user.type = "User"
+        comment.author_association = "NONE"
+        comment.created_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        pr.get_issue_comments.return_value = [comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_many_events_does_not_miss_contributor_activity(self, bot_env):
+        """Contributor activity must be found even with many subsequent events."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        # Contributor pushed a commit early on
+        contributor_commit = Mock()
+        contributor_commit.commit.author.date = datetime(
+            2024, 1, 2, tzinfo=timezone.utc
+        )
+        contributor_commit.author.login = "contributor"
+        # 60 subsequent commits from CI/other (not from contributor)
+        base = datetime(2024, 1, 3, tzinfo=timezone.utc)
+        other_commits = []
+        for i in range(60):
+            c = Mock()
+            c.commit.author.date = base + timedelta(days=i)
+            c.author.login = "ci-bot"
+            other_commits.append(c)
+        pr.get_commits.return_value = [contributor_commit] + other_commits
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
 
 
 class TestUnassignLinkedIssues:
@@ -232,6 +355,36 @@ class TestCloseStalePR:
         mock_pr = Mock()
         mock_pr.state = "closed"
         assert bot.close_stale_pr(mock_pr, 60)
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()
+
+
+class TestProcessStalePrs:
+    @patch("stale_pr_bot.datetime")
+    def test_skips_pr_waiting_for_maintainer(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.number = 42
+        mock_pr.user.login = "contributor"
+        # Changes requested on Jan 1
+        review = Mock(
+            state="CHANGES_REQUESTED",
+            submitted_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        )
+        mock_pr.get_reviews.return_value = [review]
+        # Contributor pushed on Jan 5
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        mock_pr.get_commits.return_value = [commit]
+        # No maintainer activity
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        # PR should not be warned, staled, or closed
         mock_pr.create_issue_comment.assert_not_called()
         mock_pr.edit.assert_not_called()
 
