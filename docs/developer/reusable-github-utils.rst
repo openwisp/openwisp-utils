@@ -394,7 +394,7 @@ job:
     jobs:
       find-pr:
         runs-on: ubuntu-latest
-        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'pull_request' }}
         outputs:
           pr_number: ${{ steps.pr.outputs.number }}
           pr_author: ${{ steps.pr.outputs.author }}
