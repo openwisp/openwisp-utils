@@ -29,6 +29,7 @@ TRANSIENT_FAILURE_MARKERS = (
     "Temporary failure in name resolution",
     "selenium.common.exceptions.InvalidSessionIdException",
     "Posting coverage data to https://coveralls.io",
+    "OperationalError: database is locked",
 )
 
 
