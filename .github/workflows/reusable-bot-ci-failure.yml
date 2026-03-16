@@ -33,7 +33,7 @@ on:
         required: true
 
 permissions:
-  actions: write
+  actions: read
   contents: read
   pull-requests: write
 
