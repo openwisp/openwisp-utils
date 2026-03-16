@@ -143,8 +143,11 @@ jobs:
           HEAD_SHA="${{ inputs.head_sha }}"
           MARKER="<!-- ci-transient-retry $HEAD_SHA -->"
           # Count previous retry comments for this specific commit.
+          # gh --jq does not support jq's --arg flag, so pipe through
+          # grep to count marker occurrences.
           RETRY_COUNT=$(gh pr view "$PR_NUM" --repo "$REPO" --json comments \
-            --jq --arg marker "$MARKER" '[.comments[].body | select(contains($marker))] | length' 2>/dev/null || echo "0")
+            --jq '.comments[].body' 2>/dev/null \
+            | grep -cF "$MARKER" || echo "0")
           echo "Previous retries: $RETRY_COUNT"
           if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
             echo "Max retries ($MAX_RETRIES) reached; skipping."
