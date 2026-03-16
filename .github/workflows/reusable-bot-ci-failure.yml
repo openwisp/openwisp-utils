@@ -155,11 +155,11 @@ jobs:
           # Attempt to re-run failed jobs. This requires actions:write permission,
           # which may not be granted in all caller workflows.
           if gh api -X POST "repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs" 2>/dev/null; then
+            echo "retried=true" >> "$GITHUB_OUTPUT"
             printf -v BODY '%s\n%s' \
               "$MARKER" \
               "The CI is failing due to transient infrastructure issues (not related to your code). I have restarted the failed jobs automatically ($NEXT/$MAX_RETRIES)."
             gh pr comment "$PR_NUM" --repo "$REPO" --body "$BODY"
-            echo "retried=true" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::Could not re-run failed jobs (missing actions:write permission?). Skipping auto-retry."
             echo "retried=false" >> "$GITHUB_OUTPUT"

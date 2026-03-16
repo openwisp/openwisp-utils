@@ -380,6 +380,11 @@ class TestFixMarkdownRendering(unittest.TestCase):
         result = _fix_markdown_rendering(text)
         self.assertEqual(result, "### Title\nBody")
 
+    def test_strips_wrapping_code_fences_with_leading_newline(self):
+        text = "\n```markdown\n### Title\nBody\n```\n"
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(result, "### Title\nBody")
+
     def test_strips_indentation_outside_code_blocks(self):
         text = (
             "### Title\n"

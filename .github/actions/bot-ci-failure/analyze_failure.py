@@ -257,10 +257,10 @@ def _fix_markdown_rendering(text):
     2. Lines indented with 4+ spaces outside of fenced code blocks,
        which GitHub markdown renders as <pre> blocks.
     """
-    # 1. Strip wrapping code fences.
-    if text.startswith("```"):
-        text = re.sub(r"^```[^\n]*\n?", "", text, count=1)
-        text = re.sub(r"\n?```\s*$", "", text)
+    # 1. Strip wrapping code fences (handles optional leading whitespace/newlines).
+    wrapped = re.match(r"^\s*```[^\n]*\n([\s\S]*?)\n```\s*$", text)
+    if wrapped:
+        text = wrapped.group(1)
     # 2. Remove leading indentation outside fenced code blocks.
     # Walk line-by-line, tracking whether we are inside a ``` block.
     lines = text.split("\n")
