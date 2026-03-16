@@ -144,7 +144,7 @@ class StalePRBot(GitHubBot):
     def close_stale_pr(self, pr, days_inactive):
         if pr.state == "closed":
             print(f"PR #{pr.number} is already closed, skipping")
-            return False
+            return True
         try:
             pr_author = pr.user.login if pr.user else None
             if not pr_author:

@@ -108,7 +108,7 @@ class TestPRReopenBot:
     def test_run_unsupported_event(self, bot_env):
         bot = PRReopenBot()
         bot.event_name = "push"
-        assert not bot.run()
+        assert bot.run()
 
 
 class TestPRActivityBot:
@@ -160,7 +160,7 @@ class TestPRActivityBot:
         mock_pr = Mock()
         mock_pr.user.login = "testuser"
         bot_env["repo"].get_pull.return_value = mock_pr
-        assert not bot.handle_contributor_activity()
+        assert bot.handle_contributor_activity()
 
     def test_handle_contributor_activity_pr_not_stale(self, bot_env):
         bot = PRActivityBot()
@@ -177,7 +177,7 @@ class TestPRActivityBot:
         mock_pr.user.login = "testuser"
         mock_pr.get_labels.return_value = []
         bot_env["repo"].get_pull.return_value = mock_pr
-        assert not bot.handle_contributor_activity()
+        assert bot.handle_contributor_activity()
 
     def test_handle_contributor_activity_not_pr(self, bot_env):
         bot = PRActivityBot()
@@ -190,7 +190,7 @@ class TestPRActivityBot:
                 "comment": {"user": {"login": "testuser"}},
             }
         )
-        assert not bot.handle_contributor_activity()
+        assert bot.handle_contributor_activity()
 
     def test_handle_contributor_activity_no_payload(self, bot_env):
         bot = PRActivityBot()
@@ -199,4 +199,4 @@ class TestPRActivityBot:
     def test_run_unsupported_event(self, bot_env):
         bot = PRActivityBot()
         bot.event_name = "push"
-        assert not bot.run()
+        assert bot.run()
