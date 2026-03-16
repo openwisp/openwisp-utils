@@ -300,6 +300,7 @@ def main():
         return
     # Signal the workflow that a retry is appropriate.
     if transient_only:
+        # this file is checked in the github action workflow
         with open("transient_failure", "w") as f:
             f.write("1")
     # Only fetch the full repository code context when automated tests
