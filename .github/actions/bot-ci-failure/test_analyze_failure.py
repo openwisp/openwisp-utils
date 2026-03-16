@@ -171,7 +171,11 @@ class TestIsTransientFailure(unittest.TestCase):
     """Tests for _is_transient_failure."""
 
     def test_detects_marionette(self):
-        self.assertTrue(_is_transient_failure("marionette connection lost"))
+        self.assertTrue(
+            _is_transient_failure(
+                "marionette.errors.MarionetteException: connection lost"
+            )
+        )
 
     def test_detects_ns_error(self):
         self.assertTrue(_is_transient_failure("NS_ERROR_ABORT"))
@@ -180,19 +184,33 @@ class TestIsTransientFailure(unittest.TestCase):
         self.assertTrue(_is_transient_failure("double free or corruption"))
 
     def test_detects_coveralls(self):
-        self.assertTrue(_is_transient_failure("coveralls: error posting"))
-
-    def test_detects_network_error(self):
-        self.assertTrue(_is_transient_failure("HTTP Error 502"))
+        self.assertTrue(
+            _is_transient_failure(
+                "Posting coverage data to https://coveralls.io\nError: request failed"
+            )
+        )
 
     def test_detects_connection_refused(self):
-        self.assertTrue(_is_transient_failure("connection refused"))
+        self.assertTrue(
+            _is_transient_failure(
+                "ConnectionRefusedError: [Errno 111] Connection refused"
+            )
+        )
 
     def test_normal_test_failure_not_transient(self):
         self.assertFalse(_is_transient_failure("FAIL: test_login"))
 
     def test_qa_failure_not_transient(self):
         self.assertFalse(_is_transient_failure("flake8 error: E501"))
+
+    def test_commit_message_prose_not_transient(self):
+        """Commit messages mentioning transient keywords should NOT match."""
+        commit_msg_log = (
+            "checkcommit: bad commit message\n"
+            "Fixed marionette and coveralls issues.\n"
+            "Handle connection refused errors gracefully.\n"
+        )
+        self.assertFalse(_is_transient_failure(commit_msg_log))
 
 
 class TestProcessErrorLogs(unittest.TestCase):
@@ -237,7 +255,7 @@ class TestProcessErrorLogs(unittest.TestCase):
     def test_transient_only_true_when_all_transient(self):
         content = (
             "===== JOB 100 =====\n"
-            "marionette connection lost\n"
+            "marionette.errors.MarionetteException: connection lost\n"
             "===== JOB 200 =====\n"
             "NS_ERROR_ABORT in browser\n"
         )
@@ -247,7 +265,7 @@ class TestProcessErrorLogs(unittest.TestCase):
     def test_transient_only_false_when_mixed(self):
         content = (
             "===== JOB 100 =====\n"
-            "marionette connection lost\n"
+            "marionette.errors.MarionetteException: connection lost\n"
             "===== JOB 200 =====\n"
             "FAIL: test_login\n"
         )
@@ -255,7 +273,11 @@ class TestProcessErrorLogs(unittest.TestCase):
         self.assertFalse(transient)
 
     def test_coveralls_only_is_transient(self):
-        content = "===== JOB 100 =====\ncoveralls: error posting results\n"
+        content = (
+            "===== JOB 100 =====\n"
+            "Posting coverage data to https://coveralls.io\n"
+            "Error: request failed\n"
+        )
         _, _, transient = process_error_logs(content)
         self.assertTrue(transient)
 
