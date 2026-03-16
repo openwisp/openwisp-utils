@@ -140,9 +140,11 @@ jobs:
           REPO: ${{ inputs.base_repo }}
         run: |
           MAX_RETRIES=3
-          # Count previous retry comments on this PR.
+          HEAD_SHA="${{ inputs.head_sha }}"
+          MARKER="<!-- ci-transient-retry $HEAD_SHA -->"
+          # Count previous retry comments for this specific commit.
           RETRY_COUNT=$(gh pr view "$PR_NUM" --repo "$REPO" --json comments \
-            --jq '[.comments[].body | select(contains("<!-- ci-transient-retry -->"))] | length' 2>/dev/null || echo "0")
+            --jq --arg marker "$MARKER" '[.comments[].body | select(contains($marker))] | length' 2>/dev/null || echo "0")
           echo "Previous retries: $RETRY_COUNT"
           if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
             echo "Max retries ($MAX_RETRIES) reached; skipping."
@@ -154,7 +156,7 @@ jobs:
           # which may not be granted in all caller workflows.
           if gh api -X POST "repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs" 2>/dev/null; then
             printf -v BODY '%s\n%s' \
-              '<!-- ci-transient-retry -->' \
+              "$MARKER" \
               "The CI is failing due to transient infrastructure issues (not related to your code). I have restarted the failed jobs automatically ($NEXT/$MAX_RETRIES)."
             gh pr comment "$PR_NUM" --repo "$REPO" --body "$BODY"
             echo "retried=true" >> "$GITHUB_OUTPUT"
