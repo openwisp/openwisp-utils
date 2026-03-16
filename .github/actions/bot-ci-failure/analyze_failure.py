@@ -30,6 +30,7 @@ TRANSIENT_FAILURE_MARKERS = (
     "selenium.common.exceptions.InvalidSessionIdException",
     "Posting coverage data to https://coveralls.io",
     "OperationalError: database is locked",
+    "ERROR: Could not install packages due to an OSError",
 )
 
 
