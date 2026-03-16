@@ -33,6 +33,7 @@ on:
         required: true
 
 permissions:
+  actions: write
   contents: read
   pull-requests: write
 
@@ -129,7 +130,43 @@ jobs:
         run: |
           python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 
+      - name: Auto-retry transient failures
+        id: retry
+        if: ${{ hashFiles('transient_failure') != '' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUM: ${{ inputs.pr_number }}
+          RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          MAX_RETRIES=3
+          HEAD_SHA="${{ inputs.head_sha }}"
+          MARKER="<!-- ci-transient-retry $HEAD_SHA -->"
+          # Count previous retry comments for this specific commit.
+          RETRY_COUNT=$(gh pr view "$PR_NUM" --repo "$REPO" --json comments \
+            --jq --arg marker "$MARKER" '[.comments[].body | select(contains($marker))] | length' 2>/dev/null || echo "0")
+          echo "Previous retries: $RETRY_COUNT"
+          if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+            echo "Max retries ($MAX_RETRIES) reached; skipping."
+            echo "retried=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          NEXT=$((RETRY_COUNT + 1))
+          # Attempt to re-run failed jobs. This requires actions:write permission,
+          # which may not be granted in all caller workflows.
+          if gh api -X POST "repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs" 2>/dev/null; then
+            echo "retried=true" >> "$GITHUB_OUTPUT"
+            printf -v BODY '%s\n%s' \
+              "$MARKER" \
+              "The CI is failing due to transient infrastructure issues (not related to your code). I have restarted the failed jobs automatically ($NEXT/$MAX_RETRIES)."
+            gh pr comment "$PR_NUM" --repo "$REPO" --body "$BODY"
+          else
+            echo "::warning::Could not re-run failed jobs (missing actions:write permission?). Skipping auto-retry."
+            echo "retried=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Post Comment
+        if: ${{ steps.retry.outputs.retried != 'true' }}
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           PR_NUM: ${{ inputs.pr_number }}
