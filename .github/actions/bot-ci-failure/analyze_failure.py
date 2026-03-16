@@ -90,6 +90,27 @@ def _extract_failed_tests(body):
     return body
 
 
+def _strip_slow_test_output(text):
+    """Remove the openwisp-utils slow-test report from log output.
+
+    The TimeLoggingTestRunner prints a summary of tests that exceeded a
+    time threshold.  This is purely informational and must not be fed to
+    the LLM, which tends to misinterpret the count as test failures.
+    """
+    # Strip the full block: header, individual slow-test lines, and total.
+    # The header varies (e.g. "Summary of slow tests (>0.3s)" or
+    # "Slow tests (threshold 2.00s)") so we match generically.
+    text = re.sub(
+        r"^.*(?:Slow tests|Summary of slow tests)\s*\(.*?\n(?:.*?\n)*?Total slow tests detected:.*$",
+        "",
+        text,
+        flags=re.MULTILINE,
+    )
+    # Also strip stray standalone summary lines, just in case.
+    text = re.sub(r"^Total slow tests detected:.*$", "", text, flags=re.MULTILINE)
+    return text
+
+
 def process_error_logs(content):
     """Post-process raw CI logs.
 
@@ -102,6 +123,7 @@ def process_error_logs(content):
         *transient_only* – ``True`` when every deduplicated job body looks
         like a transient / infrastructure failure.
     """
+    content = _strip_slow_test_output(content)
     tests_failed = False
     final_blocks = []
     seen_bodies = set()

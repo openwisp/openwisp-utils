@@ -11,6 +11,7 @@ from analyze_failure import (  # noqa: E402
     _fix_markdown_rendering,
     _is_transient_failure,
     _normalize_for_dedup,
+    _strip_slow_test_output,
     get_error_logs,
     get_repo_context,
     main,
@@ -317,6 +318,58 @@ class TestNormalizeForDedup(unittest.TestCase):
         text, _, _ = process_error_logs(content)
         self.assertIn("FAIL: test_foo", text)
         self.assertIn("FAIL: test_bar", text)
+
+
+class TestStripSlowTestOutput(unittest.TestCase):
+    """Tests for _strip_slow_test_output."""
+
+    def test_strips_full_slow_test_block(self):
+        log = (
+            "Ran 100 tests in 30.000s\n"
+            "OK\n"
+            "Summary of slow tests (>0.3s)\n"
+            "\n"
+            "(test_project.tests.test_selenium.TestMenu.test_menu_on_wide_screen)\n"
+            "  (5.27s) test_menu_on_wide_screen\n"
+            "(test_project.tests.test_selenium.TestInputFilters.test_input_filters)\n"
+            "  (5.00s) test_input_filters\n"
+            "\n"
+            "Total slow tests detected: 2\n"
+            "Done.\n"
+        )
+        result = _strip_slow_test_output(log)
+        self.assertNotIn("Summary of slow tests", result)
+        self.assertNotIn("Total slow tests detected", result)
+        self.assertNotIn("test_menu_on_wide_screen", result)
+        self.assertIn("Ran 100 tests", result)
+        self.assertIn("Done.", result)
+
+    def test_strips_standalone_total_line(self):
+        log = "some output\nTotal slow tests detected: 595\nmore output\n"
+        result = _strip_slow_test_output(log)
+        self.assertNotIn("Total slow tests detected", result)
+        self.assertIn("some output", result)
+        self.assertIn("more output", result)
+
+    def test_no_slow_tests_unchanged(self):
+        log = "FAIL: test_login\nAssertionError\n"
+        result = _strip_slow_test_output(log)
+        self.assertEqual(result, log)
+
+    def test_process_error_logs_strips_slow_tests(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "FAIL: test_login\nAssertionError\n"
+            "Summary of slow tests (>0.3s)\n"
+            "\n"
+            "(app.tests.SlowTest.test_slow)\n"
+            "  (5.00s) test_slow\n"
+            "\n"
+            "Total slow tests detected: 1\n"
+        )
+        text, tests_failed, _ = process_error_logs(content)
+        self.assertNotIn("slow tests", text.lower())
+        self.assertTrue(tests_failed)
 
 
 class TestFixMarkdownRendering(unittest.TestCase):
