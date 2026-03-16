@@ -13,6 +13,60 @@ class StalePRBot(GitHubBot):
         self.DAYS_BEFORE_UNASSIGN = 14
         self.DAYS_BEFORE_CLOSE = 60
 
+    def _get_last_author_activity(
+        self,
+        pr,
+        after_date,
+        issue_comments=None,
+        all_reviews=None,
+        review_comments=None,
+    ):
+        """Return the datetime of the PR author's latest activity after *after_date*.
+
+        Returns ``None`` when the author has not acted since *after_date*.
+        """
+        pr_author = pr.user.login if pr.user else None
+        if not pr_author:
+            return None
+        last_activity = None
+        commits = deque(pr.get_commits(), maxlen=50)
+        for commit in commits:
+            commit_date = commit.commit.author.date
+            if commit_date > after_date:
+                if commit.author and commit.author.login == pr_author:
+                    if not last_activity or commit_date > last_activity:
+                        last_activity = commit_date
+        if issue_comments is None:
+            issue_comments = list(pr.get_issue_comments())
+        comments = issue_comments[-20:] if len(issue_comments) > 20 else issue_comments
+        for comment in comments:
+            if comment.user and comment.user.login == pr_author:
+                comment_date = comment.created_at
+                if comment_date > after_date:
+                    if not last_activity or comment_date > last_activity:
+                        last_activity = comment_date
+        if review_comments is None:
+            review_comments = list(pr.get_review_comments())
+        trimmed = (
+            review_comments[-20:] if len(review_comments) > 20 else review_comments
+        )
+        for comment in trimmed:
+            if comment.user and comment.user.login == pr_author:
+                comment_date = comment.created_at
+                if comment_date > after_date:
+                    if not last_activity or comment_date > last_activity:
+                        last_activity = comment_date
+        if all_reviews is None:
+            all_reviews = list(pr.get_reviews())
+        reviews = all_reviews[-20:] if len(all_reviews) > 20 else all_reviews
+        for review in reviews:
+            if review.user and review.user.login == pr_author:
+                review_date = review.submitted_at
+                if review_date and review_date > after_date:
+                    if not last_activity or review_date > last_activity:
+                        last_activity = review_date
+        return last_activity
+
     def get_days_since_activity(
         self,
         pr,
@@ -24,69 +78,87 @@ class StalePRBot(GitHubBot):
         if not last_changes_requested:
             return 0
         try:
-            pr_author = pr.user.login if pr.user else None
-            if not pr_author:
-                return 0
-            last_author_activity = None
-            commits = deque(pr.get_commits(), maxlen=50)
-            for commit in commits:
-                commit_date = commit.commit.author.date
-                if commit_date > last_changes_requested:
-                    if commit.author and commit.author.login == pr_author:
-                        if (
-                            not last_author_activity
-                            or commit_date > last_author_activity
-                        ):
-                            last_author_activity = commit_date
-            if issue_comments is None:
-                issue_comments = list(pr.get_issue_comments())
-            comments = (
-                issue_comments[-20:] if len(issue_comments) > 20 else issue_comments
+            last_author_activity = self._get_last_author_activity(
+                pr,
+                last_changes_requested,
+                issue_comments,
+                all_reviews,
+                review_comments,
             )
-            for comment in comments:
-                if comment.user and comment.user.login == pr_author:
-                    comment_date = comment.created_at
-                    if comment_date > last_changes_requested:
-                        if (
-                            not last_author_activity
-                            or comment_date > last_author_activity
-                        ):
-                            last_author_activity = comment_date
-            if review_comments is None:
-                review_comments = list(pr.get_review_comments())
-            all_review_comments = review_comments
-            review_comments = (
-                all_review_comments[-20:]
-                if len(all_review_comments) > 20
-                else all_review_comments
-            )
-            for comment in review_comments:
-                if comment.user and comment.user.login == pr_author:
-                    comment_date = comment.created_at
-                    if comment_date > last_changes_requested:
-                        if (
-                            not last_author_activity
-                            or comment_date > last_author_activity
-                        ):
-                            last_author_activity = comment_date
-            if all_reviews is None:
-                all_reviews = list(pr.get_reviews())
-            reviews = all_reviews[-20:] if len(all_reviews) > 20 else all_reviews
-            for review in reviews:
-                if review.user and review.user.login == pr_author:
-                    review_date = review.submitted_at
-                    if review_date and review_date > last_changes_requested:
-                        if (
-                            not last_author_activity
-                            or review_date > last_author_activity
-                        ):
-                            last_author_activity = review_date
             reference_date = last_author_activity or last_changes_requested
             now = datetime.now(timezone.utc)
             return (now - reference_date).days
         except Exception as e:
             print("Error calculating activity" f" for PR #{pr.number}: {e}")
             return 0
+
+    def is_waiting_for_maintainer(
+        self,
+        pr,
+        last_changes_requested,
+        issue_comments=None,
+        all_reviews=None,
+        review_comments=None,
+    ):
+        """Return True when the contributor has responded but no maintainer has acted since.
+
+        The bot should not warn, mark stale, or close a PR when the ball
+        is in the maintainers' court.
+        """
+        try:
+            pr_author = pr.user.login if pr.user else None
+            if not pr_author:
+                return False
+            last_author_activity = self._get_last_author_activity(
+                pr,
+                last_changes_requested,
+                issue_comments,
+                all_reviews,
+                review_comments,
+            )
+            if not last_author_activity:
+                return False
+            # Check for any non-author activity after the contributor's last action.
+            if issue_comments is None:
+                issue_comments = list(pr.get_issue_comments())
+            comments = (
+                issue_comments[-20:] if len(issue_comments) > 20 else issue_comments
+            )
+            for comment in comments:
+                if (
+                    comment.user
+                    and comment.user.login != pr_author
+                    and comment.user.type != "Bot"
+                    and comment.created_at > last_author_activity
+                ):
+                    return False
+            if review_comments is None:
+                review_comments = list(pr.get_review_comments())
+            trimmed = (
+                review_comments[-20:] if len(review_comments) > 20 else review_comments
+            )
+            for comment in trimmed:
+                if (
+                    comment.user
+                    and comment.user.login != pr_author
+                    and comment.created_at > last_author_activity
+                ):
+                    return False
+            if all_reviews is None:
+                all_reviews = list(pr.get_reviews())
+            reviews = all_reviews[-20:] if len(all_reviews) > 20 else all_reviews
+            for review in reviews:
+                if (
+                    review.user
+                    and review.user.login != pr_author
+                    and review.submitted_at
+                    and review.submitted_at > last_author_activity
+                ):
+                    return False
+            return True
+        except Exception as e:
+            print("Error checking maintainer activity" f" for PR #{pr.number}: {e}")
+            return False
 
     def get_last_changes_requested(self, pr, all_reviews=None):
         try:
@@ -348,6 +420,18 @@ class StalePRBot(GitHubBot):
                         f"PR #{pr.number}: {days_inactive}"
                         " days since contributor activity"
                     )
+                    if self.is_waiting_for_maintainer(
+                        pr,
+                        last_changes_requested,
+                        issue_comments,
+                        all_reviews,
+                        review_comments,
+                    ):
+                        print(
+                            f"PR #{pr.number}: waiting for"
+                            " maintainer review, skipping"
+                        )
+                        continue
                     if days_inactive >= self.DAYS_BEFORE_CLOSE:
                         if self.close_stale_pr(pr, days_inactive):
                             processed_count += 1
