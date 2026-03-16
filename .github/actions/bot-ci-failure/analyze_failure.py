@@ -19,22 +19,16 @@ TEST_FAILURE_MARKERS = (
 # Patterns that indicate transient / infrastructure failures which are
 # not caused by the contributor's code.
 TRANSIENT_FAILURE_MARKERS = (
-    "marionette",
+    "marionette.errors",
     "NS_ERROR_",
     "double free or corruption",
     "Could not start Browser",
-    "connection refused",
+    "ConnectionRefusedError",
     "Connection reset by peer",
     "Network is unreachable",
     "Temporary failure in name resolution",
     "selenium.common.exceptions.InvalidSessionIdException",
-    "HTTPSConnectionPool",
-    "ReadTimeoutError",
-    "ConnectionError",
-    "HTTP Error 500",
-    "HTTP Error 502",
-    "HTTP Error 503",
-    "coveralls",
+    "Posting coverage data to https://coveralls.io",
 )
 
 
