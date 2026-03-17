@@ -86,70 +86,137 @@ the following environment variables at runtime: ``GITHUB_TOKEN``,
 
 **Setup for Other Repositories**
 
-To enable the auto-assignment bot in another OpenWISP repository, add
-workflow files under ``.github/workflows/``. Each workflow needs to:
+To enable the auto-assignment bot in another OpenWISP repository, you must
+create four workflow files under ``.github/workflows/`` that call the
+reusable GitHub Workflow. This reusable workflow automatically handles
+token generation, environment setup, and executing the bot scripts.
 
-1. Generate a GitHub App token using the OpenWISP Bot credentials.
-2. Checkout ``openwisp-utils`` to get the bot scripts.
-3. Install the bot dependencies via ``pip install -e .[github_actions]``.
-4. Run the appropriate bot command.
+.. note::
 
-Below is a complete example for the issue assignment bot. You can find all
-four workflow files in the ``openwisp-utils`` repository under
-``.github/workflows/`` (``bot-autoassign-issue.yml``,
-``bot-autoassign-pr-issue-link.yml``, ``bot-autoassign-pr-reopen.yml``,
-``bot-autoassign-stale-pr.yml``).
+    Each caller workflow must declare its own ``permissions`` block.
+    GitHub Actions reusable workflows inherit permissions from the caller,
+    so the reusable workflow cannot set them on its own.
+
+Create the following workflow files in your repository.
+
+**1. Issue Assignment Bot**
+(``.github/workflows/bot-autoassign-issue.yml``)
 
 .. code-block:: yaml
 
     name: Issue Assignment Bot
-
     on:
       issue_comment:
         types: [created]
-
     permissions:
       contents: read
       issues: write
-
     concurrency:
       group: bot-autoassign-issue-${{ github.repository }}-${{ github.event.issue.number }}
       cancel-in-progress: true
-
     jobs:
       respond-to-assign-request:
-        runs-on: ubuntu-latest
         if: github.event.issue.pull_request == null
-        steps:
-          - name: Generate GitHub App token
-            id: generate-token
-            uses: actions/create-github-app-token@v2
-            with:
-              app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
-              private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: issue_assignment
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
-          - name: Checkout openwisp-utils
-            uses: actions/checkout@v6
-            with:
-              repository: openwisp/openwisp-utils
-              path: openwisp-utils
+**2. PR Issue Link**
+(``.github/workflows/bot-autoassign-pr-issue-link.yml``)
 
-          - name: Set up Python
-            uses: actions/setup-python@v6
-            with:
-              python-version: "3.13"
+.. code-block:: yaml
 
-          - name: Install dependencies
-            run: pip install -e openwisp-utils/.[github_actions]
+    name: PR Issue Auto-Assignment
+    on:
+      pull_request_target:
+        types: [opened, reopened, closed]
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    concurrency:
+      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    jobs:
+      auto-assign-issue:
+        if: github.event.action != 'closed' || github.event.pull_request.merged == false
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: issue_assignment
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
-          - name: Run issue assignment bot
-            env:
-              GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
-              REPOSITORY: ${{ github.repository }}
-              GITHUB_EVENT_NAME: ${{ github.event_name }}
-            run: >
-              python openwisp-utils/.github/actions/bot-autoassign/__main__.py
-              issue_assignment "$GITHUB_EVENT_PATH"
+**3. PR Reopen** (``.github/workflows/bot-autoassign-pr-reopen.yml``)
+
+.. code-block:: yaml
+
+    name: PR Reopen Reassignment
+    on:
+      pull_request_target:
+        types: [reopened]
+      issue_comment:
+        types: [created]
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: bot-autoassign-pr-reopen-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    jobs:
+      reassign-on-reopen:
+        if: github.event_name == 'pull_request_target' && github.event.action == 'reopened'
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: pr_reopen
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+      handle-pr-activity:
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.issue.user.login == github.event.comment.user.login
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: pr_reopen
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+.. note::
+
+    Both jobs use ``bot_command: pr_reopen``. The ``pr_reopen`` command
+    dispatches to ``PRReopenBot`` on ``pull_request_target`` events (to
+    reassign issues when a PR is reopened) and to ``PRActivityBot`` on
+    ``issue_comment`` events (to remove the stale label when the PR author
+    comments on their stale PR).
+
+**4. Stale PR** (``.github/workflows/bot-autoassign-stale-pr.yml``)
+
+.. code-block:: yaml
+
+    name: Stale PR Management
+    on:
+      schedule:
+        - cron: "0 0 * * *"
+      workflow_dispatch:
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: bot-autoassign-stale-pr-${{ github.repository }}
+      cancel-in-progress: false
+    jobs:
+      manage-stale-prs-python:
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: stale_pr
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 GitHub Workflows
 ----------------
@@ -285,6 +352,15 @@ relevant source code context (safely bypassing unnecessary assets)
 alongside the raw error logs. It then posts a concise summary and an
 actionable remediation plan directly to the Pull Request.
 
+When the bot detects that all failures are transient (e.g., network
+errors, browser crashes, Coveralls flakiness), it automatically re-runs
+the failed jobs up to 3 times and posts a short notification instead of
+the full analysis. This requires ``actions: write`` permission in the
+caller workflow and the GitHub App must have the **Actions** permission
+enabled. If the permission is not granted (e.g., in repositories that
+haven't updated their caller workflow yet), the auto-retry is skipped
+gracefully and the full analysis is posted instead.
+
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
 cross-repository concurrency locks and token limits to prevent PR spam on
@@ -308,7 +384,7 @@ job:
 
     permissions:
       pull-requests: write
-      actions: read
+      actions: write
       contents: read
 
     concurrency:
@@ -318,35 +394,48 @@ job:
     jobs:
       find-pr:
         runs-on: ubuntu-latest
-        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'pull_request' }}
         outputs:
           pr_number: ${{ steps.pr.outputs.number }}
+          pr_author: ${{ steps.pr.outputs.author }}
         steps:
           - name: Find PR Number
             id: pr
             env:
               GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               REPO: ${{ github.repository }}
+              PR_NUMBER_PAYLOAD: ${{ github.event.workflow_run.pull_requests[0].number }}
+              EVENT_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
             run: |
-              PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
+              emit_pr() {
+                local pr_number="$1"
+                local pr_author
+                pr_author=$(gh pr view "$pr_number" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null || echo "")
+                if [ -z "$pr_author" ]; then
+                  echo "::warning::Could not fetch PR author for PR #$pr_number"
+                fi
+                echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+                echo "author=$pr_author" >> "$GITHUB_OUTPUT"
+              }
+              PR_NUMBER="$PR_NUMBER_PAYLOAD"
               if [ -n "$PR_NUMBER" ]; then
                 echo "Found PR #$PR_NUMBER from workflow payload."
-                echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                emit_pr "$PR_NUMBER"
                 exit 0
               fi
-              HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+              HEAD_SHA="$EVENT_HEAD_SHA"
               echo "Payload empty. Searching for PR via Commits API..."
               PR_NUMBER=$(gh api repos/$REPO/commits/$HEAD_SHA/pulls -q '.[0].number' 2>/dev/null || true)
               if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
                  echo "Found PR #$PR_NUMBER using Commits API."
-                 echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                 emit_pr "$PR_NUMBER"
                  exit 0
               fi
               echo "API lookup failed/empty. Scanning open PRs for matching head SHA..."
               PR_NUMBER=$(gh pr list --repo "$REPO" --state open --limit 100 --json number,headRefOid --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n 1)
               if [ -n "$PR_NUMBER" ]; then
                  echo "Found PR #$PR_NUMBER by scanning open PRs."
-                 echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+                 emit_pr "$PR_NUMBER"
                  exit 0
               fi
               echo "::warning::No open PR found. This workflow run might not be attached to an open PR."
@@ -362,8 +451,8 @@ job:
           head_repo: ${{ github.event.workflow_run.head_repository.full_name }}
           base_repo: ${{ github.repository }}
           run_id: ${{ github.event.workflow_run.id }}
-          pr_author: ${{ github.event.workflow_run.actor.login }}
-          actor: ${{ github.actor }}
+          pr_author: ${{ needs.find-pr.outputs.pr_author }}
+          actor: ${{ github.event.workflow_run.actor.login }}
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}

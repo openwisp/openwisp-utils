@@ -447,9 +447,7 @@ def main():
     system_instruction, user_data_prompt = build_prompt(
         pr_details, diff, commits, issues, changelog_format
     )
-    changelog_entry = call_gemini(
-        user_data_prompt, system_instruction, api_key, model, changelog_format
-    )
+    changelog_entry = call_gemini(user_data_prompt, system_instruction, api_key, model)
     changelog_entry = changelog_entry.strip()
 
     # Validate output before posting to prevent injection attacks
