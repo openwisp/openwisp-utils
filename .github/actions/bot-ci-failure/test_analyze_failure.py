@@ -8,7 +8,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from analyze_failure import (  # noqa: E402
     _extract_failed_tests,
+    _fix_markdown_rendering,
+    _is_transient_failure,
     _normalize_for_dedup,
+    _strip_slow_test_output,
     get_error_logs,
     get_repo_context,
     main,
@@ -22,24 +25,26 @@ class TestGetErrorLogs(unittest.TestCase):
     @patch("analyze_failure.os.path.exists")
     def test_returns_default_when_file_missing(self, mock_exists):
         mock_exists.return_value = False
-        text, tests_failed = get_error_logs()
+        text, tests_failed, transient = get_error_logs()
         self.assertEqual(text, "No failed logs found.")
         self.assertFalse(tests_failed)
+        self.assertFalse(transient)
 
     @patch("analyze_failure.os.path.exists")
     @patch("builtins.open", new_callable=mock_open, read_data="Small error log")
     def test_returns_full_content_when_small(self, mock_file, mock_exists):
         mock_exists.return_value = True
-        text, tests_failed = get_error_logs()
+        text, tests_failed, transient = get_error_logs()
         self.assertEqual(text, "Small error log")
         self.assertFalse(tests_failed)
+        self.assertFalse(transient)
 
     @patch("analyze_failure.os.path.exists")
     def test_truncates_large_logs(self, mock_exists):
         mock_exists.return_value = True
         large_content = "x" * 35000
         with patch("builtins.open", mock_open(read_data=large_content)):
-            text, tests_failed = get_error_logs()
+            text, tests_failed, transient = get_error_logs()
         self.assertIn("[LOGS TRUNCATED:", text)
         self.assertLessEqual(len(text), 30000)
 
@@ -48,9 +53,10 @@ class TestGetErrorLogs(unittest.TestCase):
     def test_handles_file_read_exception(self, mock_file, mock_exists):
         mock_exists.return_value = True
         mock_file.side_effect = Exception("Permission denied")
-        text, tests_failed = get_error_logs()
+        text, tests_failed, transient = get_error_logs()
         self.assertIn("Error reading logs: Permission denied", text)
         self.assertFalse(tests_failed)
+        self.assertFalse(transient)
 
 
 class TestGetRepoContext(unittest.TestCase):
@@ -161,6 +167,52 @@ class TestExtractFailedTests(unittest.TestCase):
         self.assertEqual(result, f"\n{sep}\n{body}\n{sep}\n")
 
 
+class TestIsTransientFailure(unittest.TestCase):
+    """Tests for _is_transient_failure."""
+
+    def test_detects_marionette(self):
+        self.assertTrue(
+            _is_transient_failure(
+                "marionette.errors.MarionetteException: connection lost"
+            )
+        )
+
+    def test_detects_ns_error(self):
+        self.assertTrue(_is_transient_failure("NS_ERROR_ABORT"))
+
+    def test_detects_double_free(self):
+        self.assertTrue(_is_transient_failure("double free or corruption"))
+
+    def test_detects_coveralls(self):
+        self.assertTrue(
+            _is_transient_failure(
+                "Posting coverage data to https://coveralls.io\nError: request failed"
+            )
+        )
+
+    def test_detects_connection_refused(self):
+        self.assertTrue(
+            _is_transient_failure(
+                "ConnectionRefusedError: [Errno 111] Connection refused"
+            )
+        )
+
+    def test_normal_test_failure_not_transient(self):
+        self.assertFalse(_is_transient_failure("FAIL: test_login"))
+
+    def test_qa_failure_not_transient(self):
+        self.assertFalse(_is_transient_failure("flake8 error: E501"))
+
+    def test_commit_message_prose_not_transient(self):
+        """Commit messages mentioning transient keywords should NOT match."""
+        commit_msg_log = (
+            "checkcommit: bad commit message\n"
+            "Fixed marionette and coveralls issues.\n"
+            "Handle connection refused errors gracefully.\n"
+        )
+        self.assertFalse(_is_transient_failure(commit_msg_log))
+
+
 class TestProcessErrorLogs(unittest.TestCase):
     """Tests for process_error_logs."""
 
@@ -171,10 +223,10 @@ class TestProcessErrorLogs(unittest.TestCase):
             "===== JOB 200 =====\n"
             "flake8 error: E501\n"
         )
-        text, tests_failed = process_error_logs(content)
-        # Only one copy of the body should remain.
+        text, tests_failed, transient = process_error_logs(content)
         self.assertEqual(text.count("flake8 error: E501"), 1)
         self.assertFalse(tests_failed)
+        self.assertFalse(transient)
 
     def test_tests_failed_true_on_test_failure(self):
         content = (
@@ -183,19 +235,51 @@ class TestProcessErrorLogs(unittest.TestCase):
             '  File "x.py", line 1\n'
             "AssertionError\n"
         )
-        _, tests_failed = process_error_logs(content)
+        _, tests_failed, transient = process_error_logs(content)
         self.assertTrue(tests_failed)
+        self.assertFalse(transient)
 
     def test_tests_failed_false_on_qa_only(self):
         content = "===== JOB 500 =====\n" "checkcommit: bad commit message\n"
-        _, tests_failed = process_error_logs(content)
+        _, tests_failed, transient = process_error_logs(content)
         self.assertFalse(tests_failed)
+        self.assertFalse(transient)
 
     def test_single_block_no_job_headers(self):
         content = "just some error output without job headers"
-        text, tests_failed = process_error_logs(content)
+        text, tests_failed, transient = process_error_logs(content)
         self.assertEqual(text, content)
         self.assertFalse(tests_failed)
+        self.assertFalse(transient)
+
+    def test_transient_only_true_when_all_transient(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "marionette.errors.MarionetteException: connection lost\n"
+            "===== JOB 200 =====\n"
+            "NS_ERROR_ABORT in browser\n"
+        )
+        _, _, transient = process_error_logs(content)
+        self.assertTrue(transient)
+
+    def test_transient_only_false_when_mixed(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "marionette.errors.MarionetteException: connection lost\n"
+            "===== JOB 200 =====\n"
+            "FAIL: test_login\n"
+        )
+        _, _, transient = process_error_logs(content)
+        self.assertFalse(transient)
+
+    def test_coveralls_only_is_transient(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "Posting coverage data to https://coveralls.io\n"
+            "Error: request failed\n"
+        )
+        _, _, transient = process_error_logs(content)
+        self.assertTrue(transient)
 
 
 class TestNormalizeForDedup(unittest.TestCase):
@@ -243,7 +327,7 @@ class TestNormalizeForDedup(unittest.TestCase):
             "FAIL: test_foo\nAssertionError\n"
             "Ran 5 tests in 2.567s\n"
         )
-        text, _ = process_error_logs(content)
+        text, _, _ = process_error_logs(content)
         self.assertEqual(text.count("FAIL: test_foo"), 1)
 
     def test_dedup_keeps_genuinely_different_failures(self):
@@ -253,9 +337,127 @@ class TestNormalizeForDedup(unittest.TestCase):
             "===== JOB 200 =====\n"
             "FAIL: test_bar\nAssertionError\n"
         )
-        text, _ = process_error_logs(content)
+        text, _, _ = process_error_logs(content)
         self.assertIn("FAIL: test_foo", text)
         self.assertIn("FAIL: test_bar", text)
+
+
+class TestStripSlowTestOutput(unittest.TestCase):
+    """Tests for _strip_slow_test_output."""
+
+    def test_strips_full_slow_test_block(self):
+        log = (
+            "Ran 100 tests in 30.000s\n"
+            "OK\n"
+            "Summary of slow tests (>0.3s)\n"
+            "\n"
+            "(test_project.tests.test_selenium.TestMenu.test_menu_on_wide_screen)\n"
+            "  (5.27s) test_menu_on_wide_screen\n"
+            "(test_project.tests.test_selenium.TestInputFilters.test_input_filters)\n"
+            "  (5.00s) test_input_filters\n"
+            "\n"
+            "Total slow tests detected: 2\n"
+            "Done.\n"
+        )
+        result = _strip_slow_test_output(log)
+        self.assertNotIn("Summary of slow tests", result)
+        self.assertNotIn("Total slow tests detected", result)
+        self.assertNotIn("test_menu_on_wide_screen", result)
+        self.assertIn("Ran 100 tests", result)
+        self.assertIn("Done.", result)
+
+    def test_strips_standalone_total_line(self):
+        log = "some output\nTotal slow tests detected: 595\nmore output\n"
+        result = _strip_slow_test_output(log)
+        self.assertNotIn("Total slow tests detected", result)
+        self.assertIn("some output", result)
+        self.assertIn("more output", result)
+
+    def test_no_slow_tests_unchanged(self):
+        log = "FAIL: test_login\nAssertionError\n"
+        result = _strip_slow_test_output(log)
+        self.assertEqual(result, log)
+
+    def test_process_error_logs_strips_slow_tests(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "FAIL: test_login\nAssertionError\n"
+            "Summary of slow tests (>0.3s)\n"
+            "\n"
+            "(app.tests.SlowTest.test_slow)\n"
+            "  (5.00s) test_slow\n"
+            "\n"
+            "Total slow tests detected: 1\n"
+        )
+        text, tests_failed, _ = process_error_logs(content)
+        self.assertNotIn("slow tests", text.lower())
+        self.assertTrue(tests_failed)
+
+
+class TestFixMarkdownRendering(unittest.TestCase):
+    """Tests for _fix_markdown_rendering function."""
+
+    def test_strips_wrapping_code_fences(self):
+        text = "```markdown\n### Title\nBody\n```"
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(result, "### Title\nBody")
+
+    def test_strips_wrapping_code_fences_with_leading_newline(self):
+        text = "\n```markdown\n### Title\nBody\n```\n"
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(result, "### Title\nBody")
+
+    def test_strips_indentation_outside_code_blocks(self):
+        text = (
+            "### Title\n"
+            "    This is indented 4 spaces\n"
+            "        This is indented 8 spaces\n"
+            "Normal line"
+        )
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(
+            result,
+            "### Title\n"
+            "This is indented 4 spaces\n"
+            "This is indented 8 spaces\n"
+            "Normal line",
+        )
+
+    def test_preserves_indentation_inside_code_blocks(self):
+        text = (
+            "Some text\n"
+            "```python\n"
+            "    def foo():\n"
+            "        return bar\n"
+            "```\n"
+            "    More text outside"
+        )
+        result = _fix_markdown_rendering(text)
+        self.assertEqual(
+            result,
+            "Some text\n"
+            "```python\n"
+            "    def foo():\n"
+            "        return bar\n"
+            "```\n"
+            "More text outside",
+        )
+
+    def test_handles_mixed_fences_and_indentation(self):
+        text = (
+            "```\n"
+            "### Title\n"
+            "    * **Item**: Indented explanation\n"
+            "        ```\n"
+            "        code here\n"
+            "        ```\n"
+            "    More indented text\n"
+            "```"
+        )
+        result = _fix_markdown_rendering(text)
+        # Outer fences stripped, inner content processed
+        self.assertNotIn("    * **Item**", result)
+        self.assertIn("* **Item**", result)
 
 
 class TestMain(unittest.TestCase):
@@ -273,7 +475,7 @@ class TestMain(unittest.TestCase):
     @patch("analyze_failure.get_error_logs")
     @patch.dict(os.environ, {"GEMINI_API_KEY": "fake_key"})
     def test_exits_early_without_failed_logs(self, mock_get_logs, mock_print):
-        mock_get_logs.return_value = ("No failed logs found.", False)
+        mock_get_logs.return_value = ("No failed logs found.", False, False)
         main()
         mock_print.assert_called_once_with(
             "::warning::Skipping: No failure logs to analyse.", file=sys.stderr
@@ -290,7 +492,7 @@ class TestMain(unittest.TestCase):
     def test_successful_api_call_prints_response(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = ("Fake error log", True)
+        mock_logs.return_value = ("Fake error log", True, False)
         mock_repo.return_value = "<file path='test.py'>code</file>"
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -316,12 +518,49 @@ class TestMain(unittest.TestCase):
     @patch("analyze_failure.get_repo_context")
     @patch.dict(
         os.environ,
+        {
+            "GEMINI_API_KEY": "fake_key",
+            "PR_AUTHOR": "testuser",
+            "COMMIT_SHA": "abc1234",
+        },
+    )
+    def test_strips_wrapping_code_fences(
+        self, mock_repo, mock_logs, mock_genai, mock_print
+    ):
+        mock_logs.return_value = ("Fake error log", True, False)
+        mock_repo.return_value = "<file path='test.py'>code</file>"
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            "```markdown\n"
+            "### Test Failed\n"
+            "Hello @testuser\n"
+            "*(Analysis for commit abc1234)*\n"
+            "Here is the fix.\n"
+            "```"
+        )
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        main()
+        mock_print.assert_called_once_with(
+            "### Test Failed\n"
+            "Hello @testuser\n"
+            "*(Analysis for commit abc1234)*\n"
+            "Here is the fix."
+        )
+
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch("analyze_failure.get_repo_context")
+    @patch.dict(
+        os.environ,
         {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
     )
     def test_skips_repo_context_when_no_test_failures(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = ("flake8 error: E501", False)
+        mock_logs.return_value = ("flake8 error: E501", False, False)
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.text = (
@@ -346,7 +585,7 @@ class TestMain(unittest.TestCase):
     def test_fails_format_validation(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = ("Fake error log", True)
+        mock_logs.return_value = ("Fake error log", True, False)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -369,7 +608,7 @@ class TestMain(unittest.TestCase):
     def test_handles_empty_api_response(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = ("Error log", True)
+        mock_logs.return_value = ("Error log", True, False)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -389,7 +628,7 @@ class TestMain(unittest.TestCase):
     @patch("analyze_failure.get_repo_context")
     @patch.dict(os.environ, {"GEMINI_API_KEY": "fake_key"})
     def test_handles_api_exception(self, mock_repo, mock_logs, mock_genai, mock_print):
-        mock_logs.return_value = ("Error log", True)
+        mock_logs.return_value = ("Error log", True, False)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_client.models.generate_content.side_effect = Exception("Quota Exceeded")
@@ -412,7 +651,7 @@ class TestMain(unittest.TestCase):
     def test_truncates_large_api_response(
         self, mock_repo, mock_logs, mock_genai, mock_print
     ):
-        mock_logs.return_value = ("Fake error log", True)
+        mock_logs.return_value = ("Fake error log", True, False)
         mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -430,6 +669,32 @@ class TestMain(unittest.TestCase):
             "\n\n*(Warning: Output truncated due to length limits)*"
         )
         self.assertEqual(len(printed_text), expected_length)
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch("analyze_failure.get_repo_context")
+    @patch.dict(
+        os.environ,
+        {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
+    )
+    def test_transient_failure_creates_marker_file(
+        self, mock_repo, mock_logs, mock_genai, mock_print, mock_file
+    ):
+        mock_logs.return_value = ("marionette error", False, True)
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            "### Transient Issue\n"
+            "Hello @test,\n"
+            "*(Analysis for commit abc)*\n"
+            "Transient."
+        )
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        main()
+        mock_file.assert_any_call("transient_failure", "w")
 
 
 if __name__ == "__main__":
