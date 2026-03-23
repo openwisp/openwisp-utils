@@ -51,13 +51,11 @@ class TestSeleniumMixinSkipHandling(SimpleTestCase):
 
     def test_setup_and_call_propagates_skip_to_standard_result(self):
         result = self._run_skipped_standard_test()
-
         self.assertEqual(len(result.skipped), 1)
         self.assertEqual(result.skipped[0][1], "skip propagation regression test")
 
     def test_setup_and_call_preserves_remote_skip_events_for_multiple_tests(self):
         result = self._run_skipped_remote_suite()
-
         self.assertEqual(
             result.events,
             [
