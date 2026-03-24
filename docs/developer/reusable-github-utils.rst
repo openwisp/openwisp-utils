@@ -520,7 +520,9 @@ uploads the PR number as an artifact for the runner to pick up.
 
           - name: Save PR metadata
             if: steps.check.outputs.has_noteworthy == 'true'
-            run: echo '${{ github.event.pull_request.number }}' > pr_number
+            env:
+              PR_NUMBER: ${{ github.event.pull_request.number }}
+            run: echo "$PR_NUMBER" > pr_number
 
           - name: Upload PR metadata
             if: steps.check.outputs.has_noteworthy == 'true'
