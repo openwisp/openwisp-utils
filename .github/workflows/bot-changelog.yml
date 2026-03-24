@@ -1,20 +1,34 @@
 name: Changelog Bot
 
 on:
-  # Trigger when a PR review is submitted with approval
   pull_request_review:
     types: [submitted]
 
 jobs:
-  changelog:
-    # Call the reusable workflow from openwisp-utils
+  check:
     if: |
       github.event.review.state == 'approved' &&
       (github.event.review.author_association == 'OWNER' ||
         github.event.review.author_association == 'MEMBER' ||
         github.event.review.author_association == 'COLLABORATOR')
-    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-changelog.yml@master
-    secrets:
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-      OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for noteworthy PR
+        id: check
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change)\]'; then
+            echo "has_noteworthy=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Save PR metadata
+        if: steps.check.outputs.has_noteworthy == 'true'
+        run: echo '${{ github.event.pull_request.number }}' > pr_number
+
+      - name: Upload PR metadata
+        if: steps.check.outputs.has_noteworthy == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog-metadata
+          path: pr_number
