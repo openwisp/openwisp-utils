@@ -383,8 +383,8 @@ job:
           - completed
 
     permissions:
-      pull-requests: write
-      actions: write
+      pull-requests: read
+      actions: read
       contents: read
 
     concurrency:
@@ -410,8 +410,8 @@ job:
               emit_pr() {
                 local pr_number="$1"
                 local pr_author
-                pr_author=$(gh pr view "$pr_number" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null || echo "")
-                if [ -z "$pr_author" ]; then
+                pr_author=$(gh pr view "$pr_number" --repo "$REPO" --json author --jq '.author.login // empty' 2>/dev/null || echo "")
+                if [ -z "$pr_author" ] || [ "$pr_author" = "null" ]; then
                   echo "::warning::Could not fetch PR author for PR #$pr_number"
                 fi
                 echo "number=$pr_number" >> "$GITHUB_OUTPUT"
@@ -444,6 +444,10 @@ job:
       call-ci-failure-bot:
         needs: find-pr
         if: ${{ needs.find-pr.outputs.pr_number != '' }}
+        permissions:
+          pull-requests: write
+          actions: write
+          contents: read
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
         with:
           pr_number: ${{ needs.find-pr.outputs.pr_number }}
