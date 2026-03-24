@@ -427,16 +427,16 @@ job:
               echo "Payload empty. Searching for PR via Commits API..."
               PR_NUMBER=$(gh api repos/$REPO/commits/$HEAD_SHA/pulls -q '.[0].number' 2>/dev/null || true)
               if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-                echo "Found PR #$PR_NUMBER using Commits API."
-                emit_pr "$PR_NUMBER"
-                exit 0
+                 echo "Found PR #$PR_NUMBER using Commits API."
+                 emit_pr "$PR_NUMBER"
+                 exit 0
               fi
               echo "API lookup failed/empty. Scanning open PRs for matching head SHA..."
               PR_NUMBER=$(gh pr list --repo "$REPO" --state open --limit 100 --json number,headRefOid --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n 1)
               if [ -n "$PR_NUMBER" ]; then
-                echo "Found PR #$PR_NUMBER by scanning open PRs."
-                emit_pr "$PR_NUMBER"
-                exit 0
+                 echo "Found PR #$PR_NUMBER by scanning open PRs."
+                 emit_pr "$PR_NUMBER"
+                 exit 0
               fi
               echo "::warning::No open PR found. This workflow run might not be attached to an open PR."
               exit 0
