@@ -383,8 +383,8 @@ job:
           - completed
 
     permissions:
-      pull-requests: write
-      actions: write
+      pull-requests: read
+      actions: read
       contents: read
 
     concurrency:
@@ -410,8 +410,8 @@ job:
               emit_pr() {
                 local pr_number="$1"
                 local pr_author
-                pr_author=$(gh pr view "$pr_number" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null || echo "")
-                if [ -z "$pr_author" ]; then
+                pr_author=$(gh pr view "$pr_number" --repo "$REPO" --json author --jq '.author.login // empty' 2>/dev/null || echo "")
+                if [ -z "$pr_author" ] || [ "$pr_author" = "null" ]; then
                   echo "::warning::Could not fetch PR author for PR #$pr_number"
                 fi
                 echo "number=$pr_number" >> "$GITHUB_OUTPUT"
@@ -427,16 +427,16 @@ job:
               echo "Payload empty. Searching for PR via Commits API..."
               PR_NUMBER=$(gh api repos/$REPO/commits/$HEAD_SHA/pulls -q '.[0].number' 2>/dev/null || true)
               if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-                 echo "Found PR #$PR_NUMBER using Commits API."
-                 emit_pr "$PR_NUMBER"
-                 exit 0
+                echo "Found PR #$PR_NUMBER using Commits API."
+                emit_pr "$PR_NUMBER"
+                exit 0
               fi
               echo "API lookup failed/empty. Scanning open PRs for matching head SHA..."
               PR_NUMBER=$(gh pr list --repo "$REPO" --state open --limit 100 --json number,headRefOid --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" | head -n 1)
               if [ -n "$PR_NUMBER" ]; then
-                 echo "Found PR #$PR_NUMBER by scanning open PRs."
-                 emit_pr "$PR_NUMBER"
-                 exit 0
+                echo "Found PR #$PR_NUMBER by scanning open PRs."
+                emit_pr "$PR_NUMBER"
+                exit 0
               fi
               echo "::warning::No open PR found. This workflow run might not be attached to an open PR."
               exit 0
@@ -444,6 +444,10 @@ job:
       call-ci-failure-bot:
         needs: find-pr
         if: ${{ needs.find-pr.outputs.pr_number != '' }}
+        permissions:
+          pull-requests: write
+          actions: write
+          contents: read
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
         with:
           pr_number: ${{ needs.find-pr.outputs.pr_number }}
