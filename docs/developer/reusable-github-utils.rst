@@ -468,11 +468,12 @@ maintainer. It analyzes the PR's title, description, code changes, and
 linked issues, then posts a properly formatted changelog entry as a
 comment on the PR.
 
-The bot uses a two-step ``workflow_run`` pattern to support PRs from
-forks. The ``pull_request_review`` event does not have access to
-repository secrets for fork PRs, so the workflow is split into a
-lightweight trigger (no secrets needed) and a runner that executes via
-``workflow_run`` with full secret access.
+The bot uses a two-workflow pattern to support PRs from forks. The first
+workflow is triggered by ``pull_request_review``: it checks whether the PR
+qualifies and uploads the PR number as an artifact, but requires no
+secrets. The second workflow executes via ``workflow_run`` once the first
+completes: it runs in the context of the base repository, has full access
+to secrets, and is the one that generates and posts the changelog comment.
 
 **Secrets**
 
@@ -486,14 +487,14 @@ lightweight trigger (no secrets needed) and a runner that executes via
 To enable the changelog bot in any OpenWISP repository, create the
 following two workflow files.
 
-**1. Trigger** (``.github/workflows/bot-changelog.yml``)
+**1. Trigger** (``.github/workflows/bot-changelog-trigger.yml``)
 
 This workflow fires on PR approval, checks if the PR is noteworthy, and
 uploads the PR number as an artifact for the runner to pick up.
 
 .. code-block:: yaml
 
-    name: Changelog Bot
+    name: Changelog Bot Trigger
 
     on:
       pull_request_review:
@@ -528,18 +529,18 @@ uploads the PR number as an artifact for the runner to pick up.
               name: changelog-metadata
               path: pr_number
 
-**2. Runner** (``.github/workflows/bot-changelog-run.yml``)
+**2. Runner** (``.github/workflows/bot-changelog-runner.yml``)
 
 This workflow triggers after the trigger completes, downloads the
 artifact, and calls the reusable workflow with full secret access.
 
 .. code-block:: yaml
 
-    name: Changelog Bot Run
+    name: Changelog Bot Runner
 
     on:
       workflow_run:
-        workflows: ["Changelog Bot"]
+        workflows: ["Changelog Bot Trigger"]
         types:
           - completed
 
@@ -590,5 +591,12 @@ artifact, and calls the reusable workflow with full secret access.
 .. note::
 
     The ``name`` field in the trigger workflow must be exactly ``Changelog
-    Bot``. The runner watches for this name via ``workflow_run``. Changing
-    it will silently break the connection between the two workflows.
+    Bot Trigger``. The runner watches for this name via ``workflow_run``.
+    Changing it will silently break the connection between the two
+    workflows.
+
+    Both ``bot-changelog-trigger.yml`` and ``bot-changelog-runner.yml``
+    must be committed to the **default branch** of the repository. GitHub
+    only activates ``workflow_run`` listeners that exist on the default
+    branch: adding the runner only to a feature branch will cause it to
+    silently do nothing.

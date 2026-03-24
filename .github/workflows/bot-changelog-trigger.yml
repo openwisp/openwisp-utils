@@ -1,4 +1,4 @@
-name: Changelog Bot
+name: Changelog Bot Trigger
 
 on:
   pull_request_review:

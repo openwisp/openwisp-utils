@@ -1,8 +1,8 @@
-name: Changelog Bot Run
+name: Changelog Bot Runner
 
 on:
   workflow_run:
-    workflows: ["Changelog Bot"]
+    workflows: ["Changelog Bot Trigger"]
     types:
       - completed
 
