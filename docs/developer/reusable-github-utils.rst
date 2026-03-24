@@ -468,6 +468,12 @@ maintainer. It analyzes the PR's title, description, code changes, and
 linked issues, then posts a properly formatted changelog entry as a
 comment on the PR.
 
+The bot uses a two-step ``workflow_run`` pattern to support PRs from
+forks. The ``pull_request_review`` event does not have access to
+repository secrets for fork PRs, so the workflow is split into a
+lightweight trigger (no secrets needed) and a runner that executes via
+``workflow_run`` with full secret access.
+
 **Secrets**
 
 - ``GEMINI_API_KEY`` (required): Google Gemini API key.
@@ -475,21 +481,114 @@ comment on the PR.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
 
-**Usage Example**
+**Setup for Other Repositories**
 
-To enable the changelog bot in any OpenWISP repository, create a workflow
-file at ``.github/workflows/changelog-bot.yml``:
+To enable the changelog bot in any OpenWISP repository, create the
+following two workflow files.
+
+**1. Trigger** (``.github/workflows/bot-changelog.yml``)
+
+This workflow fires on PR approval, checks if the PR is noteworthy, and
+uploads the PR number as an artifact for the runner to pick up.
 
 .. code-block:: yaml
 
     name: Changelog Bot
+
     on:
       pull_request_review:
         types: [submitted]
+
     jobs:
+      check:
+        if: |
+          github.event.review.state == 'approved' &&
+          (github.event.review.author_association == 'OWNER' ||
+            github.event.review.author_association == 'MEMBER' ||
+            github.event.review.author_association == 'COLLABORATOR')
+        runs-on: ubuntu-latest
+        steps:
+          - name: Check for noteworthy PR
+            id: check
+            env:
+              PR_TITLE: ${{ github.event.pull_request.title }}
+            run: |
+              if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change)\]'; then
+                echo "has_noteworthy=true" >> $GITHUB_OUTPUT
+              fi
+
+          - name: Save PR metadata
+            if: steps.check.outputs.has_noteworthy == 'true'
+            run: echo '${{ github.event.pull_request.number }}' > pr_number
+
+          - name: Upload PR metadata
+            if: steps.check.outputs.has_noteworthy == 'true'
+            uses: actions/upload-artifact@v4
+            with:
+              name: changelog-metadata
+              path: pr_number
+
+**2. Runner** (``.github/workflows/bot-changelog-run.yml``)
+
+This workflow triggers after the trigger completes, downloads the
+artifact, and calls the reusable workflow with full secret access.
+
+.. code-block:: yaml
+
+    name: Changelog Bot Run
+
+    on:
+      workflow_run:
+        workflows: ["Changelog Bot"]
+        types:
+          - completed
+
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+      issues: write
+
+    jobs:
+      fetch-metadata:
+        runs-on: ubuntu-latest
+        if: github.event.workflow_run.conclusion == 'success'
+        outputs:
+          pr_number: ${{ steps.metadata.outputs.pr_number }}
+        steps:
+          - name: Download PR metadata
+            id: download
+            uses: actions/download-artifact@v4
+            with:
+              name: changelog-metadata
+              github-token: ${{ secrets.GITHUB_TOKEN }}
+              run-id: ${{ github.event.workflow_run.id }}
+            continue-on-error: true
+
+          - name: Read PR metadata
+            if: steps.download.outcome == 'success'
+            id: metadata
+            run: |
+              PR_NUMBER=$(cat pr_number)
+              if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+                echo "::error::Invalid PR number: $PR_NUMBER"
+                exit 1
+              fi
+              echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
       changelog:
+        needs: fetch-metadata
+        if: needs.fetch-metadata.outputs.pr_number != ''
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-changelog.yml@master
+        with:
+          pr_number: ${{ needs.fetch-metadata.outputs.pr_number }}
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+.. note::
+
+    The ``name`` field in the trigger workflow must be exactly ``Changelog
+    Bot``. The runner watches for this name via ``workflow_run``. Changing
+    it will silently break the connection between the two workflows.
