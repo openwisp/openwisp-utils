@@ -64,56 +64,112 @@ class TestApi(CreateMixin, TestCase):
     def test_crud_shelf(self):
         list_url = reverse("shelf_list")
         with self.subTest("Create"):
-            resp = self.client.post(list_url, {"name": "shelf1"}, format="json")
-            self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+            response = self.client.post(
+                list_url,
+                {
+                    "name": "Fiction Shelf",
+                    "books_type": "FANTASY",
+                    "books_count": 3,
+                    "locked": False,
+                },
+                format="json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertEqual(Shelf.objects.count(), 1)
-            pk = resp.data["id"]
+            pk = response.data["id"]
 
         shelf = Shelf.objects.get(pk=pk)
         detail_url = reverse("shelf_detail", args=[pk])
         with self.subTest("List"):
-            resp = self.client.get(list_url)
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
-            self.assertIn(pk, [s["id"] for s in resp.data])
+            response = self.client.get(list_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data[0]["id"], pk)
 
         with self.subTest("Retrieve"):
-            resp = self.client.get(detail_url)
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+            response = self.client.get(detail_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data["id"], pk)
 
-        with self.subTest("Update"):
-            resp = self.client.patch(
-                detail_url, {"name": "shelf2"}, content_type="application/json"
+        with self.subTest("Update with PATCH"):
+            response = self.client.patch(
+                detail_url, {"name": "Shelf - Updated"}, content_type="application/json"
             )
-            self.assertEqual(resp.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
             # ensure the DB reflects the change
             shelf.refresh_from_db()
-            self.assertEqual(shelf.name, "shelf2")
+            self.assertEqual(shelf.name, "Shelf - Updated")
+
+        with self.subTest("Update with PUT"):
+            payload = {
+                "name": "Shelf PUT Full",
+                "books_type": "FACTUAL",
+                "books_count": 5,
+                "locked": False,
+            }
+            response = self.client.put(
+                detail_url, payload, content_type="application/json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            shelf.refresh_from_db()
+            self.assertEqual(shelf.name, "Shelf PUT Full")
 
         with self.subTest("Delete"):
-            resp = self.client.delete(detail_url)
-            self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+            response = self.client.delete(detail_url)
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
             self.assertEqual(Shelf.objects.count(), 0)
 
     def test_model_validation_create_and_update(self):
         list_url = reverse("shelf_list")
-        # Creating with invalid name should fail due to model.clean()
-        resp = self.client.post(
-            list_url, {"name": "Intentional_Test_Fail"}, format="json"
-        )
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        # Create valid
-        resp = self.client.post(list_url, {"name": "valid"}, format="json")
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        with self.subTest("Create (invalid)"):
+            response = self.client.post(
+                list_url, {"name": "Intentional_Test_Fail"}, format="json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        pk = resp.data["id"]
+        with self.subTest("Create (valid)"):
+            response = self.client.post(
+                list_url,
+                {
+                    "name": "Reference Shelf",
+                    "books_type": "FACTUAL",
+                    "books_count": 7,
+                    "locked": True,
+                },
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            pk = response.data["id"]
+
         detail_url = reverse("shelf_detail", args=[pk])
-        # Updating to invalid should fail
-        resp = self.client.patch(
-            detail_url,
-            {"name": "Intentional_Test_Fail"},
-            content_type="application/json",
-        )
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        # Ensure DB value unchanged
-        shelf = Shelf.objects.get(pk=pk)
-        self.assertEqual(shelf.name, "valid")
+        with self.subTest("Update - PATCH (invalid)"):
+            response = self.client.patch(
+                detail_url,
+                {"name": "Intentional_Test_Fail"},
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        with self.subTest("Update - PUT (valid)"):
+            payload = {
+                "name": "Valid PUT Shelf",
+                "books_type": "FACTUAL",
+                "books_count": 10,
+                "locked": True,
+            }
+            response = self.client.put(
+                detail_url, payload, content_type="application/json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        with self.subTest("Update - PUT (invalid)"):
+            invalid_payload = {"books_count": 7}
+            response = self.client.put(
+                detail_url, invalid_payload, content_type="application/json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        with self.subTest("DB value unchanged after failed updates"):
+            shelf = Shelf.objects.get(pk=pk)
+            self.assertEqual(shelf.name, "Valid PUT Shelf")
+            self.assertEqual(shelf.books_count, 10)
+            self.assertEqual(shelf.locked, True)
