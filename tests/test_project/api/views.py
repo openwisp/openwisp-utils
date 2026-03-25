@@ -1,8 +1,10 @@
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+from rest_framework import generics
+from test_project.serializers import ShelfSerializer
 
-from ..models import Project
+from ..models import Project, Shelf
 
 
 class ReceiveProjectView(View):
@@ -23,4 +25,16 @@ class ReceiveProjectView(View):
         return JsonResponse({"detail": _("ok"), "name": project.name}, status=200)
 
 
+class ShelfListCreateView(generics.ListCreateAPIView):
+    queryset = Shelf.objects.all()
+    serializer_class = ShelfSerializer
+
+
+class ShelfRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Shelf.objects.all()
+    serializer_class = ShelfSerializer
+
+
 receive_project = ReceiveProjectView.as_view()
+shelf_list_create_view = ShelfListCreateView.as_view()
+shelf_retrieve_update_destroy_view = ShelfRetrieveUpdateDestroyView.as_view()

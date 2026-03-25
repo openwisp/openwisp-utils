@@ -1,3 +1,5 @@
+from copy import copy
+
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 
@@ -19,16 +21,12 @@ class ValidatedModelSerializer(serializers.ModelSerializer):
         Allows to avoid having to duplicate model validation logic in the
         REST API.
         """
-        instance = self.instance
-        # if instance is empty (eg: creation)
-        # simulate for validation purposes
-        if not instance:
-            Model = self.Meta.model
-            instance = Model()
-            for key, value in data.items():
-                # avoid direct assignment for m2m (not allowed)
-                if not isinstance(Model._meta.get_field(key), models.ManyToManyField):
-                    setattr(instance, key, value)
+        Model = self.Meta.model
+        instance = copy(self.instance) if self.instance else Model()
+        for key, value in data.items():
+            # avoid direct assignment for m2m (not allowed)
+            if not isinstance(Model._meta.get_field(key), models.ManyToManyField):
+                setattr(instance, key, value)
         # perform model validation
         instance.full_clean(exclude=self.exclude_validation)
         return data
