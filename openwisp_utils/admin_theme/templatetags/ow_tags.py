@@ -11,8 +11,8 @@ def ow_create_filter(cl, spec, total_filters):
     choices = list(spec.choices(cl))
     selected_choice = None
     for choice in choices:
-        if choice["selected"]:
-            selected_choice = choice["display"]
+        if choice.get("selected", False):
+            selected_choice = choice.get("display", "")
     return tpl.render(
         {
             "title": spec.title,
