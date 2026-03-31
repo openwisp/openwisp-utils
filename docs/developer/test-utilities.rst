@@ -277,12 +277,13 @@ Applies a number of settings by default to improve test reliability.
 Quits the Selenium WebDriver to clean up resources after the test class
 has finished executing.
 
-``open(url, driver=None, timeout=5)``
-+++++++++++++++++++++++++++++++++++++
+``open(url, html_container="#main-content", driver=None, timeout=5)``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 - Opens a URL in the browser.
 - Waits for the page to fully load before returning.
-- Ensures the ``#main-content`` element is present before proceeding.
+- Waits for the ``html_container`` element to be visible before
+  proceeding.
 
 ``login(username=None, password=None, driver=None)``
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -292,7 +293,7 @@ Logs into the Django admin dashboard.
 - Defaults to using ``admin`` / ``password`` credentials.
 - Navigates to ``/admin/login/`` and fills in the login form.
 
-``find_element(by, value, timeout=2, wait_for='visibility', driver=None)``
+``find_element(by, value, timeout=2, driver=None, wait_for='visibility')``
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Finds an element using Selenium's ``find_element`` method. Waits for the
