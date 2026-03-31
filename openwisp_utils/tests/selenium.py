@@ -281,7 +281,7 @@ class SeleniumTestMixin:
         driver = driver or self.web_driver
         try:
             return WebDriverWait(driver, timeout).until(
-                getattr(EC, method)(((by, value)))
+                getattr(EC, method)((by, value))
             )
         except TimeoutException as e:
             print(self.get_browser_logs(driver))
