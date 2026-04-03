@@ -134,22 +134,6 @@ class CopyableFieldsAdmin(ModelAdmin):
         js = ("admin/js/jquery.init.js", "openwisp-utils/js/copyable.js")
 
 
-class UUIDAdmin(CopyableFieldsAdmin):
-    """Sets `uuid` as copyable field.
-
-    Subclass of `CopyableFieldsAdmin`. This class is kept for backward
-    compatibility and convenience, since different models of various
-    OpenWISP modules show `uuid` as the only copyable field.
-    """
-
-    copyable_fields = ("uuid",)
-
-    def uuid(self, obj):
-        return obj.pk
-
-    uuid.short_description = _("UUID")
-
-
 class ReceiveUrlAdmin(ModelAdmin):
     """Adds a receive_url field.
 
