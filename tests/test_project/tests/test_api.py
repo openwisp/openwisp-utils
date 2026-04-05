@@ -78,54 +78,59 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         for i in range(21):
             self._create_shelf(name=f"shelf{i}")
 
-    def test_list_shelf_api(self):
-        """Test shelf list API with pagination."""
+    def test_list_shelf_api_pagination(self):
+        """Test shelf list API with default pagination."""
         number_of_shelves = 21
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], number_of_shelves)
+        self.assertIsNotNone(response.data["next"])
+        self.assertIn("page=2", response.data["next"])
+        self.assertIsNone(response.data["previous"])
+        self.assertEqual(len(response.data["results"]), 10)
 
-        with self.subTest('Test "page" query in shelf list view'):
-            response = self.client.get(self.url)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.data["count"], number_of_shelves)
-            self.assertIsNotNone(response.data["next"])
-            self.assertIn("page=2", response.data["next"])
-            self.assertIsNone(response.data["previous"])
-            self.assertEqual(len(response.data["results"]), 10)
-            next_response = self.client.get(response.data["next"])
-            self.assertEqual(next_response.status_code, 200)
-            self.assertEqual(next_response.data["count"], number_of_shelves)
-            self.assertIsNotNone(next_response.data["next"])
-            self.assertIn("page=3", next_response.data["next"])
-            self.assertIsNotNone(next_response.data["previous"])
-            self.assertIn("page=1", next_response.data["previous"])
-            self.assertEqual(len(next_response.data["results"]), 10)
-            third_response = self.client.get(next_response.data["next"])
-            self.assertEqual(third_response.status_code, 200)
-            self.assertEqual(third_response.data["count"], number_of_shelves)
-            self.assertIsNone(third_response.data["next"])
-            self.assertIsNotNone(third_response.data["previous"])
-            self.assertIn("page=2", third_response.data["previous"])
-            self.assertEqual(len(third_response.data["results"]), 1)
-        with self.subTest('Test "page_size" query'):
-            page_size = 5
-            url_with_page_size = f"{self.url}?page_size={page_size}"
-            response = self.client.get(url_with_page_size)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.data["count"], number_of_shelves)
-            self.assertIsNotNone(response.data["next"])
-            self.assertIn(f"page_size={page_size}", response.data["next"])
-            self.assertIn("page=2", response.data["next"])
-            self.assertIsNone(response.data["previous"])
-            self.assertEqual(len(response.data["results"]), page_size)
-            next_response = self.client.get(response.data["next"])
-            self.assertEqual(next_response.status_code, 200)
-            self.assertEqual(next_response.data["count"], number_of_shelves)
-            self.assertIsNotNone(next_response.data["next"])
-            self.assertIn(f"page_size={page_size}", next_response.data["next"])
-            self.assertIn("page=3", next_response.data["next"])
-            self.assertIsNotNone(next_response.data["previous"])
-            self.assertIn(f"page_size={page_size}", next_response.data["previous"])
-            self.assertIn("page=1", next_response.data["previous"])
-            self.assertEqual(len(next_response.data["results"]), page_size)
+        next_response = self.client.get(response.data["next"])
+        self.assertEqual(next_response.status_code, 200)
+        self.assertEqual(next_response.data["count"], number_of_shelves)
+        self.assertIsNotNone(next_response.data["next"])
+        self.assertIn("page=3", next_response.data["next"])
+        self.assertIsNotNone(next_response.data["previous"])
+        self.assertIn("page=1", next_response.data["previous"])
+        self.assertEqual(len(next_response.data["results"]), 10)
+
+        third_response = self.client.get(next_response.data["next"])
+        self.assertEqual(third_response.status_code, 200)
+        self.assertEqual(third_response.data["count"], number_of_shelves)
+        self.assertIsNone(third_response.data["next"])
+        self.assertIsNotNone(third_response.data["previous"])
+        self.assertIn("page=2", third_response.data["previous"])
+        self.assertEqual(len(third_response.data["results"]), 1)
+
+    def test_list_shelf_api_custom_page_size(self):
+        """Test shelf list API with custom page_size parameter."""
+        number_of_shelves = 21
+        page_size = 5
+        url_with_page_size = f"{self.url}?page_size={page_size}"
+
+        response = self.client.get(url_with_page_size)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], number_of_shelves)
+        self.assertIsNotNone(response.data["next"])
+        self.assertIn(f"page_size={page_size}", response.data["next"])
+        self.assertIn("page=2", response.data["next"])
+        self.assertIsNone(response.data["previous"])
+        self.assertEqual(len(response.data["results"]), page_size)
+
+        next_response = self.client.get(response.data["next"])
+        self.assertEqual(next_response.status_code, 200)
+        self.assertEqual(next_response.data["count"], number_of_shelves)
+        self.assertIsNotNone(next_response.data["next"])
+        self.assertIn(f"page_size={page_size}", next_response.data["next"])
+        self.assertIn("page=3", next_response.data["next"])
+        self.assertIsNotNone(next_response.data["previous"])
+        self.assertIn(f"page_size={page_size}", next_response.data["previous"])
+        self.assertIn("page=1", next_response.data["previous"])
+        self.assertEqual(len(next_response.data["results"]), page_size)
 
     def test_pagination_attributes(self):
         """Test OpenWispPagination class attributes."""
