@@ -95,7 +95,8 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertIsNotNone(next_response.data["next"])
         self.assertIn("page=3", next_response.data["next"])
         self.assertIsNotNone(next_response.data["previous"])
-        self.assertIn("page=1", next_response.data["previous"])
+        # Page 1 is the default, so DRF doesn't include page=1 in the previous URL
+        self.assertIn(self.url, next_response.data["previous"])
         self.assertEqual(len(next_response.data["results"]), 10)
 
         third_response = self.client.get(next_response.data["next"])
@@ -129,7 +130,8 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertIn("page=3", next_response.data["next"])
         self.assertIsNotNone(next_response.data["previous"])
         self.assertIn(f"page_size={page_size}", next_response.data["previous"])
-        self.assertIn("page=1", next_response.data["previous"])
+        # Page 1 is the default, so DRF doesn't include page=1 in the previous URL
+        self.assertIn(url_with_page_size, next_response.data["previous"])
         self.assertEqual(len(next_response.data["results"]), page_size)
 
     def test_pagination_attributes(self):

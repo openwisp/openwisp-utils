@@ -1,8 +1,11 @@
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+from rest_framework import viewsets
+from openwisp_utils.api.pagination import OpenWispPagination
 
-from ..models import Project
+from ..models import Project, Shelf
+from ..serializers import ShelfSerializer
 
 
 class ReceiveProjectView(View):
@@ -24,3 +27,11 @@ class ReceiveProjectView(View):
 
 
 receive_project = ReceiveProjectView.as_view()
+
+
+class ShelfViewSet(viewsets.ModelViewSet):
+    """ViewSet for Shelf model with OpenWispPagination."""
+
+    queryset = Shelf.objects.all()
+    serializer_class = ShelfSerializer
+    pagination_class = OpenWispPagination
