@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.urls import reverse
 from openwisp_utils.api.pagination import OpenWispPagination
 from rest_framework.pagination import PageNumberPagination
 from test_project.serializers import ShelfSerializer
