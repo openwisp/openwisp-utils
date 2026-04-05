@@ -82,7 +82,7 @@ class TestOpenWispPagination(CreateMixin, TestCase):
     def test_list_shelf_api(self):
         """Test shelf list API with pagination."""
         number_of_shelves = 21
-        
+
         with self.subTest('Test "page" query in shelf list view'):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
