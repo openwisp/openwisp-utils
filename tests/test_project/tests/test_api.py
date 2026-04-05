@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase
-from django.urls import reverse
 from openwisp_utils.api.pagination import OpenWispPagination
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError as DRFValidationError
