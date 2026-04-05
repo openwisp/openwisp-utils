@@ -1,6 +1,10 @@
 from django.urls import path, re_path
+from rest_framework.routers import DefaultRouter
 
 from . import views
+
+router = DefaultRouter()
+router.register(r"shelves", views.ShelfViewSet, basename="shelf")
 
 urlpatterns = [
     re_path(
@@ -14,4 +18,5 @@ urlpatterns = [
         views.shelf_retrieve_update_destroy_view,
         name="shelf_detail",
     ),
+    *router.urls,
 ]
