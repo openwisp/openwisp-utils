@@ -7,6 +7,7 @@ from openwisp_utils.admin import (
     HelpTextStackedInline,
     ReadOnlyAdmin,
     ReceiveUrlAdmin,
+    Select2AdminMixin,
     TimeReadonlyAdminMixin,
     UUIDAdmin,
 )
@@ -110,7 +111,7 @@ class AutoOwnerFilter(AutocompleteFilter):
 
 
 @admin.register(Shelf)
-class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
+class ShelfAdmin(Select2AdminMixin, TimeReadonlyAdminMixin, admin.ModelAdmin):
     # DO NOT CHANGE: used for testing filters
     list_filter = [
         ShelfFilter,
@@ -121,6 +122,7 @@ class ShelfAdmin(TimeReadonlyAdminMixin, admin.ModelAdmin):
         ReverseBookFilter,
     ]
     search_fields = ["name"]
+    select2_fields = ("books_type",)
 
 
 @admin.register(OrganizationRadiusSettings)
