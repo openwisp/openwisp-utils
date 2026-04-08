@@ -1,0 +1,58 @@
+name: Reusable Changelog Bot
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        description: "Pull request number"
+        required: true
+        type: string
+    secrets:
+      GEMINI_API_KEY:
+        description: "Google Gemini API key"
+        required: true
+      OPENWISP_BOT_APP_ID:
+        description: "GitHub App ID for OpenWISP Bot"
+        required: true
+      OPENWISP_BOT_PRIVATE_KEY:
+        description: "Private key for GitHub App authentication"
+        required: true
+
+jobs:
+  generate-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout PR repository
+        uses: actions/checkout@v6
+        with:
+          ref: refs/pull/${{ inputs.pr_number }}/head
+          fetch-depth: 0
+
+      - name: Generate App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+      - name: Checkout openwisp-utils for action
+        uses: actions/checkout@v6
+        with:
+          repository: openwisp/openwisp-utils
+          ref: master
+          sparse-checkout: |
+            .github/actions/bot-changelog-generator
+          path: openwisp-utils-action
+
+      - name: Generate changelog
+        uses: ./openwisp-utils-action/.github/actions/bot-changelog-generator
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          pr-number: ${{ inputs.pr_number }}
+          repo-name: ${{ github.repository }}

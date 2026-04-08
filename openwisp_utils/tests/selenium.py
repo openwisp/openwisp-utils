@@ -53,6 +53,18 @@ class SeleniumTestMixin:
                 stream=None, descriptions=None, verbosity=0
             )
             super()._setup_and_call(result, debug)
+            # IMPORTANT: a skip is not a success; propagate it as a skip and stop.
+            if hasattr(result, "events"):
+                skip_reasons = [
+                    event[2] for event in result.events if event[0] == "addSkip"
+                ]
+            else:
+                skip_reasons = [reason for _, reason in getattr(result, "skipped", [])]
+            if skip_reasons:
+                for reason in skip_reasons:
+                    original_result.addSkip(self, reason)
+                original_result.stopTest(self)
+                return
             if result.wasSuccessful():
                 if attempt == 0:
                     original_result.addSuccess(self)
@@ -269,7 +281,7 @@ class SeleniumTestMixin:
         driver = driver or self.web_driver
         try:
             return WebDriverWait(driver, timeout).until(
-                getattr(EC, method)(((by, value)))
+                getattr(EC, method)((by, value))
             )
         except TimeoutException as e:
             print(self.get_browser_logs(driver))
@@ -278,7 +290,10 @@ class SeleniumTestMixin:
     def hide_loading_overlay(self, html_id="loading-overlay", timeout=2, driver=None):
         """The geckodriver can't figure out the loading overlay is still fading out, so let's just hide it."""
         driver = driver or self.web_driver
-        driver.execute_script(
-            f'document.getElementById("{html_id}").style.display="none";'
+        element_exists = driver.execute_script(
+            f'var el = document.getElementById("{html_id}"); '
+            f'if (el) {{ el.style.display="none"; return true; }} return false;'
         )
-        self.wait_for_invisibility(By.ID, html_id, timeout, driver)
+        # Only wait if element exists
+        if element_exists:
+            self.wait_for_invisibility(By.ID, html_id, timeout, driver)

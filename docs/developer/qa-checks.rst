@@ -30,7 +30,7 @@ will be skipped.
 Shell script to run the following quality assurance checks:
 
 - :ref:`checkmigrations <utils_checkmigrations>`
-- :ref:`checkcommit <utils_checkcommit>`
+- :ref:`Commit message check <utils_commit_message_checks>`
 - :ref:`checkendline <utils_checkendline>`
 - :ref:`checkpendingmigrations <utils_checkpendingmigrations>`
 - :ref:`checkrst <utils_checkrst>`
@@ -110,10 +110,10 @@ Usage example:
 
     checkmigrations --migration-path ./django_freeradius/migrations/
 
-.. _utils_checkcommit:
+.. _utils_commit_message_checks:
 
-``checkcommit``
----------------
+``Commit message checks``
+-------------------------
 
 Ensures the last commit message follows our :ref:`commit message style
 guidelines <openwisp_commit_message_style_guidelines>`.
@@ -122,23 +122,57 @@ We want to keep the commit log readable, consistent and easy to scan in
 order to make it easy to analyze the history of our modules, which is also
 a very important activity when performing maintenance.
 
-Usage example:
+This check uses `Commitizen
+<https://commitizen-tools.github.io/commitizen/>`_ with a custom OpenWISP
+Commitizen plugin. After staging changes to git, contributors can use
+Commitizen to create commit messages easily.
+
+Instead of using:
 
 .. code-block::
 
-    checkcommit --message "$(git log --format=%B -n 1)"
+    git commit
 
-If, for some reason, you wish to skip this QA check for a specific commit
-message you can add ``#noqa`` to the end of your commit message.
-
-Usage example:
+Contributors can use the ``openwisp-commit`` shortcut:
 
 .. code-block::
 
-    [qa] Improved #20
+    openwisp-commit
 
-    Simulation of a special unplanned case
-    #noqa
+This command interactively prompts for the commit prefix, title
+(optionally including the reference to a github issue) and a short
+description of the changes, and generates a commit message which follows
+the OpenWISP commit message conventions.
+
+If you reference an issue in the title (e.g., ``[feature] Add support
+#123``) but don't reference it in the body, the tool will automatically
+append ``Related to #123`` to the commit message for you.
+
+The following patterns are valid in the body: ``Fixes``, ``Closes``,
+``Resolves``, or ``Related to``.
+
+If you need to amend the last commit (e.g., to fix the commit message),
+use the ``--amend`` flag:
+
+.. code-block::
+
+    openwisp-commit --amend
+
+To check whether your commit message follows the conventions, use:
+
+.. code-block::
+
+    openwisp-commit --check
+
+This validates the latest commit message against the defined conventions
+and reports any formatting issues.
+
+For advanced use cases, you can also use Commitizen directly:
+
+.. code-block::
+
+    cz -n cz_openwisp commit
+    cz -n cz_openwisp check --rev-range HEAD^!
 
 .. _utils_checkendline:
 

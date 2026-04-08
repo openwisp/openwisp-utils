@@ -230,37 +230,96 @@ should be automatically installed when setting up the development
 environment. All the OpenWISP modules using ``SeleniumTestMixin`` are
 already depending on ``openwisp-utils[selenium]``.
 
-Methods
-~~~~~~~
+Key Methods of ``SeleniumTestMixin``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``setUpClass()`` (``@classmethod``): Initializes the Selenium WebDriver
-  with Firefox and applies custom settings to improve test reliability. -
-  Uses the ``SELENIUM_HEADLESS`` environment variable to determine whether
-  to run in headless mode. - Uses the ``GECKO_BIN`` environment variable
-  to specify a custom Firefox binary location. - Uses the ``GECKO_LOG``
-  environment variable to enable GeckoDriver logging to
-  ``geckodriver.log``. - Configures preferences to disable hardware
-  acceleration and increase timeouts.
-- ``tearDownClass()`` (``@classmethod``): Quits the Selenium WebDriver to
-  clean up resources after the test class has finished executing.
-- ``open(url, driver=None, timeout=5)``: Opens a URL in the browser. -
-  Waits for the page to fully load before returning. - Ensures the
-  ``#main-content`` element is present before proceeding.
-- ``login(username=None, password=None, driver=None)``: Logs into the
-  Django admin dashboard. - Defaults to using ``admin`` / ``password``
-  credentials. - Navigates to ``/admin/login/`` and fills in the login
-  form.
-- ``find_element(by, value, timeout=2, wait_for='visibility')``: Finds an
-  element using Selenium's ``find_element`` method. - Waits for the
-  element based on the specified ``wait_for`` condition (``visibility``,
-  ``presence``).
-- ``wait_for_visibility(by, value, timeout=2)``: Waits until an element is
-  visible.
-- ``wait_for_invisibility(by, value, timeout=2)``: Waits until an element
-  is no longer visible.
-- ``wait_for_presence(by, value, timeout=2)``: Waits until an element is
-  present in the DOM.
-- ``wait_for(method, by, value, timeout=2)``: General method for waiting
-  for an element based on a given condition. - Uses Selenium's
-  ``WebDriverWait`` and Expected Conditions (``EC``). - If the timeout is
-  reached, the test fails with a descriptive error message.
+``setUpClass()`` (``@classmethod``)
++++++++++++++++++++++++++++++++++++
+
+Initializes the Selenium WebDriver with either Firefox (default) or
+Chrome.
+
+Applies a number of settings by default to improve test reliability.
+
+- Uses the ``SELENIUM_HEADLESS`` environment variable to determine whether
+  to run in headless mode.
+- Firefox-specific options:
+
+  - Uses the ``GECKO_BIN`` environment variable to specify a custom
+    Firefox binary location.
+  - Uses the ``GECKO_LOG`` environment variable to enable GeckoDriver
+    logging to ``geckodriver.log``.
+  - Uses ``page_load_strategy = "eager"`` to start interacting with the
+    page before it's fully loaded.
+  - Disables hardware acceleration for improved stability
+    (``gfx.webrender.force-disabled``, ``layers.acceleration.disabled``).
+  - Increases script timeout (``dom.max_script_run_time = 30``).
+  - Uses a free port for Marionette to support parallel test execution.
+  - Injects a Firefox extension to capture browser console logs, since
+    Firefox does not support the WebDriver ``get_log`` API.
+
+- Chrome-specific options:
+
+  - Uses the ``CHROME_BIN`` environment variable to specify a custom
+    Chrome binary location.
+  - Uses ``page_load_strategy = "eager"`` to start interacting with the
+    page before it's fully loaded.
+  - Adds flags: ``--ignore-certificate-errors``, ``--no-sandbox``,
+    ``--disable-gpu``, ``--disable-dev-shm-usage``,
+    ``--disable-features=VizDisplayCompositor``.
+  - Uses a free remote debugging port to support parallel test execution.
+  - Enables browser logging with ``goog:loggingPrefs`` to retrieve console
+    logs via ``get_browser_logs()``.
+
+``tearDownClass()`` (``@classmethod``)
+++++++++++++++++++++++++++++++++++++++
+
+Quits the Selenium WebDriver to clean up resources after the test class
+has finished executing.
+
+``open(url, html_container="#main-content", driver=None, timeout=5)``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+- Opens a URL in the browser.
+- Waits for the page to fully load before returning.
+- Waits for the ``html_container`` element to be visible before
+  proceeding.
+
+``login(username=None, password=None, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Logs into the Django admin dashboard.
+
+- Defaults to using ``admin`` / ``password`` credentials.
+- Navigates to ``/admin/login/`` and fills in the login form.
+
+``find_element(by, value, timeout=2, driver=None, wait_for='visibility')``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Finds an element using Selenium's ``find_element`` method. Waits for the
+element based on the specified ``wait_for`` condition (``visibility``,
+``presence``).
+
+``wait_for_visibility(by, value, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until an element is visible.
+
+``wait_for_invisibility(by, value, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until an element is no longer visible.
+
+``wait_for_presence(by, value, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until an element is present in the DOM.
+
+``wait_for(method, by, value, timeout=2, driver=None)``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+General method for waiting for an element based on a given condition. Uses
+Selenium's ``WebDriverWait`` and Expected Conditions (``EC``).
+
+If the timeout is reached, the test fails with a descriptive error
+message.

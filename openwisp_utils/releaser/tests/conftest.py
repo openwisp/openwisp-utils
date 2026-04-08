@@ -1,3 +1,4 @@
+import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -62,6 +63,93 @@ def init_git_repo():
     return _init_git_repo
 
 
+def _create_package_json(path: Path, version="1.2.3"):
+    """Helper to create a package.json file for npm projects."""
+    import json
+
+    package_json_content = {
+        "name": "my-npm-package",
+        "version": version,
+        "description": "Test npm package",
+    }
+    (path / "package.json").write_text(json.dumps(package_json_content, indent=2))
+
+
+@pytest.fixture
+def create_package_json():
+    return _create_package_json
+
+
+def _create_makefile(path: Path, version="1.2.3"):
+    """Helper to create a Makefile for docker projects."""
+    makefile_content = f"""OPENWISP_VERSION = {version}
+DOCKER_IMAGE = openwisp/test
+
+build:
+\tdocker build -t $(DOCKER_IMAGE):$(OPENWISP_VERSION) .
+"""
+    (path / "Makefile").write_text(makefile_content)
+
+
+@pytest.fixture
+def create_makefile():
+    return _create_makefile
+
+
+def _create_docker_compose(path: Path):
+    """Helper to create a docker-compose.yml file."""
+    (path / "docker-compose.yml").write_text(
+        "version: '3'\nservices:\n  app:\n    image: test"
+    )
+
+
+@pytest.fixture
+def create_docker_compose():
+    return _create_docker_compose
+
+
+def _create_ansible_lint(path: Path):
+    """Helper to create .ansible-lint file."""
+    (path / ".ansible-lint").write_text("skip_list:\n  - '106'")
+
+
+@pytest.fixture
+def create_ansible_lint():
+    return _create_ansible_lint
+
+
+def _create_ansible_version_file(path: Path, version="1.2.3"):
+    """Helper to create templates/openwisp2/version.py for ansible projects."""
+    templates_dir = path / "templates" / "openwisp2"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "version.py").write_text(f'__openwisp_version__ = "{version}"')
+
+
+@pytest.fixture
+def create_ansible_version_file():
+    return _create_ansible_version_file
+
+
+def _create_luacheckrc(path: Path):
+    """Helper to create .luacheckrc file for OpenWRT agents."""
+    (path / ".luacheckrc").write_text("std = 'min'")
+
+
+@pytest.fixture
+def create_luacheckrc():
+    return _create_luacheckrc
+
+
+def _create_version_file(path: Path, version="1.2.3"):
+    """Helper to create VERSION file for OpenWRT agents."""
+    (path / "VERSION").write_text(version)
+
+
+@pytest.fixture
+def create_version_file():
+    return _create_version_file
+
+
 @pytest.fixture
 def mock_all(mocker):
     """A master fixture to mock all external dependencies of the release script."""
@@ -70,7 +158,6 @@ def mock_all(mocker):
             stdout="main", check_returncode=True
         ),
     }
-
     default_mock = MagicMock(stdout="", stderr="", check_returncode=True)
 
     def subprocess_side_effect(command, *args, **kwargs):
@@ -92,6 +179,15 @@ def mock_all(mocker):
         "openwisp_utils.releaser.version.questionary.select", new=mock_q_select
     )
 
+    # Mock OPENAI_CHATGPT_TOKEN to None to skip AI summary by default
+    original_environ_get = os.environ.get
+
+    def mock_environ_get(key, default=None):
+        if key == "OPENAI_CHATGPT_TOKEN":
+            return None
+        return original_environ_get(key, default)
+
+    mocker.patch("os.environ.get", side_effect=mock_environ_get)
     mocks = {
         "subprocess": mocker.patch(
             "openwisp_utils.releaser.release.subprocess.run",
@@ -149,5 +245,4 @@ def mock_all(mocker):
     }
     mocks["check_prerequisites"].return_value = (mock_config, mock_gh_instance)
     mocks["load_config"].return_value = mock_config
-
     return mocks

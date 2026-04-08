@@ -3,7 +3,7 @@ from unittest import expectedFailure
 from channels.testing import ChannelsLiveServerTestCase
 from django.test import tag
 from django.urls import reverse
-from selenium.common.exceptions import JavascriptException, NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 
@@ -725,13 +725,6 @@ class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
         self.login()
 
     def test_hide_loading_overlay(self):
-        try:
-            self.hide_loading_overlay()
-        except JavascriptException:
-            pass
-        else:
-            self.fail("Javascript exception not raised")
-
         self.web_driver.execute_script(
             'document.body.insertAdjacentHTML("beforeend", "<div id=\'loading-overlay\'></div>");'
         )

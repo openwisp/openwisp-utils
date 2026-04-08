@@ -1,9 +1,9 @@
 import fnmatch
 
-from compress_staticfiles.storage import (
-    CompressStaticFilesStorage as BaseCompressStaticFilesStorage,
-)
 from django.conf import settings
+from django_minify_compress_staticfiles.storage import (
+    MinicompressStorage as BaseMinicompressStorage,
+)
 
 
 class FileHashedNameMixin:
@@ -22,8 +22,8 @@ class FileHashedNameMixin:
 
 class CompressStaticFilesStorage(
     FileHashedNameMixin,
-    BaseCompressStaticFilesStorage,
+    BaseMinicompressStorage,
 ):
-    """Like CompressStaticFilesStorage, but allows excluding some files."""
+    """Like MinicompressStorage, but allows excluding some files."""
 
     pass

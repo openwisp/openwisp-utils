@@ -1,0 +1,182 @@
+name: CI Failure Bot
+
+on:
+  workflow_call:
+    inputs:
+      pr_number:
+        required: true
+        type: string
+      head_sha:
+        required: true
+        type: string
+      head_repo:
+        required: true
+        type: string
+      base_repo:
+        required: true
+        type: string
+      run_id:
+        required: true
+        type: string
+      pr_author:
+        required: true
+        type: string
+      actor:
+        required: true
+        type: string
+    secrets:
+      GEMINI_API_KEY:
+        required: true
+      APP_ID:
+        required: true
+      PRIVATE_KEY:
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Bot Token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+
+      - name: Checkout Reusable Workflow
+        uses: actions/checkout@v6
+        with:
+          repository: openwisp/openwisp-utils
+          ref: master
+          path: trusted_scripts
+
+      - name: Checkout PR Code
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ inputs.head_repo }}
+          ref: ${{ inputs.head_sha }}
+          path: pr_code
+          fetch-depth: 1
+          submodules: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install Tools
+        run: |
+          pip install -e "trusted_scripts[github_actions]"
+
+      - name: Fetch Failed Steps Logs
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          # Fetches failed job logs via the GitHub API (with pagination and error guards).
+          # Uses AWK to isolate the exact failure by slicing logs strictly between ##[group] and ##[error] markers.
+          set -eo pipefail
+          echo "Getting failed jobs for run $RUN_ID..."
+          if ! JOB_IDS=$(gh api --paginate repos/$REPO/actions/runs/$RUN_ID/jobs \
+            -q '.jobs[] | select(.conclusion=="failure") | .id'); then
+            echo "Could not fetch failed jobs for run $RUN_ID." > failed_logs.txt
+            exit 0
+          fi
+          if [ -z "$JOB_IDS" ]; then
+            echo "No failed jobs found." > failed_logs.txt
+            exit 0
+          fi
+          > failed_logs.txt
+          for JOB_ID in $JOB_IDS; do
+            echo "Processing job $JOB_ID"
+            if ! gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
+              echo "Could not fetch logs for job $JOB_ID; skipping." >> failed_logs.txt
+              continue
+            fi
+            echo "===== JOB $JOB_ID =====" >> failed_logs.txt
+            awk '
+            /##\[group\]/ {
+                buffer = $0 "\n"
+                next
+            }
+            {
+                buffer = buffer $0 "\n"
+                if (/##\[error\]/) {
+                    printf "%s\n", buffer
+                    buffer = ""
+                }
+            }
+            ' job_logs.txt >> failed_logs.txt
+            echo "" >> failed_logs.txt
+          done
+          if [ ! -s failed_logs.txt ] || ! grep -q "##\[error\]" failed_logs.txt; then
+            echo "Failed jobs found but logs unavailable." > failed_logs.txt
+          fi
+
+      - name: Run AI Analysis
+        timeout-minutes: 5
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PR_AUTHOR: ${{ inputs.pr_author }}
+          ACTOR: ${{ inputs.actor }}
+          COMMIT_SHA: ${{ inputs.head_sha }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+        run: |
+          python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
+
+      - name: Auto-retry transient failures
+        id: retry
+        if: ${{ hashFiles('transient_failure') != '' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUM: ${{ inputs.pr_number }}
+          RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          MAX_RETRIES=3
+          HEAD_SHA="${{ inputs.head_sha }}"
+          MARKER="<!-- ci-transient-retry $HEAD_SHA -->"
+          # Count previous retry comments for this specific commit.
+          # gh --jq does not support jq's --arg flag, so pipe through
+          # grep to count marker occurrences.
+          RETRY_COUNT=$(gh pr view "$PR_NUM" --repo "$REPO" --json comments \
+            --jq '.comments[].body' 2>/dev/null \
+            | grep -cF "$MARKER" || echo "0")
+          echo "Previous retries: $RETRY_COUNT"
+          if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+            echo "Max retries ($MAX_RETRIES) reached; skipping."
+            echo "retried=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          NEXT=$((RETRY_COUNT + 1))
+          # Attempt to re-run failed jobs. This requires actions:write permission,
+          # which may not be granted in all caller workflows.
+          if gh api -X POST "repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs" 2>/dev/null; then
+            echo "retried=true" >> "$GITHUB_OUTPUT"
+            printf -v BODY '%s\n%s' \
+              "$MARKER" \
+              "The CI is failing due to transient infrastructure issues (not related to your code). I have restarted the failed jobs automatically ($NEXT/$MAX_RETRIES)."
+            gh pr comment "$PR_NUM" --repo "$REPO" --body "$BODY"
+          else
+            echo "::warning::Could not re-run failed jobs (missing actions:write permission?). Skipping auto-retry."
+            echo "retried=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post Comment
+        if: ${{ steps.retry.outputs.retried != 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUM: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          if [ ! -s solution.md ]; then
+            echo "AI analysis produced no output; skipping comment."
+            exit 0
+          fi
+          gh pr comment "$PR_NUM" --repo "$REPO" --body-file solution.md
