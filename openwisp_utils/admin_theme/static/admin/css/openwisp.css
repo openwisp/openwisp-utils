@@ -90,6 +90,8 @@ See https://code.djangoproject.com/ticket/33878 */
 
   /* Success/Positive */
   --ow-color-success: #498b26;
+  --ow-color-danger: #a72d1d;
+  --ow-color-warning: #ffb442;
 
   /* Foreground Scale Spectrum */
   --ow-color-black: #000;
