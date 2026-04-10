@@ -197,6 +197,13 @@ class TestIsTransientFailure(unittest.TestCase):
             )
         )
 
+    def test_detects_about_neterror_connection_failure(self):
+        self.assertTrue(
+            _is_transient_failure(
+                "Selenium loaded about:neterror?e=connectionFailure during test run"
+            )
+        )
+
     def test_normal_test_failure_not_transient(self):
         self.assertFalse(_is_transient_failure("FAIL: test_login"))
 
