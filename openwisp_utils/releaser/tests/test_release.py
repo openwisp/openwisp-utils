@@ -155,13 +155,20 @@ def test_main_flow_pr_merge_wait(mock_all):
 @patch("openwisp_utils.releaser.release.update_changelog_file")
 @patch("openwisp_utils.releaser.release.format_file_with_docstrfmt")
 @patch("openwisp_utils.releaser.release.subprocess.run")
+@patch("openwisp_utils.releaser.release.branch_exists")
 @patch("openwisp_utils.releaser.release.questionary")
 def test_port_changelog_to_main_flow(
-    mock_questionary, mock_subprocess, mock_format_file, mock_update_changelog
+    mock_questionary,
+    mock_branch_exists,
+    mock_subprocess,
+    mock_format_file,
+    mock_update_changelog,
 ):
     """Tests the changelog porting process for both RST and MD files, and the cancellation path."""
     mock_gh = MagicMock()
     mock_config_rst = {"changelog_path": "CHANGES.rst"}
+    # Both branches exist: user is asked
+    mock_branch_exists.return_value = True
     mock_questionary.select.return_value.ask.return_value = "main"
     port_changelog_to_main(mock_gh, mock_config_rst, "1.1.1", "- fix", "1.1.x")
     mock_gh.create_pr.assert_called_once()
@@ -169,9 +176,112 @@ def test_port_changelog_to_main_flow(
 
     mock_gh.reset_mock()
 
-    # Test Cancellation path
+    # Test Cancellation path (when both branches exist and user cancels)
     mock_questionary.select.return_value.ask.return_value = None
     port_changelog_to_main(mock_gh, mock_config_rst, "1.1.1", "- fix", "1.1.x")
+    mock_gh.create_pr.assert_not_called()
+
+
+@patch("openwisp_utils.releaser.release.update_changelog_file")
+@patch("openwisp_utils.releaser.release.format_file_with_docstrfmt")
+@patch("openwisp_utils.releaser.release.subprocess.run")
+@patch("openwisp_utils.releaser.release.branch_exists")
+def test_port_changelog_only_master_exists(
+    mock_branch_exists, mock_subprocess, mock_format_file, mock_update_changelog
+):
+    """`master` is auto-selected when `main` does not exist locally."""
+    mock_gh = MagicMock()
+    mock_config = {"changelog_path": "CHANGES.rst"}
+    # Simulate: main=False, master=True
+    mock_branch_exists.side_effect = lambda name: name == "master"
+    port_changelog_to_main(mock_gh, mock_config, "1.1.1", "- fix", "1.1.x")
+    mock_gh.create_pr.assert_called_once()
+    # Verify PR was opened against master
+    assert mock_gh.create_pr.call_args[0][1] == "master"
+
+
+@patch("openwisp_utils.releaser.release.update_changelog_file")
+@patch("openwisp_utils.releaser.release.format_file_with_docstrfmt")
+@patch("openwisp_utils.releaser.release.subprocess.run")
+@patch("openwisp_utils.releaser.release.branch_exists")
+def test_port_changelog_only_main_exists(
+    mock_branch_exists, mock_subprocess, mock_format_file, mock_update_changelog
+):
+    """`main` is auto-selected when it exists and `master` does not."""
+    mock_gh = MagicMock()
+    mock_config = {"changelog_path": "CHANGES.rst"}
+    # Simulate: main=True, master=False
+    mock_branch_exists.side_effect = lambda name: name == "main"
+    port_changelog_to_main(mock_gh, mock_config, "1.1.1", "- fix", "1.1.x")
+    mock_gh.create_pr.assert_called_once()
+    # Verify PR was opened against main
+    assert mock_gh.create_pr.call_args[0][1] == "main"
+
+
+@patch("openwisp_utils.releaser.release.update_changelog_file")
+@patch("openwisp_utils.releaser.release.format_file_with_docstrfmt")
+@patch("openwisp_utils.releaser.release.subprocess.run")
+@patch("openwisp_utils.releaser.release.branch_exists")
+@patch("openwisp_utils.releaser.release.questionary")
+def test_port_changelog_both_branches_prompts_user(
+    mock_questionary,
+    mock_branch_exists,
+    mock_subprocess,
+    mock_format_file,
+    mock_update_changelog,
+):
+    """User is prompted to choose when both `main` and `master` exist."""
+    mock_gh = MagicMock()
+    mock_config = {"changelog_path": "CHANGES.rst"}
+    # Both branches exist
+    mock_branch_exists.return_value = True
+    mock_questionary.select.return_value.ask.return_value = "master"
+    port_changelog_to_main(mock_gh, mock_config, "1.1.1", "- fix", "1.1.x")
+    mock_questionary.select.assert_called_once()
+    mock_gh.create_pr.assert_called_once()
+    assert mock_gh.create_pr.call_args[0][1] == "master"
+
+
+@patch("openwisp_utils.releaser.release.update_changelog_file")
+@patch("openwisp_utils.releaser.release.format_file_with_docstrfmt")
+@patch("openwisp_utils.releaser.release.subprocess.run")
+@patch("openwisp_utils.releaser.release.branch_exists")
+def test_port_changelog_neither_branch_exists(
+    mock_branch_exists, mock_subprocess, mock_format_file, mock_update_changelog
+):
+    """Porting is skipped with a message if neither branch exists."""
+    mock_gh = MagicMock()
+    mock_config = {"changelog_path": "CHANGES.rst"}
+    # Neither exists
+    mock_branch_exists.return_value = False
+    port_changelog_to_main(mock_gh, mock_config, "1.1.1", "- fix", "1.1.x")
+    # Verify no PR was created
+    mock_gh.create_pr.assert_not_called()
+    # Verify no file update was attempted
+    mock_update_changelog.assert_not_called()
+
+
+@patch("openwisp_utils.releaser.release.update_changelog_file")
+@patch("openwisp_utils.releaser.release.format_file_with_docstrfmt")
+@patch("openwisp_utils.releaser.release.subprocess.run")
+@patch("openwisp_utils.releaser.release.branch_exists")
+@patch("openwisp_utils.releaser.release.questionary")
+def test_port_changelog_cancelled(
+    mock_questionary,
+    mock_branch_exists,
+    mock_subprocess,
+    mock_format_file,
+    mock_update_changelog,
+):
+    """Porting is cancelled if user doesn't select a branch."""
+    mock_gh = MagicMock()
+    mock_config = {"changelog_path": "CHANGES.rst"}
+    # Both exist to trigger prompt
+    mock_branch_exists.return_value = True
+    # User cancels (Ctrl+C or Esc)
+    mock_questionary.select.return_value.ask.return_value = None
+    port_changelog_to_main(mock_gh, mock_config, "1.1.1", "- fix", "1.1.x")
+    # Verify no PR was created
     mock_gh.create_pr.assert_not_called()
 
 
@@ -239,11 +349,15 @@ def test_main_flow_skip_release_creation(mock_all):
     )
 
 
+@patch("openwisp_utils.releaser.release.branch_exists")
 @patch("openwisp_utils.releaser.release.subprocess.run")
-def test_port_changelog_to_main_flow_markdown(mock_subprocess, mock_all):
+def test_port_changelog_to_main_flow_markdown(
+    mock_subprocess, mock_branch_exists, mock_all
+):
     """Tests the changelog porting process for a Markdown file."""
     mock_gh = MagicMock()
     mock_config_md = {"changelog_path": "CHANGES.md"}
+    mock_branch_exists.return_value = True
     mock_all["questionary_select"].return_value.ask.return_value = "main"
 
     with patch("openwisp_utils.releaser.release.update_changelog_file") as mock_update:
@@ -253,12 +367,14 @@ def test_port_changelog_to_main_flow_markdown(mock_subprocess, mock_all):
         assert "## Version 1.1.1" in called_with_content
 
 
+@patch("openwisp_utils.releaser.release.branch_exists")
 @patch("openwisp_utils.releaser.release.subprocess.run")
-def test_port_changelog_skip_pr_creation(mock_subprocess, mock_all):
+def test_port_changelog_skip_pr_creation(mock_subprocess, mock_branch_exists, mock_all):
     """Tests skipping PR creation during changelog porting."""
     mock_gh = MagicMock()
     mock_gh.create_pr.side_effect = SkipSignal
     mock_config = {"changelog_path": "CHANGES.rst"}
+    mock_branch_exists.return_value = True
     mock_all["questionary_select"].return_value.ask.return_value = "main"
 
     with patch("openwisp_utils.releaser.release.update_changelog_file"):
