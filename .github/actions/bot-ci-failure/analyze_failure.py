@@ -31,7 +31,6 @@ TRANSIENT_FAILURE_MARKERS = (
     "Posting coverage data to https://coveralls.io",
     "OperationalError: database is locked",
     "ERROR: Could not install packages due to an OSError",
-    "selenium.common.exceptions.WebDriverException",
     "about:neterror?e=connectionFailure",
 )
 
