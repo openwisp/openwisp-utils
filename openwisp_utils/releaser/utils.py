@@ -85,6 +85,17 @@ def get_current_branch():
     return result.stdout.strip()
 
 
+def branch_exists(branch_name):
+    """Check if a Git branch exists locally."""
+    result = subprocess.run(
+        ["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch_name}"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    return result.returncode == 0
+
+
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
     escaped_text = re.sub(r"(?<!`)_", r"\\_", text)
