@@ -91,7 +91,6 @@ def branch_exists(branch_name):
         ["git", "show-ref", "--verify", "--quiet", f"refs/heads/{branch_name}"],
         capture_output=True,
         text=True,
-        encoding="utf-8",
     )
     return result.returncode == 0
 

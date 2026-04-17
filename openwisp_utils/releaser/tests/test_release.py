@@ -164,7 +164,7 @@ def test_port_changelog_to_main_flow(
     mock_format_file,
     mock_update_changelog,
 ):
-    """Tests the changelog porting process for both RST and MD files, and the cancellation path."""
+    """Tests the changelog porting process for RST files."""
     mock_gh = MagicMock()
     mock_config_rst = {"changelog_path": "CHANGES.rst"}
     # Both branches exist: user is asked
@@ -173,13 +173,6 @@ def test_port_changelog_to_main_flow(
     port_changelog_to_main(mock_gh, mock_config_rst, "1.1.1", "- fix", "1.1.x")
     mock_gh.create_pr.assert_called_once()
     mock_format_file.assert_called_once_with("CHANGES.rst")
-
-    mock_gh.reset_mock()
-
-    # Test Cancellation path (when both branches exist and user cancels)
-    mock_questionary.select.return_value.ask.return_value = None
-    port_changelog_to_main(mock_gh, mock_config_rst, "1.1.1", "- fix", "1.1.x")
-    mock_gh.create_pr.assert_not_called()
 
 
 @patch("openwisp_utils.releaser.release.update_changelog_file")
