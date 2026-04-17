@@ -88,8 +88,10 @@ See https://code.djangoproject.com/ticket/33878 */
   --ow-color-primary-light: #ffe5e5;
   --ow-color-primary-lighter: #fdf2f2;
 
-  /* Success/Positive */
+  /* Status Colors */
   --ow-color-success: #498b26;
+  --ow-color-danger: #a72d1d;
+  --ow-color-warning: #ffb442;
 
   /* Foreground Scale Spectrum */
   --ow-color-black: #000;
