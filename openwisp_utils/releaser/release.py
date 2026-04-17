@@ -20,6 +20,7 @@ from openwisp_utils.releaser.github import GitHub
 from openwisp_utils.releaser.utils import (
     SkipSignal,
     adjust_markdown_headings,
+    branch_exists,
     demote_markdown_headings,
     format_file_with_docstrfmt,
     get_current_branch,
@@ -176,10 +177,23 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
         full_block_to_port = f"{version_header}\n{underline}\n\n{changelog_body}"
 
     try:
-        main_branch = questionary.select(
-            "Which branch should the changelog be ported to?",
-            choices=MAIN_BRANCHES,
-        ).ask()
+        master_exists = branch_exists("master")
+        main_exists = branch_exists("main")
+        if master_exists and main_exists:
+            main_branch = questionary.select(
+                "Which branch should the changelog be ported to?",
+                choices=MAIN_BRANCHES,
+            ).ask()
+        elif master_exists:
+            main_branch = "master"
+        elif main_exists:
+            main_branch = "main"
+        else:
+            print(
+                "Neither 'master' nor 'main' branches were found locally. "
+                "Skipping changelog porting."
+            )
+            return
 
         if not main_branch:
             print("Porting cancelled.")
