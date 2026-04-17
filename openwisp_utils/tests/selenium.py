@@ -54,11 +54,16 @@ class SeleniumTestMixin:
             )
             super()._setup_and_call(result, debug)
             # IMPORTANT: a skip is not a success; propagate it as a skip and stop.
-            if getattr(result, "skipped", None):
-                for _, reason in result.skipped:
+            if hasattr(result, "events"):
+                skip_reasons = [
+                    event[2] for event in result.events if event[0] == "addSkip"
+                ]
+            else:
+                skip_reasons = [reason for _, reason in getattr(result, "skipped", [])]
+            if skip_reasons:
+                for reason in skip_reasons:
                     original_result.addSkip(self, reason)
-                if hasattr(original_result, "events") and hasattr(result, "events"):
-                    original_result.events = result.events
+                original_result.stopTest(self)
                 return
             if result.wasSuccessful():
                 if attempt == 0:
@@ -276,7 +281,7 @@ class SeleniumTestMixin:
         driver = driver or self.web_driver
         try:
             return WebDriverWait(driver, timeout).until(
-                getattr(EC, method)(((by, value)))
+                getattr(EC, method)((by, value))
             )
         except TimeoutException as e:
             print(self.get_browser_logs(driver))
