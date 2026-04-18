@@ -35,6 +35,8 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: "openwisp-utils/setup.py"
 
       - name: Install dependencies
         run: pip install -e 'openwisp-utils/.[github_actions]'
