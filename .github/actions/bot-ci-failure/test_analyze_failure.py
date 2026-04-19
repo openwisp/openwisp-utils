@@ -288,6 +288,16 @@ class TestProcessErrorLogs(unittest.TestCase):
         _, _, transient = process_error_logs(content)
         self.assertTrue(transient)
 
+    def test_transient_marker_containing_error_keyword(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "ERROR: Could not install packages due to an OSError: HTTPSConnectionPool\n"
+            "Network is unreachable\n"
+        )
+        text, tests_failed, transient_only = process_error_logs(content)
+        self.assertTrue(transient_only)
+        self.assertFalse(tests_failed)
+
 
 class TestNormalizeForDedup(unittest.TestCase):
     """Tests for _normalize_for_dedup."""
