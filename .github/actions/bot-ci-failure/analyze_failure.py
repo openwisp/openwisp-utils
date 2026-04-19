@@ -149,10 +149,15 @@ def process_error_logs(content):
             continue
         seen_bodies.add(body_key)
         total_unique_jobs += 1
-        job_has_test_failure = any(m in body for m in TEST_FAILURE_MARKERS)
-        if _is_transient_failure(body) and not job_has_test_failure:
+        is_transient = _is_transient_failure(body)
+        cleaned_body = body
+        if is_transient:
+            for t_marker in TRANSIENT_FAILURE_MARKERS:
+                pattern = re.compile(re.escape(t_marker), re.IGNORECASE)
+                cleaned_body = pattern.sub("", cleaned_body)
+        job_has_test_failure = any(m in cleaned_body for m in TEST_FAILURE_MARKERS)
+        if is_transient and not job_has_test_failure:
             transient_jobs += 1
-        # Detect real test failures and keep only the failing parts.
         if job_has_test_failure:
             tests_failed = True
             body = _extract_failed_tests(body)
@@ -368,6 +373,9 @@ def main():
          issue" and mention the CI has been restarted automatically if applicable.
        - For Coveralls failures specifically, mention it is a known flaky
          service and not actionable by the contributor.
+       - If there are ALSO real test failures (like AssertionErrors) in the logs,
+         tell the contributor to fix the real test failures first and push a new commit.
+         Do NOT tell them the CI restarted automatically if real test failures exist.
 
     5. **Build/Infrastructure/Other** (missing dependencies, Docker errors,
        setup failures that are NOT transient)
