@@ -6,15 +6,22 @@ import sys
 from google import genai
 from google.genai import types
 
-# Keywords that indicate an automated test failure (as opposed to
-# QA-only / commit-message-only failures).
-TEST_FAILURE_MARKERS = (
+# Strict markers that unequivocally indicate a failing test or assertion.
+STRICT_TEST_FAILURE_MARKERS = (
     "FAIL:",
-    "ERROR:",
     "FAILED (",
-    "Traceback (most recent call last):",
     "AssertionError",
 )
+
+# Generic markers that could be from a test failure (e.g., TypeError)
+# OR from a transient infrastructure crash.
+GENERIC_TEST_FAILURE_MARKERS = (
+    "ERROR:",
+    "Traceback (most recent call last):",
+)
+
+# Combined for functions that need to extract blocks of failed tests
+TEST_FAILURE_MARKERS = STRICT_TEST_FAILURE_MARKERS + GENERIC_TEST_FAILURE_MARKERS
 
 # Patterns that indicate transient / infrastructure failures which are
 # not caused by the contributor's code.
@@ -150,12 +157,22 @@ def process_error_logs(content):
         seen_bodies.add(body_key)
         total_unique_jobs += 1
         is_transient = _is_transient_failure(body)
-        cleaned_body = body
-        if is_transient:
-            for t_marker in TRANSIENT_FAILURE_MARKERS:
-                pattern = re.compile(re.escape(t_marker), re.IGNORECASE)
-                cleaned_body = pattern.sub("", cleaned_body)
-        job_has_test_failure = any(m in cleaned_body for m in TEST_FAILURE_MARKERS)
+        # 1. Strict markers (e.g., "FAIL:") ALWAYS mean a real test broke.
+        has_strict_failure = any(m in body for m in STRICT_TEST_FAILURE_MARKERS)
+        # 2. Generic markers (e.g., "Traceback") could be a code bug OR an infrastructure crash.
+        has_generic_failure = any(m in body for m in GENERIC_TEST_FAILURE_MARKERS)
+        if has_strict_failure:
+            # Genuine test failures (AssertionError, FAIL:) always block auto-retry.
+            job_has_test_failure = True
+        elif is_transient:
+            # If we detected a known transient error (like a network drop), we assume
+            # the generic "ERROR:" and "Traceback" strings belong to that crash.
+            # We safely forgive them to allow the auto-retry to trigger.
+            job_has_test_failure = False
+        else:
+            # There was no transient error. Therefore, if we found generic failures
+            # (like a SyntaxError or TypeError in the code), it is a real test failure.
+            job_has_test_failure = has_generic_failure
         if is_transient and not job_has_test_failure:
             transient_jobs += 1
         if job_has_test_failure:
