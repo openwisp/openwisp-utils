@@ -259,15 +259,55 @@ class TestProcessErrorLogs(unittest.TestCase):
         self.assertFalse(tests_failed)
         self.assertFalse(transient)
 
-    def test_transient_only_true_when_all_transient(self):
+    def test_pure_transient_error_allows_retry(self):
+        """Ensure a purely transient error correctly flags for a retry."""
         content = (
-            "===== JOB 100 =====\n"
-            "marionette.errors.MarionetteException: connection lost\n"
-            "===== JOB 200 =====\n"
-            "NS_ERROR_ABORT in browser\n"
+            "===== JOB 1 =====\n"
+            "Setting up Selenium...\n"
+            "selenium.common.exceptions.InvalidSessionIdException: Message: Session is not active\n"
         )
-        _, _, transient = process_error_logs(content)
-        self.assertTrue(transient)
+        text, tests_failed, transient_only = process_error_logs(content)
+        self.assertFalse(tests_failed)
+        self.assertTrue(transient_only)
+
+    def test_transient_forgives_generic_traceback(self):
+        """Ensure transient crashes with generic tracebacks don't falsely trigger test failures."""
+        content = (
+            "===== JOB 2 =====\n"
+            "Traceback (most recent call last):\n"
+            "  File 'urllib3/connectionpool.py', line 703\n"
+            "ERROR: Could not install packages due to an OSError: HTTPSConnectionPool\n"
+            "Network is unreachable\n"
+        )
+        text, tests_failed, transient_only = process_error_logs(content)
+        self.assertFalse(tests_failed)
+        self.assertTrue(transient_only)
+
+    def test_strict_failure_blocks_transient_retry(self):
+        """Ensure a strict failure (AssertionError) blocks retry even if a transient error exists."""
+        content = (
+            "===== JOB 3 =====\n"
+            "FAIL: test_user_login\n"
+            "AssertionError: True is not False\n"
+            "...\n"
+            "Connection reset by peer\n"
+        )
+        text, tests_failed, transient_only = process_error_logs(content)
+        self.assertTrue(tests_failed)
+        self.assertFalse(transient_only)
+
+    def test_pure_generic_bug_blocks_retry(self):
+        """Ensure a generic traceback without a transient error is flagged as a real code bug."""
+        content = (
+            "===== JOB 4 =====\n"
+            "Traceback (most recent call last):\n"
+            "  File 'app/models.py', line 45, in save\n"
+            "TypeError: 'NoneType' object is not subscriptable\n"
+            "ERROR: Process exited with code 1\n"
+        )
+        text, tests_failed, transient_only = process_error_logs(content)
+        self.assertTrue(tests_failed)
+        self.assertFalse(transient_only)
 
     def test_transient_only_false_when_mixed(self):
         content = (
@@ -287,6 +327,16 @@ class TestProcessErrorLogs(unittest.TestCase):
         )
         _, _, transient = process_error_logs(content)
         self.assertTrue(transient)
+
+    def test_transient_marker_containing_error_keyword(self):
+        content = (
+            "===== JOB 100 =====\n"
+            "ERROR: Could not install packages due to an OSError: HTTPSConnectionPool\n"
+            "Network is unreachable\n"
+        )
+        text, tests_failed, transient_only = process_error_logs(content)
+        self.assertTrue(transient_only)
+        self.assertFalse(tests_failed)
 
 
 class TestNormalizeForDedup(unittest.TestCase):

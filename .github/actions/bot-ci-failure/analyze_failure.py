@@ -6,15 +6,22 @@ import sys
 from google import genai
 from google.genai import types
 
-# Keywords that indicate an automated test failure (as opposed to
-# QA-only / commit-message-only failures).
-TEST_FAILURE_MARKERS = (
+# Strict markers that unequivocally indicate a failing test or assertion.
+STRICT_TEST_FAILURE_MARKERS = (
     "FAIL:",
-    "ERROR:",
     "FAILED (",
-    "Traceback (most recent call last):",
     "AssertionError",
 )
+
+# Generic markers that could be from a test failure (e.g., TypeError)
+# OR from a transient infrastructure crash.
+GENERIC_TEST_FAILURE_MARKERS = (
+    "ERROR:",
+    "Traceback (most recent call last):",
+)
+
+# Combined for functions that need to extract blocks of failed tests
+TEST_FAILURE_MARKERS = STRICT_TEST_FAILURE_MARKERS + GENERIC_TEST_FAILURE_MARKERS
 
 # Patterns that indicate transient / infrastructure failures which are
 # not caused by the contributor's code.
@@ -149,10 +156,25 @@ def process_error_logs(content):
             continue
         seen_bodies.add(body_key)
         total_unique_jobs += 1
-        job_has_test_failure = any(m in body for m in TEST_FAILURE_MARKERS)
-        if _is_transient_failure(body) and not job_has_test_failure:
+        is_transient = _is_transient_failure(body)
+        # 1. Strict markers (e.g., "FAIL:") ALWAYS mean a real test broke.
+        has_strict_failure = any(m in body for m in STRICT_TEST_FAILURE_MARKERS)
+        # 2. Generic markers (e.g., "Traceback") could be a code bug OR an infrastructure crash.
+        has_generic_failure = any(m in body for m in GENERIC_TEST_FAILURE_MARKERS)
+        if has_strict_failure:
+            # Genuine test failures (AssertionError, FAIL:) always block auto-retry.
+            job_has_test_failure = True
+        elif is_transient:
+            # If we detected a known transient error (like a network drop), we assume
+            # the generic "ERROR:" and "Traceback" strings belong to that crash.
+            # We safely forgive them to allow the auto-retry to trigger.
+            job_has_test_failure = False
+        else:
+            # There was no transient error. Therefore, if we found generic failures
+            # (like a SyntaxError or TypeError in the code), it is a real test failure.
+            job_has_test_failure = has_generic_failure
+        if is_transient and not job_has_test_failure:
             transient_jobs += 1
-        # Detect real test failures and keep only the failing parts.
         if job_has_test_failure:
             tests_failed = True
             body = _extract_failed_tests(body)
@@ -368,6 +390,9 @@ def main():
          issue" and mention the CI has been restarted automatically if applicable.
        - For Coveralls failures specifically, mention it is a known flaky
          service and not actionable by the contributor.
+       - If there are ALSO real test failures (like AssertionErrors) in the logs,
+         tell the contributor to fix the real test failures first and push a new commit.
+         Do NOT tell them the CI restarted automatically if real test failures exist.
 
     5. **Build/Infrastructure/Other** (missing dependencies, Docker errors,
        setup failures that are NOT transient)
