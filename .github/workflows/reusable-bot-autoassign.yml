@@ -7,6 +7,11 @@ on:
         required: true
         type: string
         description: "The bot to execute (e.g., 'issue_assignment', 'pr_reopen', 'stale_pr')"
+      bot_username:
+        required: false
+        type: string
+        default: "openwisp-companion"
+        description: "The GitHub App username used to detect bot mentions and bot-authored comments"
     secrets:
       OPENWISP_BOT_APP_ID:
         required: true
@@ -45,6 +50,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           BOT_COMMAND: ${{ inputs.bot_command }}
+          BOT_USERNAME: ${{ inputs.bot_username }}
         run: |
           if [ -n "$GITHUB_EVENT_PATH" ]; then
             python openwisp-utils/.github/actions/bot-autoassign/__main__.py "$BOT_COMMAND" "$GITHUB_EVENT_PATH"
