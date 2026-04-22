@@ -41,6 +41,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+          BOT_USERNAME: openwisp-companion
         run: >
           python .github/actions/bot-autoassign/__main__.py
           issue_assignment "$GITHUB_EVENT_PATH"
