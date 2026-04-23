@@ -477,18 +477,115 @@ comment on the PR.
 
 **Usage Example**
 
-To enable the changelog bot in any OpenWISP repository, create a workflow
-file at ``.github/workflows/changelog-bot.yml``:
+To enable the changelog bot in any OpenWISP repository, create the
+following two workflow files under ``.github/workflows/``.
+
+The trigger workflow runs when a PR review is submitted. If the PR is
+approved by a maintainer and its title starts with ``[feature]``,
+``[fix]``, or ``[change]``, it stores the PR number as workflow metadata.
+
+**1. Changelog Bot Trigger**
+(``.github/workflows/bot-changelog-trigger.yml``)
 
 .. code-block:: yaml
 
-    name: Changelog Bot
+    name: Changelog Bot Trigger
+
     on:
       pull_request_review:
         types: [submitted]
+
+    permissions: {}
+
     jobs:
+      check:
+        if: |
+          github.event.review.state == 'approved' &&
+          (github.event.review.author_association == 'OWNER' ||
+            github.event.review.author_association == 'MEMBER' ||
+            github.event.review.author_association == 'COLLABORATOR')
+        runs-on: ubuntu-latest
+        steps:
+          - name: Check for noteworthy PR
+            id: check
+            env:
+              PR_TITLE: ${{ github.event.pull_request.title }}
+            run: |
+              if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change)\]'; then
+                echo "has_noteworthy=true" >> $GITHUB_OUTPUT
+              fi
+
+          - name: Save PR metadata
+            if: steps.check.outputs.has_noteworthy == 'true'
+            env:
+              PR_NUMBER: ${{ github.event.pull_request.number }}
+            run: echo "$PR_NUMBER" > pr_number
+
+          - name: Upload PR metadata
+            if: steps.check.outputs.has_noteworthy == 'true'
+            uses: actions/upload-artifact@v7
+            with:
+              name: changelog-metadata
+              path: pr_number
+
+The runner workflow is triggered after the trigger workflow completes. It
+retrieves the PR metadata and calls the reusable changelog workflow.
+
+**2. Changelog Bot Runner**
+(``.github/workflows/bot-changelog-runner.yml``)
+
+.. code-block:: yaml
+
+    name: Changelog Bot Runner
+
+    on:
+      workflow_run:
+        workflows: ["Changelog Bot Trigger"]
+        types:
+          - completed
+
+    permissions:
+      actions: read
+
+    jobs:
+      fetch-metadata:
+        runs-on: ubuntu-latest
+        if: github.event.workflow_run.conclusion == 'success'
+        permissions:
+          actions: read
+        outputs:
+          pr_number: ${{ steps.metadata.outputs.pr_number }}
+        steps:
+          - name: Download PR metadata
+            id: download
+            uses: actions/download-artifact@v8
+            with:
+              name: changelog-metadata
+              github-token: ${{ secrets.GITHUB_TOKEN }}
+              run-id: ${{ github.event.workflow_run.id }}
+            continue-on-error: true
+
+          - name: Read PR metadata
+            if: steps.download.outcome == 'success'
+            id: metadata
+            run: |
+              PR_NUMBER=$(cat pr_number)
+              if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+                echo "::error::Invalid PR number: $PR_NUMBER"
+                exit 1
+              fi
+              echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
       changelog:
+        needs: fetch-metadata
+        if: needs.fetch-metadata.outputs.pr_number != ''
+        permissions:
+          contents: read
+          pull-requests: write
+          issues: write
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-changelog.yml@master
+        with:
+          pr_number: ${{ needs.fetch-metadata.outputs.pr_number }}
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
