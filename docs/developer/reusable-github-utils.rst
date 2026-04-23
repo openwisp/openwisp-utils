@@ -383,8 +383,8 @@ job:
           - completed
 
     permissions:
-      pull-requests: write
-      actions: write
+      pull-requests: read
+      actions: read
       contents: read
 
     concurrency:
@@ -410,8 +410,8 @@ job:
               emit_pr() {
                 local pr_number="$1"
                 local pr_author
-                pr_author=$(gh pr view "$pr_number" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null || echo "")
-                if [ -z "$pr_author" ]; then
+                pr_author=$(gh pr view "$pr_number" --repo "$REPO" --json author --jq '.author.login // empty' 2>/dev/null || echo "")
+                if [ -z "$pr_author" ] || [ "$pr_author" = "null" ]; then
                   echo "::warning::Could not fetch PR author for PR #$pr_number"
                 fi
                 echo "number=$pr_number" >> "$GITHUB_OUTPUT"
@@ -444,6 +444,10 @@ job:
       call-ci-failure-bot:
         needs: find-pr
         if: ${{ needs.find-pr.outputs.pr_number != '' }}
+        permissions:
+          pull-requests: write
+          actions: write
+          contents: read
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
         with:
           pr_number: ${{ needs.find-pr.outputs.pr_number }}
@@ -468,6 +472,13 @@ maintainer. It analyzes the PR's title, description, code changes, and
 linked issues, then posts a properly formatted changelog entry as a
 comment on the PR.
 
+The bot uses a two-workflow pattern to support PRs from forks. The first
+workflow is triggered by ``pull_request_review``: it checks whether the PR
+qualifies and uploads the PR number as an artifact, but requires no
+secrets. The second workflow executes via ``workflow_run`` once the first
+completes: it runs in the context of the base repository, has full access
+to secrets, and is the one that generates and posts the changelog comment.
+
 **Secrets**
 
 - ``GEMINI_API_KEY`` (required): Google Gemini API key.
@@ -475,7 +486,10 @@ comment on the PR.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
 
-**Usage Example**
+**Setup for Other Repositories**
+
+To enable the changelog bot in any OpenWISP repository, create the
+following two workflow files.
 
 To enable the changelog bot in any OpenWISP repository, create the
 following two workflow files under ``.github/workflows/``.
@@ -590,3 +604,16 @@ retrieves the PR metadata and calls the reusable changelog workflow.
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+.. note::
+
+    The ``name`` field in the trigger workflow must be exactly ``Changelog
+    Bot Trigger``. The runner watches for this name via ``workflow_run``.
+    Changing it will silently break the connection between the two
+    workflows.
+
+    Both ``bot-changelog-trigger.yml`` and ``bot-changelog-runner.yml``
+    must be committed to the **default branch** of the repository. GitHub
+    only activates ``workflow_run`` listeners that exist on the default
+    branch: adding the runner only to a feature branch will cause it to
+    silently do nothing.
