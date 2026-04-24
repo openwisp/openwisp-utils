@@ -34,7 +34,7 @@ TRANSIENT_FAILURE_MARKERS = (
     "Network is unreachable",
     "Temporary failure in name resolution",
     "selenium.common.exceptions.InvalidSessionIdException",
-    "selenium.common.exceptions.WebDriverException"
+    "selenium.common.exceptions.WebDriverException",
     "Posting coverage data to https://coveralls.io",
     "OperationalError: database is locked",
     "ERROR: Could not install packages due to an OSError",
