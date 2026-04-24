@@ -338,6 +338,20 @@ class TestProcessErrorLogs(unittest.TestCase):
         self.assertTrue(transient_only)
         self.assertFalse(tests_failed)
 
+    def test_transient_ignores_unittest_failed_summary(self):
+        """Ensure unittest's 'FAILED (errors=1)' summary does not override transient crashes."""
+        content = (
+            "===== JOB 5 =====\n"
+            "Traceback (most recent call last):\n"
+            "selenium.common.exceptions.WebDriverException: Message: Reached error page: about:neterror\n"
+            "----------------------------------------------------------------------\n"
+            "Ran 367 tests in 311.148s\n\n"
+            "FAILED (errors=1)\n"
+        )
+        text, tests_failed, transient_only = process_error_logs(content)
+        self.assertFalse(tests_failed)
+        self.assertTrue(transient_only)
+
 
 class TestNormalizeForDedup(unittest.TestCase):
     """Tests for _normalize_for_dedup."""
