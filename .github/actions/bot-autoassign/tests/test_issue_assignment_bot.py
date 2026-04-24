@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest  # noqa: E402
+from github import GithubException  # noqa: E402
 
 try:
     from issue_assignment_bot import IssueAssignmentBot  # noqa: E402
@@ -27,9 +28,11 @@ def bot_env(monkeypatch):
     monkeypatch.setattr("issue_assignment_bot.time.sleep", lambda _seconds: None)
     with patch("base.Github") as mock_github_cls:
         mock_repo = Mock()
-        mock_github_cls.return_value.get_repo.return_value = mock_repo
+        mock_github = mock_github_cls.return_value
+        mock_github.get_repo.return_value = mock_repo
         yield {
             "github_cls": mock_github_cls,
+            "github": mock_github,
             "repo": mock_repo,
         }
 
@@ -102,24 +105,6 @@ class TestExtractLinkedIssues:
         from utils import extract_linked_issues
 
         result = extract_linked_issues(pr_body)
-        assert sorted(result) == sorted(expected)
-
-    @pytest.mark.parametrize(
-        "pr_body,expected",
-        [
-            ("Fixes #123", [123]),
-            ("Closes #456 and resolves #789", [456, 789]),
-            ("Fixed #999", [999]),
-            ("Related to #99", []),  # excluded in strict mode
-            ("Relates to #42", []),  # excluded in strict mode
-            ("Fixes #1 and related to #2", [1]),
-            ("", []),
-        ],
-    )
-    def test_extract_linked_issues_strict(self, pr_body, expected, bot_env):
-        from utils import extract_linked_issues
-
-        result = extract_linked_issues(pr_body, strict=True)
         assert sorted(result) == sorted(expected)
 
 
@@ -208,6 +193,19 @@ def _make_bot_assign_issue(
     return mock_issue
 
 
+def _make_search_result(number, body, user_login="contributor"):
+    mock_pr = Mock()
+    mock_pr.number = number
+    mock_pr.user.login = user_login
+    mock_pr.body = body
+    mock_issue = Mock()
+    mock_issue.body = body
+    mock_issue.number = number
+    mock_issue.user.login = user_login
+    mock_issue.as_pull_request.return_value = mock_pr
+    return mock_issue
+
+
 class TestAutoAssignIssuesFromPR:
     def test_success(self, bot_env):
         bot = IssueAssignmentBot()
@@ -243,8 +241,6 @@ class TestAutoAssignIssuesFromPR:
         assert "automatically assigned" not in fallback
 
     def test_verification_error_stays_silent(self, bot_env):
-        from github import GithubException
-
         bot = IssueAssignmentBot()
         initial_issue = Mock()
         initial_issue.labels = []
@@ -298,6 +294,62 @@ class TestAutoAssignIssuesFromPR:
         assert assigned == []
         mock_issue.add_to_assignees.assert_not_called()
         mock_issue.create_comment.assert_not_called()
+
+    def test_verification_recovers_then_reports_failure(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        stale_issue = Mock()
+        stale_issue.assignees = []
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            GithubException(500, "transient", headers=None),
+            stale_issue,
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        initial_issue.create_comment.assert_called_once()
+        fallback = initial_issue.create_comment.call_args[0][0]
+        assert "openwisp-companion assign" in fallback
+
+    def test_verification_catches_non_github_exception(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            RuntimeError("network dropped"),
+            RuntimeError("network dropped"),
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        initial_issue.create_comment.assert_not_called()
+
+    def test_verification_first_fetch_authoritative(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        stale_issue = Mock()
+        stale_issue.assignees = []
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            stale_issue,
+            RuntimeError("network dropped"),
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        initial_issue.create_comment.assert_called_once()
+        fallback = initial_issue.create_comment.call_args[0][0]
+        assert "openwisp-companion assign" in fallback
 
     def test_skip_already_assigned(self, bot_env):
         bot = IssueAssignmentBot()
@@ -377,6 +429,19 @@ class TestUnassignIssuesFromPR:
         unassigned = bot.unassign_issues_from_pr("Fixes #123", "testuser")
         assert len(unassigned) == 0
         mock_issue.remove_from_assignees.assert_not_called()
+
+    def test_unassign_matches_case_insensitively(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_assignee = Mock()
+        mock_assignee.login = "TestUser"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.assignees = [mock_assignee]
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        unassigned = bot.unassign_issues_from_pr("Fixes #123", "testuser")
+        assert 123 in unassigned
+        mock_issue.remove_from_assignees.assert_called_once_with("testuser")
 
 
 class TestHandleIssueComment:
@@ -592,7 +657,6 @@ class TestIsBotAssignCommand:
             "@openwisp-companion hello",
             "@someone-else assign",
             "assign @openwisp-companion",
-            # regex word-boundary precision — substrings must not match
             "@openwisp-companion assignee",
             "@openwisp-companion assigning",
             "@openwisp-companion assigns",
@@ -610,12 +674,10 @@ class TestHandleBotAssignRequest:
     def test_assigns_when_open_pr_exists(self, bot_env):
         bot = IssueAssignmentBot()
         mock_issue = _make_issue_with_assignment("contributor")
-        mock_pr = Mock()
-        mock_pr.number = 200
-        mock_pr.user.login = "contributor"
-        mock_pr.body = "Fixes #123"
         bot_env["repo"].get_issue.return_value = mock_issue
-        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123")
+        ]
         assert bot.handle_bot_assign_request(123, "contributor")
         mock_issue.add_to_assignees.assert_called_once_with("contributor")
         mock_issue.create_comment.assert_called_once()
@@ -627,12 +689,23 @@ class TestHandleBotAssignRequest:
         bot = IssueAssignmentBot()
         mock_issue = _make_bot_assign_issue()
         bot_env["repo"].get_issue.return_value = mock_issue
-        bot_env["repo"].get_pulls.return_value = []
+        bot_env["github"].search_issues.return_value = []
         assert bot.handle_bot_assign_request(123, "contributor")
         mock_issue.add_to_assignees.assert_not_called()
         mock_issue.create_comment.assert_called_once()
         comment_text = mock_issue.create_comment.call_args[0][0]
         assert "could not find an open PR" in comment_text
+
+    def test_stays_silent_when_search_errors(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_bot_assign_issue()
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.side_effect = GithubException(
+            500, "transient", headers=None
+        )
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
 
     def test_skip_if_already_assigned(self, bot_env):
         bot = IssueAssignmentBot()
@@ -672,12 +745,10 @@ class TestHandleBotAssignRequest:
     def test_matches_pr_author_case_insensitively(self, bot_env):
         bot = IssueAssignmentBot()
         mock_issue = _make_issue_with_assignment("contributor")
-        mock_pr = Mock()
-        mock_pr.number = 200
-        mock_pr.user.login = "Contributor"
-        mock_pr.body = "Fixes #123"
         bot_env["repo"].get_issue.return_value = mock_issue
-        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123", user_login="Contributor")
+        ]
         assert bot.handle_bot_assign_request(123, "contributor")
         mock_issue.add_to_assignees.assert_called_once_with("contributor")
 
@@ -691,30 +762,24 @@ class TestHandleBotAssignRequest:
     def test_still_silently_rejected(self, bot_env):
         bot = IssueAssignmentBot()
         mock_issue = _make_bot_assign_issue()
-        mock_pr = Mock()
-        mock_pr.number = 200
-        mock_pr.user.login = "contributor"
-        mock_pr.body = "Fixes #123"
         bot_env["repo"].get_issue.return_value = mock_issue
-        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123")
+        ]
         assert bot.handle_bot_assign_request(123, "contributor")
         mock_issue.add_to_assignees.assert_called_once_with("contributor")
         comment_text = mock_issue.create_comment.call_args[0][0]
         assert "manually" in comment_text
 
-    def test_ignores_related_to_pr_reference(self, bot_env):
+    def test_accepts_related_to_pr_reference(self, bot_env):
         bot = IssueAssignmentBot()
-        mock_issue = _make_bot_assign_issue()
-        mock_pr = Mock()
-        mock_pr.number = 200
-        mock_pr.user.login = "contributor"
-        mock_pr.body = "Related to #123"
+        mock_issue = _make_issue_with_assignment("contributor")
         bot_env["repo"].get_issue.return_value = mock_issue
-        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Related to #123")
+        ]
         assert bot.handle_bot_assign_request(123, "contributor")
-        mock_issue.add_to_assignees.assert_not_called()
-        comment_text = mock_issue.create_comment.call_args[0][0]
-        assert "could not find an open PR" in comment_text
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
 
 
 class TestHandleIssueCommentBotCommand:
@@ -730,12 +795,10 @@ class TestHandleIssueCommentBotCommand:
             }
         )
         mock_issue = _make_issue_with_assignment("contributor")
-        mock_pr = Mock()
-        mock_pr.number = 200
-        mock_pr.user.login = "contributor"
-        mock_pr.body = "Fixes #123"
         bot_env["repo"].get_issue.return_value = mock_issue
-        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123")
+        ]
         assert bot.handle_issue_comment()
         mock_issue.add_to_assignees.assert_called_once_with("contributor")
 
@@ -799,7 +862,7 @@ class TestHandleIssueCommentBotCommand:
 
     def test_bot_fallback_message_does_not_self_trigger(self, bot_env):
         bot = IssueAssignmentBot()
-        fallback = bot._build_silent_failure_message("contributor", 200)
+        fallback = bot._cannot_auto_assign_message("contributor", 200)
         bot.load_event_payload(
             {
                 "action": "created",

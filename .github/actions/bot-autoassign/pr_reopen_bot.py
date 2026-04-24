@@ -2,15 +2,16 @@ import json
 import os
 
 from base import GitHubBot
-from utils import get_valid_linked_issues
+from utils import extract_linked_issues, get_valid_linked_issues
 
 
 class PRReopenBot(GitHubBot):
     def reassign_issues_to_author(self, pr_number, pr_author, pr_body):
         try:
             reassigned_issues = []
+            linked_issues = extract_linked_issues(pr_body)
             for issue_number, issue in get_valid_linked_issues(
-                self.repo, self.repository_name, pr_body
+                self.repo, self.repository_name, linked_issues
             ):
                 try:
                     current_assignees = [
@@ -128,8 +129,9 @@ class PRActivityBot(GitHubBot):
             except Exception as e:
                 print(f"Could not remove stale label: {e}")
             reassigned_count = 0
+            linked_issues = extract_linked_issues(pr.body or "")
             for issue_number, issue in get_valid_linked_issues(
-                self.repo, self.repository_name, pr.body or ""
+                self.repo, self.repository_name, linked_issues
             ):
                 try:
                     current_assignees = [

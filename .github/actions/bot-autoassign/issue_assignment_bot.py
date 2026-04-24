@@ -3,12 +3,12 @@ import re
 import time
 
 from base import GitHubBot
-from github import GithubException
 from utils import (
     extract_linked_issues,
     find_open_pr_for_issue,
     get_valid_linked_issues,
     unassign_linked_issues_helper,
+    user_in_logins,
 )
 
 VERIFICATION_RETRY_DELAY_SECONDS = 1.0
@@ -212,42 +212,30 @@ class IssueAssignmentBot(GitHubBot):
 
     @staticmethod
     def _get_assignee_logins(issue):
-        return [
-            assignee.login
-            for assignee in getattr(issue, "assignees", []) or []
-            if hasattr(assignee, "login")
-        ]
+        return [a.login for a in issue.assignees if hasattr(a, "login")]
 
-    @staticmethod
-    def _user_in(user, logins):
-        user_lower = (user or "").lower()
-        return any(user_lower == (login or "").lower() for login in logins)
-
-    def _assignment_succeeded(self, issue_number, user):
-        # GitHub silently rejects assignment of non-collaborators who
-        # have not commented on the issue. Re-fetch to confirm, and
-        # retry once to absorb read-after-write lag. Returns None when
-        # verification itself errored — caller must stay silent.
-        attempts = 2
-        last_error = None
-        for attempt in range(attempts):
+    def _verify_assignment(self, issue_number, user):
+        """Re-fetch to confirm `user` was assigned. Returns True/False
+        on verified state, None when every fetch errored — caller
+        stays silent on None since the true state is unknown.
+        """
+        had_successful_fetch = False
+        for attempt in range(2):
             try:
                 updated_issue = self.repo.get_issue(issue_number)
-                if self._user_in(user, self._get_assignee_logins(updated_issue)):
+                had_successful_fetch = True
+                if user_in_logins(user, self._get_assignee_logins(updated_issue)):
                     return True
-            except GithubException as e:
-                last_error = e
+            except Exception as e:
                 print(
-                    f"GitHub API error verifying assignment for #{issue_number}"
-                    f" (attempt {attempt + 1}/{attempts}): {e}"
+                    f"Error verifying assignment for #{issue_number}"
+                    f" (attempt {attempt + 1}/2): {e}"
                 )
-            if attempt + 1 < attempts:
+            if attempt == 0:
                 time.sleep(VERIFICATION_RETRY_DELAY_SECONDS)
-        if last_error is not None:
-            return None
-        return False
+        return False if had_successful_fetch else None
 
-    def _build_silent_failure_message(self, pr_author, pr_number):
+    def _cannot_auto_assign_message(self, pr_author, pr_number):
         return (
             f"Hi @{pr_author} 👋,\n\n"
             f"Thank you for opening PR #{pr_number} to address this issue!\n\n"
@@ -267,8 +255,7 @@ class IssueAssignmentBot(GitHubBot):
             issue = self.repo.get_issue(issue_number)
             if (
                 hasattr(issue, "repository")
-                and getattr(issue.repository, "full_name", self.repository_name)
-                != self.repository_name
+                and issue.repository.full_name != self.repository_name
             ):
                 print(
                     f"Issue #{issue_number} is from a different"
@@ -281,21 +268,29 @@ class IssueAssignmentBot(GitHubBot):
             if getattr(issue, "state", "open") == "closed":
                 print(f"#{issue_number} is closed, ignoring bot command")
                 return True
-            if self._user_in(commenter, self._get_assignee_logins(issue)):
+            if user_in_logins(commenter, self._get_assignee_logins(issue)):
                 print(f"{commenter} is already assigned to #{issue_number}")
                 return True
-            pr = find_open_pr_for_issue(self.repo, commenter, issue_number)
+            try:
+                pr = find_open_pr_for_issue(
+                    self.github, self.repository_name, commenter, issue_number
+                )
+            except Exception as e:
+                # Don't post "no PR found" on a search error — that's
+                # not the same as a verified miss.
+                print(f"Error searching open PRs by {commenter}: {e}")
+                return True
             if pr is None:
                 issue.create_comment(
                     f"Hi @{commenter} 👋,\n\n"
                     "I could not find an open PR by you that references"
                     f" this issue (#{issue_number}). Please open a PR"
                     f" linking to this issue (e.g. `Fixes #{issue_number}`)"
-                    " and then re-run the command."
+                    f" and then comment `@{self.bot_username} assign` again."
                 )
                 return True
             issue.add_to_assignees(commenter)
-            verified = self._assignment_succeeded(issue_number, commenter)
+            verified = self._verify_assignment(issue_number, commenter)
             if verified is True:
                 issue.create_comment(
                     f"This issue has been assigned to @{commenter}"
@@ -303,6 +298,8 @@ class IssueAssignmentBot(GitHubBot):
                 )
                 print(f"Assigned #{issue_number} to {commenter} via bot command")
             elif verified is False:
+                # Commenter has commented but the assignment still
+                # failed (perm block, outage, etc.).
                 issue.create_comment(
                     f"Sorry @{commenter}, GitHub still did not allow"
                     " this assignment. A maintainer will need to assign"
@@ -310,12 +307,12 @@ class IssueAssignmentBot(GitHubBot):
                 )
                 print(
                     f"Bot-command assignment of #{issue_number} to"
-                    f" {commenter} was silently rejected"
+                    f" {commenter} was silently rejected."
                 )
             else:
                 print(
                     f"Skipping comment for #{issue_number}:"
-                    " assignment state could not be verified"
+                    " assignment state could not be verified."
                 )
             return True
         except Exception as e:
@@ -339,7 +336,7 @@ class IssueAssignmentBot(GitHubBot):
                 )
             assigned_issues = []
             for issue_number, issue in get_valid_linked_issues(
-                self.repo, self.repository_name, pr_body
+                self.repo, self.repository_name, linked_issues
             ):
                 if len(assigned_issues) >= max_issues:
                     break
@@ -352,7 +349,7 @@ class IssueAssignmentBot(GitHubBot):
                         continue
                     current_assignees = self._get_assignee_logins(issue)
                     if current_assignees:
-                        if self._user_in(pr_author, current_assignees):
+                        if user_in_logins(pr_author, current_assignees):
                             print(
                                 f"Issue #{issue_number} already"
                                 f" assigned to {pr_author}"
@@ -365,7 +362,7 @@ class IssueAssignmentBot(GitHubBot):
                             )
                         continue
                     issue.add_to_assignees(pr_author)
-                    verified = self._assignment_succeeded(issue_number, pr_author)
+                    verified = self._verify_assignment(issue_number, pr_author)
                     if verified is True:
                         assigned_issues.append(issue_number)
                         print(f"Assigned issue #{issue_number} to {pr_author}")
@@ -379,18 +376,18 @@ class IssueAssignmentBot(GitHubBot):
                     elif verified is False:
                         print(
                             f"Assignment of #{issue_number} to {pr_author}"
-                            " was silently rejected by GitHub"
+                            " was silently rejected by GitHub."
                         )
                         issue.create_comment(
-                            self._build_silent_failure_message(pr_author, pr_number)
+                            self._cannot_auto_assign_message(pr_author, pr_number)
                         )
                     else:
                         print(
                             f"Skipping comment for #{issue_number}:"
-                            " assignment state could not be verified"
+                            " assignment state could not be verified."
                         )
                 except Exception as e:
-                    print(f"Error processing issue" f" #{issue_number}: {e}")
+                    print(f"Error processing issue #{issue_number}: {e}")
             return assigned_issues
         except Exception as e:
             print(f"Error in auto_assign_issues_from_pr: {e}")
