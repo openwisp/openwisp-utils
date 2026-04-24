@@ -9,7 +9,6 @@ from google.genai import types
 # Strict markers that unequivocally indicate a failing test or assertion.
 STRICT_TEST_FAILURE_MARKERS = (
     "FAIL:",
-    "FAILED (",
     "AssertionError",
 )
 
