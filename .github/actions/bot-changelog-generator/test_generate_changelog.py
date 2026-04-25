@@ -559,6 +559,15 @@ class TestValidateChangelogOutput(unittest.TestCase):
         result = validate_changelog_output(text, "md")
         self.assertTrue(result)
 
+    def test_allows_body_lines_that_look_like_footer_prefixes(self):
+        text = (
+            "[change] Improved redirect URL handling\n\n"
+            "Fixes handling of #fragment values in redirect URLs.\n"
+            "Keeps the behavior stable without using a footer block."
+        )
+        result = validate_changelog_output(text, "rst")
+        self.assertTrue(result)
+
     def test_invalid_no_tag(self):
         text = "Added new functionality\n\nAdds useful context.\n\nCloses #123"
         result = validate_changelog_output(text, "rst")
@@ -627,7 +636,8 @@ class TestValidateChangelogOutput(unittest.TestCase):
         text = (
             "[feature] Added new functionality #123\n\n"
             "Adds useful context.\n\n"
-            "`#123 <https://github.com/org/repo/issues/123>`_"
+            "`#123 <https://github.com/org/repo/issues/123>`_\n\n"
+            "Closes #123"
         )
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
@@ -636,7 +646,8 @@ class TestValidateChangelogOutput(unittest.TestCase):
         text = (
             "[feature] Added new functionality #123\n\n"
             "Adds useful context.\n\n"
-            "[#123](https://github.com/org/repo/issues/123)"
+            "[#123](https://github.com/org/repo/issues/123)\n\n"
+            "Closes #123"
         )
         result = validate_changelog_output(text, "md")
         self.assertFalse(result)
@@ -645,7 +656,8 @@ class TestValidateChangelogOutput(unittest.TestCase):
         text = (
             "[feature] Added new functionality #123\n\n"
             "Adds useful context.\n\n"
-            "(#123)"
+            "(#123)\n\n"
+            "Closes #123"
         )
         result = validate_changelog_output(text, "md")
         self.assertFalse(result)
@@ -667,9 +679,9 @@ class TestValidateChangelogOutput(unittest.TestCase):
 
     def test_rejects_comment_intro_text(self):
         text = (
-            "Proposed change log entry:\n"
             "[feature] Added new functionality\n\n"
-            "Adds useful context."
+            "Adds useful context.\n\n"
+            "proposed change log entry:"
         )
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)

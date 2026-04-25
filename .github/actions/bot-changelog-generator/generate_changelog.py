@@ -391,25 +391,17 @@ def validate_changelog_output(text: str, changelog_format: str) -> bool:
         return False
 
     footer_lines = []
-    for line in nonempty_body_lines:
-        lowered = line.lower()
-        if "#" in line and lowered.startswith(
-            (
-                "close ",
-                "closes ",
-                "closed ",
-                "fix ",
-                "fixes ",
-                "fixed ",
-                "resolve ",
-                "resolves ",
-                "resolved ",
-                "related to ",
-            )
-        ):
-            if not ISSUE_FOOTER_RE.fullmatch(line):
-                return False
-            footer_lines.append(line)
+    footer_start = len(nonempty_body_lines)
+    for index in range(len(nonempty_body_lines) - 1, -1, -1):
+        line = nonempty_body_lines[index]
+        if ISSUE_FOOTER_RE.fullmatch(line):
+            footer_start = index
+            continue
+        break
+    footer_lines = nonempty_body_lines[footer_start:]
+    for line in footer_lines:
+        if not ISSUE_FOOTER_RE.fullmatch(line):
+            return False
 
     has_summary_line = any(
         not ISSUE_FOOTER_RE.fullmatch(line) for line in nonempty_body_lines
