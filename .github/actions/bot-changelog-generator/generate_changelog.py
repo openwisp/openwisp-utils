@@ -38,8 +38,9 @@ from requests.exceptions import RequestException
 CHANGELOG_BOT_MARKER = "<!-- openwisp-changelog-bot -->"
 CHANGELOG_COMMENT_INTRO = "Proposed change log entry:"
 COMMIT_SUBJECT_LIMIT = 72
+COMMIT_BODY_MAX_NONEMPTY_LINES = 10
 ISSUE_FOOTER_RE = re.compile(
-    r"^(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to) "
+    r"^(?:Closes|Fixes|Related to) "
     r"#\d+(?: #\d+)*$",
     re.IGNORECASE,
 )
@@ -307,7 +308,11 @@ def build_prompt(
         "- Focus the body on user-visible behavior, fixes, configuration changes,\n"
         "  compatibility notes, or important implementation consequences\n"
         f"- Wrap the body around {COMMIT_SUBJECT_LIMIT} characters per line\n"
-        "- If linked issues are present, use plain-text issue references such as "
+        f"- Keep the body concise, using no more than "
+        f"{COMMIT_BODY_MAX_NONEMPTY_LINES} non-empty lines after the title,\n"
+        "  including any issue footer lines\n"
+        "- Use the linked issues we have from PR description provided. If linked issues \n"
+        "are present, use plain-text issue references such as \n"
         "#123 in the title and matching footer lines such as Closes #123,\n"
         "  Fixes #123, Resolves #123, or Related to #123\n"
         "- If no linked issues are present, omit issue references instead of using\n"

@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch  # noqa: E402
 from generate_changelog import (  # noqa: E402
     CHANGELOG_BOT_MARKER,
     CHANGELOG_COMMENT_INTRO,
+    COMMIT_BODY_MAX_NONEMPTY_LINES,
     COMMIT_SUBJECT_LIMIT,
     build_github_comment,
     build_prompt,
@@ -343,6 +344,10 @@ class TestBuildPrompt(unittest.TestCase):
         )
         self.assertIn(
             "Do not use ReStructuredText/Markdown syntax to link issues",
+            system_instruction,
+        )
+        self.assertIn(
+            f"{COMMIT_BODY_MAX_NONEMPTY_LINES} non-empty lines after the title",
             system_instruction,
         )
         # Check user data prompt
