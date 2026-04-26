@@ -40,8 +40,7 @@ CHANGELOG_COMMENT_INTRO = "Proposed change log entry:"
 COMMIT_SUBJECT_LIMIT = 72
 COMMIT_BODY_MAX_NONEMPTY_LINES = 10
 ISSUE_FOOTER_RE = re.compile(
-    r"^(?:Closes|Fixes|Related to) "
-    r"#\d+(?: #\d+)*$",
+    r"^(?:Closes|Fixes|Related to) " r"#\d+(?: #\d+)*$",
     re.IGNORECASE,
 )
 
