@@ -491,10 +491,15 @@ to secrets, and is the one that generates and posts the changelog comment.
 To enable the changelog bot in any OpenWISP repository, create the
 following two workflow files.
 
-**1. Trigger** (``.github/workflows/bot-changelog-trigger.yml``)
+To enable the changelog bot in any OpenWISP repository, create the
+following two workflow files under ``.github/workflows/``.
 
-This workflow fires on PR approval, checks if the PR is noteworthy, and
-uploads the PR number as an artifact for the runner to pick up.
+The trigger workflow runs when a PR review is submitted. If the PR is
+approved by a maintainer and its title starts with ``[feature]``,
+``[fix]``, or ``[change]``, it stores the PR number as workflow metadata.
+
+**1. Changelog Bot Trigger**
+(``.github/workflows/bot-changelog-trigger.yml``)
 
 .. code-block:: yaml
 
@@ -503,6 +508,8 @@ uploads the PR number as an artifact for the runner to pick up.
     on:
       pull_request_review:
         types: [submitted]
+
+    permissions: {}
 
     jobs:
       check:
@@ -530,15 +537,16 @@ uploads the PR number as an artifact for the runner to pick up.
 
           - name: Upload PR metadata
             if: steps.check.outputs.has_noteworthy == 'true'
-            uses: actions/upload-artifact@v4
+            uses: actions/upload-artifact@v7
             with:
               name: changelog-metadata
               path: pr_number
 
-**2. Runner** (``.github/workflows/bot-changelog-runner.yml``)
+The runner workflow is triggered after the trigger workflow completes. It
+retrieves the PR metadata and calls the reusable changelog workflow.
 
-This workflow triggers after the trigger completes, downloads the
-artifact, and calls the reusable workflow with full secret access.
+**2. Changelog Bot Runner**
+(``.github/workflows/bot-changelog-runner.yml``)
 
 .. code-block:: yaml
 
@@ -552,20 +560,19 @@ artifact, and calls the reusable workflow with full secret access.
 
     permissions:
       actions: read
-      contents: read
-      pull-requests: write
-      issues: write
 
     jobs:
       fetch-metadata:
         runs-on: ubuntu-latest
         if: github.event.workflow_run.conclusion == 'success'
+        permissions:
+          actions: read
         outputs:
           pr_number: ${{ steps.metadata.outputs.pr_number }}
         steps:
           - name: Download PR metadata
             id: download
-            uses: actions/download-artifact@v4
+            uses: actions/download-artifact@v8
             with:
               name: changelog-metadata
               github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -586,6 +593,10 @@ artifact, and calls the reusable workflow with full secret access.
       changelog:
         needs: fetch-metadata
         if: needs.fetch-metadata.outputs.pr_number != ''
+        permissions:
+          contents: read
+          pull-requests: write
+          issues: write
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-changelog.yml@master
         with:
           pr_number: ${{ needs.fetch-metadata.outputs.pr_number }}

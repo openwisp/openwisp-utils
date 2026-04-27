@@ -9,7 +9,6 @@ from google.genai import types
 # Strict markers that unequivocally indicate a failing test or assertion.
 STRICT_TEST_FAILURE_MARKERS = (
     "FAIL:",
-    "FAILED (",
     "AssertionError",
 )
 
@@ -35,6 +34,7 @@ TRANSIENT_FAILURE_MARKERS = (
     "Network is unreachable",
     "Temporary failure in name resolution",
     "selenium.common.exceptions.InvalidSessionIdException",
+    "selenium.common.exceptions.WebDriverException",
     "Posting coverage data to https://coveralls.io",
     "OperationalError: database is locked",
     "ERROR: Could not install packages due to an OSError",
