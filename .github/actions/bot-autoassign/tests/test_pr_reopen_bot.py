@@ -62,6 +62,22 @@ class TestPRReopenBot:
         assigned = bot.reassign_issues_to_author(100, "testuser", "Fixes #123")
         assert len(assigned) == 0
 
+    def test_reassign_skips_when_author_already_assigned_case_insensitive(
+        self, bot_env
+    ):
+        bot = PRReopenBot()
+        mock_assignee = Mock()
+        mock_assignee.login = "TestUser"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.assignees = [mock_assignee]
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assigned = bot.reassign_issues_to_author(100, "testuser", "Fixes #123")
+        assert assigned == []
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
+
     def test_remove_stale_label(self, bot_env):
         bot = PRReopenBot()
         mock_pr = Mock()
@@ -161,6 +177,34 @@ class TestPRActivityBot:
         mock_pr.user.login = "testuser"
         bot_env["repo"].get_pull.return_value = mock_pr
         assert bot.handle_contributor_activity()
+
+    def test_handle_contributor_activity_author_case_insensitive(self, bot_env):
+        bot = PRActivityBot()
+        bot.load_event_payload(
+            {
+                "issue": {
+                    "number": 100,
+                    "pull_request": {
+                        "url": ("https://api.github.com" "/repos/owner/repo/pulls/100")
+                    },
+                },
+                "comment": {"user": {"login": "testuser"}},
+            }
+        )
+        mock_pr = Mock()
+        mock_pr.user.login = "TestUser"
+        mock_pr.body = "Fixes #123"
+        mock_label = Mock()
+        mock_label.name = "stale"
+        mock_pr.get_labels.return_value = [mock_label]
+        bot_env["repo"].get_pull.return_value = mock_pr
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_contributor_activity()
+        mock_pr.remove_from_labels.assert_called_once_with("stale")
 
     def test_handle_contributor_activity_pr_not_stale(self, bot_env):
         bot = PRActivityBot()

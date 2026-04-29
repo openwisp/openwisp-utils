@@ -218,6 +218,26 @@ Create the following workflow files in your repository.
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
+**Overriding the bot username**
+
+All four caller workflows accept an optional ``bot_username`` input
+(default ``openwisp-companion``). The bot uses it to detect mentions of
+the form ``@<bot_username> assign`` in issue comments and to ignore
+comments authored by the bot itself. Set this if your repository uses a
+different GitHub App username:
+
+.. code-block:: yaml
+
+    jobs:
+      respond-to-assign-request:
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: issue_assignment
+          bot_username: my-custom-bot
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
 GitHub Workflows
 ----------------
 
