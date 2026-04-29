@@ -2,7 +2,7 @@ import json
 import os
 
 from base import GitHubBot
-from utils import extract_linked_issues, get_valid_linked_issues
+from utils import extract_linked_issues, get_valid_linked_issues, user_in_logins
 
 
 class PRReopenBot(GitHubBot):
@@ -19,14 +19,16 @@ class PRReopenBot(GitHubBot):
                         for assignee in issue.assignees
                         if hasattr(assignee, "login")
                     ]
-                    if current_assignees and pr_author not in current_assignees:
+                    if current_assignees and not user_in_logins(
+                        pr_author, current_assignees
+                    ):
                         print(
                             f"Issue #{issue_number} is assigned"
                             " to others:"
                             f' {", ".join(current_assignees)}'
                         )
                         continue
-                    if pr_author not in current_assignees:
+                    if not user_in_logins(pr_author, current_assignees):
                         issue.add_to_assignees(pr_author)
                         reassigned_issues.append(issue_number)
                         print(f"Reassigned issue #{issue_number}" f" to {pr_author}")
@@ -116,7 +118,7 @@ class PRActivityBot(GitHubBot):
                 print("Comment is on an issue," " not a PR, skipping")
                 return True
             pr = self.repo.get_pull(pr_number)
-            if not pr.user or commenter != pr.user.login:
+            if not pr.user or not user_in_logins(commenter, [pr.user.login]):
                 print("Comment not from PR author, skipping")
                 return True
             labels = [label.name for label in pr.get_labels()]

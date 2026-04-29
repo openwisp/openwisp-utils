@@ -669,6 +669,12 @@ class TestIsBotAssignCommand:
         bot = IssueAssignmentBot()
         assert not bot.is_bot_assign_command(comment)
 
+    def test_respects_custom_bot_username(self, monkeypatch, bot_env):
+        monkeypatch.setenv("BOT_USERNAME", "custom-bot")
+        bot = IssueAssignmentBot()
+        assert bot.is_bot_assign_command("@custom-bot assign")
+        assert not bot.is_bot_assign_command("@openwisp-companion assign")
+
 
 class TestHandleBotAssignRequest:
     def test_assigns_when_open_pr_exists(self, bot_env):
