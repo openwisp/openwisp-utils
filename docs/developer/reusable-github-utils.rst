@@ -78,7 +78,8 @@ OpenWISP repositories. The bot provides the following features:
 These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
 the ``actions/create-github-app-token`` action. The bot itself consumes
 the following environment variables at runtime: ``GITHUB_TOKEN``,
-``REPOSITORY``, and ``GITHUB_EVENT_NAME``.
+``REPOSITORY``, ``GITHUB_EVENT_NAME``, and ``BOT_USERNAME`` (optional;
+defaults to ``openwisp-companion``).
 
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
