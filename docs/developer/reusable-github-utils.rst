@@ -139,7 +139,7 @@ Create the following workflow files in your repository.
       issues: write
       pull-requests: read
     concurrency:
-      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
+      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}-${{ github.event.action }}
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
