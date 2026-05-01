@@ -25,7 +25,7 @@ def bot_env(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
     monkeypatch.setenv("GITHUB_EVENT_NAME", "issue_comment")
-    monkeypatch.setattr("issue_assignment_bot.time.sleep", lambda _seconds: None)
+    monkeypatch.setattr("utils.time.sleep", lambda _seconds: None)
     with patch("base.Github") as mock_github_cls:
         mock_repo = Mock()
         mock_github = mock_github_cls.return_value

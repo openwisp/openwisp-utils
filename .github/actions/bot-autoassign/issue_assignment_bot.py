@@ -1,17 +1,16 @@
 import os
 import re
-import time
 
 from base import GitHubBot
 from utils import (
     extract_linked_issues,
     find_open_pr_for_issue,
+    get_assignee_logins,
     get_valid_linked_issues,
     unassign_linked_issues_helper,
     user_in_logins,
+    verify_assignment,
 )
-
-VERIFICATION_RETRY_DELAY_SECONDS = 1.0
 
 
 class IssueAssignmentBot(GitHubBot):
@@ -210,31 +209,6 @@ class IssueAssignmentBot(GitHubBot):
             print(f"Error responding to assignment request: {e}")
             return False
 
-    @staticmethod
-    def _get_assignee_logins(issue):
-        return [a.login for a in issue.assignees if hasattr(a, "login")]
-
-    def _verify_assignment(self, issue_number, user):
-        """Re-fetch to confirm `user` was assigned. Returns True/False
-        on verified state, None when every fetch errored — caller
-        stays silent on None since the true state is unknown.
-        """
-        had_successful_fetch = False
-        for attempt in range(2):
-            try:
-                updated_issue = self.repo.get_issue(issue_number)
-                had_successful_fetch = True
-                if user_in_logins(user, self._get_assignee_logins(updated_issue)):
-                    return True
-            except Exception as e:
-                print(
-                    f"Error verifying assignment for #{issue_number}"
-                    f" (attempt {attempt + 1}/2): {e}"
-                )
-            if attempt == 0:
-                time.sleep(VERIFICATION_RETRY_DELAY_SECONDS)
-        return False if had_successful_fetch else None
-
     def _cannot_auto_assign_message(self, pr_author, pr_number):
         return (
             f"Hi @{pr_author} 👋,\n\n"
@@ -268,7 +242,7 @@ class IssueAssignmentBot(GitHubBot):
             if getattr(issue, "state", "open") == "closed":
                 print(f"#{issue_number} is closed, ignoring bot command")
                 return True
-            if user_in_logins(commenter, self._get_assignee_logins(issue)):
+            if user_in_logins(commenter, get_assignee_logins(issue)):
                 print(f"{commenter} is already assigned to #{issue_number}")
                 return True
             try:
@@ -290,7 +264,7 @@ class IssueAssignmentBot(GitHubBot):
                 )
                 return True
             issue.add_to_assignees(commenter)
-            verified = self._verify_assignment(issue_number, commenter)
+            verified = verify_assignment(self.repo, issue_number, commenter)
             if verified is True:
                 issue.create_comment(
                     f"This issue has been assigned to @{commenter}"
@@ -347,7 +321,7 @@ class IssueAssignmentBot(GitHubBot):
                             " auto-assignment"
                         )
                         continue
-                    current_assignees = self._get_assignee_logins(issue)
+                    current_assignees = get_assignee_logins(issue)
                     if current_assignees:
                         if user_in_logins(pr_author, current_assignees):
                             print(
@@ -362,7 +336,7 @@ class IssueAssignmentBot(GitHubBot):
                             )
                         continue
                     issue.add_to_assignees(pr_author)
-                    verified = self._verify_assignment(issue_number, pr_author)
+                    verified = verify_assignment(self.repo, issue_number, pr_author)
                     if verified is True:
                         assigned_issues.append(issue_number)
                         print(f"Assigned issue #{issue_number} to {pr_author}")

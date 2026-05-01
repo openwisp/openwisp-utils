@@ -1,11 +1,41 @@
 import re
+import time
 
 from github import GithubException
+
+VERIFICATION_RETRY_DELAY_SECONDS = 1.0
+FIND_OPEN_PR_MAX_RESULTS = 20
 
 
 def user_in_logins(user, logins):
     user_lower = (user or "").lower()
     return any(user_lower == (login or "").lower() for login in logins)
+
+
+def get_assignee_logins(issue):
+    return [a.login for a in issue.assignees if hasattr(a, "login")]
+
+
+def verify_assignment(repo, issue_number, user):
+    """Re-fetch to confirm `user` was assigned. Returns True/False
+    on verified state, None when every fetch errored — caller
+    stays silent on None since the true state is unknown.
+    """
+    had_successful_fetch = False
+    for attempt in range(2):
+        try:
+            updated_issue = repo.get_issue(issue_number)
+            had_successful_fetch = True
+            if user_in_logins(user, get_assignee_logins(updated_issue)):
+                return True
+        except Exception as e:
+            print(
+                f"Error verifying assignment for #{issue_number}"
+                f" (attempt {attempt + 1}/2): {e}"
+            )
+        if attempt == 0:
+            time.sleep(VERIFICATION_RETRY_DELAY_SECONDS)
+    return False if had_successful_fetch else None
 
 
 def extract_linked_issues(pr_body):
@@ -56,7 +86,10 @@ def find_open_pr_for_issue(github, repo_full_name, author, issue_number):
     if not author:
         return None
     query = f"repo:{repo_full_name} is:pr is:open author:{author}"
-    for item in github.search_issues(query, sort="updated", order="desc"):
+    results = github.search_issues(query, sort="updated", order="desc")
+    for index, item in enumerate(results):
+        if index >= FIND_OPEN_PR_MAX_RESULTS:
+            break
         if issue_number in extract_linked_issues(item.body or ""):
             return item.as_pull_request()
     return None
@@ -70,12 +103,7 @@ def unassign_linked_issues_helper(repo, repository_name, pr_body, pr_author):
         repo, repository_name, linked_issues
     ):
         try:
-            current_assignees = [
-                assignee.login
-                for assignee in issue.assignees
-                if hasattr(assignee, "login")
-            ]
-            if user_in_logins(pr_author, current_assignees):
+            if user_in_logins(pr_author, get_assignee_logins(issue)):
                 issue.remove_from_assignees(pr_author)
                 unassigned_issues.append(issue_number)
                 print(f"Unassigned {pr_author} from issue #{issue_number}")
