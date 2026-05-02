@@ -12,6 +12,7 @@ from . import settings as app_settings
 from .dashboard import get_dashboard_context
 from .system_info import (
     get_enabled_openwisp_modules,
+    get_openwisp_license,
     get_openwisp_version,
     get_os_details,
 )
@@ -40,10 +41,15 @@ class OpenwispAdminSite(admin.AdminSite):
         return super().index(request, extra_context=context)
 
     def openwisp_info(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            from django.http import HttpResponseForbidden
+
+            return HttpResponseForbidden()
         context = {
             "enabled_openwisp_modules": get_enabled_openwisp_modules(),
             "system_info": get_os_details(),
             "openwisp_version": get_openwisp_version(),
+            "openwisp_license": get_openwisp_license(),
             "title": _("System Information"),
             "site_title": self.site_title,
         }

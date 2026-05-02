@@ -1,6 +1,7 @@
 import importlib.metadata
 import platform
 from collections import OrderedDict
+from pathlib import Path
 
 import distro
 from django.conf import settings
@@ -66,3 +67,11 @@ def get_os_details():
         "kernel_version": kernel_version,
         "hardware_platform": uname.machine,
     }
+
+
+def get_openwisp_license():
+    try:
+        license_path = Path(__file__).resolve().parent.parent.parent / "LICENSE"
+        return license_path.read_text()
+    except (FileNotFoundError, OSError):
+        return None

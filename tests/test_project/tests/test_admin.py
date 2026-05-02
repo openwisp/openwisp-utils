@@ -593,3 +593,31 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, "<h2>OpenWISP Version")
             _assert_system_information(response)
+
+        with self.subTest("Test license is shown"):
+            response = self.client.get(reverse("admin:ow-info"))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "<h2>License</h2>")
+            self.assertContains(response, "BSD 3-Clause License")
+
+    def test_system_info_non_superuser_gets_403(self):
+        non_superuser = User.objects.create_user(
+            username="operator",
+            password="operator",
+            email="operator@test.org",
+            is_staff=True,
+        )
+        self.client.force_login(non_superuser)
+        response = self.client.get(reverse("admin:ow-info"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_system_info_menu_hidden_for_non_superuser(self):
+        non_superuser = User.objects.create_user(
+            username="operator2",
+            password="operator2",
+            email="operator2@test.org",
+            is_staff=True,
+        )
+        self.client.force_login(non_superuser)
+        response = self.client.get(reverse("admin:index"))
+        self.assertNotContains(response, "openwisp-system-info")

@@ -21,6 +21,11 @@
 <p><strong>{% trans "Kernel version" %}:</strong> {{ system_info.kernel_version }}</p>
 <p><strong>{% trans "Hardware platform" %}:</strong> {{ system_info.hardware_platform }}</p>
 
+{% if openwisp_license %}
+<h2>{% trans "License" %}</h2>
+<pre>{{ openwisp_license }}</pre>
+{% endif %}
+
 <div id="metric-consent">
 {% block metric_collect_consent %}
   {% if metric_collection_installed %}

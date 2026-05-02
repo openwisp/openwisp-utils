@@ -119,7 +119,7 @@ class TestConsent(TestCase):
         self.client.force_login(non_superuser)
         with self.subTest("Test non-superuser makes post request"):
             response = self.client.post(path, {"user_consented": False})
-            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.status_code, 403)
             consent_obj.refresh_from_db()
             self.assertEqual(consent_obj.user_consented, True)
 

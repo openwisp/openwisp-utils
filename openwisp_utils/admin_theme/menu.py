@@ -90,7 +90,8 @@ class ModelLink(BaseMenuItem):
 class MenuLink(BaseMenuItem):
     """Generic Links.
 
-    Creates a link from a custom url Input parameters: label, url, icon.
+    Creates a link from a custom url Input parameters: label, url, icon,
+    permissions.
     """
 
     def __init__(self, config):
@@ -105,6 +106,14 @@ class MenuLink(BaseMenuItem):
             )
         self.url = url
         self.icon = config.get("icon")
+        self.permissions = config.get("permissions", {})
+
+    def create_context(self, request=None):
+        if self.permissions.get("superuser_only") and (
+            request is None or not request.user.is_superuser
+        ):
+            return None
+        return {"label": self.label, "url": self.url, "icon": self.icon}
 
 
 class MenuGroup(BaseMenuItem):

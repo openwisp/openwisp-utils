@@ -61,6 +61,7 @@ class OpenWispAdminThemeConfig(AppConfig):
                 "label": _("System info"),
                 "url": "/admin/openwisp-system-info/",
                 "icon": "ow-info-icon",
+                "permissions": {"superuser_only": True},
             },
         )
 
