@@ -71,7 +71,6 @@ def test_main_flow_user_cancels_version(mock_all):
 def test_main_flow_user_rejects_changelog(mock_all):
     """Tests the flow where the user rejects the generated changelog."""
     mock_all["questionary_confirm"].return_value.ask.side_effect = [
-        True,  # Use AI
         True,  # Use suggested version
         False,  # Reject changelog block
     ]
@@ -85,10 +84,9 @@ def test_bugfix_flow_skip_porting(mock_all):
         ("git", "rev-parse", "--abbrev-ref", "HEAD")
     ].stdout = "1.1.x"
     mock_all["questionary_confirm"].return_value.ask.side_effect = [
-        True,
-        True,
-        True,
-        True,
+        True,  # Use suggested version
+        True,  # Accept changelog block
+        True,  # Finished editing
         False,  # Decline porting
     ]
     run_release()
