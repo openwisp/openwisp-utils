@@ -403,7 +403,7 @@ def main():
         greeting = f"Hello @{pr_author} and @{actor},"
     tag_id = secrets.token_hex(4)
     is_dependabot = pr_author == "dependabot[bot]"
-    retry_mode = os.environ.get("CI_RETRY_MODE", "llm").strip().lower()
+    retry_mode = (os.environ.get("CI_RETRY_MODE") or "llm").strip().lower()
     raw_model = os.environ.get("GEMINI_MODEL", "").strip()
     gemini_model = raw_model if raw_model else "gemini-2.5-flash-lite"
     should_retry = False
