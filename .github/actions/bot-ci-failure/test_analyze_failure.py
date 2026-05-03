@@ -782,7 +782,12 @@ class TestMain(unittest.TestCase):
     @patch("analyze_failure._should_retry_ci")
     @patch.dict(
         os.environ,
-        {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
+        {
+            "GEMINI_API_KEY": "fake_key",
+            "PR_AUTHOR": "test",
+            "COMMIT_SHA": "abc",
+            "CI_RETRY_MODE": "heuristic",
+        },
     )
     def test_transient_failure_creates_marker_file(
         self, mock_retry, mock_repo, mock_logs, mock_genai, mock_print, mock_file
@@ -810,7 +815,12 @@ class TestMain(unittest.TestCase):
     @patch("analyze_failure._should_retry_ci")
     @patch.dict(
         os.environ,
-        {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
+        {
+            "GEMINI_API_KEY": "fake_key",
+            "PR_AUTHOR": "test",
+            "COMMIT_SHA": "abc",
+            "CI_RETRY_MODE": "llm",
+        },
     )
     def test_llm_retry_creates_marker_file(
         self, mock_retry, mock_repo, mock_logs, mock_genai, mock_print, mock_file
