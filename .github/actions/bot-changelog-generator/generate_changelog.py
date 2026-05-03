@@ -427,7 +427,7 @@ def get_changelog_bot_validation_errors(text: str) -> list[str]:
     suspicious_patterns = [
         r"ignore\s+previous\s+instructions",
         r"ignore_[a-z_]*instructions",
-        r"system\s*:",
+        r"\bsystem\s*:",
         r"<script",
         r"javascript:",
         r"IMPORTANT\s*:\s*(?!Treat)",

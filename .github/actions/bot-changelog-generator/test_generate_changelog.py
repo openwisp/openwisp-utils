@@ -576,6 +576,21 @@ class TestValidateChangelogOutput(unittest.TestCase):
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
 
+    @patch("generate_changelog.get_openwisp_commitizen")
+    def test_allows_system_substring_inside_word(self, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=True, errors=[]
+        )
+        mock_get_commitizen.return_value = mock_plugin
+        text = (
+            "[change] Improved ecosystem stability\n\n"
+            "Updates ecosystem: defaults without adding prompt directives."
+        )
+        result = validate_changelog_output(text, "rst")
+        self.assertTrue(result)
+
     def test_rejects_script_injection(self):
         text = (
             "[feature] Added <script>alert('xss')</script>\n\n"
