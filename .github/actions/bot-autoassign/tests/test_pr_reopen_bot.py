@@ -258,9 +258,12 @@ class TestPRActivityBot:
         mock_issue.pull_request = None
         mock_issue.assignees = []
         mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        _attach_assign_simulation(mock_issue)
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.handle_contributor_activity()
         mock_pr.remove_from_labels.assert_called_once_with("stale")
+        mock_issue.add_to_assignees.assert_called_once_with("testuser")
+        mock_pr.create_issue_comment.assert_called_once()
 
     def test_handle_contributor_activity_pr_not_stale(self, bot_env):
         bot = PRActivityBot()

@@ -226,6 +226,7 @@ class TestAutoAssignIssuesFromPR:
     def test_silent_failure_posts_fallback_message(self, bot_env):
         bot = IssueAssignmentBot()
         mock_issue = Mock()
+        mock_issue.state = "open"
         mock_issue.labels = []
         mock_issue.pull_request = None
         mock_issue.assignees = []
