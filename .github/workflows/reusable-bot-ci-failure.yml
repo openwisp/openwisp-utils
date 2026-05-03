@@ -127,6 +127,7 @@ jobs:
           ACTOR: ${{ inputs.actor }}
           COMMIT_SHA: ${{ inputs.head_sha }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          CI_RETRY_MODE: ${{ vars.CI_RETRY_MODE }}
         run: |
           python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 
