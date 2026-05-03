@@ -353,7 +353,13 @@ def _should_retry_ci(client, error_log, model, tag_id):
             file=sys.stderr,
         )
         return False
-    decision = _parse_retry_decision(response.text if response else "")
+    raw_text = response.text if response else ""
+    decision = _parse_retry_decision(raw_text)
+    preview = raw_text.strip().splitlines()[0] if raw_text else "<empty>"
+    print(
+        f"::notice::Retry classifier model={model} output={preview}",
+        file=sys.stderr,
+    )
     if decision is None:
         print(
             "::warning::Retry classifier returned invalid output; defaulting to no retry.",
@@ -409,6 +415,10 @@ def main():
         )
     else:
         should_retry = transient_only
+    print(
+        f"::notice::Retry mode={retry_mode} transient_only={transient_only} should_retry={should_retry}",
+        file=sys.stderr,
+    )
     if should_retry:
         # this file is checked in the github action workflow
         with open("transient_failure", "w") as f:
