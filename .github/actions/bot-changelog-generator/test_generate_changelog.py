@@ -17,6 +17,7 @@ from generate_changelog import (  # noqa: E402
     build_prompt,
     call_gemini,
     detect_changelog_format,
+    get_changelog_validation_errors,
     get_env_or_exit,
     get_linked_issues,
     get_pr_commits,
@@ -357,6 +358,12 @@ class TestBuildPrompt(unittest.TestCase):
         self.assertIn("https://github.com/org/repo/pull/123", user_data_prompt)
         self.assertIn("diff content", user_data_prompt)
         self.assertIn("<user_data>", user_data_prompt)
+        self.assertIn("<repo_commit_message_rules>", user_data_prompt)
+        self.assertIn("openwisp_utils/releaser/commitizen.py", user_data_prompt)
+        self.assertIn(
+            "openwisp_utils/releaser/tests/test_commitizen_rules.py",
+            user_data_prompt,
+        )
 
     def test_includes_commits(self):
         pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
@@ -520,7 +527,14 @@ class TestPostGithubComment(unittest.TestCase):
 class TestValidateChangelogOutput(unittest.TestCase):
     """Tests for validate_changelog_output function."""
 
-    def test_valid_feature_tag_rst(self):
+    @patch("generate_changelog.get_openwisp_commitizen")
+    def test_valid_feature_tag_rst(self, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=True, errors=[]
+        )
+        mock_get_commitizen.return_value = mock_plugin
         text = (
             "[feature] Added new functionality #123\n\n"
             "Adds the new behavior with a user-focused summary.\n\n"
@@ -528,58 +542,10 @@ class TestValidateChangelogOutput(unittest.TestCase):
         )
         result = validate_changelog_output(text, "rst")
         self.assertTrue(result)
-
-    def test_valid_fix_tag_rst(self):
-        text = (
-            "[fix] Fixed a bug #123\n\n"
-            "Restores the previous behavior for affected deployments.\n\n"
-            "Fixes #123"
-        )
-        result = validate_changelog_output(text, "rst")
-        self.assertTrue(result)
-
-    def test_valid_change_tag_rst(self):
-        text = (
-            "[change] Updated component\n\n"
-            "Improves maintainability without changing the public API."
-        )
-        result = validate_changelog_output(text, "rst")
-        self.assertTrue(result)
-
-    def test_valid_feature_tag_md(self):
-        text = (
-            "[feature] Added new functionality #123\n\n"
-            "Introduces the capability in a way maintainers can reuse directly.\n\n"
-            "Related to #123"
-        )
-        result = validate_changelog_output(text, "md")
-        self.assertTrue(result)
-
-    def test_valid_multiline_body(self):
-        text = (
-            "[change] Updated component behavior\n\n"
-            "Explains the first relevant change from the user's perspective.\n"
-            "Adds a second wrapped line with more useful context."
-        )
-        result = validate_changelog_output(text, "md")
-        self.assertTrue(result)
-
-    def test_allows_body_lines_that_look_like_footer_prefixes(self):
-        text = (
-            "[change] Improved redirect URL handling\n\n"
-            "Fixes handling of #fragment values in redirect URLs.\n"
-            "Keeps the behavior stable without using a footer block."
-        )
-        result = validate_changelog_output(text, "rst")
-        self.assertTrue(result)
+        mock_plugin.validate_commit_message.assert_called_once()
 
     def test_invalid_no_tag(self):
         text = "Added new functionality\n\nAdds useful context.\n\nCloses #123"
-        result = validate_changelog_output(text, "rst")
-        self.assertFalse(result)
-
-    def test_invalid_wrong_tag(self):
-        text = "[docs] Updated documentation\n\nAdds useful context."
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
 
@@ -588,17 +554,8 @@ class TestValidateChangelogOutput(unittest.TestCase):
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
 
-    def test_invalid_no_summary_body(self):
-        text = "[feature] Added new functionality #123\n\nCloses #123"
-        result = validate_changelog_output(text, "md")
-        self.assertFalse(result)
-
     def test_invalid_empty_text(self):
         result = validate_changelog_output("", "rst")
-        self.assertFalse(result)
-
-    def test_invalid_too_short(self):
-        result = validate_changelog_output("short", "rst")
         self.assertFalse(result)
 
     def test_rejects_prompt_injection_ignore_instructions(self):
@@ -637,51 +594,6 @@ class TestValidateChangelogOutput(unittest.TestCase):
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
 
-    def test_rejects_rst_issue_link_syntax(self):
-        text = (
-            "[feature] Added new functionality #123\n\n"
-            "Adds useful context.\n\n"
-            "`#123 <https://github.com/org/repo/issues/123>`_\n\n"
-            "Closes #123"
-        )
-        result = validate_changelog_output(text, "rst")
-        self.assertFalse(result)
-
-    def test_rejects_markdown_issue_link_syntax(self):
-        text = (
-            "[feature] Added new functionality #123\n\n"
-            "Adds useful context.\n\n"
-            "[#123](https://github.com/org/repo/issues/123)\n\n"
-            "Closes #123"
-        )
-        result = validate_changelog_output(text, "md")
-        self.assertFalse(result)
-
-    def test_rejects_parenthesized_pr_reference(self):
-        text = (
-            "[feature] Added new functionality #123\n\n"
-            "Adds useful context.\n\n"
-            "(#123)\n\n"
-            "Closes #123"
-        )
-        result = validate_changelog_output(text, "md")
-        self.assertFalse(result)
-
-    def test_rejects_subject_longer_than_limit(self):
-        title = "[feature] " + ("A" * (COMMIT_SUBJECT_LIMIT - len("[feature] ") + 1))
-        text = f"{title}\n\nAdds useful context."
-        result = validate_changelog_output(text, "rst")
-        self.assertFalse(result)
-
-    def test_rejects_mismatched_issue_references(self):
-        text = (
-            "[feature] Added new functionality #123\n\n"
-            "Adds useful context.\n\n"
-            "Closes #456"
-        )
-        result = validate_changelog_output(text, "rst")
-        self.assertFalse(result)
-
     def test_rejects_comment_intro_text(self):
         text = (
             "[feature] Added new functionality\n\n"
@@ -690,6 +602,35 @@ class TestValidateChangelogOutput(unittest.TestCase):
         )
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
+
+    @patch("generate_changelog.get_openwisp_commitizen")
+    def test_returns_commitizen_validation_errors(self, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=False,
+            errors=["Issue mismatch between title and body."],
+        )
+        mock_get_commitizen.return_value = mock_plugin
+
+        errors = get_changelog_validation_errors(
+            "[feature] Added new functionality #123\n\nBody.\n\nCloses #456", "rst"
+        )
+        self.assertEqual(errors, ["Issue mismatch between title and body."])
+
+    @patch("generate_changelog.get_openwisp_commitizen")
+    def test_passes_subject_limit_to_commitizen(self, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=True, errors=[]
+        )
+        mock_get_commitizen.return_value = mock_plugin
+
+        validate_changelog_output("[change] Valid title\n\nUseful body.", "rst")
+
+        call_kwargs = mock_plugin.validate_commit_message.call_args.kwargs
+        self.assertEqual(call_kwargs["max_msg_length"], COMMIT_SUBJECT_LIMIT)
 
 
 if __name__ == "__main__":

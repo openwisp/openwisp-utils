@@ -1,5 +1,5 @@
 name: "OpenWISP Changelog Generator"
-description: "Analyzes a PR and generates a RestructuredText changelog entry suggestion"
+description: "Analyzes a PR and generates a squash-merge commit message suggestion"
 author: "OpenWISP"
 
 inputs:
@@ -26,7 +26,10 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install "openwisp-utils[github_actions] @ https://github.com/openwisp/openwisp-utils/archive/refs/heads/master.tar.gz"
+      run: >
+        pip install
+        "openwisp-utils[github_actions] @ https://github.com/openwisp/openwisp-utils/archive/refs/heads/master.tar.gz"
+        "commitizen>=4.13.0,<5.0.0"
 
     - name: Generate changelog entry
       id: generate
