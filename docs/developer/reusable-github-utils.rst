@@ -382,6 +382,17 @@ enabled. If the permission is not granted (e.g., in repositories that
 haven't updated their caller workflow yet), the auto-retry is skipped
 gracefully and the full analysis is posted instead.
 
+**Retry mode configuration**
+
+The bot supports a configurable retry classifier mode via
+``CI_RETRY_MODE`` (repository or organization variable). Accepted values:
+
+- ``llm`` (default): uses the LLM decision; if the LLM fails, falls back
+  to heuristic transient detection.
+- ``both``: retries when either heuristic or LLM indicates transient; the
+  LLM call is skipped when the heuristic already matched.
+- Any other value (including empty/typo): heuristic-only retry.
+
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
 cross-repository concurrency locks and token limits to prevent PR spam on

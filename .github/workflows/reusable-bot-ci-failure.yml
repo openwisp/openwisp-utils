@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: openwisp/openwisp-utils
-          ref: master
+          ref: refactor/transient-rerun-mechanism
           path: trusted_scripts
 
       - name: Checkout PR Code
@@ -127,6 +127,7 @@ jobs:
           ACTOR: ${{ inputs.actor }}
           COMMIT_SHA: ${{ inputs.head_sha }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          CI_RETRY_MODE: ${{ vars.CI_RETRY_MODE }}
         run: |
           python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 
@@ -148,6 +149,9 @@ jobs:
           RETRY_COUNT=$(gh pr view "$PR_NUM" --repo "$REPO" --json comments \
             --jq '.comments[].body' 2>/dev/null \
             | grep -cF "$MARKER" || echo "0")
+          if ! [[ "$RETRY_COUNT" =~ ^[0-9]+$ ]]; then
+            RETRY_COUNT=0
+          fi
           echo "Previous retries: $RETRY_COUNT"
           if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
             echo "Max retries ($MAX_RETRIES) reached; skipping."
