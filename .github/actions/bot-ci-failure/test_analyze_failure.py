@@ -547,6 +547,9 @@ class TestParseRetryDecision(unittest.TestCase):
     def test_unexpected_output(self):
         self.assertIsNone(_parse_retry_decision("MAYBE"))
 
+    def test_whitespace_only_output(self):
+        self.assertIsNone(_parse_retry_decision("   \n  "))
+
 
 class TestMain(unittest.TestCase):
     """Tests for the main execution block."""
@@ -827,6 +830,7 @@ class TestMain(unittest.TestCase):
     ):
         mock_logs.return_value = ("selenium flake", True, False)
         mock_retry.return_value = True
+        mock_repo.return_value = "Code"
         mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.text = (
@@ -834,6 +838,75 @@ class TestMain(unittest.TestCase):
             "Hello @test,\n"
             "*(Analysis for commit abc)*\n"
             "Here is the fix."
+        )
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        main()
+        mock_file.assert_any_call("transient_failure", "w")
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch("analyze_failure.get_repo_context")
+    @patch("analyze_failure._should_retry_ci")
+    @patch.dict(
+        os.environ,
+        {
+            "GEMINI_API_KEY": "fake_key",
+            "PR_AUTHOR": "test",
+            "COMMIT_SHA": "abc",
+            "CI_RETRY_MODE": "both",
+        },
+    )
+    def test_retry_mode_both_transient_skips_llm(
+        self, mock_retry, mock_repo, mock_logs, mock_genai, mock_print, mock_file
+    ):
+        mock_logs.return_value = ("marionette error", False, True)
+        mock_retry.return_value = False
+        mock_repo.return_value = "Code"
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            "### Transient\n"
+            "Hello @test,\n"
+            "*(Analysis for commit abc)*\n"
+            "Transient."
+        )
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+        main()
+        mock_file.assert_any_call("transient_failure", "w")
+        mock_retry.assert_not_called()
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch("analyze_failure.get_repo_context")
+    @patch("analyze_failure._should_retry_ci")
+    @patch.dict(
+        os.environ,
+        {
+            "GEMINI_API_KEY": "fake_key",
+            "PR_AUTHOR": "test",
+            "COMMIT_SHA": "abc",
+            "CI_RETRY_MODE": "both",
+        },
+    )
+    def test_retry_mode_both_llm_fallback(
+        self, mock_retry, mock_repo, mock_logs, mock_genai, mock_print, mock_file
+    ):
+        mock_logs.return_value = ("selenium flake", True, False)
+        mock_retry.return_value = True
+        mock_repo.return_value = "Code"
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = (
+            "### Test Failed\n"
+            "Hello @test,\n"
+            "*(Analysis for commit abc)*\n"
+            "Fix it."
         )
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client

@@ -301,13 +301,18 @@ def _fix_markdown_rendering(text):
 
 
 def _parse_retry_decision(text):
-    if not text:
+    if not text or not text.strip():
         return None
-    first = text.strip().splitlines()[0].strip().upper()
+    lines = text.strip().splitlines()
+    if not lines:
+        return None
+    first = lines[0].strip().upper()
     if first.startswith("YES"):
         return True
     if first.startswith("NO"):
         return False
+    # Any other output is treated as invalid; caller will fall back to the
+    # heuristic transient_only decision when this returns None.
     return None
 
 
@@ -352,7 +357,7 @@ def _should_retry_ci(client, error_log, model, tag_id):
             f"::warning::Retry classifier failed: {e}",
             file=sys.stderr,
         )
-        return False
+        return None
     raw_text = response.text if response else ""
     decision = _parse_retry_decision(raw_text)
     preview = raw_text.strip().splitlines()[0] if raw_text else "<empty>"
@@ -365,7 +370,7 @@ def _should_retry_ci(client, error_log, model, tag_id):
             "::warning::Retry classifier returned invalid output; defaulting to no retry.",
             file=sys.stderr,
         )
-        return False
+        return None
     return decision
 
 
@@ -408,11 +413,14 @@ def main():
     gemini_model = raw_model if raw_model else "gemini-2.5-flash-lite"
     should_retry = False
     if retry_mode == "llm":
-        should_retry = _should_retry_ci(client, error_log, gemini_model, tag_id)
+        decision = _should_retry_ci(client, error_log, gemini_model, tag_id)
+        should_retry = transient_only if decision is None else decision
     elif retry_mode == "both":
-        should_retry = transient_only or _should_retry_ci(
-            client, error_log, gemini_model, tag_id
-        )
+        if transient_only:
+            should_retry = True
+        else:
+            decision = _should_retry_ci(client, error_log, gemini_model, tag_id)
+            should_retry = bool(decision)
     else:
         should_retry = transient_only
     print(
