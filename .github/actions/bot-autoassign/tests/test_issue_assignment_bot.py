@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest  # noqa: E402
+from github import GithubException  # noqa: E402
 
 try:
     from issue_assignment_bot import IssueAssignmentBot  # noqa: E402
@@ -24,11 +25,14 @@ def bot_env(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
     monkeypatch.setenv("GITHUB_EVENT_NAME", "issue_comment")
+    monkeypatch.setattr("utils.time.sleep", lambda _seconds: None)
     with patch("base.Github") as mock_github_cls:
         mock_repo = Mock()
-        mock_github_cls.return_value.get_repo.return_value = mock_repo
+        mock_github = mock_github_cls.return_value
+        mock_github.get_repo.return_value = mock_repo
         yield {
             "github_cls": mock_github_cls,
+            "github": mock_github,
             "repo": mock_repo,
         }
 
@@ -154,25 +158,199 @@ class TestRespondToAssignment:
         assert not bot.respond_to_assignment_request(123, "testuser")
 
 
+def _make_issue_with_assignment(
+    login="testuser", repo_full_name="openwisp/openwisp-utils"
+):
+    mock_issue = Mock()
+    mock_issue.labels = []
+    mock_issue.title = "Test issue"
+    mock_issue.body = "Test body"
+    mock_issue.pull_request = None
+    mock_issue.state = "open"
+    mock_issue.assignees = []
+    mock_issue.repository.full_name = repo_full_name
+
+    def _assign(user):
+        assignee = Mock()
+        assignee.login = user
+        mock_issue.assignees = [*mock_issue.assignees, assignee]
+
+    mock_issue.add_to_assignees.side_effect = _assign
+    return mock_issue
+
+
+def _make_bot_assign_issue(
+    state="open",
+    pull_request=None,
+    assignees=None,
+    repo_full_name="openwisp/openwisp-utils",
+):
+    mock_issue = Mock()
+    mock_issue.state = state
+    mock_issue.pull_request = pull_request
+    mock_issue.assignees = list(assignees or [])
+    mock_issue.repository.full_name = repo_full_name
+    return mock_issue
+
+
+def _make_search_result(number, body, user_login="contributor"):
+    mock_pr = Mock()
+    mock_pr.number = number
+    mock_pr.user.login = user_login
+    mock_pr.body = body
+    mock_issue = Mock()
+    mock_issue.body = body
+    mock_issue.number = number
+    mock_issue.user.login = user_login
+    mock_issue.as_pull_request.return_value = mock_pr
+    return mock_issue
+
+
 class TestAutoAssignIssuesFromPR:
     def test_success(self, bot_env):
         bot = IssueAssignmentBot()
+        issues_by_number = {
+            123: _make_issue_with_assignment("testuser"),
+            456: _make_issue_with_assignment("testuser"),
+        }
+        bot_env["repo"].get_issue.side_effect = lambda n: issues_by_number[n]
+        assigned = bot.auto_assign_issues_from_pr(
+            100, "testuser", "This PR fixes #123 and closes #456"
+        )
+        assert sorted(assigned) == [123, 456]
+        for issue in issues_by_number.values():
+            issue.add_to_assignees.assert_called_once_with("testuser")
+            issue.create_comment.assert_called_once()
+            assert "automatically assigned" in issue.create_comment.call_args[0][0]
+
+    def test_silent_failure_posts_fallback_message(self, bot_env):
+        bot = IssueAssignmentBot()
         mock_issue = Mock()
+        mock_issue.state = "open"
         mock_issue.labels = []
-        mock_issue.title = "Test issue"
-        mock_issue.body = "Test body"
         mock_issue.pull_request = None
         mock_issue.assignees = []
         mock_issue.repository.full_name = "openwisp/openwisp-utils"
         bot_env["repo"].get_issue.return_value = mock_issue
-        assigned = bot.auto_assign_issues_from_pr(
-            100, "testuser", "This PR fixes #123 and closes #456"
-        )
-        assert len(assigned) == 2
-        assert 123 in assigned
-        assert 456 in assigned
-        assert mock_issue.add_to_assignees.call_count == 2
-        mock_issue.add_to_assignees.assert_any_call("testuser")
+        assigned = bot.auto_assign_issues_from_pr(100, "nonmember", "Fixes #123")
+        assert assigned == []
+        mock_issue.add_to_assignees.assert_called_once_with("nonmember")
+        mock_issue.create_comment.assert_called_once()
+        fallback = mock_issue.create_comment.call_args[0][0]
+        assert "@nonmember" in fallback
+        assert "openwisp-companion assign" in fallback
+        assert "automatically assigned" not in fallback
+
+    def test_verification_error_stays_silent(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        transient = GithubException(500, "transient", headers=None)
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            transient,
+            transient,
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        initial_issue.add_to_assignees.assert_called_once_with("someuser")
+        initial_issue.create_comment.assert_not_called()
+
+    def test_verification_retries_on_transient_lag(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        stale_issue = Mock()
+        stale_issue.assignees = []
+        fresh_assignee = Mock()
+        fresh_assignee.login = "someuser"
+        fresh_issue = Mock()
+        fresh_issue.assignees = [fresh_assignee]
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            stale_issue,
+            fresh_issue,
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == [123]
+        initial_issue.create_comment.assert_called_once()
+        assert "automatically assigned" in initial_issue.create_comment.call_args[0][0]
+
+    def test_skip_closed_issue_in_pr_flow(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = Mock()
+        mock_issue.labels = []
+        mock_issue.pull_request = None
+        mock_issue.state = "closed"
+        mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
+
+    def test_verification_recovers_then_reports_failure(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        stale_issue = Mock()
+        stale_issue.assignees = []
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            GithubException(500, "transient", headers=None),
+            stale_issue,
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        initial_issue.create_comment.assert_called_once()
+        fallback = initial_issue.create_comment.call_args[0][0]
+        assert "openwisp-companion assign" in fallback
+
+    def test_verification_catches_non_github_exception(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            RuntimeError("network dropped"),
+            RuntimeError("network dropped"),
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        initial_issue.create_comment.assert_not_called()
+
+    def test_verification_first_fetch_authoritative(self, bot_env):
+        bot = IssueAssignmentBot()
+        initial_issue = Mock()
+        initial_issue.labels = []
+        initial_issue.pull_request = None
+        initial_issue.assignees = []
+        initial_issue.repository.full_name = "openwisp/openwisp-utils"
+        stale_issue = Mock()
+        stale_issue.assignees = []
+        bot_env["repo"].get_issue.side_effect = [
+            initial_issue,
+            stale_issue,
+            RuntimeError("network dropped"),
+        ]
+        assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
+        assert assigned == []
+        initial_issue.create_comment.assert_called_once()
+        fallback = initial_issue.create_comment.call_args[0][0]
+        assert "openwisp-companion assign" in fallback
 
     def test_skip_already_assigned(self, bot_env):
         bot = IssueAssignmentBot()
@@ -200,11 +378,10 @@ class TestAutoAssignIssuesFromPR:
     def test_rate_limiting(self, bot_env):
         bot = IssueAssignmentBot()
         issue_refs = " ".join([f"fixes #{i}" for i in range(1, 16)])
-        mock_issue = Mock()
-        mock_issue.pull_request = None
-        mock_issue.assignees = []
-        mock_issue.repository.full_name = "openwisp/openwisp-utils"
-        bot_env["repo"].get_issue.return_value = mock_issue
+        issues_by_number = {
+            n: _make_issue_with_assignment("testuser") for n in range(1, 16)
+        }
+        bot_env["repo"].get_issue.side_effect = lambda n: issues_by_number[n]
         assigned = bot.auto_assign_issues_from_pr(
             100, "testuser", issue_refs, max_issues=10
         )
@@ -253,6 +430,19 @@ class TestUnassignIssuesFromPR:
         unassigned = bot.unassign_issues_from_pr("Fixes #123", "testuser")
         assert len(unassigned) == 0
         mock_issue.remove_from_assignees.assert_not_called()
+
+    def test_unassign_matches_case_insensitively(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_assignee = Mock()
+        mock_assignee.login = "TestUser"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.assignees = [mock_assignee]
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        unassigned = bot.unassign_issues_from_pr("Fixes #123", "testuser")
+        assert 123 in unassigned
+        mock_issue.remove_from_assignees.assert_called_once_with("testuser")
 
 
 class TestHandleIssueComment:
@@ -324,10 +514,7 @@ class TestHandlePullRequest:
                 },
             }
         )
-        mock_issue = Mock()
-        mock_issue.pull_request = None
-        mock_issue.assignees = []
-        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.handle_pull_request()
         mock_issue.add_to_assignees.assert_called_once_with("testuser")
@@ -344,10 +531,7 @@ class TestHandlePullRequest:
                 },
             }
         )
-        mock_issue = Mock()
-        mock_issue.pull_request = None
-        mock_issue.assignees = []
-        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.handle_pull_request()
 
@@ -437,10 +621,7 @@ class TestRun:
                 },
             }
         )
-        mock_issue = Mock()
-        mock_issue.pull_request = None
-        mock_issue.assignees = []
-        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.run()
 
@@ -454,3 +635,253 @@ class TestRun:
         bot.github = None
         bot.repo = None
         assert not bot.run()
+
+
+class TestIsBotAssignCommand:
+    @pytest.mark.parametrize(
+        "comment",
+        [
+            "@openwisp-companion assign",
+            "@openwisp-companion assign me",
+            "hey @openwisp-companion assign please",
+            "@OpenWISP-Companion ASSIGN",
+        ],
+    )
+    def test_positive_cases(self, comment, bot_env):
+        bot = IssueAssignmentBot()
+        assert bot.is_bot_assign_command(comment)
+
+    @pytest.mark.parametrize(
+        "comment",
+        [
+            "assign me please",
+            "@openwisp-companion hello",
+            "@someone-else assign",
+            "assign @openwisp-companion",
+            "@openwisp-companion assignee",
+            "@openwisp-companion assigning",
+            "@openwisp-companion assigns",
+            "@openwisp-companion assignment",
+            "",
+            None,
+        ],
+    )
+    def test_negative_cases(self, comment, bot_env):
+        bot = IssueAssignmentBot()
+        assert not bot.is_bot_assign_command(comment)
+
+    def test_respects_custom_bot_username(self, monkeypatch, bot_env):
+        monkeypatch.setenv("BOT_USERNAME", "custom-bot")
+        bot = IssueAssignmentBot()
+        assert bot.is_bot_assign_command("@custom-bot assign")
+        assert not bot.is_bot_assign_command("@openwisp-companion assign")
+
+
+class TestHandleBotAssignRequest:
+    def test_assigns_when_open_pr_exists(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_issue_with_assignment("contributor")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123")
+        ]
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+        mock_issue.create_comment.assert_called_once()
+        comment = mock_issue.create_comment.call_args[0][0]
+        assert "assigned to @contributor" in comment
+        assert "PR #200" in comment
+
+    def test_replies_when_no_open_pr(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_bot_assign_issue()
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = []
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_called_once()
+        comment_text = mock_issue.create_comment.call_args[0][0]
+        assert "could not find an open PR" in comment_text
+
+    def test_stays_silent_when_search_errors(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_bot_assign_issue()
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.side_effect = GithubException(
+            500, "transient", headers=None
+        )
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
+
+    def test_skip_if_already_assigned(self, bot_env):
+        bot = IssueAssignmentBot()
+        existing = Mock()
+        existing.login = "contributor"
+        mock_issue = _make_bot_assign_issue(assignees=[existing])
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
+
+    def test_skip_if_already_assigned_case_insensitive(self, bot_env):
+        bot = IssueAssignmentBot()
+        existing = Mock()
+        existing.login = "Contributor"
+        mock_issue = _make_bot_assign_issue(assignees=[existing])
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+
+    def test_skip_if_issue_closed(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_bot_assign_issue(state="closed")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
+
+    def test_skip_if_cross_repo_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_bot_assign_issue(repo_full_name="other-org/other-repo")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
+
+    def test_matches_pr_author_case_insensitively(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_issue_with_assignment("contributor")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123", user_login="Contributor")
+        ]
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+
+    def test_skip_if_target_is_pr(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_bot_assign_issue(pull_request={"url": "x"})
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_not_called()
+
+    def test_still_silently_rejected(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_bot_assign_issue()
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123")
+        ]
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+        comment_text = mock_issue.create_comment.call_args[0][0]
+        assert "manually" in comment_text
+
+    def test_accepts_related_to_pr_reference(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = _make_issue_with_assignment("contributor")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Related to #123")
+        ]
+        assert bot.handle_bot_assign_request(123, "contributor")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+
+
+class TestHandleIssueCommentBotCommand:
+    def test_bot_command_triggers_assign(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": "@openwisp-companion assign",
+                    "user": {"login": "contributor"},
+                },
+            }
+        )
+        mock_issue = _make_issue_with_assignment("contributor")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123")
+        ]
+        assert bot.handle_issue_comment()
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+
+    def test_ignores_bot_own_comments(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": "@openwisp-companion assign",
+                    "user": {"login": "openwisp-companion[bot]"},
+                },
+            }
+        )
+        assert bot.handle_issue_comment()
+        bot_env["repo"].get_issue.assert_not_called()
+
+    def test_ignores_comments_with_bot_type(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": "@openwisp-companion assign",
+                    "user": {"login": "some-other-bot[bot]", "type": "Bot"},
+                },
+            }
+        )
+        assert bot.handle_issue_comment()
+        bot_env["repo"].get_issue.assert_not_called()
+
+    def test_ignores_comments_from_github_app(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": "@openwisp-companion assign",
+                    "user": {"login": "someuser"},
+                    "performed_via_github_app": {"id": 1},
+                },
+            }
+        )
+        assert bot.handle_issue_comment()
+        bot_env["repo"].get_issue.assert_not_called()
+
+    def test_ignores_edited_comments(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "edited",
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": "@openwisp-companion assign",
+                    "user": {"login": "contributor"},
+                },
+            }
+        )
+        assert bot.handle_issue_comment()
+        bot_env["repo"].get_issue.assert_not_called()
+
+    def test_bot_fallback_message_does_not_self_trigger(self, bot_env):
+        bot = IssueAssignmentBot()
+        fallback = bot._cannot_auto_assign_message("contributor", 200)
+        bot.load_event_payload(
+            {
+                "action": "created",
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": fallback,
+                    "user": {
+                        "login": "openwisp-companion[bot]",
+                        "type": "Bot",
+                    },
+                },
+            }
+        )
+        assert bot.handle_issue_comment()
+        bot_env["repo"].get_issue.assert_not_called()

@@ -2,42 +2,57 @@ import json
 import os
 
 from base import GitHubBot
-from utils import get_valid_linked_issues
+from utils import (
+    extract_linked_issues,
+    get_assignee_logins,
+    get_valid_linked_issues,
+    user_in_logins,
+    verify_assignment,
+)
 
 
 class PRReopenBot(GitHubBot):
     def reassign_issues_to_author(self, pr_number, pr_author, pr_body):
         try:
             reassigned_issues = []
+            linked_issues = extract_linked_issues(pr_body)
             for issue_number, issue in get_valid_linked_issues(
-                self.repo, self.repository_name, pr_body
+                self.repo, self.repository_name, linked_issues
             ):
                 try:
-                    current_assignees = [
-                        assignee.login
-                        for assignee in issue.assignees
-                        if hasattr(assignee, "login")
-                    ]
-                    if current_assignees and pr_author not in current_assignees:
+                    current_assignees = get_assignee_logins(issue)
+                    if current_assignees and not user_in_logins(
+                        pr_author, current_assignees
+                    ):
                         print(
                             f"Issue #{issue_number} is assigned"
                             " to others:"
                             f' {", ".join(current_assignees)}'
                         )
                         continue
-                    if pr_author not in current_assignees:
-                        issue.add_to_assignees(pr_author)
-                        reassigned_issues.append(issue_number)
-                        print(f"Reassigned issue #{issue_number}" f" to {pr_author}")
-                        welcome_message = (
-                            f"Welcome back, @{pr_author}! 🎉"
-                            " This issue has been reassigned"
-                            " to you as you've reopened"
-                            f" PR #{pr_number}."
+                    if user_in_logins(pr_author, current_assignees):
+                        continue
+                    issue.add_to_assignees(pr_author)
+                    if (
+                        verify_assignment(self.repo, issue_number, pr_author)
+                        is not True
+                    ):
+                        print(
+                            f"Reassign of #{issue_number} to {pr_author}"
+                            " was silently rejected or unverifiable."
                         )
-                        issue.create_comment(welcome_message)
+                        continue
+                    reassigned_issues.append(issue_number)
+                    print(f"Reassigned issue #{issue_number} to {pr_author}")
+                    welcome_message = (
+                        f"Welcome back, @{pr_author}! 🎉"
+                        " This issue has been reassigned"
+                        " to you as you've reopened"
+                        f" PR #{pr_number}."
+                    )
+                    issue.create_comment(welcome_message)
                 except Exception as e:
-                    print(f"Error processing issue" f" #{issue_number}: {e}")
+                    print(f"Error processing issue #{issue_number}: {e}")
             return reassigned_issues
         except Exception as e:
             print(f"Error in reassign_issues_to_author: {e}")
@@ -115,7 +130,7 @@ class PRActivityBot(GitHubBot):
                 print("Comment is on an issue," " not a PR, skipping")
                 return True
             pr = self.repo.get_pull(pr_number)
-            if not pr.user or commenter != pr.user.login:
+            if not pr.user or not user_in_logins(commenter, [pr.user.login]):
                 print("Comment not from PR author, skipping")
                 return True
             labels = [label.name for label in pr.get_labels()]
@@ -128,21 +143,27 @@ class PRActivityBot(GitHubBot):
             except Exception as e:
                 print(f"Could not remove stale label: {e}")
             reassigned_count = 0
+            linked_issues = extract_linked_issues(pr.body or "")
             for issue_number, issue in get_valid_linked_issues(
-                self.repo, self.repository_name, pr.body or ""
+                self.repo, self.repository_name, linked_issues
             ):
                 try:
-                    current_assignees = [
-                        assignee.login
-                        for assignee in issue.assignees
-                        if hasattr(assignee, "login")
-                    ]
-                    if not current_assignees:
-                        issue.add_to_assignees(commenter)
-                        reassigned_count += 1
-                        print(f"Reassigned issue #{issue_number}" f" to {commenter}")
+                    if get_assignee_logins(issue):
+                        continue
+                    issue.add_to_assignees(commenter)
+                    if (
+                        verify_assignment(self.repo, issue_number, commenter)
+                        is not True
+                    ):
+                        print(
+                            f"Reassign of #{issue_number} to {commenter}"
+                            " was silently rejected or unverifiable."
+                        )
+                        continue
+                    reassigned_count += 1
+                    print(f"Reassigned issue #{issue_number} to {commenter}")
                 except Exception as e:
-                    print(f"Error reassigning issue" f" #{issue_number}: {e}")
+                    print(f"Error reassigning issue #{issue_number}: {e}")
             if reassigned_count > 0:
                 encouragement_message = (
                     f"Thanks for following up, @{commenter}! 🙌"
