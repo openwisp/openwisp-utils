@@ -78,7 +78,8 @@ OpenWISP repositories. The bot provides the following features:
 These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
 the ``actions/create-github-app-token`` action. The bot itself consumes
 the following environment variables at runtime: ``GITHUB_TOKEN``,
-``REPOSITORY``, and ``GITHUB_EVENT_NAME``.
+``REPOSITORY``, ``GITHUB_EVENT_NAME``, and ``BOT_USERNAME`` (optional;
+defaults to ``openwisp-companion``).
 
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
@@ -138,7 +139,7 @@ Create the following workflow files in your repository.
       issues: write
       pull-requests: read
     concurrency:
-      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
+      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}-${{ github.event.action }}
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
@@ -214,6 +215,26 @@ Create the following workflow files in your repository.
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: stale_pr
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+**Overriding the bot username**
+
+All four caller workflows accept an optional ``bot_username`` input
+(default ``openwisp-companion``). The bot uses it to detect mentions of
+the form ``@<bot_username> assign`` in issue comments and to ignore
+comments authored by the bot itself. Set this if your repository uses a
+different GitHub App username:
+
+.. code-block:: yaml
+
+    jobs:
+      respond-to-assign-request:
+        uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
+        with:
+          bot_command: issue_assignment
+          bot_username: my-custom-bot
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
