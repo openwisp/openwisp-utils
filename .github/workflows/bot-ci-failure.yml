@@ -72,7 +72,7 @@ jobs:
       pull-requests: write
       actions: write
       contents: read
-    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@refactor/transient-rerun-mechanism
+    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
     with:
       pr_number: ${{ needs.find-pr.outputs.pr_number }}
       head_sha: ${{ github.event.workflow_run.head_sha }}
