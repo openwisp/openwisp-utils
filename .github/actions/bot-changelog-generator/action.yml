@@ -28,8 +28,7 @@ runs:
       shell: bash
       run: >
         pip install
-        "openwisp-utils[github_actions] @ https://github.com/openwisp/openwisp-utils/archive/refs/heads/master.tar.gz"
-        "commitizen>=4.13.0,<5.0.0"
+        "openwisp-utils[github_actions, qa] @ https://github.com/openwisp/openwisp-utils/archive/refs/heads/master.tar.gz"
 
     - name: Generate changelog entry
       id: generate

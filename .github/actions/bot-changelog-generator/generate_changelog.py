@@ -435,18 +435,14 @@ def get_changelog_bot_validation_errors(text: str) -> list[str]:
 
     if not any(text.startswith(tag) for tag in required_tags):
         errors.append("Commit message must start with [feature], [fix], or [change].")
-
     if "```" in text:
         errors.append("Commit message must not contain fenced code blocks.")
-
     if CHANGELOG_COMMENT_INTRO.lower() in text.lower():
         errors.append("Commit message must not include the GitHub comment intro text.")
-
     if "\n\n" not in text:
         errors.append("Commit message must include a body after a blank line.")
     elif not text.partition("\n\n")[2].strip():
         errors.append("Commit message body cannot be empty.")
-
     for pattern in suspicious_patterns:
         if re.search(pattern, text, re.IGNORECASE):
             errors.append(f"Commit message matched a blocked safety pattern: {pattern}")
