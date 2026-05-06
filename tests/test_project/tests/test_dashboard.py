@@ -294,3 +294,30 @@ class TestAdminDashboard(AdminTestMixin, CreateMixin, DjangoTestCase):
             context["dashboard_charts"][1]["query_params"]["labels"][0],
             "&lt;strong&gt;Projects with operators&lt;/strong&gt;",
         )
+
+    def test_filter_not_double_encoded(self):
+        project = Project.objects.create(name="Dongwon T&I")
+        Operator.objects.create(project=project, first_name="test", last_name="test")
+        mocked_user = MockUser(is_superuser=True)
+        mocked_request = MockRequest(user=mocked_user)
+        context = get_dashboard_context(mocked_request)
+        target_chart = None
+        for chart in context["dashboard_charts"].values():
+            if chart.get("name") == "Operator Project Distribution":
+                target_chart = chart
+                break
+        self.assertIsNotNone(target_chart)
+        filters = target_chart.get("filters", [])
+        labels = target_chart.get("query_params", {}).get("labels", [])
+        self.assertIn("Dongwon%20T%26I", filters)
+        self.assertNotIn("Dongwon T&I", filters)
+        self.assertIn("Dongwon T&amp;I", labels)
+        filter_index = None
+        for i, label in enumerate(labels):
+            if "Dongwon" in label:
+                filter_index = i
+                break
+        self.assertIsNotNone(filter_index)
+        final_url = target_chart["target_link"] + filters[filter_index]
+        self.assertNotIn("&I", final_url.split("=", 1)[-1])
+        self.assertIn("%26", final_url)

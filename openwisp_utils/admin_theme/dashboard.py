@@ -1,5 +1,6 @@
 import copy
 import html
+from urllib.parse import quote
 
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Count
@@ -209,10 +210,8 @@ def get_dashboard_context(request):
                 label = qs_key
                 # get human readable label if predefined labels are available
                 # otherwise use the result got from the DB
+                filters.append(quote(label, safe=""))
                 if labels_i18n and qs_key in labels_i18n:
-                    # store original label as filter, but only
-                    # if we have more than the empty default label defined
-                    filters.append(label)
                     label = labels_i18n[qs_key]
                 else:
                     # HTML escape labels coming from values in the DB
