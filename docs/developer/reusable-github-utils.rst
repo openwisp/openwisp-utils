@@ -325,7 +325,6 @@ not yet merged, the workflow exits safely without failing.
       push:
         branches:
           - master
-          - main
       issue_comment:
         types: [created]
 
