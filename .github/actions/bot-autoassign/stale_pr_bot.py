@@ -32,11 +32,21 @@ class StalePRBot(GitHubBot):
             return None
         last_activity = None
         for commit in pr.get_commits():
-            commit_date = commit.commit.author.date
-            if commit_date > after_date:
-                if commit.author and commit.author.login == pr_author:
-                    if not last_activity or commit_date > last_activity:
-                        last_activity = commit_date
+            author_date = commit.commit.author.date if commit.commit.author else None
+            committer_date = (
+                commit.commit.committer.date if commit.commit.committer else None
+            )
+            if author_date and committer_date:
+                commit_date = max(author_date, committer_date)
+            else:
+                commit_date = author_date or committer_date
+            if not commit_date or commit_date <= after_date:
+                continue
+            author_login = commit.author.login if commit.author else None
+            committer_login = commit.committer.login if commit.committer else None
+            if author_login == pr_author or committer_login == pr_author:
+                if not last_activity or commit_date > last_activity:
+                    last_activity = commit_date
         if issue_comments is None:
             issue_comments = list(pr.get_issue_comments())
         for comment in issue_comments:
@@ -160,13 +170,25 @@ class StalePRBot(GitHubBot):
         try:
             if all_reviews is None:
                 all_reviews = list(pr.get_reviews())
-            changes_requested_reviews = [
-                r for r in all_reviews if r.state == "CHANGES_REQUESTED"
+            latest_per_reviewer = {}
+            for r in all_reviews:
+                if not r.user or not r.submitted_at:
+                    continue
+                if r.user.type == "Bot":
+                    continue
+                if r.state == "COMMENTED":
+                    continue
+                current = latest_per_reviewer.get(r.user.login)
+                if current is None or r.submitted_at > current.submitted_at:
+                    latest_per_reviewer[r.user.login] = r
+            blocking = [
+                r
+                for r in latest_per_reviewer.values()
+                if r.state == "CHANGES_REQUESTED"
             ]
-            if not changes_requested_reviews:
+            if not blocking:
                 return None
-            changes_requested_reviews.sort(key=lambda r: r.submitted_at, reverse=True)
-            return changes_requested_reviews[0].submitted_at
+            return max(blocking, key=lambda r: r.submitted_at).submitted_at
         except Exception as e:
             print("Error getting reviews" f" for PR #{pr.number}: {e}")
             return None

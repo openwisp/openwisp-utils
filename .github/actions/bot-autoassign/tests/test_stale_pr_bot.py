@@ -77,6 +77,144 @@ class TestGetLastChangesRequested:
         ]
         assert bot.get_last_changes_requested(mock_pr) is None
 
+    def _make_review(self, state, submitted_at, login="alice", user_type="User"):
+        review = Mock()
+        review.state = state
+        review.submitted_at = submitted_at
+        review.user.login = login
+        review.user.type = user_type
+        return review
+
+    def test_bot_changes_requested_ignored(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 2, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_bot_changes_requested_then_bot_approved(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+            self._make_review(
+                "APPROVED",
+                datetime(2024, 1, 2, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_human_changes_requested_then_same_human_approved(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+            ),
+            self._make_review(
+                "APPROVED",
+                datetime(2024, 1, 2, tzinfo=timezone.utc),
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_human_changes_requested_then_dismissed(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+            ),
+            self._make_review(
+                "DISMISSED",
+                datetime(2024, 1, 3, tzinfo=timezone.utc),
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_commented_does_not_supersede_changes_requested(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+            ),
+            self._make_review(
+                "COMMENTED",
+                datetime(2024, 1, 5, tzinfo=timezone.utc),
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) == datetime(
+            2024, 1, 1, tzinfo=timezone.utc
+        )
+
+    def test_bot_review_after_human_block_does_not_dominate(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        human_block = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        mock_pr.get_reviews.return_value = [
+            self._make_review("CHANGES_REQUESTED", human_block, login="alice"),
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 2, 1, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) == human_block
+
+    def test_one_human_blocks_other_approves(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        block_time = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "APPROVED",
+                datetime(2024, 1, 4, tzinfo=timezone.utc),
+                login="alice",
+            ),
+            self._make_review(
+                "CHANGES_REQUESTED",
+                block_time,
+                login="bob",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) == block_time
+
+    def test_review_without_user_skipped(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        bad_review = Mock(
+            state="CHANGES_REQUESTED",
+            submitted_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        )
+        bad_review.user = None
+        mock_pr.get_reviews.return_value = [bad_review]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_review_without_submitted_at_skipped(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        pending = self._make_review("CHANGES_REQUESTED", None)
+        mock_pr.get_reviews.return_value = [pending]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
 
 class TestGetDaysSinceActivity:
     @patch("stale_pr_bot.datetime")
@@ -92,7 +230,9 @@ class TestGetDaysSinceActivity:
         mock_pr.get_reviews.return_value = []
         mock_commit = Mock()
         mock_commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         mock_commit.author.login = "testuser"
+        mock_commit.committer.login = "testuser"
         mock_pr.get_commits.return_value = [mock_commit]
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
         result = bot.get_days_since_activity(mock_pr, last_cr)
@@ -102,6 +242,63 @@ class TestGetDaysSinceActivity:
         bot = StalePRBot()
         mock_pr = Mock()
         assert bot.get_days_since_activity(mock_pr, None) == 0
+
+    @patch("stale_pr_bot.datetime")
+    def test_force_push_uses_committer_date(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2023, 12, 1, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 15, tzinfo=timezone.utc)
+        mock_commit.author.login = "testuser"
+        mock_commit.committer.login = "testuser"
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 5
+
+    @patch("stale_pr_bot.datetime")
+    def test_unlinked_author_falls_back_to_committer(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 1, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.author = None
+        mock_commit.committer.login = "testuser"
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 5
+
+    @patch("stale_pr_bot.datetime")
+    def test_both_unlinked_commit_skipped(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 1, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.author = None
+        mock_commit.committer = None
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 9
 
 
 class TestIsWaitingForMaintainer:
@@ -123,7 +320,9 @@ class TestIsWaitingForMaintainer:
         # Contributor pushed a commit after changes were requested
         commit = Mock()
         commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         commit.author.login = "contributor"
+        commit.committer.login = "contributor"
         pr.get_commits.return_value = [commit]
         assert bot.is_waiting_for_maintainer(pr, last_cr) is True
 
@@ -134,7 +333,9 @@ class TestIsWaitingForMaintainer:
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
         commit = Mock()
         commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         commit.author.login = "contributor"
+        commit.committer.login = "contributor"
         pr.get_commits.return_value = [commit]
         # Maintainer reviewed after contributor's commit
         review = Mock()
@@ -152,7 +353,9 @@ class TestIsWaitingForMaintainer:
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
         commit = Mock()
         commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         commit.author.login = "contributor"
+        commit.committer.login = "contributor"
         pr.get_commits.return_value = [commit]
         comment = Mock()
         comment.user.login = "maintainer"
@@ -176,7 +379,9 @@ class TestIsWaitingForMaintainer:
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
         commit = Mock()
         commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         commit.author.login = "contributor"
+        commit.committer.login = "contributor"
         pr.get_commits.return_value = [commit]
         # Only a bot comment exists after contributor's activity
         bot_comment = Mock()
@@ -194,7 +399,9 @@ class TestIsWaitingForMaintainer:
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
         commit = Mock()
         commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         commit.author.login = "contributor"
+        commit.committer.login = "contributor"
         pr.get_commits.return_value = [commit]
         comment = Mock()
         comment.user.login = "random_user"
@@ -214,14 +421,20 @@ class TestIsWaitingForMaintainer:
         contributor_commit.commit.author.date = datetime(
             2024, 1, 2, tzinfo=timezone.utc
         )
+        contributor_commit.commit.committer.date = datetime(
+            2024, 1, 2, tzinfo=timezone.utc
+        )
         contributor_commit.author.login = "contributor"
+        contributor_commit.committer.login = "contributor"
         # 60 subsequent commits from CI/other (not from contributor)
         base = datetime(2024, 1, 3, tzinfo=timezone.utc)
         other_commits = []
         for i in range(60):
             c = Mock()
             c.commit.author.date = base + timedelta(days=i)
+            c.commit.committer.date = base + timedelta(days=i)
             c.author.login = "ci-bot"
+            c.committer.login = "ci-bot"
             other_commits.append(c)
         pr.get_commits.return_value = [contributor_commit] + other_commits
         assert bot.is_waiting_for_maintainer(pr, last_cr) is True
@@ -369,16 +582,19 @@ class TestProcessStalePrs:
         mock_pr = Mock()
         mock_pr.number = 42
         mock_pr.user.login = "contributor"
-        # Changes requested on Jan 1
-        review = Mock(
-            state="CHANGES_REQUESTED",
-            submitted_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
-        )
+        # Maintainer requested changes on Jan 1
+        review = Mock()
+        review.state = "CHANGES_REQUESTED"
+        review.submitted_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        review.user.login = "maintainer"
+        review.user.type = "User"
         mock_pr.get_reviews.return_value = [review]
         # Contributor pushed on Jan 5
         commit = Mock()
         commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         commit.author.login = "contributor"
+        commit.committer.login = "contributor"
         mock_pr.get_commits.return_value = [commit]
         # No maintainer activity
         mock_pr.get_issue_comments.return_value = []
@@ -386,6 +602,55 @@ class TestProcessStalePrs:
         bot_env["repo"].get_pulls.return_value = [mock_pr]
         bot.process_stale_prs()
         # PR should not be warned, staled, or closed
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_skips_pr_with_only_bot_changes_requested(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.number = 1235
+        mock_pr.user.login = "contributor"
+        bot_review = Mock()
+        bot_review.state = "CHANGES_REQUESTED"
+        bot_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        bot_review.user.login = "coderabbitai[bot]"
+        bot_review.user.type = "Bot"
+        mock_pr.get_reviews.return_value = [bot_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_skips_pr_with_superseded_changes_requested(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.number = 99
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        approve_review = Mock()
+        approve_review.state = "APPROVED"
+        approve_review.submitted_at = datetime(2024, 2, 5, tzinfo=timezone.utc)
+        approve_review.user.login = "maintainer"
+        approve_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review, approve_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
         mock_pr.create_issue_comment.assert_not_called()
         mock_pr.edit.assert_not_called()
 
