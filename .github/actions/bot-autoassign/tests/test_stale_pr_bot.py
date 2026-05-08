@@ -300,6 +300,27 @@ class TestGetDaysSinceActivity:
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
         assert bot.get_days_since_activity(mock_pr, last_cr) == 9
 
+    @patch("stale_pr_bot.datetime")
+    def test_maintainer_rebase_does_not_count_as_author_activity(
+        self, mock_datetime, bot_env
+    ):
+        mock_datetime.now.return_value = datetime(2024, 3, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "contributor"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2023, 12, 1, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 2, 25, tzinfo=timezone.utc)
+        mock_commit.author.login = "contributor"
+        mock_commit.committer.login = "maintainer"
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 60
+
 
 class TestIsWaitingForMaintainer:
     def _make_pr(self, author="contributor"):

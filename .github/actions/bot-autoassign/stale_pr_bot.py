@@ -15,6 +15,25 @@ class StalePRBot(GitHubBot):
         self.DAYS_BEFORE_UNASSIGN = 14
         self.DAYS_BEFORE_CLOSE = 60
 
+    @staticmethod
+    def _commit_activity_date_for_author(commit, pr_author):
+        dates = []
+        if (
+            commit.author
+            and commit.author.login == pr_author
+            and commit.commit.author
+            and commit.commit.author.date
+        ):
+            dates.append(commit.commit.author.date)
+        if (
+            commit.committer
+            and commit.committer.login == pr_author
+            and commit.commit.committer
+            and commit.commit.committer.date
+        ):
+            dates.append(commit.commit.committer.date)
+        return max(dates, default=None)
+
     def _get_last_author_activity(
         self,
         pr,
@@ -32,21 +51,11 @@ class StalePRBot(GitHubBot):
             return None
         last_activity = None
         for commit in pr.get_commits():
-            author_date = commit.commit.author.date if commit.commit.author else None
-            committer_date = (
-                commit.commit.committer.date if commit.commit.committer else None
-            )
-            if author_date and committer_date:
-                commit_date = max(author_date, committer_date)
-            else:
-                commit_date = author_date or committer_date
+            commit_date = self._commit_activity_date_for_author(commit, pr_author)
             if not commit_date or commit_date <= after_date:
                 continue
-            author_login = commit.author.login if commit.author else None
-            committer_login = commit.committer.login if commit.committer else None
-            if author_login == pr_author or committer_login == pr_author:
-                if not last_activity or commit_date > last_activity:
-                    last_activity = commit_date
+            if not last_activity or commit_date > last_activity:
+                last_activity = commit_date
         if issue_comments is None:
             issue_comments = list(pr.get_issue_comments())
         for comment in issue_comments:
@@ -167,28 +176,33 @@ class StalePRBot(GitHubBot):
             return False
 
     def get_last_changes_requested(self, pr, all_reviews=None):
+        """Timestamp of the latest CHANGES_REQUESTED that still represents
+        a human reviewer's current stance, or ``None``.
+        """
         try:
             if all_reviews is None:
                 all_reviews = list(pr.get_reviews())
+            # Bot reviews are advisory; COMMENTED does not change stance.
             latest_per_reviewer = {}
-            for r in all_reviews:
-                if not r.user or not r.submitted_at:
+            for review in all_reviews:
+                if (
+                    not review.user
+                    or not review.submitted_at
+                    or review.user.type == "Bot"
+                    or review.state == "COMMENTED"
+                ):
                     continue
-                if r.user.type == "Bot":
-                    continue
-                if r.state == "COMMENTED":
-                    continue
-                current = latest_per_reviewer.get(r.user.login)
-                if current is None or r.submitted_at > current.submitted_at:
-                    latest_per_reviewer[r.user.login] = r
-            blocking = [
-                r
-                for r in latest_per_reviewer.values()
-                if r.state == "CHANGES_REQUESTED"
-            ]
-            if not blocking:
-                return None
-            return max(blocking, key=lambda r: r.submitted_at).submitted_at
+                current = latest_per_reviewer.get(review.user.login)
+                if current is None or review.submitted_at > current.submitted_at:
+                    latest_per_reviewer[review.user.login] = review
+            return max(
+                (
+                    review.submitted_at
+                    for review in latest_per_reviewer.values()
+                    if review.state == "CHANGES_REQUESTED"
+                ),
+                default=None,
+            )
         except Exception as e:
             print("Error getting reviews" f" for PR #{pr.number}: {e}")
             return None

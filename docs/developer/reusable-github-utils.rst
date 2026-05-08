@@ -73,6 +73,33 @@ OpenWISP repositories. The bot provides the following features:
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
 
+**How Stale PR Detection Works**
+
+The Stale PR job runs daily. For each open PR:
+
+1. **Trigger condition.** The PR is processed only when at least one human
+   reviewer's latest non-COMMENTED review is ``CHANGES_REQUESTED``. Bot
+   reviews and reviews later superseded by ``APPROVED`` or ``DISMISSED``
+   from the same reviewer do not block.
+2. **Inactivity** is the time since the more recent of: the PR author's
+   latest commit, issue comment, review comment, or review after the
+   blocking review; or the blocking review's timestamp if the author has
+   not acted since. For commits the date is taken from whichever identity
+   (author or committer) matches the PR author, so a maintainer rebasing
+   the contributor's commits does not reset the clock.
+3. **Maintainer-court skip.** If a maintainer (``OWNER``, ``MEMBER`` or
+   ``COLLABORATOR``) has commented or reviewed after the contributor's
+   last action, the PR is skipped — the ball is in the maintainer's court.
+4. **Action by days inactive:**
+
+   - **≥ 7 days:** posts a stale-warning comment.
+   - **≥ 14 days:** adds the ``stale`` label and unassigns the contributor
+     from linked issues. Pushing commits or replying revives the PR.
+   - **≥ 60 days:** closes the PR. Linked issues remain unassigned;
+     reopening the PR reassigns them and removes the ``stale`` label.
+
+   Each stage posts at most once per blocking review cycle.
+
 **Secrets**
 
 These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
