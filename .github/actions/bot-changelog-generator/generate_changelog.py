@@ -23,12 +23,15 @@ Environment Variables:
     GEMINI_MODEL: Model to use (default: 'gemini-2.5-flash-lite')
 """
 
+import importlib.util
 import os
 import re
+import runpy
 import secrets
 import subprocess
 import sys
 from html import escape
+from types import ModuleType
 
 from google import genai
 from google.genai import types
@@ -399,10 +402,46 @@ def build_prompt(
 
 
 def get_openwisp_commitizen():
-    """Load the local OpenWISP Commitizen plugin lazily."""
-    from openwisp_utils.releaser.commitizen import OpenWispCommitizen
+    """Load the plugin without triggering Commitizen plugin auto-discovery."""
+    spec = importlib.util.find_spec("openwisp_utils.releaser.commitizen")
+    if spec is None or not spec.origin:
+        raise ImportError("Could not locate openwisp_utils.releaser.commitizen")
 
-    return OpenWispCommitizen(_CommitizenConfig())
+    class _BaseCommitizen:
+        def __init__(self, config):
+            self.config = config
+
+    class _ValidationResult:
+        def __init__(self, is_valid: bool, errors: list[str] | None = None):
+            self.is_valid = is_valid
+            self.errors = errors or []
+
+    fake_commitizen = ModuleType("commitizen")
+    fake_commitizen_cz = ModuleType("commitizen.cz")
+    fake_commitizen_base = ModuleType("commitizen.cz.base")
+    fake_commitizen_base.BaseCommitizen = _BaseCommitizen
+    fake_commitizen_base.ValidationResult = _ValidationResult
+    fake_commitizen.cz = fake_commitizen_cz
+    fake_commitizen_cz.base = fake_commitizen_base
+
+    previous_modules = {
+        name: sys.modules.get(name)
+        for name in ("commitizen", "commitizen.cz", "commitizen.cz.base")
+    }
+
+    try:
+        sys.modules["commitizen"] = fake_commitizen
+        sys.modules["commitizen.cz"] = fake_commitizen_cz
+        sys.modules["commitizen.cz.base"] = fake_commitizen_base
+        plugin_class = runpy.run_path(spec.origin)["OpenWispCommitizen"]
+    finally:
+        for name, previous in previous_modules.items():
+            if previous is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = previous
+
+    return plugin_class(_CommitizenConfig())
 
 
 def get_commit_message_validation_errors(text: str) -> list[str]:

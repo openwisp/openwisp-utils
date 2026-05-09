@@ -20,6 +20,7 @@ from generate_changelog import (  # noqa: E402
     get_changelog_validation_errors,
     get_env_or_exit,
     get_linked_issues,
+    get_openwisp_commitizen,
     get_pr_commits,
     get_pr_details,
     get_pr_diff,
@@ -526,6 +527,24 @@ class TestPostGithubComment(unittest.TestCase):
 
 class TestValidateChangelogOutput(unittest.TestCase):
     """Tests for validate_changelog_output function."""
+
+    def test_loads_commitizen_plugin_without_circular_import(self):
+        plugin = get_openwisp_commitizen()
+        self.assertEqual(plugin.__class__.__name__, "OpenWispCommitizen")
+
+        result = plugin.validate_commit_message(
+            commit_msg=(
+                "[feature] Added new functionality #123\n\n"
+                "Adds the new behavior with a user-focused summary.\n\n"
+                "Closes #123"
+            ),
+            pattern=MagicMock(),
+            allow_abort=False,
+            allowed_prefixes=[],
+            max_msg_length=COMMIT_SUBJECT_LIMIT,
+            commit_hash="TEST",
+        )
+        self.assertTrue(result.is_valid)
 
     @patch("generate_changelog.get_openwisp_commitizen")
     def test_valid_feature_tag_rst(self, mock_get_commitizen):
