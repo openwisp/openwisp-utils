@@ -209,6 +209,12 @@ class StalePRBot(GitHubBot):
             return 0
 
     def close_stale_pr(self, pr, days_inactive):
+        # TEMPORARY: auto-close disabled. The stale-detection heuristic
+        # has been closing PRs that are merely blocked by bot reviews
+        # (or by reviews the same reviewer later approved). The proper
+        # fix lives in PR #668; until it lands, no PR is auto-closed.
+        print(f"Auto-close currently disabled, skipping PR #{pr.number}")
+        return False
         if pr.state == "closed":
             print(f"PR #{pr.number} is already closed, skipping")
             return True
