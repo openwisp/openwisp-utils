@@ -69,7 +69,8 @@ OpenWISP repositories. The bot provides the following features:
   assigned, the bot responds with contributing guidelines explaining that
   no assignment is needed — just open a PR.
 - **Stale PR management**: Warns PR authors after 7 days of inactivity,
-  marks stale and unassigns after 14 days, and closes after 60 days.
+  marks stale and unassigns after 14 days, and posts a final follow-up
+  encouragement after 60 days. The bot does not auto-close PRs.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
 
@@ -92,11 +93,13 @@ The Stale PR job runs daily. For each open PR:
    last action, the PR is skipped — the ball is in the maintainer's court.
 4. **Action by days inactive:**
 
-   - **≥ 7 days:** posts a stale-warning comment.
+   - **7–13 days:** posts a stale-warning comment.
    - **≥ 14 days:** adds the ``stale`` label and unassigns the contributor
-     from linked issues. Pushing commits or replying revives the PR.
-   - **≥ 60 days:** closes the PR. Linked issues remain unassigned;
-     reopening the PR reassigns them and removes the ``stale`` label.
+     from linked issues. An author comment on the PR clears the label and
+     reassigns the issues; a push alone only resets the inactivity timer.
+   - **≥ 60 days:** posts a final follow-up comment asking whether the
+     contributor is still working on it. The PR is not auto-closed;
+     maintainers may close manually if needed.
 
    Each stage posts at most once per blocking review cycle.
 

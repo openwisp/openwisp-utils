@@ -13,7 +13,7 @@ class StalePRBot(GitHubBot):
         super().__init__()
         self.DAYS_BEFORE_STALE_WARNING = 7
         self.DAYS_BEFORE_UNASSIGN = 14
-        self.DAYS_BEFORE_CLOSE = 60
+        self.DAYS_BEFORE_FINAL_FOLLOWUP = 60
 
     @staticmethod
     def _commit_activity_date_for_author(commit, pr_author):
@@ -244,75 +244,31 @@ class StalePRBot(GitHubBot):
             print(f"Error processing linked issues for PR #{pr.number}: {e}")
             return 0
 
-    def close_stale_pr(self, pr, days_inactive):
-        # TEMPORARY: auto-close disabled. The stale-detection heuristic
-        # has been closing PRs that are merely blocked by bot reviews
-        # (or by reviews the same reviewer later approved). The proper
-        # fix lives in PR #668; until it lands, no PR is auto-closed.
-        print(f"Auto-close currently disabled, skipping PR #{pr.number}")
-        return False
-        if pr.state == "closed":
-            print(f"PR #{pr.number} is already closed, skipping")
-            return True
+    def send_final_followup(self, pr, days_inactive):
         try:
             pr_author = pr.user.login if pr.user else None
             if not pr_author:
                 return False
-            close_lines = [
-                "<!-- bot:closed -->",
-                f"Hi @{pr_author} 👋,",
+            followup_lines = [
+                "<!-- bot:final_followup -->",
+                f"Hi @{pr_author},",
                 "",
                 (
-                    "This pull request has been automatically"
-                    " closed due to"
-                    f" **{days_inactive} days of inactivity**."
-                    " After changes were requested,"
-                    " the PR remained inactive."
+                    f"This PR has been inactive for **{days_inactive} days**"
+                    " since changes were requested. Are you still working on it?"
                 ),
                 "",
                 (
-                    "We understand that life gets busy,"
-                    " and we appreciate your initial"
-                    " contribution! 💙"
+                    "If yes, push new commits or reply to let us know."
+                    " If you've moved on, please close the PR or comment"
+                    " so another contributor can pick it up."
                 ),
-                "",
-                ("**The door is always open**" " for you to come back:"),
-                (
-                    "- You can **reopen this PR** at any time"
-                    " if you'd like to continue working on it"
-                ),
-                ("- Feel free to push new commits" " addressing the requested changes"),
-                (
-                    "- If you reopen the PR, the linked issue"
-                    " will be reassigned to you"
-                ),
-                "",
-                (
-                    "If you have any questions or need help,"
-                    " don't hesitate to reach out."
-                    " We're here to support you!"
-                ),
-                "",
-                ("Thank you for your interest in" " contributing to OpenWISP! 🙏"),
             ]
-            try:
-                pr.create_issue_comment("\n".join(close_lines))
-            except Exception as comment_error:
-                print(
-                    f"Warning: Could not post closing comment"
-                    f" on PR #{pr.number}: {comment_error}"
-                )
-            finally:
-                pr.edit(state="closed")
-            unassigned_count = self.unassign_linked_issues(pr)
-            print(
-                f"Closed PR #{pr.number} after"
-                f" {days_inactive} days of inactivity,"
-                f" unassigned {unassigned_count} issues"
-            )
+            pr.create_issue_comment("\n".join(followup_lines))
+            print(f"Sent final follow-up for PR #{pr.number}")
             return True
         except Exception as e:
-            print(f"Error closing PR #{pr.number}: {e}")
+            print(f"Error sending final follow-up for PR #{pr.number}: {e}")
             return False
 
     def mark_pr_stale(self, pr, days_inactive):
@@ -352,14 +308,6 @@ class StalePRBot(GitHubBot):
                     " about the requested changes, please"
                     " let us know."
                     " We're happy to help! 🤝"
-                ),
-                "",
-                (
-                    "If there's no further activity within"
-                    f" **{self.DAYS_BEFORE_CLOSE - days_inactive}"
-                    " more days**, this PR will be"
-                    " automatically closed"
-                    " (but can be reopened anytime)."
                 ),
             ]
             pr.create_issue_comment("\n".join(unassign_lines))
@@ -469,27 +417,40 @@ class StalePRBot(GitHubBot):
                             " maintainer review, skipping"
                         )
                         continue
-                    if days_inactive >= self.DAYS_BEFORE_CLOSE:
-                        if self.close_stale_pr(pr, days_inactive):
-                            processed_count += 1
-                    elif days_inactive >= self.DAYS_BEFORE_UNASSIGN:
-                        if not self.has_bot_comment(
-                            pr,
-                            "stale",
-                            after_date=last_changes_requested,
-                            issue_comments=issue_comments,
-                        ):
-                            if self.mark_pr_stale(pr, days_inactive):
-                                processed_count += 1
-                    elif days_inactive >= self.DAYS_BEFORE_STALE_WARNING:
-                        if not self.has_bot_comment(
-                            pr,
+                    stages = (
+                        (
+                            self.DAYS_BEFORE_STALE_WARNING,
+                            self.DAYS_BEFORE_UNASSIGN,
                             "stale_warning",
+                            self.send_stale_warning,
+                        ),
+                        (
+                            self.DAYS_BEFORE_UNASSIGN,
+                            None,
+                            "stale",
+                            self.mark_pr_stale,
+                        ),
+                        (
+                            self.DAYS_BEFORE_FINAL_FOLLOWUP,
+                            None,
+                            "final_followup",
+                            self.send_final_followup,
+                        ),
+                    )
+                    for low, high, marker, action in stages:
+                        if days_inactive < low:
+                            continue
+                        if high is not None and days_inactive >= high:
+                            continue
+                        if self.has_bot_comment(
+                            pr,
+                            marker,
                             after_date=last_changes_requested,
                             issue_comments=issue_comments,
                         ):
-                            if self.send_stale_warning(pr, days_inactive):
-                                processed_count += 1
+                            continue
+                        if action(pr, days_inactive):
+                            processed_count += 1
                 except Exception as e:
                     print(f"Error processing" f" PR #{pr.number}: {e}")
                     continue

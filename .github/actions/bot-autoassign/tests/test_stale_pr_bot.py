@@ -43,7 +43,7 @@ class TestInit:
         bot = StalePRBot()
         assert bot.DAYS_BEFORE_STALE_WARNING == 7
         assert bot.DAYS_BEFORE_UNASSIGN == 14
-        assert bot.DAYS_BEFORE_CLOSE == 60
+        assert bot.DAYS_BEFORE_FINAL_FOLLOWUP == 60
 
 
 class TestGetLastChangesRequested:
@@ -563,34 +563,15 @@ class TestMarkPRStale:
         mock_issue.remove_from_assignees.assert_called_once_with("testuser")
 
 
-@pytest.mark.skip(reason="Auto-close temporarily disabled; see close_stale_pr stub.")
-class TestCloseStalePR:
+class TestSendFinalFollowup:
     def test_success(self, bot_env):
         bot = StalePRBot()
         mock_pr = Mock()
-        mock_pr.body = "Fixes #123"
         mock_pr.user.login = "testuser"
-        mock_pr.state = "open"
-        mock_assignee = Mock()
-        mock_assignee.login = "testuser"
-        mock_issue = Mock()
-        mock_issue.pull_request = None
-        mock_issue.assignees = [mock_assignee]
-        mock_issue.repository.full_name = "openwisp/openwisp-utils"
-        bot_env["repo"].get_issue.return_value = mock_issue
-        assert bot.close_stale_pr(mock_pr, 60)
+        assert bot.send_final_followup(mock_pr, 60)
         mock_pr.create_issue_comment.assert_called_once()
         comment = mock_pr.create_issue_comment.call_args[0][0]
-        assert "<!-- bot:closed -->" in comment
-        mock_pr.edit.assert_called_once_with(state="closed")
-        mock_issue.remove_from_assignees.assert_called_once_with("testuser")
-
-    def test_already_closed(self, bot_env):
-        bot = StalePRBot()
-        mock_pr = Mock()
-        mock_pr.state = "closed"
-        assert bot.close_stale_pr(mock_pr, 60)
-        mock_pr.create_issue_comment.assert_not_called()
+        assert "<!-- bot:final_followup -->" in comment
         mock_pr.edit.assert_not_called()
 
 
@@ -673,6 +654,36 @@ class TestProcessStalePrs:
         bot_env["repo"].get_pulls.return_value = [mock_pr]
         bot.process_stale_prs()
         mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_pr_first_processed_past_60_days_marks_stale_and_followup(
+        self, mock_datetime, bot_env
+    ):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = ""
+        mock_pr.number = 7
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_labels.return_value = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        bodies = [c[0][0] for c in mock_pr.create_issue_comment.call_args_list]
+        assert any("<!-- bot:stale -->" in b for b in bodies)
+        assert any("<!-- bot:final_followup -->" in b for b in bodies)
+        assert not any("<!-- bot:stale_warning -->" in b for b in bodies)
+        mock_pr.add_to_labels.assert_called_once_with("stale")
         mock_pr.edit.assert_not_called()
 
 
