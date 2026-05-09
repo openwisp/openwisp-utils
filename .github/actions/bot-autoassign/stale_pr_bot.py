@@ -1,8 +1,13 @@
+import os
 import time
 from datetime import datetime, timezone
 
 from base import GitHubBot
-from utils import unassign_linked_issues_helper
+from utils import (
+    extract_linked_issues,
+    get_valid_linked_issues,
+    unassign_linked_issues_helper,
+)
 
 # GitHub author_association values that represent project maintainers.
 MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
@@ -14,6 +19,7 @@ class StalePRBot(GitHubBot):
         self.DAYS_BEFORE_STALE_WARNING = 7
         self.DAYS_BEFORE_UNASSIGN = 14
         self.DAYS_BEFORE_FINAL_FOLLOWUP = 60
+        self.bot_login = os.environ.get("BOT_USERNAME", "openwisp-companion") + "[bot]"
 
     @staticmethod
     def _commit_activity_date_for_author(commit, pr_author):
@@ -38,6 +44,7 @@ class StalePRBot(GitHubBot):
         self,
         pr,
         after_date,
+        commits=None,
         issue_comments=None,
         all_reviews=None,
         review_comments=None,
@@ -50,7 +57,9 @@ class StalePRBot(GitHubBot):
         if not pr_author:
             return None
         last_activity = None
-        for commit in pr.get_commits():
+        if commits is None:
+            commits = pr.get_commits()
+        for commit in commits:
             commit_date = self._commit_activity_date_for_author(commit, pr_author)
             if not commit_date or commit_date <= after_date:
                 continue
@@ -86,6 +95,7 @@ class StalePRBot(GitHubBot):
         self,
         pr,
         last_changes_requested,
+        commits=None,
         issue_comments=None,
         all_reviews=None,
         review_comments=None,
@@ -96,6 +106,7 @@ class StalePRBot(GitHubBot):
             last_author_activity = self._get_last_author_activity(
                 pr,
                 last_changes_requested,
+                commits,
                 issue_comments,
                 all_reviews,
                 review_comments,
@@ -104,60 +115,35 @@ class StalePRBot(GitHubBot):
             now = datetime.now(timezone.utc)
             return (now - reference_date).days
         except Exception as e:
-            print("Error calculating activity" f" for PR #{pr.number}: {e}")
+            print(f"Error calculating activity for PR #{pr.number}: {e}")
             return 0
 
     def is_waiting_for_maintainer(
         self,
         pr,
         last_changes_requested,
+        commits=None,
         issue_comments=None,
         all_reviews=None,
         review_comments=None,
     ):
-        """Return True when the contributor has responded but no maintainer has acted since.
-
-        The bot should not warn, mark stale, or close a PR when the ball
-        is in the maintainers' court.
+        """True when the contributor has responded but no maintainer review
+        has followed. Comments don't count; errors fail closed (skip).
         """
         try:
             pr_author = pr.user.login if pr.user else None
             if not pr_author:
-                return False
+                return True
             last_author_activity = self._get_last_author_activity(
                 pr,
                 last_changes_requested,
+                commits,
                 issue_comments,
                 all_reviews,
                 review_comments,
             )
             if not last_author_activity:
                 return False
-            # Check for maintainer activity after the contributor's last action.
-            # Only OWNER / MEMBER / COLLABORATOR responses count; random
-            # community comments and bot messages do not.
-            if issue_comments is None:
-                issue_comments = list(pr.get_issue_comments())
-            for comment in issue_comments:
-                if (
-                    comment.user
-                    and comment.user.login != pr_author
-                    and comment.user.type != "Bot"
-                    and getattr(comment, "author_association", None) in MAINTAINER_ROLES
-                    and comment.created_at > last_author_activity
-                ):
-                    return False
-            if review_comments is None:
-                review_comments = list(pr.get_review_comments())
-            for comment in review_comments:
-                if (
-                    comment.user
-                    and comment.user.login != pr_author
-                    and comment.user.type != "Bot"
-                    and getattr(comment, "author_association", None) in MAINTAINER_ROLES
-                    and comment.created_at > last_author_activity
-                ):
-                    return False
             if all_reviews is None:
                 all_reviews = list(pr.get_reviews())
             for review in all_reviews:
@@ -172,8 +158,8 @@ class StalePRBot(GitHubBot):
                     return False
             return True
         except Exception as e:
-            print("Error checking maintainer activity" f" for PR #{pr.number}: {e}")
-            return False
+            print(f"Error checking maintainer activity for PR #{pr.number}: {e}")
+            return True
 
     def get_last_changes_requested(self, pr, all_reviews=None):
         """Timestamp of the latest CHANGES_REQUESTED that still represents
@@ -204,14 +190,12 @@ class StalePRBot(GitHubBot):
                 default=None,
             )
         except Exception as e:
-            print("Error getting reviews" f" for PR #{pr.number}: {e}")
+            print(f"Error getting reviews for PR #{pr.number}: {e}")
             return None
 
     def has_bot_comment(self, pr, comment_type, after_date=None, issue_comments=None):
-        """Check if PR already has a specific type of bot comment.
-
-        Uses HTML markers. If ``after_date`` is provided,
-        only considers comments posted after that date.
+        """Check if this bot has already posted a comment with the given
+        marker. If ``after_date`` is set, only later comments count.
         """
         try:
             if issue_comments is None:
@@ -220,7 +204,7 @@ class StalePRBot(GitHubBot):
             for comment in issue_comments:
                 if (
                     comment.user
-                    and comment.user.type == "Bot"
+                    and comment.user.login == self.bot_login
                     and marker in comment.body
                 ):
                     if after_date and comment.created_at <= after_date:
@@ -228,21 +212,45 @@ class StalePRBot(GitHubBot):
                     return True
             return False
         except Exception as e:
-            print("Error checking bot comments" f" for PR #{pr.number}: {e}")
+            print(f"Error checking bot comments for PR #{pr.number}: {e}")
             return False
 
     def unassign_linked_issues(self, pr):
-        try:
-            pr_author = pr.user.login if pr.user else None
-            if not pr_author:
-                return False
-            unassigned_issues = unassign_linked_issues_helper(
+        pr_author = pr.user.login if pr.user else None
+        if not pr_author:
+            return 0
+        return len(
+            unassign_linked_issues_helper(
                 self.repo, self.repository_name, pr.body or "", pr_author
             )
-            return len(unassigned_issues)
+        )
+
+    def _clear_stale_label(self, pr):
+        try:
+            if "stale" not in {label.name for label in pr.get_labels()}:
+                return False
+            pr.remove_from_labels("stale")
+            return True
         except Exception as e:
-            print(f"Error processing linked issues for PR #{pr.number}: {e}")
-            return 0
+            print(f"Could not clear stale label from PR #{pr.number}: {e}")
+            return False
+
+    def _reassign_unassigned_linked_issues(self, pr):
+        pr_author = pr.user.login if pr.user else None
+        if not pr_author:
+            return
+        try:
+            linked = extract_linked_issues(pr.body or "")
+            for _, issue in get_valid_linked_issues(
+                self.repo, self.repository_name, linked
+            ):
+                try:
+                    if not issue.assignees:
+                        issue.add_to_assignees(pr_author)
+                except Exception as e:
+                    print(f"Error reassigning issue #{issue.number}: {e}")
+        except Exception as e:
+            print(f"Error iterating linked issues for PR #{pr.number}: {e}")
 
     def send_final_followup(self, pr, days_inactive):
         try:
@@ -251,7 +259,7 @@ class StalePRBot(GitHubBot):
                 return False
             followup_lines = [
                 "<!-- bot:final_followup -->",
-                f"Hi @{pr_author},",
+                f"Hi @{pr_author} 👋,",
                 "",
                 (
                     f"This PR has been inactive for **{days_inactive} days**"
@@ -310,20 +318,19 @@ class StalePRBot(GitHubBot):
                     " We're happy to help! 🤝"
                 ),
             ]
-            pr.create_issue_comment("\n".join(unassign_lines))
             unassigned_count = self.unassign_linked_issues(pr)
+            pr.create_issue_comment("\n".join(unassign_lines))
             try:
                 pr.add_to_labels("stale")
             except Exception as e:
                 print(f"Could not add stale label: {e}")
             print(
-                f"Marked PR #{pr.number} as stale after"
-                f" {days_inactive} days,"
+                f"Marked PR #{pr.number} as stale after {days_inactive} days,"
                 f" unassigned {unassigned_count} issues"
             )
             return True
         except Exception as e:
-            print(f"Error marking PR #{pr.number}" f" as stale: {e}")
+            print(f"Error marking PR #{pr.number} as stale: {e}")
             return False
 
     def send_stale_warning(self, pr, days_inactive):
@@ -372,7 +379,7 @@ class StalePRBot(GitHubBot):
             print(f"Sent stale warning for PR #{pr.number}")
             return True
         except Exception as e:
-            print("Error sending warning" f" for PR #{pr.number}: {e}")
+            print(f"Error sending warning for PR #{pr.number}: {e}")
             return False
 
     def process_stale_prs(self):
@@ -394,27 +401,34 @@ class StalePRBot(GitHubBot):
                         continue
                     issue_comments = list(pr.get_issue_comments())
                     review_comments = list(pr.get_review_comments())
+                    commits = list(pr.get_commits())
                     days_inactive = self.get_days_since_activity(
                         pr,
                         last_changes_requested,
+                        commits,
                         issue_comments,
                         all_reviews,
                         review_comments,
                     )
                     print(
-                        f"PR #{pr.number}: {days_inactive}"
-                        " days since contributor activity"
+                        f"PR #{pr.number}: {days_inactive} days since"
+                        " contributor activity"
                     )
                     if self.is_waiting_for_maintainer(
                         pr,
                         last_changes_requested,
+                        commits,
                         issue_comments,
                         all_reviews,
                         review_comments,
                     ):
+                        # If we previously marked the PR stale, unwind
+                        # that state now that the contributor has acted.
+                        if self._clear_stale_label(pr):
+                            self._reassign_unassigned_linked_issues(pr)
                         print(
-                            f"PR #{pr.number}: waiting for"
-                            " maintainer review, skipping"
+                            f"PR #{pr.number}: waiting for maintainer review,"
+                            " skipping"
                         )
                         continue
                     stages = (
@@ -437,6 +451,7 @@ class StalePRBot(GitHubBot):
                             self.send_final_followup,
                         ),
                     )
+                    posted_stale_this_run = False
                     for low, high, marker, action in stages:
                         if days_inactive < low:
                             continue
@@ -449,17 +464,19 @@ class StalePRBot(GitHubBot):
                             issue_comments=issue_comments,
                         ):
                             continue
+                        # Don't post final-followup in the same run as stale.
+                        if marker == "final_followup" and posted_stale_this_run:
+                            continue
                         if action(pr, days_inactive):
                             processed_count += 1
+                            if marker == "stale":
+                                posted_stale_this_run = True
                 except Exception as e:
-                    print(f"Error processing" f" PR #{pr.number}: {e}")
+                    print(f"Error processing PR #{pr.number}: {e}")
                     continue
                 finally:
                     time.sleep(0.5)
-            print(
-                f"Checked {pr_count} open PRs,"
-                f" processed {processed_count} stale PRs"
-            )
+            print(f"Checked {pr_count} open PRs, processed {processed_count} stale PRs")
             return True
         except Exception as e:
             print(f"Error in process_stale_prs: {e}")
@@ -467,7 +484,7 @@ class StalePRBot(GitHubBot):
 
     def run(self):
         if not self.github or not self.repo:
-            print("GitHub client not properly initialized," " cannot proceed")
+            print("GitHub client not properly initialized, cannot proceed")
             return False
         print("Stale PR Management Bot starting...")
         try:

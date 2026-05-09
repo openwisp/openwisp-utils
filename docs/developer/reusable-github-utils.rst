@@ -88,9 +88,10 @@ The Stale PR job runs daily. For each open PR:
    not acted since. For commits the date is taken from whichever identity
    (author or committer) matches the PR author, so a maintainer rebasing
    the contributor's commits does not reset the clock.
-3. **Maintainer-court skip.** If a maintainer (``OWNER``, ``MEMBER`` or
-   ``COLLABORATOR``) has commented or reviewed after the contributor's
-   last action, the PR is skipped — the ball is in the maintainer's court.
+3. **Maintainer-court skip.** If the contributor has responded but no
+   maintainer (``OWNER``, ``MEMBER`` or ``COLLABORATOR``) has submitted a
+   review since, the PR is skipped — the ball is in the maintainer's
+   court. Comments are not reviews.
 4. **Action by days inactive:**
 
    - **7–13 days:** posts a stale-warning comment.

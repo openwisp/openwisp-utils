@@ -367,8 +367,8 @@ class TestIsWaitingForMaintainer:
         pr.get_reviews.return_value = [review]
         assert bot.is_waiting_for_maintainer(pr, last_cr) is False
 
-    def test_contributor_responded_maintainer_commented(self, bot_env):
-        """Contributor pushed, then maintainer left an issue comment."""
+    def test_maintainer_comment_does_not_count_as_review(self, bot_env):
+        """A maintainer comment is not a review; the PR is still waiting."""
         bot = StalePRBot()
         pr = self._make_pr()
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
@@ -384,7 +384,7 @@ class TestIsWaitingForMaintainer:
         comment.author_association = "COLLABORATOR"
         comment.created_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
         pr.get_issue_comments.return_value = [comment]
-        assert bot.is_waiting_for_maintainer(pr, last_cr) is False
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
 
     def test_contributor_never_responded(self, bot_env):
         """No contributor activity after changes requested → not waiting."""
@@ -460,6 +460,13 @@ class TestIsWaitingForMaintainer:
         pr.get_commits.return_value = [contributor_commit] + other_commits
         assert bot.is_waiting_for_maintainer(pr, last_cr) is True
 
+    def test_fails_closed_on_exception(self, bot_env):
+        bot = StalePRBot()
+        pr = self._make_pr()
+        pr.get_commits.side_effect = RuntimeError("transient API error")
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
 
 class TestUnassignLinkedIssues:
     def test_success(self, bot_env):
@@ -497,23 +504,31 @@ class TestHasBotComment:
         bot = StalePRBot()
         mock_pr = Mock()
         mock_comment = Mock()
-        mock_comment.user.type = "Bot"
+        mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:stale --> This is a stale warning"
         mock_comment.created_at = datetime(2024, 1, 10, tzinfo=timezone.utc)
         mock_pr.get_issue_comments.return_value = [mock_comment]
         assert bot.has_bot_comment(mock_pr, "stale")
         assert not bot.has_bot_comment(mock_pr, "closed")
 
-    def test_ignores_old_marker_before_after_date(self, bot_env):
-        """Old markers from a previous cycle should be ignored."""
+    def test_ignores_marker_from_other_bot(self, bot_env):
         bot = StalePRBot()
         mock_pr = Mock()
         mock_comment = Mock()
-        mock_comment.user.type = "Bot"
+        mock_comment.user.login = "some-other-bot[bot]"
+        mock_comment.body = "<!-- bot:stale --> quoted from elsewhere"
+        mock_comment.created_at = datetime(2024, 1, 10, tzinfo=timezone.utc)
+        mock_pr.get_issue_comments.return_value = [mock_comment]
+        assert not bot.has_bot_comment(mock_pr, "stale")
+
+    def test_ignores_old_marker_before_after_date(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_comment = Mock()
+        mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:stale_warning --> old warning"
         mock_comment.created_at = datetime(2024, 1, 5, tzinfo=timezone.utc)
         mock_pr.get_issue_comments.return_value = [mock_comment]
-        # The marker is from Jan 5 but changes re-requested Jan 8
         after_date = datetime(2024, 1, 8, tzinfo=timezone.utc)
         assert not bot.has_bot_comment(mock_pr, "stale_warning", after_date=after_date)
 
@@ -521,7 +536,7 @@ class TestHasBotComment:
         bot = StalePRBot()
         mock_pr = Mock()
         mock_comment = Mock()
-        mock_comment.user.type = "Bot"
+        mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:stale_warning --> new warning"
         mock_comment.created_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
         mock_pr.get_issue_comments.return_value = [mock_comment]
@@ -561,6 +576,16 @@ class TestMarkPRStale:
         assert "<!-- bot:stale -->" in comment
         mock_pr.add_to_labels.assert_called_once_with("stale")
         mock_issue.remove_from_assignees.assert_called_once_with("testuser")
+
+    def test_no_comment_when_unassign_raises(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.number = 1
+        bot.unassign_linked_issues = Mock(side_effect=RuntimeError("transient"))
+        assert bot.mark_pr_stale(mock_pr, 14) is False
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.add_to_labels.assert_not_called()
 
 
 class TestSendFinalFollowup:
@@ -657,7 +682,7 @@ class TestProcessStalePrs:
         mock_pr.edit.assert_not_called()
 
     @patch("stale_pr_bot.datetime")
-    def test_pr_first_processed_past_60_days_marks_stale_and_followup(
+    def test_pr_first_processed_past_60_days_marks_stale_only(
         self, mock_datetime, bot_env
     ):
         mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
@@ -681,10 +706,48 @@ class TestProcessStalePrs:
         bot.process_stale_prs()
         bodies = [c[0][0] for c in mock_pr.create_issue_comment.call_args_list]
         assert any("<!-- bot:stale -->" in b for b in bodies)
-        assert any("<!-- bot:final_followup -->" in b for b in bodies)
+        assert not any("<!-- bot:final_followup -->" in b for b in bodies)
         assert not any("<!-- bot:stale_warning -->" in b for b in bodies)
         mock_pr.add_to_labels.assert_called_once_with("stale")
         mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_clears_stale_label_when_contributor_responds(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = "Fixes #42"
+        mock_pr.number = 1
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        mock_pr.get_commits.return_value = [commit]
+        stale_label = Mock()
+        stale_label.name = "stale"
+        mock_pr.get_labels.return_value = [stale_label]
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_issue = Mock()
+        mock_issue.number = 42
+        mock_issue.pull_request = None
+        mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        mock_pr.remove_from_labels.assert_called_once_with("stale")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+        mock_pr.create_issue_comment.assert_not_called()
 
 
 class TestRun:
