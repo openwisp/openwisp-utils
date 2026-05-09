@@ -2,12 +2,14 @@
 
 import os
 import sys
+from types import SimpleNamespace
 
 # Add the directory to path for importing (must be before local imports)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import unittest  # noqa: E402
 from unittest.mock import MagicMock, patch  # noqa: E402
 
+import generate_changelog  # noqa: E402
 from generate_changelog import (  # noqa: E402
     CHANGELOG_BOT_MARKER,
     CHANGELOG_COMMENT_INTRO,
@@ -545,6 +547,52 @@ class TestValidateChangelogOutput(unittest.TestCase):
             commit_hash="TEST",
         )
         self.assertTrue(result.is_valid)
+
+    @patch("generate_changelog.importlib.util.find_spec", return_value=None)
+    def test_raises_if_commitizen_plugin_module_cannot_be_located(self, mock_find_spec):
+        with self.assertRaises(ImportError) as context:
+            get_openwisp_commitizen()
+
+        self.assertIn(
+            "Could not locate openwisp_utils.releaser.commitizen",
+            str(context.exception),
+        )
+        mock_find_spec.assert_called_once_with("openwisp_utils.releaser.commitizen")
+
+    @patch(
+        "generate_changelog.importlib.util.find_spec",
+        return_value=SimpleNamespace(origin="/tmp/fake_commitizen.py"),
+    )
+    @patch("generate_changelog.runpy.run_path", side_effect=RuntimeError("boom"))
+    def test_restores_sys_modules_if_plugin_loading_fails(
+        self, mock_run_path, mock_find_spec
+    ):
+        existing_commitizen = object()
+        existing_commitizen_cz = object()
+
+        with patch.dict(
+            generate_changelog.sys.modules,
+            {
+                "commitizen": existing_commitizen,
+                "commitizen.cz": existing_commitizen_cz,
+            },
+            clear=False,
+        ):
+            with self.assertRaises(RuntimeError) as context:
+                get_openwisp_commitizen()
+
+            self.assertEqual(str(context.exception), "boom")
+            self.assertIs(
+                generate_changelog.sys.modules["commitizen"], existing_commitizen
+            )
+            self.assertIs(
+                generate_changelog.sys.modules["commitizen.cz"],
+                existing_commitizen_cz,
+            )
+            self.assertNotIn("commitizen.cz.base", generate_changelog.sys.modules)
+
+        mock_find_spec.assert_called_once_with("openwisp_utils.releaser.commitizen")
+        mock_run_path.assert_called_once_with("/tmp/fake_commitizen.py")
 
     @patch("generate_changelog.get_openwisp_commitizen")
     def test_valid_feature_tag_rst(self, mock_get_commitizen):
