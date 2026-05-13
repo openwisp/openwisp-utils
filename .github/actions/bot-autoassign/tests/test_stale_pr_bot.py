@@ -719,6 +719,38 @@ class TestProcessStalePrs:
         mock_pr.edit.assert_not_called()
 
     @patch("stale_pr_bot.datetime")
+    def test_first_run_past_60_days_failed_stale_skips_followup(
+        self, mock_datetime, bot_env
+    ):
+        # Sustained API outage: mark_pr_stale returns False. The
+        # final-followup must still be suppressed this run, otherwise the
+        # contributor sees an out-of-context follow-up with no prior stale
+        # notice.
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = ""
+        mock_pr.number = 8
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.labels = []
+        bot.mark_pr_stale = Mock(return_value=False)
+        bot.send_final_followup = Mock(return_value=True)
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        bot.mark_pr_stale.assert_called_once()
+        bot.send_final_followup.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
     def test_final_followup_fires_after_prior_stale_run(self, mock_datetime, bot_env):
         mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
         mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)

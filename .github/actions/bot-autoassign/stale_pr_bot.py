@@ -470,10 +470,15 @@ class StalePRBot(GitHubBot):
                         # Don't post final-followup in the same run as stale.
                         if marker == "final_followup" and posted_stale_this_run:
                             continue
+                        # Flag the attempt, not the success: a failed stale
+                        # post must still suppress final-followup this run,
+                        # otherwise the contributor gets the follow-up with
+                        # no prior stale notice. The stale stage will retry
+                        # on the next daily run.
+                        if marker == "stale":
+                            posted_stale_this_run = True
                         if action(pr, days_inactive):
                             processed_count += 1
-                            if marker == "stale":
-                                posted_stale_this_run = True
                 except Exception as e:
                     print(f"Error processing PR #{pr.number}: {e}")
                     continue
