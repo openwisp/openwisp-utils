@@ -749,6 +749,37 @@ class TestProcessStalePrs:
         mock_issue.add_to_assignees.assert_called_once_with("contributor")
         mock_pr.create_issue_comment.assert_not_called()
 
+    @patch("stale_pr_bot.datetime")
+    def test_clears_stale_label_when_no_active_block(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = "Fixes #42"
+        mock_pr.number = 1
+        mock_pr.user.login = "contributor"
+        # Reviewer approved after their CR → no active CHANGES_REQUESTED.
+        approve = Mock()
+        approve.state = "APPROVED"
+        approve.submitted_at = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        approve.user.login = "maintainer"
+        approve.user.type = "User"
+        mock_pr.get_reviews.return_value = [approve]
+        stale_label = Mock()
+        stale_label.name = "stale"
+        mock_pr.get_labels.return_value = [stale_label]
+        mock_issue = Mock()
+        mock_issue.number = 42
+        mock_issue.pull_request = None
+        mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        mock_pr.remove_from_labels.assert_called_once_with("stale")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+        mock_pr.create_issue_comment.assert_not_called()
+
 
 class TestRun:
     def test_no_github_client(self, bot_env):

@@ -296,10 +296,9 @@ class StalePRBot(GitHubBot):
                 ),
                 "",
                 (
-                    "As a result, **the linked issue(s)"
-                    " have been unassigned** from you"
-                    " to allow other contributors"
-                    " to work on it."
+                    "As a result, **any linked issues are being"
+                    " unassigned** from you so other contributors"
+                    " can pick them up."
                 ),
                 "",
                 (
@@ -325,7 +324,7 @@ class StalePRBot(GitHubBot):
             except Exception as e:
                 print(f"Could not add stale label: {e}")
             print(
-                f"Marked PR #{pr.number} as stale after {days_inactive} days,"
+                f"Marked PR #{pr.number} stale at {days_inactive} days,"
                 f" unassigned {unassigned_count} issues"
             )
             return True
@@ -398,6 +397,9 @@ class StalePRBot(GitHubBot):
                         pr, all_reviews
                     )
                     if not last_changes_requested:
+                        # No active block — unwind any prior stale state.
+                        if self._clear_stale_label(pr):
+                            self._reassign_unassigned_linked_issues(pr)
                         continue
                     issue_comments = list(pr.get_issue_comments())
                     review_comments = list(pr.get_review_comments())
@@ -411,8 +413,7 @@ class StalePRBot(GitHubBot):
                         review_comments,
                     )
                     print(
-                        f"PR #{pr.number}: {days_inactive} days since"
-                        " contributor activity"
+                        f"PR #{pr.number}: {days_inactive} days since contributor activity"
                     )
                     if self.is_waiting_for_maintainer(
                         pr,
@@ -427,8 +428,7 @@ class StalePRBot(GitHubBot):
                         if self._clear_stale_label(pr):
                             self._reassign_unassigned_linked_issues(pr)
                         print(
-                            f"PR #{pr.number}: waiting for maintainer review,"
-                            " skipping"
+                            f"PR #{pr.number}: waiting for maintainer review, skipping"
                         )
                         continue
                     stages = (

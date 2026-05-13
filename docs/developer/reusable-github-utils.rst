@@ -96,8 +96,9 @@ The Stale PR job runs daily. For each open PR:
 
    - **7–13 days:** posts a stale-warning comment.
    - **≥ 14 days:** adds the ``stale`` label and unassigns the contributor
-     from linked issues. An author comment on the PR clears the label and
-     reassigns the issues; a push alone only resets the inactivity timer.
+     from linked issues. Any subsequent author activity (push or comment)
+     unwinds the label and reassigns linked issues on the next daily run;
+     an author comment also triggers the immediate recovery bot.
    - **≥ 60 days:** posts a final follow-up comment asking whether the
      contributor is still working on it. The PR is not auto-closed;
      maintainers may close manually if needed.
