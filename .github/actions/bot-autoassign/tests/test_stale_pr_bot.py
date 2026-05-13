@@ -712,6 +712,40 @@ class TestProcessStalePrs:
         mock_pr.edit.assert_not_called()
 
     @patch("stale_pr_bot.datetime")
+    def test_final_followup_fires_after_prior_stale_run(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = ""
+        mock_pr.number = 7
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        stale_label = Mock()
+        stale_label.name = "stale"
+        mock_pr.get_labels.return_value = [stale_label]
+        prior_stale = Mock()
+        prior_stale.user.login = bot.bot_login
+        prior_stale.body = "<!-- bot:stale --> previous run"
+        prior_stale.created_at = datetime(2024, 5, 1, tzinfo=timezone.utc)
+        mock_pr.get_issue_comments.return_value = [prior_stale]
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        bodies = [c[0][0] for c in mock_pr.create_issue_comment.call_args_list]
+        assert any("<!-- bot:final_followup -->" in b for b in bodies)
+        assert not any(
+            "<!-- bot:stale -->" in b and "previous run" not in b for b in bodies
+        )
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
     def test_clears_stale_label_when_contributor_responds(self, mock_datetime, bot_env):
         mock_datetime.now.return_value = datetime(2024, 2, 1, tzinfo=timezone.utc)
         mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)

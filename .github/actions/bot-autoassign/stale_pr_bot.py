@@ -19,7 +19,10 @@ class StalePRBot(GitHubBot):
         self.DAYS_BEFORE_STALE_WARNING = 7
         self.DAYS_BEFORE_UNASSIGN = 14
         self.DAYS_BEFORE_FINAL_FOLLOWUP = 60
-        self.bot_login = os.environ.get("BOT_USERNAME", "openwisp-companion") + "[bot]"
+        bot_username = os.environ.get("BOT_USERNAME", "openwisp-companion")
+        self.bot_login = (
+            bot_username if bot_username.endswith("[bot]") else f"{bot_username}[bot]"
+        )
 
     @staticmethod
     def _commit_activity_date_for_author(commit, pr_author):
@@ -164,34 +167,33 @@ class StalePRBot(GitHubBot):
     def get_last_changes_requested(self, pr, all_reviews=None):
         """Timestamp of the latest CHANGES_REQUESTED that still represents
         a human reviewer's current stance, or ``None``.
+
+        Errors propagate so the caller can distinguish "no active block"
+        from "couldn't determine" and skip the PR.
         """
-        try:
-            if all_reviews is None:
-                all_reviews = list(pr.get_reviews())
-            # Bot reviews are advisory; COMMENTED does not change stance.
-            latest_per_reviewer = {}
-            for review in all_reviews:
-                if (
-                    not review.user
-                    or not review.submitted_at
-                    or review.user.type == "Bot"
-                    or review.state == "COMMENTED"
-                ):
-                    continue
-                current = latest_per_reviewer.get(review.user.login)
-                if current is None or review.submitted_at > current.submitted_at:
-                    latest_per_reviewer[review.user.login] = review
-            return max(
-                (
-                    review.submitted_at
-                    for review in latest_per_reviewer.values()
-                    if review.state == "CHANGES_REQUESTED"
-                ),
-                default=None,
-            )
-        except Exception as e:
-            print(f"Error getting reviews for PR #{pr.number}: {e}")
-            return None
+        if all_reviews is None:
+            all_reviews = list(pr.get_reviews())
+        # Bot reviews are advisory; COMMENTED does not change stance.
+        latest_per_reviewer = {}
+        for review in all_reviews:
+            if (
+                not review.user
+                or not review.submitted_at
+                or review.user.type == "Bot"
+                or review.state == "COMMENTED"
+            ):
+                continue
+            current = latest_per_reviewer.get(review.user.login)
+            if current is None or review.submitted_at > current.submitted_at:
+                latest_per_reviewer[review.user.login] = review
+        return max(
+            (
+                review.submitted_at
+                for review in latest_per_reviewer.values()
+                if review.state == "CHANGES_REQUESTED"
+            ),
+            default=None,
+        )
 
     def has_bot_comment(self, pr, comment_type, after_date=None, issue_comments=None):
         """Check if this bot has already posted a comment with the given
