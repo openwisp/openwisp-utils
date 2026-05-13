@@ -228,8 +228,9 @@ class StalePRBot(GitHubBot):
         )
 
     def _clear_stale_label(self, pr):
+        # pr.labels comes from the list-pulls payload, so no extra request.
         try:
-            if "stale" not in {label.name for label in pr.get_labels()}:
+            if "stale" not in {label.name for label in pr.labels}:
                 return False
             pr.remove_from_labels("stale")
             return True

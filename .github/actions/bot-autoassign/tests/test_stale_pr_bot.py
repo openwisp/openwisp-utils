@@ -708,7 +708,7 @@ class TestProcessStalePrs:
         mock_pr.get_commits.return_value = []
         mock_pr.get_issue_comments.return_value = []
         mock_pr.get_review_comments.return_value = []
-        mock_pr.get_labels.return_value = []
+        mock_pr.labels = []
         bot_env["repo"].get_pulls.return_value = [mock_pr]
         bot.process_stale_prs()
         bodies = [c[0][0] for c in mock_pr.create_issue_comment.call_args_list]
@@ -737,7 +737,7 @@ class TestProcessStalePrs:
         mock_pr.get_review_comments.return_value = []
         stale_label = Mock()
         stale_label.name = "stale"
-        mock_pr.get_labels.return_value = [stale_label]
+        mock_pr.labels = [stale_label]
         prior_stale = Mock()
         prior_stale.user.login = bot.bot_login
         prior_stale.body = "<!-- bot:stale --> previous run"
@@ -775,7 +775,7 @@ class TestProcessStalePrs:
         mock_pr.get_commits.return_value = [commit]
         stale_label = Mock()
         stale_label.name = "stale"
-        mock_pr.get_labels.return_value = [stale_label]
+        mock_pr.labels = [stale_label]
         mock_pr.get_issue_comments.return_value = []
         mock_pr.get_review_comments.return_value = []
         mock_issue = Mock()
@@ -808,7 +808,7 @@ class TestProcessStalePrs:
         mock_pr.get_reviews.return_value = [approve]
         stale_label = Mock()
         stale_label.name = "stale"
-        mock_pr.get_labels.return_value = [stale_label]
+        mock_pr.labels = [stale_label]
         mock_issue = Mock()
         mock_issue.number = 42
         mock_issue.pull_request = None
