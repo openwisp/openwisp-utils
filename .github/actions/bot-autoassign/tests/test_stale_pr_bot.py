@@ -215,6 +215,13 @@ class TestGetLastChangesRequested:
         mock_pr.get_reviews.return_value = [pending]
         assert bot.get_last_changes_requested(mock_pr) is None
 
+    def test_propagates_exception(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.side_effect = RuntimeError("transient API error")
+        with pytest.raises(RuntimeError, match="transient API error"):
+            bot.get_last_changes_requested(mock_pr)
+
 
 class TestGetDaysSinceActivity:
     @patch("stale_pr_bot.datetime")
