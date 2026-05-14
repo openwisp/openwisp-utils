@@ -13,10 +13,12 @@ from generate_changelog import (  # noqa: E402
     CHANGELOG_COMMENT_INTRO,
     COMMIT_BODY_MAX_NONEMPTY_LINES,
     COMMIT_SUBJECT_LIMIT,
+    MAX_GENERATION_ATTEMPTS,
     build_github_comment,
     build_prompt,
     call_gemini,
     detect_changelog_format,
+    generate_changelog_entry,
     get_changelog_validation_errors,
     get_env_or_exit,
     get_linked_issues,
@@ -414,6 +416,21 @@ class TestBuildPrompt(unittest.TestCase):
         self.assertIn("plain-text git commit message", system_instruction)
         self.assertIn("https://github.com/org/repo/pull/123", user_data_prompt)
 
+    def test_includes_validation_feedback_on_retry(self):
+        pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
+        system_instruction, user_data_prompt = build_prompt(
+            pr_details,
+            "",
+            [],
+            [],
+            validation_errors=["Title is too long."],
+            attempt=2,
+        )
+        self.assertIn("<validation_feedback>", user_data_prompt)
+        self.assertIn("Attempt 1 failed validation", user_data_prompt)
+        self.assertIn("Title is too long.", user_data_prompt)
+        self.assertIn("trusted bot-generated feedback", system_instruction)
+
 
 class TestBuildGithubComment(unittest.TestCase):
     """Tests for build_github_comment function."""
@@ -646,6 +663,58 @@ class TestValidateChangelogOutput(unittest.TestCase):
 
         call_kwargs = mock_plugin.validate_commit_message.call_args.kwargs
         self.assertEqual(call_kwargs["max_msg_length"], COMMIT_SUBJECT_LIMIT)
+
+
+class TestGenerateChangelogEntry(unittest.TestCase):
+    """Tests for changelog generation retries."""
+
+    @patch("generate_changelog.get_changelog_validation_errors")
+    @patch("generate_changelog.call_gemini")
+    def test_retries_until_validation_passes(
+        self, mock_call_gemini, mock_get_validation_errors
+    ):
+        pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
+        mock_call_gemini.side_effect = [
+            "[change] First attempt\n\nBody",
+            "[change] Final attempt\n\nBody",
+        ]
+        mock_get_validation_errors.side_effect = [["Title invalid"], []]
+
+        entry, errors = generate_changelog_entry(
+            pr_details, "", [], [], "rst", "api_key", "gemini-test"
+        )
+
+        self.assertEqual(entry, "[change] Final attempt\n\nBody")
+        self.assertEqual(errors, [])
+        self.assertEqual(mock_call_gemini.call_count, 2)
+        second_prompt = mock_call_gemini.call_args_list[1].args[0]
+        self.assertIn("<validation_feedback>", second_prompt)
+        self.assertIn("Title invalid", second_prompt)
+
+    @patch("generate_changelog.get_changelog_validation_errors")
+    @patch("generate_changelog.call_gemini")
+    def test_returns_last_attempt_after_max_retries(
+        self, mock_call_gemini, mock_get_validation_errors
+    ):
+        pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
+        mock_call_gemini.side_effect = [
+            "[change] Attempt 1\n\nBody",
+            "[change] Attempt 2\n\nBody",
+            "[change] Attempt 3\n\nBody",
+        ]
+        mock_get_validation_errors.side_effect = [
+            ["Error 1"],
+            ["Error 2"],
+            ["Error 3"],
+        ]
+
+        entry, errors = generate_changelog_entry(
+            pr_details, "", [], [], "rst", "api_key", "gemini-test"
+        )
+
+        self.assertEqual(entry, "[change] Attempt 3\n\nBody")
+        self.assertEqual(errors, ["Error 3"])
+        self.assertEqual(mock_call_gemini.call_count, MAX_GENERATION_ATTEMPTS)
 
 
 if __name__ == "__main__":
