@@ -84,7 +84,7 @@ class ProjectAdmin(CopyableFieldsAdmin, ReceiveUrlAdmin):
     inlines = [OperatorInline]
     list_display = ("name",)
     fields = ("uuid", "name", "key", "receive_url")
-    readonly_fields = ("uuid", "receive_url")
+    readonly_fields = ("receive_url",)
     receive_url_name = "receive_project"
     copyable_fields = ("uuid",)
 
