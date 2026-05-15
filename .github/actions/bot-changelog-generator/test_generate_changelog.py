@@ -22,6 +22,7 @@ from generate_changelog import (  # noqa: E402
     get_changelog_validation_errors,
     get_env_or_exit,
     get_linked_issues,
+    get_openwisp_commitizen,
     get_pr_commits,
     get_pr_details,
     get_pr_diff,
@@ -547,6 +548,51 @@ class TestPostGithubComment(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             post_github_comment("org/repo", 123, "Test comment", "token")
         self.assertIn("Failed to post comment", str(context.exception))
+
+
+class TestGetOpenwispCommitizen(unittest.TestCase):
+    """Regression tests for get_openwisp_commitizen (issue #669)."""
+
+    _MODULE_PREFIXES = ("commitizen", "openwisp_utils.releaser.commitizen")
+
+    def setUp(self):
+        """Evict cached commitizen modules to simulate a fresh process.
+
+        The circular import only triggers on the first load of
+        ``commitizen.cz``; if any earlier code path cached it, the bug
+        is hidden and the test would falsely pass.
+        """
+        self._saved_modules = {
+            name: module
+            for name, module in sys.modules.items()
+            if name == "commitizen"
+            or name.startswith("commitizen.")
+            or name == "openwisp_utils.releaser.commitizen"
+        }
+        for name in self._saved_modules:
+            del sys.modules[name]
+
+    def tearDown(self):
+        """Restore the original module cache.
+
+        Avoids leaving partial modules in ``sys.modules`` on failure
+        and keeps the test isolated from any later test that may rely
+        on the original commitizen module identity.
+        """
+        for name in list(sys.modules):
+            if (
+                name == "commitizen"
+                or name.startswith("commitizen.")
+                or name == "openwisp_utils.releaser.commitizen"
+            ):
+                del sys.modules[name]
+        sys.modules.update(self._saved_modules)
+
+    def test_loads_plugin_without_circular_import(self):
+        plugin = get_openwisp_commitizen()
+        self.assertEqual(plugin.__class__.__name__, "OpenWispCommitizen")
+        self.assertTrue(hasattr(plugin, "schema_pattern"))
+        self.assertTrue(hasattr(plugin, "validate_commit_message"))
 
 
 class TestValidateChangelogOutput(unittest.TestCase):

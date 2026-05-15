@@ -477,7 +477,15 @@ def generate_changelog_entry(
 
 
 def get_openwisp_commitizen():
-    """Load the local OpenWISP Commitizen plugin lazily."""
+    """Load the local OpenWISP Commitizen plugin lazily.
+
+    ``commitizen.cz`` is imported first so its plugin auto-discovery
+    completes before ``openwisp_utils.releaser.commitizen`` enters the
+    import stack. Without this ordering, discovery re-imports our
+    module mid-initialization and raises ``AttributeError`` on
+    ``OpenWispCommitizen`` (issue #669).
+    """
+    import commitizen.cz  # noqa: F401 — load order matters; see docstring
     from openwisp_utils.releaser.commitizen import OpenWispCommitizen
 
     return OpenWispCommitizen(_CommitizenConfig())

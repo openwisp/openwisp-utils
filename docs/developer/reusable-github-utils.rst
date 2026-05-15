@@ -69,9 +69,41 @@ OpenWISP repositories. The bot provides the following features:
   assigned, the bot responds with contributing guidelines explaining that
   no assignment is needed — just open a PR.
 - **Stale PR management**: Warns PR authors after 7 days of inactivity,
-  marks stale and unassigns after 14 days, and closes after 60 days.
+  marks stale and unassigns after 14 days, and posts a final follow-up
+  encouragement after 60 days. The bot does not auto-close PRs.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
+
+**How Stale PR Detection Works**
+
+The Stale PR job runs daily. For each open PR:
+
+1. **Trigger condition.** The PR is processed only when at least one human
+   reviewer's latest non-COMMENTED review is ``CHANGES_REQUESTED``. Bot
+   reviews and reviews later superseded by ``APPROVED`` or ``DISMISSED``
+   from the same reviewer do not block.
+2. **Inactivity** is the time since the more recent of: the PR author's
+   latest commit, issue comment, review comment, or review after the
+   blocking review; or the blocking review's timestamp if the author has
+   not acted since. For commits the date is taken from whichever identity
+   (author or committer) matches the PR author, so a maintainer rebasing
+   the contributor's commits does not reset the clock.
+3. **Maintainer-court skip.** If the contributor has responded but no
+   maintainer (``OWNER``, ``MEMBER`` or ``COLLABORATOR``) has submitted a
+   review since, the PR is skipped — the ball is in the maintainer's
+   court. Comments are not reviews.
+4. **Action by days inactive:**
+
+   - **7–13 days:** posts a stale-warning comment.
+   - **≥ 14 days:** adds the ``stale`` label and unassigns the contributor
+     from linked issues. Any subsequent author activity (push or comment)
+     unwinds the label and reassigns linked issues on the next daily run;
+     an author comment also triggers the immediate recovery bot.
+   - **≥ 60 days:** posts a final follow-up comment asking whether the
+     contributor is still working on it. The PR is not auto-closed;
+     maintainers may close manually if needed.
+
+   Each stage posts at most once per blocking review cycle.
 
 **Secrets**
 
