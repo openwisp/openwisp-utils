@@ -2,6 +2,7 @@ from django.contrib.admin import ModelAdmin, StackedInline
 from django.core.exceptions import FieldError
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from openwisp_utils.widgets import Select2Widget
 
 
 class TimeReadonlyAdminMixin(object):
@@ -212,3 +213,14 @@ class HelpTextStackedInline(StackedInline):
         formset = super().get_formset(request, obj, **kwargs)
         formset.help_text = self.help_text
         return formset
+
+
+class Select2AdminMixin:
+    """Mixin that applies Select2Widget to specified choice fields."""
+
+    select2_fields = ()
+
+    def formfield_for_choice_field(self, db_field, request, **kwargs):
+        if db_field.name in self.select2_fields:
+            kwargs["widget"] = Select2Widget()
+        return super().formfield_for_choice_field(db_field, request, **kwargs)
