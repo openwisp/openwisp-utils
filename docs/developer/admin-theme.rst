@@ -286,3 +286,20 @@ Similarly, you can customize the HTML of the template by overriding the
 ``body`` block. See `email_template.html
 <https://github.com/openwisp/openwisp-utils/blob/master/openwisp_utils/admin_theme/templates/openwisp_utils/email_template.html>`_
 for reference implementation.
+
+Shared NetJSONGraph Assets
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``openwisp-utils`` provides the unbundled ECharts variant of
+``netjsongraph.js`` (and its base CSS themes) so it can be reused across
+different OpenWISP modules without redundantly bundling Leaflet JS.
+
+These files are served via the ``openwisp_utils.admin_theme`` app. You can
+include them in other OpenWISP modules using the ``static`` template tag:
+
+.. code-block:: html+django
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'lib/netjsongraph/css/netjsongraph.css' %}">
+    <link rel="stylesheet" href="{% static 'lib/netjsongraph/css/netjsongraph-theme.css' %}">
+    <script src="{% static 'lib/netjsongraph/js/netjsongraph.echarts.min.js' %}"></script>
