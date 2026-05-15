@@ -48,6 +48,29 @@ it easy to copy the fields contents.
 
 Useful for auto-generated fields such as UUIDs, secret keys, tokens, etc.
 
+To replicate the "copy UUID" behavior previously provided by the removed
+``UUIDAdmin`` class, set ``copyable_fields = ("uuid",)`` on a
+``CopyableFieldsAdmin`` subclass and expose a ``uuid()`` display method,
+for example:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from django.utils.translation import gettext_lazy as _
+    from openwisp_utils.admin import CopyableFieldsAdmin
+
+    from .models import MyModel
+
+
+    @admin.register(MyModel)
+    class MyModelAdmin(CopyableFieldsAdmin):
+        copyable_fields = ("uuid",)
+
+        def uuid(self, obj):
+            return obj.pk
+
+        uuid.short_description = _("UUID")
+
 ``openwisp_utils.admin.ReceiveUrlAdmin``
 ----------------------------------------
 
