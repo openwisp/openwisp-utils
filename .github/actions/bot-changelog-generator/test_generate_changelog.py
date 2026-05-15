@@ -342,7 +342,11 @@ class TestBuildPrompt(unittest.TestCase):
         self.assertIn("[fix]", system_instruction)
         self.assertIn("[change]", system_instruction)
         self.assertIn(
-            f"within {COMMIT_SUBJECT_LIMIT} characters when possible",
+            f"within {COMMIT_SUBJECT_LIMIT} characters, including the tag and spaces",
+            system_instruction,
+        )
+        self.assertIn(
+            "If any rule below is broken, the output is invalid.",
             system_instruction,
         )
         self.assertIn(
@@ -427,7 +431,11 @@ class TestBuildPrompt(unittest.TestCase):
             attempt=2,
         )
         self.assertIn("<validation_feedback>", user_data_prompt)
-        self.assertIn("Attempt 1 failed validation", user_data_prompt)
+        self.assertIn(
+            "The previous answer failed OpenWISP Commitizen validation.",
+            user_data_prompt,
+        )
+        self.assertIn("Return a corrected commit message only.", user_data_prompt)
         self.assertIn("Title is too long.", user_data_prompt)
         self.assertIn("trusted bot-generated feedback", system_instruction)
 
