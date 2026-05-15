@@ -7,7 +7,6 @@ import time
 from datetime import datetime
 
 import questionary
-import requests
 from openwisp_utils.releaser.changelog import (
     format_rst_block,
     get_release_block_from_file,
@@ -20,10 +19,10 @@ from openwisp_utils.releaser.github import GitHub
 from openwisp_utils.releaser.utils import (
     SkipSignal,
     adjust_markdown_headings,
+    branch_exists,
     demote_markdown_headings,
     format_file_with_docstrfmt,
     get_current_branch,
-    retryable_request,
     rst_to_markdown,
 )
 from openwisp_utils.releaser.version import (
@@ -91,71 +90,6 @@ def check_prerequisites():
     return config, gh
 
 
-def get_ai_summary(content, file_format, token):
-    # Asks the user if they want to use GPT for summarizing the changelog,
-    # and handles the interaction loop (Accept/Retry/Use Original).
-    if not questionary.confirm(
-        "Do you want to use an AI to generate a human-readable summary of the changelog?",
-        default=False,
-    ).ask():
-        return content
-
-    if not token:
-        print(
-            "⚠️ OPENAI_CHATGPT_TOKEN environment variable is not set. Skipping AI summary.",
-            file=sys.stderr,
-        )
-        return content
-
-    api_url = "https://api.openai.com/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    prompt = (
-        f"Please generate a human-readable changelog from the following git-cliff output. "
-        f"The final output should be in {file_format} format and should only contain the changelog content, "
-        f"ready to be inserted into a CHANGES.{file_format} file. Do not include any extra commentary.\n\n"
-        f"Here is the content to process:\n\n{content}"
-    )
-    payload = {
-        "model": "gpt-4o",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.5,
-    }
-
-    while True:
-        try:
-            print("🤖 Generating AI summary... (this might take a moment)")
-            response = retryable_request(
-                method="post",
-                url=api_url,
-                headers=headers,
-                json=payload,
-                timeout=60,
-            )
-            summary = response.json()["choices"][0]["message"]["content"]
-
-            print("\n" + "=" * 20 + " AI Generated Summary " + "=" * 20)
-            print(summary)
-            print("=" * 62)
-
-            decision = questionary.select(
-                "How would you like to proceed?",
-                choices=["Accept", "Retry", "Use Original (from git-cliff)"],
-            ).ask()
-
-            if decision == "Accept":
-                return summary
-            elif decision == "Use Original (from git-cliff)":
-                return content
-            elif decision == "Retry":
-                continue
-            else:
-                return content
-        except (requests.RequestException, SkipSignal) as e:
-            print(f"\n⚠️ An error occurred with the AI API: {e}", file=sys.stderr)
-            print("Falling back to the original content from git-cliff.")
-            return content
-
-
 def port_changelog_to_main(gh, config, version, changelog_body, original_branch):
     """Checks out the main branch, updates the changelog, and creates a new PR."""
     print("\n" + "=" * 50)
@@ -176,10 +110,23 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
         full_block_to_port = f"{version_header}\n{underline}\n\n{changelog_body}"
 
     try:
-        main_branch = questionary.select(
-            "Which branch should the changelog be ported to?",
-            choices=MAIN_BRANCHES,
-        ).ask()
+        master_exists = branch_exists("master")
+        main_exists = branch_exists("main")
+        if master_exists and main_exists:
+            main_branch = questionary.select(
+                "Which branch should the changelog be ported to?",
+                choices=MAIN_BRANCHES,
+            ).ask()
+        elif master_exists:
+            main_branch = "master"
+        elif main_exists:
+            main_branch = "main"
+        else:
+            print(
+                "Neither 'master' nor 'main' branches were found locally. "
+                "Skipping changelog porting."
+            )
+            return
 
         if not main_branch:
             print("Porting cancelled.")
@@ -275,10 +222,7 @@ def main():
     processed_block = process_changelog(raw_changelog_block)
     formatted_block_rst = format_rst_block(processed_block)
 
-    gpt_token = os.environ.get("OPENAI_CHATGPT_TOKEN")
-    changelog_content = get_ai_summary(
-        formatted_block_rst, config["changelog_format"], gpt_token
-    )
+    changelog_content = formatted_block_rst
 
     # Strip any header
     header_stripping_regex = re.compile(

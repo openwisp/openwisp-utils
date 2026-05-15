@@ -1,14 +1,29 @@
+import os
 import re
 
 from base import GitHubBot
 from utils import (
     extract_linked_issues,
+    find_open_pr_for_issue,
+    get_assignee_logins,
     get_valid_linked_issues,
     unassign_linked_issues_helper,
+    user_in_logins,
+    verify_assignment,
 )
 
 
 class IssueAssignmentBot(GitHubBot):
+    def __init__(self):
+        super().__init__()
+        self.bot_username = os.environ.get("BOT_USERNAME", "openwisp-companion")
+
+    def is_bot_assign_command(self, comment_body):
+        if not comment_body:
+            return False
+        pattern = rf"(?<![\w-])@{re.escape(self.bot_username)}\s+assign\b"
+        return bool(re.search(pattern, comment_body, re.IGNORECASE))
+
     def is_assignment_request(self, comment_body):
         if not comment_body:
             return False
@@ -194,6 +209,90 @@ class IssueAssignmentBot(GitHubBot):
             print(f"Error responding to assignment request: {e}")
             return False
 
+    def _cannot_auto_assign_message(self, pr_author, pr_number):
+        return (
+            f"Hi @{pr_author} 👋,\n\n"
+            f"Thank you for opening PR #{pr_number} to address this issue!\n\n"
+            "GitHub did not allow the bot to assign this issue to you"
+            " automatically, because you are not yet an organization"
+            " member and have not previously commented on this issue.\n\n"
+            f"To get assigned, please comment `@{self.bot_username} assign`"
+            " on this issue. Your comment satisfies GitHub's requirement"
+            " and the bot will then assign the issue to you."
+        )
+
+    def handle_bot_assign_request(self, issue_number, commenter):
+        if not self.repo:
+            print("GitHub client not initialized")
+            return False
+        try:
+            issue = self.repo.get_issue(issue_number)
+            if (
+                hasattr(issue, "repository")
+                and issue.repository.full_name != self.repository_name
+            ):
+                print(
+                    f"Issue #{issue_number} is from a different"
+                    " repository, ignoring bot command"
+                )
+                return True
+            if issue.pull_request:
+                print(f"#{issue_number} is a PR, ignoring bot command")
+                return True
+            if getattr(issue, "state", "open") == "closed":
+                print(f"#{issue_number} is closed, ignoring bot command")
+                return True
+            if user_in_logins(commenter, get_assignee_logins(issue)):
+                print(f"{commenter} is already assigned to #{issue_number}")
+                return True
+            try:
+                pr = find_open_pr_for_issue(
+                    self.github, self.repository_name, commenter, issue_number
+                )
+            except Exception as e:
+                # Don't post "no PR found" on a search error — that's
+                # not the same as a verified miss.
+                print(f"Error searching open PRs by {commenter}: {e}")
+                return True
+            if pr is None:
+                issue.create_comment(
+                    f"Hi @{commenter} 👋,\n\n"
+                    "I could not find an open PR by you that references"
+                    f" this issue (#{issue_number}). Please open a PR"
+                    f" linking to this issue (e.g. `Fixes #{issue_number}`)"
+                    f" and then comment `@{self.bot_username} assign` again."
+                )
+                return True
+            issue.add_to_assignees(commenter)
+            verified = verify_assignment(self.repo, issue_number, commenter)
+            if verified is True:
+                issue.create_comment(
+                    f"This issue has been assigned to @{commenter}"
+                    f" who opened PR #{pr.number} to address it. 🎯"
+                )
+                print(f"Assigned #{issue_number} to {commenter} via bot command")
+            elif verified is False:
+                # Commenter has commented but the assignment still
+                # failed (perm block, outage, etc.).
+                issue.create_comment(
+                    f"Sorry @{commenter}, GitHub still did not allow"
+                    " this assignment. A maintainer will need to assign"
+                    " this issue manually."
+                )
+                print(
+                    f"Bot-command assignment of #{issue_number} to"
+                    f" {commenter} was silently rejected."
+                )
+            else:
+                print(
+                    f"Skipping comment for #{issue_number}:"
+                    " assignment state could not be verified."
+                )
+            return True
+        except Exception as e:
+            print(f"Error handling bot assign command: {e}")
+            return False
+
     def auto_assign_issues_from_pr(self, pr_number, pr_author, pr_body, max_issues=10):
         if not self.repo:
             print("GitHub client not initialized")
@@ -211,18 +310,20 @@ class IssueAssignmentBot(GitHubBot):
                 )
             assigned_issues = []
             for issue_number, issue in get_valid_linked_issues(
-                self.repo, self.repository_name, pr_body
+                self.repo, self.repository_name, linked_issues
             ):
                 if len(assigned_issues) >= max_issues:
                     break
                 try:
-                    current_assignees = [
-                        assignee.login
-                        for assignee in issue.assignees
-                        if hasattr(assignee, "login")
-                    ]
+                    if getattr(issue, "state", "open") == "closed":
+                        print(
+                            f"Issue #{issue_number} is closed, skipping"
+                            " auto-assignment"
+                        )
+                        continue
+                    current_assignees = get_assignee_logins(issue)
                     if current_assignees:
-                        if pr_author in current_assignees:
+                        if user_in_logins(pr_author, current_assignees):
                             print(
                                 f"Issue #{issue_number} already"
                                 f" assigned to {pr_author}"
@@ -235,17 +336,32 @@ class IssueAssignmentBot(GitHubBot):
                             )
                         continue
                     issue.add_to_assignees(pr_author)
-                    assigned_issues.append(issue_number)
-                    print(f"Assigned issue #{issue_number}" f" to {pr_author}")
-                    comment_message = (
-                        "This issue has been automatically"
-                        f" assigned to @{pr_author}"
-                        f" who opened PR #{pr_number}"
-                        " to address it. 🎯"
-                    )
-                    issue.create_comment(comment_message)
+                    verified = verify_assignment(self.repo, issue_number, pr_author)
+                    if verified is True:
+                        assigned_issues.append(issue_number)
+                        print(f"Assigned issue #{issue_number} to {pr_author}")
+                        comment_message = (
+                            "This issue has been automatically"
+                            f" assigned to @{pr_author}"
+                            f" who opened PR #{pr_number}"
+                            " to address it. 🎯"
+                        )
+                        issue.create_comment(comment_message)
+                    elif verified is False:
+                        print(
+                            f"Assignment of #{issue_number} to {pr_author}"
+                            " was silently rejected by GitHub."
+                        )
+                        issue.create_comment(
+                            self._cannot_auto_assign_message(pr_author, pr_number)
+                        )
+                    else:
+                        print(
+                            f"Skipping comment for #{issue_number}:"
+                            " assignment state could not be verified."
+                        )
                 except Exception as e:
-                    print(f"Error processing issue" f" #{issue_number}: {e}")
+                    print(f"Error processing issue #{issue_number}: {e}")
             return assigned_issues
         except Exception as e:
             print(f"Error in auto_assign_issues_from_pr: {e}")
@@ -266,11 +382,27 @@ class IssueAssignmentBot(GitHubBot):
             print(f"Error in unassign_issues_from_pr: {e}")
             return []
 
+    def _is_bot_comment(self, comment):
+        user = comment.get("user") or {}
+        if (user.get("type") or "").lower() == "bot":
+            return True
+        if comment.get("performed_via_github_app"):
+            return True
+        login = (user.get("login") or "").lower()
+        return login in {
+            self.bot_username.lower(),
+            f"{self.bot_username}[bot]".lower(),
+        }
+
     def handle_issue_comment(self):
         if not self.event_payload:
             print("No event payload available")
             return False
         try:
+            action = self.event_payload.get("action")
+            if action and action != "created":
+                print(f"Ignoring issue_comment action '{action}'")
+                return True
             if self.event_payload.get("issue", {}).get("pull_request"):
                 print("Comment is on a PR, not an issue - skipping")
                 return True
@@ -282,9 +414,14 @@ class IssueAssignmentBot(GitHubBot):
             if not all([comment_body, commenter, issue_number]):
                 print("Missing required comment data")
                 return False
+            if self._is_bot_comment(comment):
+                print("Ignoring comment posted by a bot")
+                return True
+            if self.is_bot_assign_command(comment_body):
+                return self.handle_bot_assign_request(issue_number, commenter)
             if self.is_assignment_request(comment_body):
                 return self.respond_to_assignment_request(issue_number, commenter)
-            print("Comment does not contain assignment request")
+            print("Comment does not contain an assignment request or bot command")
             return True
         except Exception as e:
             print(f"Error handling issue comment: {e}")
