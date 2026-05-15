@@ -88,11 +88,6 @@ class ProjectAdmin(CopyableFieldsAdmin, ReceiveUrlAdmin):
     receive_url_name = "receive_project"
     copyable_fields = ("uuid",)
 
-    def uuid(self, obj):
-        return obj.pk
-
-    uuid.short_description = _("UUID")
-
 
 class ShelfFilter(SimpleInputFilter):
     parameter_name = "shelf"
