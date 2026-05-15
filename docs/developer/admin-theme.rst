@@ -288,7 +288,7 @@ Similarly, you can customize the HTML of the template by overriding the
 for reference implementation.
 
 Shared NetJSONGraph Assets
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``openwisp-utils`` provides the unbundled ECharts variant of
 ``netjsongraph.js`` (and its base CSS themes) so it can be reused
