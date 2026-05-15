@@ -291,13 +291,11 @@ Shared NetJSONGraph Assets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``openwisp-utils`` provides the unbundled ECharts variant of
-``netjsongraph.js`` (and its base CSS themes) so it can be reused
-across different OpenWISP modules without redundantly bundling
-Leaflet JS.
+``netjsongraph.js`` (and its base CSS themes) so it can be reused across
+different OpenWISP modules without redundantly bundling Leaflet JS.
 
-These files are served via the ``openwisp_utils.admin_theme`` app.
-You can include them in other OpenWISP modules using the ``static``
-template tag:
+These files are served via the ``openwisp_utils.admin_theme`` app. You can
+include them in other OpenWISP modules using the ``static`` template tag:
 
 .. code-block:: html+django
 
