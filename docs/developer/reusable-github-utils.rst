@@ -604,6 +604,7 @@ approved by a maintainer and its title starts with ``[feature]``,
             with:
               name: changelog-metadata
               path: pr_number
+              retention-days: 1
 
 The runner workflow is triggered after the trigger workflow completes. It
 retrieves the PR metadata and calls the reusable changelog workflow.
