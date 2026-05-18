@@ -1,4 +1,3 @@
-import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -179,15 +178,6 @@ def mock_all(mocker):
         "openwisp_utils.releaser.version.questionary.select", new=mock_q_select
     )
 
-    # Mock OPENAI_CHATGPT_TOKEN to None to skip AI summary by default
-    original_environ_get = os.environ.get
-
-    def mock_environ_get(key, default=None):
-        if key == "OPENAI_CHATGPT_TOKEN":
-            return None
-        return original_environ_get(key, default)
-
-    mocker.patch("os.environ.get", side_effect=mock_environ_get)
     mocks = {
         "subprocess": mocker.patch(
             "openwisp_utils.releaser.release.subprocess.run",

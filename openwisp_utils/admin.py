@@ -139,24 +139,19 @@ class CopyableFieldsAdmin(ModelAdmin):
             extra_context=extra_context,
         )
 
-    class Media:
-        js = ("admin/js/jquery.init.js", "openwisp-utils/js/copyable.js")
-
-
-class UUIDAdmin(CopyableFieldsAdmin):
-    """Sets `uuid` as copyable field.
-
-    Subclass of `CopyableFieldsAdmin`. This class is kept for backward
-    compatibility and convenience, since different models of various
-    OpenWISP modules show `uuid` as the only copyable field.
-    """
-
-    copyable_fields = ("uuid",)
-
     def uuid(self, obj):
+        """Return the object's primary key (UUID).
+
+        This default implementation allows subclasses to use
+        copyable_fields = ("uuid",) without defining their own uuid()
+        method when their model uses a UUID primary key.
+        """
         return obj.pk
 
     uuid.short_description = _("UUID")
+
+    class Media:
+        js = ("admin/js/jquery.init.js", "openwisp-utils/js/copyable.js")
 
 
 class ReceiveUrlAdmin(ModelAdmin):
