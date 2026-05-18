@@ -37,13 +37,24 @@ class ReadOnlyAdmin(ModelAdmin):
         opts = self.model._meta
         resolver_match = getattr(request, "resolver_match", None)
         url_name = getattr(resolver_match, "url_name", None)
-        if url_name and url_name in (
+        own_admin_urls = (
             f"{opts.app_label}_{opts.model_name}_delete",
             f"{opts.app_label}_{opts.model_name}_change",
             f"{opts.app_label}_{opts.model_name}_changelist",
-        ):
+        )
+        if url_name in own_admin_urls:
             return False
-        return super().has_delete_permission(request, obj)
+        # Django calls child admins during parent delete confirmations;
+        # allow only those cascade checks to use normal delete permissions.
+        is_parent_delete = url_name and url_name.endswith("_delete")
+        is_parent_bulk_delete = (
+            url_name
+            and url_name.endswith("_changelist")
+            and request.POST.get("action") == "delete_selected"
+        )
+        if is_parent_delete or is_parent_bulk_delete:
+            return super().has_delete_permission(request, obj)
+        return False
 
     def save_model(self, request, obj, form, change):  # pragma: nocover
         pass
