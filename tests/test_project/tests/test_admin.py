@@ -247,6 +247,26 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             ma.get_fields(self.client.request)
         self.assertIn(copyable_field_err, err.exception.args[0])
 
+    def test_copyablefields_admin_default_uuid_method(self):
+        """CopyableFieldsAdmin should provide a default uuid method.
+
+        This allows subclasses to use copyable_fields = ("uuid",) without
+        having to define their own uuid() method and short_description.
+        The uuid method should return obj.pk and have short_description
+        "UUID".
+        """
+
+        class TestAdminWithUuid(CopyableFieldsAdmin):
+            copyable_fields = ("uuid",)
+
+        p = Project.objects.create(name="test-default-uuid")
+        ma = TestAdminWithUuid(Project, AdminSite())
+        # Verify the uuid method exists and returns obj.pk
+        self.assertTrue(hasattr(ma, "uuid"))
+        self.assertEqual(ma.uuid(p), p.pk)
+        # Verify short_description is set
+        self.assertEqual(ma.uuid.short_description, "UUID")
+
     def test_copyablefields_admin_fields_order(self):
         path = reverse("admin:test_project_project_add")
         self.client.get(path)
