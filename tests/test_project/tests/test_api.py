@@ -275,3 +275,19 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertEqual(pagination.page_size, 10)
         self.assertEqual(pagination.max_page_size, 100)
         self.assertEqual(pagination.page_size_query_param, "page_size")
+
+    def test_list_shelf_api_page_size_capped_at_max(self):
+        """Requests above max_page_size are capped at max_page_size."""
+        max_page_size = OpenWispPagination.max_page_size
+        # Create enough shelves so the response would exceed max_page_size
+        # if the cap were not enforced.
+        extra = (max_page_size + 5) - Shelf.objects.count()
+        for i in range(extra):
+            self._create_shelf(name=f"extra_shelf{i}")
+        total = Shelf.objects.count()
+        self.assertGreater(total, max_page_size)
+
+        response = self.client.get(f"{self.url}?page_size={max_page_size + 50}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], total)
+        self.assertEqual(len(response.data["results"]), max_page_size)

@@ -83,15 +83,20 @@ Every openwisp module which has an API should use this class to configure
 its own default settings, which will be merged with the settings of the
 other modules.
 
+.. _utils_openwisp_pagination:
+
 ``openwisp_utils.api.pagination.OpenWispPagination``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A reusable pagination class for DRF views that provides consistent
 pagination behavior across OpenWISP modules with sensible defaults.
 
-- **10** items per page (``page_size``)
-- **100** max items per page (``max_page_size``)
-- Custom page size via ``?page_size=N`` query parameter
+- **10** items per page (``page_size``), configurable via
+  :ref:`OPENWISP_API_PAGE_SIZE <openwisp_api_page_size>`
+- **100** max items per page (``max_page_size``), configurable via
+  :ref:`OPENWISP_API_MAX_PAGE_SIZE <openwisp_api_max_page_size>`
+- Custom page size via ``?page_size=N`` query parameter (capped at
+  ``max_page_size``)
 
 **Usage in Views:**
 
@@ -102,7 +107,7 @@ pagination behavior across OpenWISP modules with sensible defaults.
 
 
     class DeviceViewSet(ModelViewSet):
-        queryset = Device.objects.all()
+        queryset = Device.objects.order_by("-created")
         serializer_class = DeviceSerializer
         pagination_class = OpenWispPagination
 
@@ -111,16 +116,16 @@ pagination behavior across OpenWISP modules with sensible defaults.
 .. code-block:: bash
 
     # Returns first 10 items (default page size)
-    GET /api/v1/controller/devices/
+    GET /api/v1/controller/device/
 
     # Returns items 11-20 (second page)
-    GET /api/v1/controller/devices/?page=2
+    GET /api/v1/controller/device/?page=2
 
     # Returns first 25 items (custom page size)
-    GET /api/v1/controller/devices/?page_size=25
+    GET /api/v1/controller/device/?page_size=25
 
     # Returns items 26-50 with custom page size
-    GET /api/v1/controller/devices/?page=2&page_size=25
+    GET /api/v1/controller/device/?page=2&page_size=25
 
 Storage Utilities
 -----------------

@@ -40,7 +40,7 @@ class ShelfRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class ShelfViewSet(viewsets.ModelViewSet):
     """ViewSet for Shelf model with OpenWispPagination."""
 
-    queryset = Shelf.objects.all()
+    queryset = Shelf.objects.order_by("-created_at")
     serializer_class = ShelfSerializer
     pagination_class = OpenWispPagination
 

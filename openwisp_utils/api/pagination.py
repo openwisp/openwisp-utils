@@ -1,5 +1,7 @@
 from django.core.exceptions import ImproperlyConfigured
 
+from .. import settings as app_settings
+
 try:
     from rest_framework.pagination import PageNumberPagination
 except ImportError:  # pragma: nocover
@@ -10,8 +12,8 @@ except ImportError:  # pragma: nocover
 
 
 class OpenWispPagination(PageNumberPagination):
-    """Reusable pagination class with sensible defaults."""
+    """Reusable pagination class with settings-backed defaults."""
 
-    page_size = 10
-    max_page_size = 100
+    page_size = app_settings.API_PAGE_SIZE
+    max_page_size = app_settings.API_MAX_PAGE_SIZE
     page_size_query_param = "page_size"
