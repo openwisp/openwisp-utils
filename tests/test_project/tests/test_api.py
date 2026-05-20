@@ -213,7 +213,6 @@ class TestOpenWispPagination(CreateMixin, TestCase):
             self._create_shelf(name=f"shelf{i}")
 
     def test_list_shelf_api_pagination(self):
-        """Test shelf list API with default pagination."""
         number_of_shelves = 21
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -242,7 +241,6 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertEqual(len(third_response.data["results"]), 1)
 
     def test_list_shelf_api_custom_page_size(self):
-        """Test shelf list API with custom page_size parameter."""
         number_of_shelves = 21
         page_size = 5
         url_with_page_size = f"{self.url}?page_size={page_size}"
@@ -269,7 +267,6 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertEqual(len(next_response.data["results"]), page_size)
 
     def test_pagination_attributes(self):
-        """Test OpenWispPagination class attributes."""
         pagination = OpenWispPagination()
         self.assertIsInstance(pagination, PageNumberPagination)
         self.assertEqual(pagination.page_size, 10)
@@ -277,7 +274,6 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertEqual(pagination.page_size_query_param, "page_size")
 
     def test_list_shelf_api_page_size_capped_at_max(self):
-        """Requests above max_page_size are capped at max_page_size."""
         max_page_size = OpenWispPagination.max_page_size
         # Create enough shelves so the response would exceed max_page_size
         # if the cap were not enforced.

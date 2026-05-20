@@ -162,10 +162,7 @@ documentation
 ``OPENWISP_API_PAGE_SIZE``
 --------------------------
 
-======= =======
-type    ``int``
-default ``10``
-======= =======
+**Default**: ``10``
 
 Default number of items per page returned by :ref:`OpenWispPagination
 <utils_openwisp_pagination>`.
@@ -175,10 +172,7 @@ Default number of items per page returned by :ref:`OpenWispPagination
 ``OPENWISP_API_MAX_PAGE_SIZE``
 ------------------------------
 
-======= =======
-type    ``int``
-default ``100``
-======= =======
+**Default**: ``100``
 
 Maximum number of items per page that clients can request via the
 ``?page_size=N`` query parameter on views using :ref:`OpenWispPagination

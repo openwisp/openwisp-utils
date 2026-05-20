@@ -10,11 +10,7 @@ from ..serializers import ShelfSerializer
 
 
 class ReceiveProjectView(View):
-    """Test View.
-
-    Test view is used to check the validity of the pk and the key. It
-    returns the project name.
-    """
+    """Checks pk/key validation and returns the project name."""
 
     def get(self, request, pk):
         try:
@@ -38,8 +34,6 @@ class ShelfRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ShelfViewSet(viewsets.ModelViewSet):
-    """ViewSet for Shelf model with OpenWispPagination."""
-
     queryset = Shelf.objects.order_by("-created_at")
     serializer_class = ShelfSerializer
     pagination_class = OpenWispPagination
