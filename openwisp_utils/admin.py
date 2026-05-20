@@ -12,7 +12,40 @@ class TimeReadonlyAdminMixin(object):
         super().__init__(*args, **kwargs)
 
 
-class ReadOnlyAdmin(ModelAdmin):
+class BlockDeleteAllowCascadeMixin:
+    """A mixin that allows cascade/bulk deletions while blocking single-row deletion in the change view."""
+
+    def is_admin_cascade_delete_request(self, request):
+        """Return True when another admin model is checking cascade deletion."""
+        model = self.model
+        opts = model._meta
+        resolver_match = getattr(request, "resolver_match", None)
+        url_name = getattr(resolver_match, "url_name", None)
+        if not url_name:
+            return False
+        own_admin_urls = (
+            f"{opts.app_label}_{opts.model_name}_delete",
+            f"{opts.app_label}_{opts.model_name}_change",
+            f"{opts.app_label}_{opts.model_name}_changelist",
+        )
+        if url_name in own_admin_urls:
+            return False
+        is_parent_delete = url_name.endswith("_delete")
+        is_parent_bulk_delete = (
+            url_name.endswith("_changelist")
+            and getattr(request, "POST", {}).get("action") == "delete_selected"
+        )
+        return is_parent_delete or is_parent_bulk_delete
+
+    def has_delete_permission(self, request, obj=None):
+        # Django calls child admins during parent delete confirmations;
+        # allow only those cascade checks to use normal delete permissions.
+        if self.is_admin_cascade_delete_request(request):
+            return super().has_delete_permission(request, obj)
+        return False
+
+
+class ReadOnlyAdmin(BlockDeleteAllowCascadeMixin, ModelAdmin):
     """Disables all editing capabilities."""
 
     exclude = tuple()
@@ -31,29 +64,6 @@ class ReadOnlyAdmin(ModelAdmin):
         return actions
 
     def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        opts = self.model._meta
-        resolver_match = getattr(request, "resolver_match", None)
-        url_name = getattr(resolver_match, "url_name", None)
-        own_admin_urls = (
-            f"{opts.app_label}_{opts.model_name}_delete",
-            f"{opts.app_label}_{opts.model_name}_change",
-            f"{opts.app_label}_{opts.model_name}_changelist",
-        )
-        if url_name in own_admin_urls:
-            return False
-        # Django calls child admins during parent delete confirmations;
-        # allow only those cascade checks to use normal delete permissions.
-        is_parent_delete = url_name and url_name.endswith("_delete")
-        is_parent_bulk_delete = (
-            url_name
-            and url_name.endswith("_changelist")
-            and request.POST.get("action") == "delete_selected"
-        )
-        if is_parent_delete or is_parent_bulk_delete:
-            return super().has_delete_permission(request, obj)
         return False
 
     def save_model(self, request, obj, form, change):  # pragma: nocover
