@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase
+from openwisp_utils import settings as app_settings
 from openwisp_utils.api.pagination import OpenWispPagination
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError as DRFValidationError
@@ -266,11 +267,23 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertIn(url_with_page_size, next_response.data["previous"])
         self.assertEqual(len(next_response.data["results"]), page_size)
 
+        # Walk to the last page to verify the partial-page boundary
+        last_response = next_response
+        while last_response.data["next"] is not None:
+            last_response = self.client.get(last_response.data["next"])
+            self.assertEqual(last_response.status_code, 200)
+        self.assertEqual(last_response.data["count"], number_of_shelves)
+        self.assertEqual(len(last_response.data["results"]), 1)
+        self.assertIsNone(last_response.data["next"])
+        self.assertIsNotNone(last_response.data["previous"])
+        self.assertIn("page=4", last_response.data["previous"])
+        self.assertIn(f"page_size={page_size}", last_response.data["previous"])
+
     def test_pagination_attributes(self):
         pagination = OpenWispPagination()
         self.assertIsInstance(pagination, PageNumberPagination)
-        self.assertEqual(pagination.page_size, 10)
-        self.assertEqual(pagination.max_page_size, 100)
+        self.assertEqual(pagination.page_size, app_settings.API_PAGE_SIZE)
+        self.assertEqual(pagination.max_page_size, app_settings.API_MAX_PAGE_SIZE)
         self.assertEqual(pagination.page_size_query_param, "page_size")
 
     def test_list_shelf_api_page_size_capped_at_max(self):
