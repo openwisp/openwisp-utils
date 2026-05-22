@@ -215,6 +215,7 @@ class TestOpenWispPagination(CreateMixin, TestCase):
 
     def test_list_shelf_api_pagination(self):
         number_of_shelves = 21
+        default_page_size = app_settings.API_PAGE_SIZE
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], number_of_shelves)
@@ -231,7 +232,7 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertIsNotNone(next_response.data["previous"])
         # Page 1 is the default, so DRF doesn't include page=1 in the previous URL
         self.assertIn(self.url, next_response.data["previous"])
-        self.assertEqual(len(next_response.data["results"]), 10)
+        self.assertEqual(len(next_response.data["results"]), default_page_size)
 
         third_response = self.client.get(next_response.data["next"])
         self.assertEqual(third_response.status_code, 200)
@@ -239,7 +240,7 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         self.assertIsNone(third_response.data["next"])
         self.assertIsNotNone(third_response.data["previous"])
         self.assertIn("page=2", third_response.data["previous"])
-        self.assertEqual(len(third_response.data["results"]), 1)
+        self.assertEqual(len(third_response.data["results"]), default_page_size)
 
     def test_list_shelf_api_custom_page_size(self):
         number_of_shelves = 21
