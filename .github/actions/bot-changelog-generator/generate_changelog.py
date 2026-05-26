@@ -10,6 +10,7 @@ and OpenWISP squash merges:
 - [feature] for new features
 - [fix] for bug fixes
 - [change] for changes
+- [change!] for backward incompatible changes
 
 
 Usage:
@@ -365,7 +366,8 @@ def build_prompt(
         "If any rule below is broken, the output is invalid.\n"
         "RULES YOU MUST FOLLOW:\n"
         "- Output exactly one plain-text git commit message\n"
-        "- Start the first line with exactly one tag: [feature], [fix], or [change]\n"
+        "- Start the first line with exactly one tag: [feature], [fix], "
+        "[change], or [change!]\n"
         f"- Keep the first line within {COMMIT_SUBJECT_LIMIT} characters, "
         "including the tag and spaces\n"
         "- Capitalize the first word after the tag\n"
@@ -399,6 +401,7 @@ def build_prompt(
         "- [feature] - New functionality\n"
         "- [fix] - Bug fixes\n"
         "- [change] - Non-breaking changes, refactors, updates\n"
+        "- [change!] - Backward incompatible changes\n"
         "Length: Provide enough body detail to help "
         "a maintainer reuse the output as a high-quality squash merge commit "
         "message.\n"
@@ -509,7 +512,7 @@ def get_commit_message_validation_errors(text: str) -> list[str]:
 def get_changelog_bot_validation_errors(text: str) -> list[str]:
     """Validate bot-specific safety and formatting requirements."""
     errors = []
-    required_tags = ("[feature]", "[fix]", "[change]")
+    required_tags = ("[feature]", "[fix]", "[change]", "[change!]")
     suspicious_patterns = [
         r"ignore\s+previous\s+instructions",
         r"ignore_[a-z_]*instructions",
@@ -520,7 +523,9 @@ def get_changelog_bot_validation_errors(text: str) -> list[str]:
     ]
 
     if not any(text.startswith(tag) for tag in required_tags):
-        errors.append("Commit message must start with [feature], [fix], or [change].")
+        errors.append(
+            "Commit message must start with [feature], [fix], [change], or [change!]."
+        )
     if "```" in text:
         errors.append("Commit message must not contain fenced code blocks.")
     if CHANGELOG_COMMENT_INTRO.lower() in text.lower():

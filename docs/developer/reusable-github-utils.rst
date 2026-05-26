@@ -530,8 +530,9 @@ Changelog Bot
 
 This workflow automatically generates changelog entry suggestions for Pull
 Requests using Google Gemini. It gets triggered when a PR with a title
-prefixed with ``[feature]``, ``[fix]``, or ``[change]`` is approved by a
-maintainer. It analyzes the PR's title, description, code changes, and
+prefixed with ``[feature]``, ``[fix]``, ``[change]``, or ``[change!]`` is
+approved by a maintainer. ``[change!]`` marks backward incompatible
+changes. The bot analyzes the PR's title, description, code changes, and
 linked issues, then posts a properly formatted changelog entry as a
 comment on the PR.
 
@@ -559,7 +560,8 @@ following two workflow files under ``.github/workflows/``.
 
 The trigger workflow runs when a PR review is submitted. If the PR is
 approved by a maintainer and its title starts with ``[feature]``,
-``[fix]``, or ``[change]``, it stores the PR number as workflow metadata.
+``[fix]``, ``[change]``, or ``[change!]``, it stores the PR number as
+workflow metadata.
 
 **1. Changelog Bot Trigger**
 (``.github/workflows/bot-changelog-trigger.yml``)
@@ -588,7 +590,7 @@ approved by a maintainer and its title starts with ``[feature]``,
             env:
               PR_TITLE: ${{ github.event.pull_request.title }}
             run: |
-              if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change)\]'; then
+              if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change!?)\]'; then
                 echo "has_noteworthy=true" >> $GITHUB_OUTPUT
               fi
 

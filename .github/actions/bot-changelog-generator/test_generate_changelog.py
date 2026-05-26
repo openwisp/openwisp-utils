@@ -1,7 +1,9 @@
 """Tests for the changelog generator GitHub action."""
 
 import os
+import re
 import sys
+from pathlib import Path
 
 # Add the directory to path for importing (must be before local imports)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -342,6 +344,7 @@ class TestBuildPrompt(unittest.TestCase):
         self.assertIn("[feature]", system_instruction)
         self.assertIn("[fix]", system_instruction)
         self.assertIn("[change]", system_instruction)
+        self.assertIn("[change!]", system_instruction)
         self.assertIn(
             f"within {COMMIT_SUBJECT_LIMIT} characters, including the tag and spaces",
             system_instruction,
@@ -615,6 +618,29 @@ class TestValidateChangelogOutput(unittest.TestCase):
         self.assertTrue(result)
         mock_plugin.validate_commit_message.assert_called_once()
 
+    @patch("generate_changelog.get_openwisp_commitizen")
+    def test_valid_backward_incompatible_change_tag(self, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=True, errors=[]
+        )
+        mock_get_commitizen.return_value = mock_plugin
+
+        text = (
+            "[change!] Removed legacy setting\n\n"
+            "Drops the deprecated setting so users must update their configuration."
+        )
+
+        errors = get_changelog_validation_errors(text, "rst")
+
+        self.assertEqual(
+            errors,
+            [],
+            "[change!] marks backward incompatible changes and must be accepted "
+            "by the changelog bot validation.",
+        )
+
     def test_invalid_no_tag(self):
         text = "Added new functionality\n\nAdds useful context.\n\nCloses #123"
         result = validate_changelog_output(text, "rst")
@@ -769,6 +795,28 @@ class TestGenerateChangelogEntry(unittest.TestCase):
         self.assertEqual(entry, "[change] Attempt 3\n\nBody")
         self.assertEqual(errors, ["Error 3"])
         self.assertEqual(mock_call_gemini.call_count, MAX_GENERATION_ATTEMPTS)
+
+
+class TestChangelogTriggerWorkflow(unittest.TestCase):
+    """Tests for the workflow that decides whether the bot should run."""
+
+    def test_noteworthy_regex_matches_backward_incompatible_changes(self):
+        workflow_path = (
+            Path(__file__).resolve().parents[2]
+            / "workflows"
+            / "bot-changelog-trigger.yml"
+        )
+        workflow = workflow_path.read_text(encoding="utf-8")
+        match = re.search(r"grep -qiE '([^']+)'", workflow)
+        self.assertIsNotNone(match, "Could not find the noteworthy PR regex.")
+        noteworthy_regex = match.group(1)
+
+        self.assertRegex(
+            "[change!] Removed legacy behavior",
+            noteworthy_regex,
+            "PRs titled with [change!] mark backward incompatible changes and "
+            "must trigger the changelog bot.",
+        )
 
 
 if __name__ == "__main__":
