@@ -25,6 +25,8 @@ class ValidatedModelSerializer(serializers.ModelSerializer):
         REST API.
         """
         instance = self.instance
+        # if instance is empty (eg: creation)
+        # simulate for validation purposes
         if not instance:
             Model = self.Meta.model
             instance = Model()
@@ -40,6 +42,7 @@ class ValidatedModelSerializer(serializers.ModelSerializer):
             if isinstance(field, (models.ManyToManyField, ForeignObjectRel)):
                 continue
             setattr(instance, key, value)
+        # perform model validation
         try:
             instance.full_clean(exclude=self.exclude_validation)
         except DjangoValidationError as e:
