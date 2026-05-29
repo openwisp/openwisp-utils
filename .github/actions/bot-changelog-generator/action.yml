@@ -15,11 +15,24 @@ inputs:
   repo-name:
     description: "Repository name in format owner/repo"
     required: true
+  cache-dependency-path:
+    description: "Path to dependency metadata used for pip cache invalidation"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
   steps:
+    - name: Set up Python with cache
+      if: ${{ inputs.cache-dependency-path != '' }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: "pip"
+        cache-dependency-path: ${{ inputs.cache-dependency-path }}
+
     - name: Set up Python
+      if: ${{ inputs.cache-dependency-path == '' }}
       uses: actions/setup-python@v5
       with:
         python-version: "3.13"

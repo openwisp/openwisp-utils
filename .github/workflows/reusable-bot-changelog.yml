@@ -47,11 +47,13 @@ jobs:
           ref: master
           sparse-checkout: |
             .github/actions/bot-changelog-generator
+            setup.py
           path: openwisp-utils-action
 
       - name: Generate changelog
         uses: ./openwisp-utils-action/.github/actions/bot-changelog-generator
         with:
+          cache-dependency-path: openwisp-utils-action/setup.py
           github-token: ${{ steps.app-token.outputs.token }}
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           pr-number: ${{ inputs.pr_number }}
