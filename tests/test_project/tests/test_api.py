@@ -1,6 +1,10 @@
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase
+from django.urls import reverse
+from rest_framework import serializers, status
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from test_project.serializers import ShelfSerializer
 
 from ..models import Shelf
@@ -11,15 +15,9 @@ class TestApi(CreateMixin, TestCase):
     shelf_model = Shelf
     operator_permission_filter = [{"codename__endswith": "shelf"}]
 
-    def test_validator_pass(self):
-        s1 = self._create_shelf(name="shelf1")
-        serializer = ShelfSerializer(s1)
-        result = serializer.validate(s1)
-        self.assertIsInstance(result, Shelf)
-
     def test_validator_data_dict(self):
         s1 = self._create_shelf(name="shelf1")
-        data = s1.__dict__
+        data = s1.__dict__.copy()
         to_delete = [
             "_state",
             "id",
@@ -30,27 +28,43 @@ class TestApi(CreateMixin, TestCase):
         for key in to_delete:
             del data[key]
         data["writers"] = [1]
-        serializer = ShelfSerializer()
+        serializer = ShelfSerializer(instance=s1, data=data)
         data = serializer.validate(data)
 
     def test_validator_fail(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(DjangoValidationError):
             self._create_shelf(name="Intentional_Test_Fail")
 
         s1 = self._create_shelf(name="shelf1")
-        s1.name = "Intentional_Test_Fail"
-        serializer = ShelfSerializer(s1)
-        with self.assertRaises(ValidationError):
-            serializer.validate(s1)
+        with self.assertRaises(DRFValidationError):
+            serializer = ShelfSerializer(instance=s1)
+            serializer.validate({"name": "Intentional_Test_Fail"})
 
     def test_exclude_validation(self):
         s1 = self._create_shelf(name="shelf1")
-        s1.books_type = "madeup"
-        serializer = ShelfSerializer(s1)
-        with self.assertRaises(ValidationError):
-            serializer.validate(s1)
+        with self.assertRaises(DRFValidationError):
+            serializer = ShelfSerializer(instance=s1)
+            serializer.validate({"books_type": "invalid"})
+        serializer = ShelfSerializer(instance=s1)
         serializer.exclude_validation = ["books_type"]
-        serializer.validate(s1)
+        serializer.validate({"books_type": "invalid"})
+
+    def test_nested_relation_validation_data_is_not_assigned_directly(self):
+        class OwnerSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = get_user_model()
+                fields = ["username"]
+
+        class NestedShelfSerializer(ShelfSerializer):
+            owner = OwnerSerializer()
+
+            class Meta(ShelfSerializer.Meta):
+                fields = ["name", "owner"]
+
+        s1 = self._create_shelf(name="shelf1")
+        data = {"owner": {"username": "alice"}}
+        serializer = NestedShelfSerializer(instance=s1)
+        self.assertEqual(serializer.validate(data), data)
 
     def test_rest_framework_settings_override(self):
         drf_conf = getattr(settings, "REST_FRAMEWORK", {})
@@ -64,3 +78,124 @@ class TestApi(CreateMixin, TestCase):
                 "TEST": True,
             },
         )
+
+    def test_crud_shelf(self):
+        list_url = reverse("shelf_list")
+        with self.subTest("Create"):
+            response = self.client.post(
+                list_url,
+                {
+                    "name": "Fiction Shelf",
+                    "books_type": "FANTASY",
+                    "books_count": 3,
+                    "locked": False,
+                },
+                format="json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(Shelf.objects.count(), 1)
+            pk = response.data["id"]
+
+        shelf = Shelf.objects.get(pk=pk)
+        detail_url = reverse("shelf_detail", args=[pk])
+        with self.subTest("List"):
+            response = self.client.get(list_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data[0]["id"], pk)
+
+        with self.subTest("Retrieve"):
+            response = self.client.get(detail_url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.data["id"], pk)
+
+        with self.subTest("Update with PATCH"):
+            response = self.client.patch(
+                detail_url,
+                {"name": "Shelf - Updated"},
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            shelf.refresh_from_db()
+            self.assertEqual(shelf.name, "Shelf - Updated")
+
+        with self.subTest("Update with PUT"):
+            payload = {
+                "name": "Shelf PUT Full",
+                "books_type": "FACTUAL",
+                "books_count": 5,
+                "locked": False,
+            }
+            response = self.client.put(
+                detail_url, payload, content_type="application/json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            shelf.refresh_from_db()
+            self.assertEqual(shelf.name, "Shelf PUT Full")
+
+        with self.subTest("Delete"):
+            response = self.client.delete(detail_url)
+            self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+            self.assertEqual(Shelf.objects.count(), 0)
+
+    def test_model_validation_create_and_update(self):
+        list_url = reverse("shelf_list")
+        with self.subTest("Create (invalid)"):
+            response = self.client.post(
+                list_url, {"name": "Intentional_Test_Fail"}, format="json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        with self.subTest("Create (valid)"):
+            response = self.client.post(
+                list_url,
+                {
+                    "name": "Reference Shelf",
+                    "books_type": "FACTUAL",
+                    "books_count": 7,
+                    "locked": True,
+                },
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            pk = response.data["id"]
+
+        detail_url = reverse("shelf_detail", args=[pk])
+        with self.subTest("Update - PATCH (invalid)"):
+            response = self.client.patch(
+                detail_url,
+                {"name": "Intentional_Test_Fail"},
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        with self.subTest("Update - PUT (valid)"):
+            payload = {
+                "name": "Valid PUT Shelf",
+                "books_type": "FACTUAL",
+                "books_count": 10,
+                "locked": True,
+            }
+            response = self.client.put(
+                detail_url, payload, content_type="application/json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        with self.subTest("Update - PUT (invalid)"):
+            invalid_payload = {
+                "name": "Intentional_Test_Fail",
+                "books_type": "FACTUAL",
+                "books_count": 7,
+                "locked": True,
+            }
+            response = self.client.put(
+                detail_url, invalid_payload, content_type="application/json"
+            )
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn("Intentional_Test_Fail", str(response.data))
+            self.assertNotIn("This field is required", str(response.data))
+
+        with self.subTest("DB value unchanged after failed updates"):
+            shelf = Shelf.objects.get(pk=pk)
+            self.assertEqual(shelf.name, "Valid PUT Shelf")
+            self.assertEqual(shelf.books_count, 10)
+            self.assertEqual(shelf.locked, True)
