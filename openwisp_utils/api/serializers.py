@@ -1,11 +1,12 @@
 from copy import copy
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import models
-from django.db.models.fields.reverse_related import ForeignObjectRel
 
 try:
+    from django.core.exceptions import FieldDoesNotExist
+    from django.core.exceptions import ValidationError as DjangoValidationError
+    from django.db import models
+    from django.db.models.fields.reverse_related import ForeignObjectRel
     from rest_framework import serializers
     from rest_framework.exceptions import ValidationError as DRFValidationError
 except ImportError:  # pragma: nocover
@@ -25,19 +26,18 @@ class ValidatedModelSerializer(serializers.ModelSerializer):
         REST API.
         """
         instance = self.instance
+        Model = self.Meta.model
         # if instance is empty (eg: creation)
         # simulate for validation purposes
         if not instance:
-            Model = self.Meta.model
             instance = Model()
         else:
             instance = copy(instance)
         for key, value in data.items():
-            Model = type(instance)
             # avoid direct assignment for m2m (not allowed)
             try:
                 field = Model._meta.get_field(key)
-            except Exception:
+            except FieldDoesNotExist:
                 continue
             if isinstance(field, (models.ManyToManyField, ForeignObjectRel)):
                 continue
