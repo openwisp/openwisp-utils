@@ -1,8 +1,9 @@
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from test_project.serializers import ShelfSerializer
 
@@ -47,6 +48,23 @@ class TestApi(CreateMixin, TestCase):
         serializer = ShelfSerializer(instance=s1)
         serializer.exclude_validation = ["books_type"]
         serializer.validate({"books_type": "invalid"})
+
+    def test_nested_relation_validation_data_is_not_assigned_directly(self):
+        class OwnerSerializer(serializers.ModelSerializer):
+            class Meta:
+                model = get_user_model()
+                fields = ["username"]
+
+        class NestedShelfSerializer(ShelfSerializer):
+            owner = OwnerSerializer()
+
+            class Meta(ShelfSerializer.Meta):
+                fields = ["name", "owner"]
+
+        s1 = self._create_shelf(name="shelf1")
+        data = {"owner": {"username": "alice"}}
+        serializer = NestedShelfSerializer(instance=s1)
+        self.assertEqual(serializer.validate(data), data)
 
     def test_rest_framework_settings_override(self):
         drf_conf = getattr(settings, "REST_FRAMEWORK", {})
@@ -163,11 +181,18 @@ class TestApi(CreateMixin, TestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         with self.subTest("Update - PUT (invalid)"):
-            invalid_payload = {"books_count": 7}
+            invalid_payload = {
+                "name": "Intentional_Test_Fail",
+                "books_type": "FACTUAL",
+                "books_count": 7,
+                "locked": True,
+            }
             response = self.client.put(
                 detail_url, invalid_payload, content_type="application/json"
             )
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn("Intentional_Test_Fail", str(response.data))
+            self.assertNotIn("This field is required", str(response.data))
 
         with self.subTest("DB value unchanged after failed updates"):
             shelf = Shelf.objects.get(pk=pk)

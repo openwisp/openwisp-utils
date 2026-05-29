@@ -32,6 +32,7 @@ class ValidatedModelSerializer(serializers.ModelSerializer):
         if not instance:
             instance = Model()
         else:
+            # Validate incoming PUT/PATCH data without mutating the DB instance.
             instance = copy(instance)
         for key, value in data.items():
             # avoid direct assignment for m2m (not allowed)
@@ -40,6 +41,9 @@ class ValidatedModelSerializer(serializers.ModelSerializer):
             except FieldDoesNotExist:
                 continue
             if isinstance(field, (models.ManyToManyField, ForeignObjectRel)):
+                continue
+            # Skip nested relationships as we are only validating this model instance.
+            if field.is_relation and isinstance(value, (dict, list)):
                 continue
             setattr(instance, key, value)
         # perform model validation
