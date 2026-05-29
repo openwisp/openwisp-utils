@@ -1,12 +1,11 @@
 from copy import copy
 
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import models
+from django.db.models.fields.reverse_related import ForeignObjectRel
 
 try:
-    from django.core.exceptions import FieldDoesNotExist
-    from django.core.exceptions import ValidationError as DjangoValidationError
-    from django.db import models
-    from django.db.models.fields.reverse_related import ForeignObjectRel
     from rest_framework import serializers
     from rest_framework.exceptions import ValidationError as DRFValidationError
 except ImportError:  # pragma: nocover
