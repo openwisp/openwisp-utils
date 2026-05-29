@@ -18,5 +18,5 @@ CELERY_HARD_TIME_LIMIT = getattr(settings, "OPENWISP_CELERY_HARD_TIME_LIMIT", 12
 CELERY_SOFT_TIME_LIMIT = getattr(settings, "OPENWISP_CELERY_SOFT_TIME_LIMIT", 30)
 
 # Pagination defaults for OpenWispPagination
-API_PAGE_SIZE = getattr(settings, "OPENWISP_API_PAGE_SIZE", 10)
+API_DEFAULT_PAGE_SIZE = getattr(settings, "OPENWISP_API_DEFAULT_PAGE_SIZE", 10)
 API_MAX_PAGE_SIZE = getattr(settings, "OPENWISP_API_MAX_PAGE_SIZE", 100)

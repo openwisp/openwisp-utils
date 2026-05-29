@@ -1,12 +1,17 @@
+from importlib import reload
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from openwisp_utils import settings as app_settings
+from openwisp_utils.api import pagination as pagination_module
 from openwisp_utils.api.pagination import OpenWispPagination
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.request import Request
+from rest_framework.test import APIRequestFactory
 from test_project.serializers import ShelfSerializer
 
 from ..models import Shelf
@@ -215,7 +220,7 @@ class TestOpenWispPagination(CreateMixin, TestCase):
 
     def test_list_shelf_api_pagination(self):
         number_of_shelves = 21
-        default_page_size = app_settings.API_PAGE_SIZE
+        default_page_size = app_settings.API_DEFAULT_PAGE_SIZE
         last_page_size = number_of_shelves % default_page_size
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -284,9 +289,38 @@ class TestOpenWispPagination(CreateMixin, TestCase):
     def test_pagination_attributes(self):
         pagination = OpenWispPagination()
         self.assertIsInstance(pagination, PageNumberPagination)
-        self.assertEqual(pagination.page_size, app_settings.API_PAGE_SIZE)
+        self.assertEqual(pagination.page_size, app_settings.API_DEFAULT_PAGE_SIZE)
         self.assertEqual(pagination.max_page_size, app_settings.API_MAX_PAGE_SIZE)
         self.assertEqual(pagination.page_size_query_param, "page_size")
+
+    def _reload_pagination_settings(self):
+        reload(app_settings)
+        reload(pagination_module)
+        return pagination_module.OpenWispPagination
+
+    def test_pagination_attributes_can_be_overridden(self):
+        try:
+            with override_settings(
+                OPENWISP_API_DEFAULT_PAGE_SIZE=7,
+                OPENWISP_API_MAX_PAGE_SIZE=8,
+            ):
+                Pagination = self._reload_pagination_settings()
+                pagination = Pagination()
+                queryset = Shelf.objects.order_by("id")
+                factory = APIRequestFactory()
+                # test custom default page size
+                request = Request(factory.get(self.url))
+                paginated = pagination.paginate_queryset(queryset, request)
+                self.assertEqual(pagination.page_size, 7)
+                self.assertEqual(len(paginated), 7)
+                # test custom max page size
+                request = Request(factory.get(self.url, {"page_size": 50}))
+                paginated = pagination.paginate_queryset(queryset, request)
+                self.assertEqual(pagination.max_page_size, 8)
+                self.assertEqual(len(paginated), 8)
+        # restore default settings
+        finally:
+            self._reload_pagination_settings()
 
     def test_list_shelf_api_page_size_capped_at_max(self):
         max_page_size = OpenWispPagination.max_page_size

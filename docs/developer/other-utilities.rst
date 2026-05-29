@@ -92,7 +92,7 @@ A reusable pagination class for DRF views that provides consistent
 pagination behavior across OpenWISP modules with sensible defaults.
 
 - **10** items per page (``page_size``), configurable via
-  :ref:`OPENWISP_API_PAGE_SIZE <openwisp_api_page_size>`
+  :ref:`OPENWISP_API_DEFAULT_PAGE_SIZE <openwisp_default_api_page_size>`
 - **100** max items per page (``max_page_size``), configurable via
   :ref:`OPENWISP_API_MAX_PAGE_SIZE <openwisp_api_max_page_size>`
 - Custom page size via ``?page_size=N`` query parameter (capped at

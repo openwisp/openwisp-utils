@@ -14,6 +14,6 @@ except ImportError:  # pragma: nocover
 class OpenWispPagination(PageNumberPagination):
     """Reusable pagination class with settings-backed defaults."""
 
-    page_size = app_settings.API_PAGE_SIZE
+    page_size = app_settings.API_DEFAULT_PAGE_SIZE
     max_page_size = app_settings.API_MAX_PAGE_SIZE
     page_size_query_param = "page_size"

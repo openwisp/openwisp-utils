@@ -157,10 +157,10 @@ For more information about optional parameters check the `drf-yasg
 documentation
 <https://drf-yasg.readthedocs.io/en/stable/readme.html#quickstart>`_.
 
-.. _openwisp_api_page_size:
+.. _openwisp_default_api_page_size:
 
-``OPENWISP_API_PAGE_SIZE``
---------------------------
+``OPENWISP_API_DEFAULT_PAGE_SIZE``
+----------------------------------
 
 **Default**: ``10``
 
