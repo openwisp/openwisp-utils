@@ -386,7 +386,10 @@ def build_prompt(
         "  from the user's perspective\n"
         "- Focus the body on user-visible behavior, fixes, configuration changes,\n"
         "  compatibility notes, or important implementation consequences\n"
-        f"- Wrap the body around {COMMIT_SUBJECT_LIMIT} characters per line\n"
+        f"- Every non-empty body line must be {COMMIT_SUBJECT_LIMIT} "
+        "characters or shorter\n"
+        "- Insert real newline characters to wrap long body sentences; do not "
+        "return one long paragraph\n"
         f"- Keep the body concise, using no more than "
         f"{COMMIT_BODY_MAX_NONEMPTY_LINES} non-empty lines after the title,\n"
         "  including any issue footer lines\n"
@@ -534,6 +537,14 @@ def get_changelog_bot_validation_errors(text: str) -> list[str]:
         errors.append("Commit message must include a body after a blank line.")
     elif not text.partition("\n\n")[2].strip():
         errors.append("Commit message body cannot be empty.")
+    else:
+        body = text.partition("\n\n")[2]
+        for line_number, line in enumerate(body.splitlines(), 1):
+            if line.strip() and len(line) > COMMIT_SUBJECT_LIMIT:
+                errors.append(
+                    f"Commit message body line {line_number} must be "
+                    f"{COMMIT_SUBJECT_LIMIT} characters or shorter."
+                )
     for pattern in suspicious_patterns:
         if re.search(pattern, text, re.IGNORECASE):
             errors.append(f"Commit message matched a blocked safety pattern: {pattern}")

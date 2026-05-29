@@ -358,6 +358,11 @@ class TestBuildPrompt(unittest.TestCase):
             system_instruction,
         )
         self.assertIn(
+            f"Every non-empty body line must be {COMMIT_SUBJECT_LIMIT} "
+            "characters or shorter",
+            system_instruction,
+        )
+        self.assertIn(
             f"{COMMIT_BODY_MAX_NONEMPTY_LINES} non-empty lines after the title",
             system_instruction,
         )
@@ -650,6 +655,21 @@ class TestValidateChangelogOutput(unittest.TestCase):
         text = "[feature] Added new functionality"
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
+
+    def test_invalid_body_line_too_long(self):
+        text = (
+            "[feature] Added new functionality\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so the bot asks Gemini to wrap it."
+        )
+        errors = get_changelog_validation_errors(text, "rst")
+        self.assertEqual(
+            errors,
+            [
+                f"Commit message body line 1 must be {COMMIT_SUBJECT_LIMIT} "
+                "characters or shorter."
+            ],
+        )
 
     def test_invalid_empty_text(self):
         result = validate_changelog_output("", "rst")
