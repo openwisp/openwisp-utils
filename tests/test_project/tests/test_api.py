@@ -322,6 +322,20 @@ class TestOpenWispPagination(CreateMixin, TestCase):
         finally:
             self._reload_pagination_settings()
 
+    def test_pagination_page_size_can_be_overridden_by_view(self):
+        class View:
+            pagination_page_size = 20
+
+        pagination = OpenWispPagination()
+        queryset = Shelf.objects.order_by("id")
+        factory = APIRequestFactory()
+        request = Request(factory.get(self.url))
+        paginated = pagination.paginate_queryset(queryset, request, view=View())
+        self.assertEqual(len(paginated), 20)
+        request = Request(factory.get(self.url, {"page_size": 5}))
+        paginated = pagination.paginate_queryset(queryset, request, view=View())
+        self.assertEqual(len(paginated), 5)
+
     def test_list_shelf_api_page_size_capped_at_max(self):
         max_page_size = OpenWispPagination.max_page_size
         # Create enough shelves so the response would exceed max_page_size
