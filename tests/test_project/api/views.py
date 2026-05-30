@@ -26,6 +26,7 @@ class ReceiveProjectView(View):
 class ShelfListCreateView(generics.ListCreateAPIView):
     queryset = Shelf.objects.all()
     serializer_class = ShelfSerializer
+    pagination_class = OpenWispPagination
 
 
 class ShelfRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):

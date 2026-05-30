@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from openwisp_utils import settings as app_settings
 from openwisp_utils.api import pagination as pagination_module
 from openwisp_utils.api.pagination import OpenWispPagination
@@ -108,7 +109,7 @@ class TestApi(CreateMixin, TestCase):
         with self.subTest("List"):
             response = self.client.get(list_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertEqual(response.data[0]["id"], pk)
+            self.assertEqual(response.data["results"][0]["id"], pk)
 
         with self.subTest("Retrieve"):
             response = self.client.get(detail_url)
