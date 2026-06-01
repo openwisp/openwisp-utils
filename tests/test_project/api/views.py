@@ -1,9 +1,8 @@
 from django.http import JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from rest_framework import generics, viewsets
-
 from openwisp_utils.api.pagination import OpenWispPagination
+from rest_framework import generics, viewsets
 
 from ..models import Project, Shelf
 from ..serializers import ShelfSerializer

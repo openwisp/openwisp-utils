@@ -119,9 +119,9 @@ pagination behavior across OpenWISP modules with sensible defaults.
         pagination_page_size = 20
 
 Views can set ``pagination_page_size`` to override
-:ref:`OPENWISP_API_DEFAULT_PAGE_SIZE <openwisp_default_api_page_size>` while
-keeping the same reusable pagination class. The ``?page_size=N`` query
-parameter still takes precedence and is capped by
+:ref:`OPENWISP_API_DEFAULT_PAGE_SIZE <openwisp_default_api_page_size>`
+while keeping the same reusable pagination class. The ``?page_size=N``
+query parameter still takes precedence and is capped by
 :ref:`OPENWISP_API_MAX_PAGE_SIZE <openwisp_api_max_page_size>`.
 
 **API Request Examples:**
