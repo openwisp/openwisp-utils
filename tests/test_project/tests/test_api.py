@@ -1,10 +1,18 @@
+from importlib import reload
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
+from openwisp_utils import settings as app_settings
+from openwisp_utils.api import pagination as pagination_module
+from openwisp_utils.api.pagination import OpenWispPagination
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.request import Request
+from rest_framework.test import APIRequestFactory
 from test_project.serializers import ShelfSerializer
 
 from ..models import Shelf
@@ -101,7 +109,7 @@ class TestApi(CreateMixin, TestCase):
         with self.subTest("List"):
             response = self.client.get(list_url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            self.assertEqual(response.data[0]["id"], pk)
+            self.assertEqual(response.data["results"][0]["id"], pk)
 
         with self.subTest("Retrieve"):
             response = self.client.get(detail_url)
@@ -199,3 +207,147 @@ class TestApi(CreateMixin, TestCase):
             self.assertEqual(shelf.name, "Valid PUT Shelf")
             self.assertEqual(shelf.books_count, 10)
             self.assertEqual(shelf.locked, True)
+
+
+class TestOpenWispPagination(CreateMixin, TestCase):
+    shelf_model = Shelf
+
+    def setUp(self):
+        super().setUp()
+        self.url = "/api/v1/shelves/"
+        # Create 21 shelves to test pagination across multiple pages
+        for i in range(21):
+            self._create_shelf(name=f"shelf{i}")
+
+    def test_list_shelf_api_pagination(self):
+        number_of_shelves = 21
+        default_page_size = app_settings.API_DEFAULT_PAGE_SIZE
+        last_page_size = number_of_shelves % default_page_size
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], number_of_shelves)
+        self.assertIsNotNone(response.data["next"])
+        self.assertIn("page=2", response.data["next"])
+        self.assertIsNone(response.data["previous"])
+        self.assertEqual(len(response.data["results"]), default_page_size)
+
+        next_response = self.client.get(response.data["next"])
+        self.assertEqual(next_response.status_code, 200)
+        self.assertEqual(next_response.data["count"], number_of_shelves)
+        self.assertIsNotNone(next_response.data["next"])
+        self.assertIn("page=3", next_response.data["next"])
+        self.assertIsNotNone(next_response.data["previous"])
+        # Page 1 is the default, so DRF doesn't include page=1 in the previous URL
+        self.assertIn(self.url, next_response.data["previous"])
+        self.assertEqual(len(next_response.data["results"]), default_page_size)
+
+        third_response = self.client.get(next_response.data["next"])
+        self.assertEqual(third_response.status_code, 200)
+        self.assertEqual(third_response.data["count"], number_of_shelves)
+        self.assertIsNone(third_response.data["next"])
+        self.assertIsNotNone(third_response.data["previous"])
+        self.assertIn("page=2", third_response.data["previous"])
+        self.assertEqual(len(third_response.data["results"]), last_page_size)
+
+    def test_list_shelf_api_custom_page_size(self):
+        number_of_shelves = 21
+        page_size = 5
+        url_with_page_size = f"{self.url}?page_size={page_size}"
+
+        response = self.client.get(url_with_page_size)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], number_of_shelves)
+        self.assertIsNotNone(response.data["next"])
+        self.assertIn(f"page_size={page_size}", response.data["next"])
+        self.assertIn("page=2", response.data["next"])
+        self.assertIsNone(response.data["previous"])
+        self.assertEqual(len(response.data["results"]), page_size)
+
+        next_response = self.client.get(response.data["next"])
+        self.assertEqual(next_response.status_code, 200)
+        self.assertEqual(next_response.data["count"], number_of_shelves)
+        self.assertIsNotNone(next_response.data["next"])
+        self.assertIn(f"page_size={page_size}", next_response.data["next"])
+        self.assertIn("page=3", next_response.data["next"])
+        self.assertIsNotNone(next_response.data["previous"])
+        self.assertIn(f"page_size={page_size}", next_response.data["previous"])
+        # Page 1 is the default, so DRF doesn't include page=1 in the previous URL
+        self.assertIn(url_with_page_size, next_response.data["previous"])
+        self.assertEqual(len(next_response.data["results"]), page_size)
+
+        # Walk to the last page to verify the partial-page boundary
+        last_response = next_response
+        while last_response.data["next"] is not None:
+            last_response = self.client.get(last_response.data["next"])
+            self.assertEqual(last_response.status_code, 200)
+        self.assertEqual(last_response.data["count"], number_of_shelves)
+        self.assertEqual(len(last_response.data["results"]), 1)
+        self.assertIsNone(last_response.data["next"])
+        self.assertIsNotNone(last_response.data["previous"])
+        self.assertIn("page=4", last_response.data["previous"])
+        self.assertIn(f"page_size={page_size}", last_response.data["previous"])
+
+    def test_pagination_attributes(self):
+        pagination = OpenWispPagination()
+        self.assertIsInstance(pagination, PageNumberPagination)
+        self.assertEqual(pagination.page_size, app_settings.API_DEFAULT_PAGE_SIZE)
+        self.assertEqual(pagination.max_page_size, app_settings.API_MAX_PAGE_SIZE)
+        self.assertEqual(pagination.page_size_query_param, "page_size")
+
+    def _reload_pagination_settings(self):
+        reload(app_settings)
+        reload(pagination_module)
+        return pagination_module.OpenWispPagination
+
+    def test_pagination_attributes_can_be_overridden(self):
+        try:
+            with override_settings(
+                OPENWISP_API_DEFAULT_PAGE_SIZE=7,
+                OPENWISP_API_MAX_PAGE_SIZE=8,
+            ):
+                Pagination = self._reload_pagination_settings()
+                pagination = Pagination()
+                queryset = Shelf.objects.order_by("id")
+                factory = APIRequestFactory()
+                # test custom default page size
+                request = Request(factory.get(self.url))
+                paginated = pagination.paginate_queryset(queryset, request)
+                self.assertEqual(pagination.page_size, 7)
+                self.assertEqual(len(paginated), 7)
+                # test custom max page size
+                request = Request(factory.get(self.url, {"page_size": 50}))
+                paginated = pagination.paginate_queryset(queryset, request)
+                self.assertEqual(pagination.max_page_size, 8)
+                self.assertEqual(len(paginated), 8)
+        # restore default settings
+        finally:
+            self._reload_pagination_settings()
+
+    def test_pagination_page_size_can_be_overridden_by_view(self):
+        class View:
+            pagination_page_size = 20
+
+        pagination = OpenWispPagination()
+        queryset = Shelf.objects.order_by("id")
+        factory = APIRequestFactory()
+        request = Request(factory.get(self.url))
+        paginated = pagination.paginate_queryset(queryset, request, view=View())
+        self.assertEqual(len(paginated), 20)
+        request = Request(factory.get(self.url, {"page_size": 5}))
+        paginated = pagination.paginate_queryset(queryset, request, view=View())
+        self.assertEqual(len(paginated), 5)
+
+    def test_list_shelf_api_page_size_capped_at_max(self):
+        max_page_size = OpenWispPagination.max_page_size
+        # Create enough shelves so the response would exceed max_page_size
+        # if the cap were not enforced.
+        extra = (max_page_size + 5) - Shelf.objects.count()
+        for i in range(extra):
+            self._create_shelf(name=f"extra_shelf{i}")
+        total = Shelf.objects.count()
+        self.assertGreater(total, max_page_size)
+
+        response = self.client.get(f"{self.url}?page_size={max_page_size + 50}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], total)
+        self.assertEqual(len(response.data["results"]), max_page_size)
