@@ -1,5 +1,6 @@
 import json
 import re
+import subprocess
 import sys
 
 import questionary
@@ -64,14 +65,20 @@ def _bump_npm_version(content, new_version, version_path):
 
 
 def _bump_docker_version(content, new_version, version_path):
-    """Handles version bumping for Docker packages."""
-    return _bump_with_regex(
-        content,
-        r"^OPENWISP_VERSION\s*=\s*[^\s]+",
-        f"OPENWISP_VERSION = {new_version}",
-        version_path,
-        "OPENWISP_VERSION",
+    """Handles version bumping for docker-openwisp.
+
+    Delegates to docker-openwisp's canonical ``make bump`` target so the
+    releaser does not need to know how the version is stored on disk.
+    """
+    subprocess.run(
+        ["make", "bump", f"VERSION={new_version}"],
+        check=True,
+        capture_output=True,
     )
+    # ``make bump`` already wrote the canonical VERSION file; return its
+    # content so the caller writes back the same value.
+    with open(version_path, "r") as f:
+        return f.read()
 
 
 def _bump_ansible_version(content, new_version, version_path):

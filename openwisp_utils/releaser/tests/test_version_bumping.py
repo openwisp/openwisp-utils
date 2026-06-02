@@ -98,8 +98,9 @@ def test_get_current_version_short_tuple():
 def test_bump_version_no_tuple_found(mock_config):
     """Tests RuntimeError during version bumping if VERSION is not found."""
     mock_config["package_type"] = "python"
-    with patch("os.path.exists", return_value=True), patch(
-        "builtins.open", mock_open(read_data="NO_VERSION_HERE")
+    with (
+        patch("os.path.exists", return_value=True),
+        patch("builtins.open", mock_open(read_data="NO_VERSION_HERE")),
     ):
         with pytest.raises(RuntimeError, match="Failed to find and bump VERSION"):
             bump_version(mock_config, "1.2.1")
@@ -214,12 +215,12 @@ def test_bump_version_npm():
     assert '"version": "1.2.4"' in written_content
 
 
-# Docker Package Version Tests
+# Docker (docker-openwisp) Package Version Tests
 def test_get_current_version_docker():
-    """Tests getting current version from docker Makefile."""
+    """Tests getting current version from the docker-openwisp VERSION file."""
     config = {
         "package_type": "docker",
-        "version_path": "Makefile",
+        "version_path": "images/common/openwisp/VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
     version, version_type = get_current_version(config)
@@ -228,20 +229,23 @@ def test_get_current_version_docker():
 
 
 def test_bump_version_docker():
-    """Tests bumping version for docker packages in Makefile."""
+    """Tests that docker-openwisp is bumped via the canonical 'make bump'."""
     config = {
         "package_type": "docker",
-        "version_path": "Makefile",
+        "version_path": "images/common/openwisp/VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
-    makefile_content = "OPENWISP_VERSION = 1.2.3\nDOCKER_IMAGE = openwisp/test\n"
-    m_open = mock_open(read_data=makefile_content)
-    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+    m_open = mock_open(read_data="1.2.4\n")
+    with (
+        patch("openwisp_utils.releaser.version.subprocess.run") as mock_run,
+        patch("builtins.open", m_open),
+    ):
         result = bump_version(config, "1.2.4")
 
     assert result is True
-    written_content = m_open().write.call_args[0][0]
-    assert "OPENWISP_VERSION = 1.2.4" in written_content
+    mock_run.assert_called_once_with(
+        ["make", "bump", "VERSION=1.2.4"], check=True, capture_output=True
+    )
 
 
 # Ansible Package Version Tests
