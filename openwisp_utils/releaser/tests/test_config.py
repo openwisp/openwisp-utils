@@ -268,6 +268,26 @@ def test_docker_package_without_version_file(
     assert config["CURRENT_VERSION"] is None
 
 
+def test_docker_package_empty_version_file(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests docker package with an empty canonical VERSION file."""
+    create_docker_compose(project_dir)
+    create_docker_version_file(project_dir, version="")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "docker"
+    # version_path is recorded so make bump can still recover after a
+    # manual version entry, even though the current version is unknown.
+    assert config["version_path"] == DOCKER_VERSION_PATH
+    assert config["CURRENT_VERSION"] is None
+
+
 def test_docker_package_invalid_version(
     project_dir,
     create_docker_compose,

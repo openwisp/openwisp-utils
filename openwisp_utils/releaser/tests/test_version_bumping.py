@@ -1,3 +1,4 @@
+import subprocess
 from unittest.mock import mock_open, patch
 
 import pytest
@@ -244,8 +245,51 @@ def test_bump_version_docker():
 
     assert result is True
     mock_run.assert_called_once_with(
-        ["make", "bump", "VERSION=1.2.4"], check=True, capture_output=True
+        ["make", "bump", "VERSION=1.2.4"],
+        check=True,
+        capture_output=True,
+        text=True,
     )
+    # make bump writes the file itself; bump_version must not write again.
+    m_open().write.assert_not_called()
+
+
+def test_bump_version_docker_make_failure():
+    """A failing 'make bump' surfaces Make's output in the raised error."""
+    config = {
+        "package_type": "docker",
+        "version_path": "images/common/openwisp/VERSION",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    error = subprocess.CalledProcessError(
+        returncode=2, cmd=["make", "bump", "VERSION=1.2.4"]
+    )
+    error.stdout = "building...\n"
+    error.stderr = "ERROR: boom\n"
+    m_open = mock_open(read_data="1.2.3\n")
+    with (
+        patch("openwisp_utils.releaser.version.subprocess.run", side_effect=error),
+        patch("builtins.open", m_open),
+    ):
+        with pytest.raises(RuntimeError, match="ERROR: boom"):
+            bump_version(config, "1.2.4")
+
+
+def test_bump_version_docker_unchanged_file():
+    """A 'make bump' that exits 0 but leaves VERSION stale must fail loudly."""
+    config = {
+        "package_type": "docker",
+        "version_path": "images/common/openwisp/VERSION",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    # subprocess succeeds, but the file still holds the old version.
+    m_open = mock_open(read_data="1.2.3\n")
+    with (
+        patch("openwisp_utils.releaser.version.subprocess.run"),
+        patch("builtins.open", m_open),
+    ):
+        with pytest.raises(RuntimeError, match="contains '1.2.3'"):
+            bump_version(config, "1.2.4")
 
 
 # Ansible Package Version Tests

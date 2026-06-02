@@ -69,16 +69,31 @@ def _bump_docker_version(content, new_version, version_path):
 
     Delegates to docker-openwisp's canonical ``make bump`` target so the
     releaser does not need to know how the version is stored on disk.
+    Verifies the canonical VERSION file was updated, then returns ``None``
+    so the caller skips the write-back (``make bump`` already wrote it).
     """
-    subprocess.run(
-        ["make", "bump", f"VERSION={new_version}"],
-        check=True,
-        capture_output=True,
-    )
-    # ``make bump`` already wrote the canonical VERSION file; return its
-    # content so the caller writes back the same value.
+    try:
+        subprocess.run(
+            ["make", "bump", f"VERSION={new_version}"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        # Surface Make's output so the failure is diagnosable.
+        raise RuntimeError(
+            f"`make bump VERSION={new_version}` failed:\n{e.stdout}{e.stderr}"
+        ) from e
+    # A zero-exit ``make bump`` does not guarantee the file changed; verify it
+    # so a no-op target cannot silently produce a stale release.
     with open(version_path, "r") as f:
-        return f.read()
+        bumped_version = f.read().strip()
+    if bumped_version != new_version:
+        raise RuntimeError(
+            f"`make bump VERSION={new_version}` completed but {version_path} "
+            f"contains {bumped_version!r}."
+        )
+    return None
 
 
 def _bump_ansible_version(content, new_version, version_path):
@@ -127,8 +142,11 @@ def bump_version(config, new_version):
     if not handler:
         raise RuntimeError(f"Unknown package type: {package_type}")
     new_content = handler(content, new_version, version_path)
-    with open(version_path, "w") as f:
-        f.write(new_content)
+    # A handler may return None to signal it already wrote the file itself
+    # (e.g. docker-openwisp delegates the write to ``make bump``).
+    if new_content is not None:
+        with open(version_path, "w") as f:
+            f.write(new_content)
     return True
 
 
