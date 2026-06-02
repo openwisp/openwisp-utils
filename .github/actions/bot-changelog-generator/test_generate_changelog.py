@@ -30,6 +30,7 @@ from generate_changelog import (  # noqa: E402
     get_pr_diff,
     has_existing_changelog_comment,
     post_github_comment,
+    resolve_model,
     validate_changelog_output,
 )
 
@@ -53,6 +54,32 @@ class TestGetEnvOrExit(unittest.TestCase):
             with self.assertRaises(SystemExit) as context:
                 get_env_or_exit("EMPTY_VAR")
             self.assertEqual(context.exception.code, 1)
+
+
+class TestResolveModel(unittest.TestCase):
+    """Tests for resolve_model: GEMINI_MODEL env resolution."""
+
+    def test_returns_env_model_when_set(self):
+        with patch.dict(os.environ, {"GEMINI_MODEL": "gemini-2.5-flash"}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash")
+
+    def test_returns_default_when_unset(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+
+    def test_returns_default_when_empty(self):
+        # Regression: an empty ``${{ vars.GEMINI_MODEL }}`` forwards an empty
+        # string, which must still fall back to the default model.
+        with patch.dict(os.environ, {"GEMINI_MODEL": ""}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+
+    def test_returns_default_when_whitespace(self):
+        with patch.dict(os.environ, {"GEMINI_MODEL": "   "}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+
+    def test_strips_surrounding_whitespace(self):
+        with patch.dict(os.environ, {"GEMINI_MODEL": "  gemini-2.5-flash  "}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash")
 
 
 class TestGetPrDetails(unittest.TestCase):
@@ -309,6 +336,21 @@ class TestCallGemini(unittest.TestCase):
                 "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
             )
         self.assertEqual(context.exception.code, 1)
+
+    @patch("generate_changelog.genai")
+    def test_exits_zero_on_quota_error(self, mock_genai):
+        # Quota / RPD exhaustion must not turn the workflow red; it should skip
+        # gracefully (exit 0) like the CI-failure bot does on API errors.
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = Exception(
+            "429 RESOURCE_EXHAUSTED: Quota exceeded for requests per day"
+        )
+        mock_genai.Client.return_value = mock_client
+        with self.assertRaises(SystemExit) as context:
+            call_gemini(
+                "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+            )
+        self.assertEqual(context.exception.code, 0)
 
     @patch("generate_changelog.genai")
     def test_passes_prompt_as_contents(self, mock_genai):
@@ -797,23 +839,22 @@ class TestGenerateChangelogEntry(unittest.TestCase):
         self, mock_call_gemini, mock_get_validation_errors
     ):
         pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
+        # Provide one entry/error per allowed attempt so the test tracks the
+        # configured MAX_GENERATION_ATTEMPTS instead of a hardcoded count.
+        attempts = MAX_GENERATION_ATTEMPTS
         mock_call_gemini.side_effect = [
-            "[change] Attempt 1\n\nBody",
-            "[change] Attempt 2\n\nBody",
-            "[change] Attempt 3\n\nBody",
+            f"[change] Attempt {i}\n\nBody" for i in range(1, attempts + 1)
         ]
         mock_get_validation_errors.side_effect = [
-            ["Error 1"],
-            ["Error 2"],
-            ["Error 3"],
+            [f"Error {i}"] for i in range(1, attempts + 1)
         ]
 
         entry, errors = generate_changelog_entry(
             pr_details, "", [], [], "rst", "api_key", "gemini-test"
         )
 
-        self.assertEqual(entry, "[change] Attempt 3\n\nBody")
-        self.assertEqual(errors, ["Error 3"])
+        self.assertEqual(entry, f"[change] Attempt {attempts}\n\nBody")
+        self.assertEqual(errors, [f"Error {attempts}"])
         self.assertEqual(mock_call_gemini.call_count, MAX_GENERATION_ATTEMPTS)
 
 
