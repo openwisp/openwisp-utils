@@ -424,6 +424,14 @@ The bot supports a configurable retry classifier mode via
   LLM call is skipped when the heuristic already matched.
 - Any other value (including empty/typo): heuristic-only retry.
 
+**Model configuration**
+
+By default the bot uses ``gemini-2.5-flash-lite``. To use a different model
+(for example a paid tier with a higher or unlimited daily request quota), set
+the ``GEMINI_MODEL`` repository or organization variable. An unset or empty
+value keeps the default. The same variable also controls the changelog bot, so
+setting it once at the organization level repoints both bots together.
+
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
 cross-repository concurrency locks and token limits to prevent PR spam on
@@ -549,6 +557,13 @@ to secrets, and is the one that generates and posts the changelog comment.
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
+
+**Model configuration**
+
+The changelog bot uses ``gemini-2.5-flash-lite`` by default and honors the same
+``GEMINI_MODEL`` repository or organization variable as the CI failure bot. Set
+it to point both bots at a model with a higher daily request quota; leave it
+unset to keep the default.
 
 **Setup for Other Repositories**
 

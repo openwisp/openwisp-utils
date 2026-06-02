@@ -21,7 +21,8 @@ Environment Variables:
     PR_NUMBER: The PR number to analyze
     REPO_NAME: The repository name (e.g., openwisp/openwisp-utils)
     GITHUB_TOKEN: GitHub token for API access
-    GEMINI_MODEL: Model to use (default: 'gemini-2.5-flash-lite')
+    GEMINI_MODEL: Model to use (default: 'gemini-2.5-flash-lite'). An unset or
+        empty value falls back to the default, mirroring the CI-failure bot.
 """
 
 import os
@@ -40,7 +41,10 @@ CHANGELOG_BOT_MARKER = "<!-- openwisp-changelog-bot -->"
 CHANGELOG_COMMENT_INTRO = "Proposed change log entry:"
 COMMIT_SUBJECT_LIMIT = 72
 COMMIT_BODY_MAX_NONEMPTY_LINES = 10
-MAX_GENERATION_ATTEMPTS = 3
+# Keep this low: each attempt is one Gemini request, and the bot shares a
+# per-model daily request quota (RPD) with the other OpenWISP bots.
+MAX_GENERATION_ATTEMPTS = 2
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
 COMMIT_MESSAGE_RULE_CONTEXT_FILES = (
     "openwisp_utils/releaser/commitizen.py",
     "openwisp_utils/releaser/tests/test_commitizen_rules.py",
@@ -62,6 +66,29 @@ def get_env_or_exit(name: str) -> str:
         print(f"Error: {name} environment variable is required", file=sys.stderr)
         sys.exit(1)
     return value
+
+
+def resolve_model() -> str:
+    """Resolve the Gemini model from the environment.
+
+    Mirrors the CI-failure bot: an unset, empty, or whitespace-only
+    ``GEMINI_MODEL`` (for example an empty ``${{ vars.GEMINI_MODEL }}``)
+    falls back to the default model.
+    """
+    raw_model = os.environ.get("GEMINI_MODEL", "").strip()
+    return raw_model or DEFAULT_GEMINI_MODEL
+
+
+def _is_quota_error(error_message: str) -> bool:
+    """Return True if the error looks like a Gemini quota / rate-limit error."""
+    lowered = error_message.lower()
+    return (
+        "429" in lowered
+        or "resource_exhausted" in lowered
+        or "quota" in lowered
+        or "rate limit" in lowered
+        or "rate-limit" in lowered
+    )
 
 
 def github_api_request(endpoint: str, token: str) -> dict:
@@ -229,6 +256,16 @@ def call_gemini(
         error_msg = str(e)
         error_msg = re.sub(r"key=\S+", "key=***", error_msg)
         error_msg = re.sub(r"Bearer\s+\S+", "Bearer ***", error_msg)
+        if _is_quota_error(error_msg):
+            # Daily quota (RPD) exhaustion is not a code problem and must not
+            # mark the workflow as failed. Skip gracefully like the CI-failure
+            # bot does on API errors.
+            print(
+                f"::warning::Gemini quota exhausted; skipping changelog "
+                f"suggestion: {error_msg}",
+                file=sys.stderr,
+            )
+            sys.exit(0)
         print(f"Gemini API error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
@@ -623,7 +660,7 @@ def main():
         print("Changelog comment already exists, skipping.")
         return
     api_key = get_env_or_exit("GEMINI_API_KEY")
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    model = resolve_model()
     pr_details = get_pr_details(repo, pr_number, github_token)
     base_branch = pr_details["base_branch"]
     diff = get_pr_diff(base_branch)
