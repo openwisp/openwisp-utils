@@ -84,6 +84,10 @@ def _bump_docker_version(content, new_version, version_path):
         raise RuntimeError(
             f"`make bump VERSION={new_version}` failed:\n{e.stdout}{e.stderr}"
         ) from e
+    except FileNotFoundError as e:
+        raise RuntimeError(
+            "`make` is required to bump docker-openwisp but was not found on PATH."
+        ) from e
     # A zero-exit ``make bump`` does not guarantee the file changed; verify it
     # so a no-op target cannot silently produce a stale release.
     with open(version_path, "r") as f:

@@ -275,6 +275,25 @@ def test_bump_version_docker_make_failure():
             bump_version(config, "1.2.4")
 
 
+def test_bump_version_docker_make_missing():
+    """A missing 'make' executable raises a diagnosable release error."""
+    config = {
+        "package_type": "docker",
+        "version_path": "images/common/openwisp/VERSION",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    m_open = mock_open(read_data="1.2.3\n")
+    with (
+        patch(
+            "openwisp_utils.releaser.version.subprocess.run",
+            side_effect=FileNotFoundError(),
+        ),
+        patch("builtins.open", m_open),
+    ):
+        with pytest.raises(RuntimeError, match="`make` is required"):
+            bump_version(config, "1.2.4")
+
+
 def test_bump_version_docker_unchanged_file():
     """A 'make bump' that exits 0 but leaves VERSION stale must fail loudly."""
     config = {
