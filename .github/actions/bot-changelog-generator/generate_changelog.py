@@ -30,6 +30,7 @@ import re
 import secrets
 import subprocess
 import sys
+import textwrap
 from html import escape
 
 from google import genai
@@ -50,6 +51,11 @@ COMMIT_MESSAGE_RULE_CONTEXT_FILES = (
     "openwisp_utils/releaser/tests/test_commitizen_rules.py",
 )
 COMMIT_MESSAGE_RULE_CONTEXT_LIMIT = 6000
+ISSUE_FOOTER_RE = re.compile(
+    r"^(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to)"
+    r"(?:\s+#\d+)+\.?$",
+    re.IGNORECASE,
+)
 
 
 class _CommitizenConfig:
@@ -89,6 +95,57 @@ def _is_quota_error(error_message: str) -> bool:
         or "rate limit" in lowered
         or "rate-limit" in lowered
     )
+
+
+def _flush_body_paragraph(
+    normalized_body_lines: list[str], paragraph: list[str]
+) -> None:
+    """Wrap buffered body text into normalized commit-message lines."""
+    if not paragraph:
+        return
+    paragraph_text = " ".join(line.strip() for line in paragraph)
+    normalized_body_lines.extend(
+        textwrap.wrap(
+            paragraph_text,
+            width=COMMIT_SUBJECT_LIMIT,
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
+    )
+    paragraph.clear()
+
+
+def normalize_changelog_output(text: str) -> str:
+    """Normalize locally fixable formatting in a generated commit message."""
+    text = text.strip()
+    if "\n\n" not in text:
+        return text
+    subject, _, body = text.partition("\n\n")
+    if not body.strip():
+        return text
+    normalized_body_lines = []
+    paragraph = []
+    # Buffer regular body lines so existing hard-wrapped text is reflowed as
+    # one paragraph instead of preserving Gemini's arbitrary line breaks.
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            _flush_body_paragraph(normalized_body_lines, paragraph)
+            if normalized_body_lines and normalized_body_lines[-1] != "":
+                normalized_body_lines.append("")
+        elif ISSUE_FOOTER_RE.match(stripped):
+            # Issue footers are semantically meaningful commit metadata, so do
+            # not merge or wrap them into the preceding paragraph.
+            _flush_body_paragraph(normalized_body_lines, paragraph)
+            normalized_body_lines.append(stripped)
+        else:
+            paragraph.append(stripped)
+    _flush_body_paragraph(normalized_body_lines, paragraph)
+    while normalized_body_lines and normalized_body_lines[-1] == "":
+        normalized_body_lines.pop()
+    if not normalized_body_lines:
+        return subject.strip()
+    return f"{subject.strip()}\n\n" + "\n".join(normalized_body_lines)
 
 
 def github_api_request(endpoint: str, token: str) -> dict:
@@ -499,9 +556,9 @@ def generate_changelog_entry(
             validation_errors=validation_errors or None,
             attempt=attempt,
         )
-        latest_entry = call_gemini(
-            user_data_prompt, system_instruction, api_key, model
-        ).strip()
+        latest_entry = normalize_changelog_output(
+            call_gemini(user_data_prompt, system_instruction, api_key, model)
+        )
         validation_errors = get_changelog_validation_errors(
             latest_entry, changelog_format
         )
@@ -680,8 +737,8 @@ def main():
     if validation_errors:
         print(
             "::warning::Generated changelog entry failed validation against "
-            "OpenWISP commit message rules after 3 attempts. Posting the last "
-            "attempt anyway.",
+            "OpenWISP commit message rules after "
+            f"{MAX_GENERATION_ATTEMPTS} attempts. Posting the last attempt anyway.",
             file=sys.stderr,
         )
         for error in validation_errors:
