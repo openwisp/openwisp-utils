@@ -118,14 +118,23 @@ runflake8() {
 }
 
 runrstcheck() {
-  cmd="docstrfmt --no-docstring-trailing-line -i -c -l 74 -s =-~+^\"\'.: --extend-exclude node_modules ."
-  $($cmd --quiet) &&
-    echo "SUCCESS: ReStructuredText check successful!" ||
-    {
+  local files=()
+  # Build the file list manually so docstrfmt never sees node_modules or
+  # hidden directories; its built-in exclude matching misses deeply nested paths.
+  while IFS= read -r -d '' file; do
+    files+=("$file")
+  done < <(find . -path "*/.*" -prune -o -path "*/node_modules/*" -prune \
+    -o -type f \( -name "*.py" -o -name "*.rst" \) -print0)
+  if [ ${#files[@]} -gt 0 ]; then
+    local cmd=(docstrfmt --no-docstring-trailing-line -i -c -l 74 -s "=-~+^\"'.:")
+    "${cmd[@]}" --quiet "${files[@]}" || {
       echoerr "ERROR: ReStructuredText check failed!"
-      $($cmd)
+      "${cmd[@]}" "${files[@]}"
       FAILURE=1
+      return
     }
+  fi
+  echo "SUCCESS: ReStructuredText check successful!"
 }
 
 runisort() {
