@@ -266,6 +266,26 @@ class TestQa(TestCase):
                     "done\n"
                 )
             os.chmod(docstrfmt_path, 0o755)
+            # Create a normal Python file
+            work_file = path.join(temp_dir, "work.py")
+            with open(work_file, "w") as f:
+                f.write("x = 1\n")
+            spaced_file = path.join(temp_dir, "work with spaces.rst")
+            with open(spaced_file, "w") as f:
+                f.write("Test\n====\n")
+            # Create files inside node_modules (should be excluded)
+            node_module_py = path.join(temp_dir, "node_modules", "pkg", "file.py")
+            os.makedirs(path.dirname(node_module_py))
+            with open(node_module_py, "w") as f:
+                f.write("y = 2\n")
+            node_module_rst = path.join(temp_dir, "node_modules", "other", "doc.rst")
+            os.makedirs(path.dirname(node_module_rst))
+            with open(node_module_rst, "w") as f:
+                f.write("Test\n====\n")
+            hidden_py = path.join(temp_dir, ".github", "actions", "script.py")
+            os.makedirs(path.dirname(hidden_py))
+            with open(hidden_py, "w") as f:
+                f.write("z = 3\n")
             env = os.environ.copy()
             env["DOCSTRFMT_ARGS"] = args_path
             env["PATH"] = f'{bin_dir}:{env["PATH"]}'
@@ -286,7 +306,14 @@ class TestQa(TestCase):
                 text=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(
+                result.stdout.count("SUCCESS: ReStructuredText check successful!"),
+                1,
+            )
             with open(args_path) as f:
                 args = f.read().splitlines()
-            self.assertIn("--extend-exclude", args)
-            self.assertIn("node_modules", args)
+            self.assertIn("./work.py", args)
+            self.assertIn("./work with spaces.rst", args)
+            self.assertNotIn("./node_modules/pkg/file.py", args)
+            self.assertNotIn("./node_modules/other/doc.rst", args)
+            self.assertNotIn("./.github/actions/script.py", args)

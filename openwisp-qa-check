@@ -118,14 +118,19 @@ runflake8() {
 }
 
 runrstcheck() {
-  cmd="docstrfmt --no-docstring-trailing-line -i -c -l 74 -s =-~+^\"\'.: --extend-exclude node_modules ."
-  $($cmd --quiet) &&
-    echo "SUCCESS: ReStructuredText check successful!" ||
-    {
+  local files=()
+  mapfile -t files < <(find . -path "*/.*" -prune -o -path "*/node_modules/*" -prune \
+    -o -type f \( -name "*.py" -o -name "*.rst" \) -print | sort)
+  if [ ${#files[@]} -gt 0 ]; then
+    local cmd=(docstrfmt --no-docstring-trailing-line -i -c -l 74 -s "=-~+^\"'.:" "${files[@]}")
+    "${cmd[@]}" --quiet || {
       echoerr "ERROR: ReStructuredText check failed!"
-      $($cmd)
+      "${cmd[@]}"
       FAILURE=1
+      return
     }
+  fi
+  echo "SUCCESS: ReStructuredText check successful!"
 }
 
 runisort() {
