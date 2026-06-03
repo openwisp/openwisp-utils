@@ -119,6 +119,8 @@ runflake8() {
 
 runrstcheck() {
   local files=()
+  # Build the file list manually so docstrfmt never sees node_modules or
+  # hidden directories; its built-in exclude matching misses deeply nested paths.
   mapfile -t files < <(find . -path "*/.*" -prune -o -path "*/node_modules/*" -prune \
     -o -type f \( -name "*.py" -o -name "*.rst" \) -print | sort)
   if [ ${#files[@]} -gt 0 ]; then
