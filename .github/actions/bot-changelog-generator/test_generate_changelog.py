@@ -29,6 +29,7 @@ from generate_changelog import (  # noqa: E402
     get_pr_details,
     get_pr_diff,
     has_existing_changelog_comment,
+    normalize_changelog_output,
     post_github_comment,
     resolve_model,
     validate_changelog_output,
@@ -648,6 +649,43 @@ class TestGetOpenwispCommitizen(unittest.TestCase):
 class TestValidateChangelogOutput(unittest.TestCase):
     """Tests for validate_changelog_output function."""
 
+    def test_normalizes_long_body_lines(self):
+        text = (
+            "[feature] Added new functionality\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so the bot can wrap it locally without asking Gemini again."
+        )
+        normalized = normalize_changelog_output(text)
+        body = normalized.partition("\n\n")[2]
+        self.assertIn("\n", body)
+        self.assertTrue(
+            all(
+                len(line) <= COMMIT_SUBJECT_LIMIT
+                for line in body.splitlines()
+                if line.strip()
+            )
+        )
+
+    def test_normalization_preserves_issue_footers_and_blank_lines(self):
+        text = (
+            "[feature] Added new functionality #123\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so it needs to be wrapped locally before validation.\n\n"
+            "Closes #123"
+        )
+        normalized = normalize_changelog_output(text)
+        self.assertTrue(normalized.endswith("\n\nCloses #123"))
+        self.assertEqual(normalized.count("\n\n"), 2)
+
+    def test_normalization_does_not_shorten_subject(self):
+        subject = (
+            "[feature] Added a very long subject that remains invalid because "
+            "shortening it could remove important context"
+        )
+        text = f"{subject}\n\nUseful body."
+        normalized = normalize_changelog_output(text)
+        self.assertEqual(normalized.splitlines()[0], subject)
+
     @patch("generate_changelog.get_openwisp_commitizen")
     def test_valid_feature_tag_rst(self, mock_get_commitizen):
         mock_plugin = MagicMock()
@@ -711,6 +749,20 @@ class TestValidateChangelogOutput(unittest.TestCase):
                 f"Commit message body line 1 must be {COMMIT_SUBJECT_LIMIT} "
                 "characters or shorter."
             ],
+        )
+
+    def test_invalid_subject_too_long(self):
+        text = (
+            "[feature] Added a very long subject that remains invalid because "
+            "shortening it could remove important context\n\n"
+            "Useful body."
+        )
+
+        errors = get_changelog_validation_errors(text, "rst")
+
+        self.assertEqual(
+            errors,
+            [f"commit message length exceeds the limit ({COMMIT_SUBJECT_LIMIT} chars)"],
         )
 
     def test_invalid_empty_text(self):
@@ -832,6 +884,39 @@ class TestGenerateChangelogEntry(unittest.TestCase):
         second_prompt = mock_call_gemini.call_args_list[1].args[0]
         self.assertIn("<validation_feedback>", second_prompt)
         self.assertIn("Title invalid", second_prompt)
+
+    @patch("generate_changelog.get_openwisp_commitizen")
+    @patch("generate_changelog.call_gemini")
+    def test_wraps_body_without_retrying(self, mock_call_gemini, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=True, errors=[]
+        )
+        mock_get_commitizen.return_value = mock_plugin
+        pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
+        mock_call_gemini.return_value = (
+            "[change] Updated changelog bot\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so the bot can wrap it locally without asking Gemini again.\n\n"
+            "Closes #123"
+        )
+
+        entry, errors = generate_changelog_entry(
+            pr_details, "", [], [], "rst", "api_key", "gemini-test"
+        )
+
+        self.assertEqual(errors, [])
+        self.assertEqual(mock_call_gemini.call_count, 1)
+        self.assertTrue(entry.endswith("\n\nCloses #123"))
+        body = entry.partition("\n\n")[2]
+        self.assertTrue(
+            all(
+                len(line) <= COMMIT_SUBJECT_LIMIT
+                for line in body.splitlines()
+                if line.strip()
+            )
+        )
 
     @patch("generate_changelog.get_changelog_validation_errors")
     @patch("generate_changelog.call_gemini")

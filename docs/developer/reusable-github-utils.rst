@@ -426,11 +426,12 @@ The bot supports a configurable retry classifier mode via
 
 **Model configuration**
 
-By default the bot uses ``gemini-2.5-flash-lite``. To use a different model
-(for example a paid tier with a higher or unlimited daily request quota), set
-the ``GEMINI_MODEL`` repository or organization variable. An unset or empty
-value keeps the default. The same variable also controls the changelog bot, so
-setting it once at the organization level repoints both bots together.
+By default the bot uses ``gemini-2.5-flash-lite``. To use a different
+model (for example a paid tier with a higher or unlimited daily request
+quota), set the ``GEMINI_MODEL`` repository or organization variable. An
+unset or empty value keeps the default. The same variable also controls
+the changelog bot, so setting it once at the organization level repoints
+both bots together.
 
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
@@ -560,10 +561,15 @@ to secrets, and is the one that generates and posts the changelog comment.
 
 **Model configuration**
 
-The changelog bot uses ``gemini-2.5-flash-lite`` by default and honors the same
-``GEMINI_MODEL`` repository or organization variable as the CI failure bot. Set
-it to point both bots at a model with a higher daily request quota; leave it
-unset to keep the default.
+The changelog bot uses ``gemini-2.5-flash-lite`` by default and honors the
+same ``GEMINI_MODEL`` repository or organization variable as the CI
+failure bot. Set it to point both bots at a model with a higher daily
+request quota; leave it unset to keep the default.
+
+The bot normalizes generated commit-message body text locally before
+validation, wrapping long body lines while preserving issue footers such
+as ``Closes #123``. This avoids spending extra Gemini requests on
+formatting issues that can be fixed deterministically.
 
 **Setup for Other Repositories**
 
