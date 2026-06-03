@@ -312,8 +312,11 @@ class TestQa(TestCase):
             )
             with open(args_path) as f:
                 args = f.read().splitlines()
+            quiet_index = args.index("--quiet")
             self.assertIn("./work.py", args)
             self.assertIn("./work with spaces.rst", args)
+            self.assertLess(quiet_index, args.index("./work.py"))
+            self.assertLess(quiet_index, args.index("./work with spaces.rst"))
             self.assertNotIn("./node_modules/pkg/file.py", args)
             self.assertNotIn("./node_modules/other/doc.rst", args)
             self.assertNotIn("./.github/actions/script.py", args)
