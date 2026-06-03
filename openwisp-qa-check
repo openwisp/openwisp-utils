@@ -118,7 +118,7 @@ runflake8() {
 }
 
 runrstcheck() {
-  cmd="docstrfmt --no-docstring-trailing-line -i -c -l 74 -s =-~+^\"\'.: ."
+  cmd="docstrfmt --no-docstring-trailing-line -i -c -l 74 -s =-~+^\"\'.: --extend-exclude node_modules ."
   $($cmd --quiet) &&
     echo "SUCCESS: ReStructuredText check successful!" ||
     {

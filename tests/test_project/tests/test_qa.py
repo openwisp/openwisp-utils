@@ -1,4 +1,6 @@
 import os
+import subprocess
+import tempfile
 from os import path
 from unittest.mock import patch
 
@@ -247,3 +249,44 @@ class TestQa(TestCase):
                 except (SystemExit, Exception) as e:
                     msg = "Check failed:\n\n{}\n\nOutput:{}".format(option[-1], e)
                     self.fail(msg)
+
+    def test_checkrst_excludes_node_modules(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-check")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = path.join(temp_dir, "bin")
+            os.mkdir(bin_dir)
+            args_path = path.join(temp_dir, "docstrfmt-args.txt")
+            docstrfmt_path = path.join(bin_dir, "docstrfmt")
+            with open(docstrfmt_path, "w") as f:
+                f.write(
+                    "#!/bin/sh\n"
+                    'for arg in "$@"; do\n'
+                    '    printf "%s\\n" "$arg" >> "$DOCSTRFMT_ARGS"\n'
+                    "done\n"
+                )
+            os.chmod(docstrfmt_path, 0o755)
+            env = os.environ.copy()
+            env["DOCSTRFMT_ARGS"] = args_path
+            env["PATH"] = f'{bin_dir}:{env["PATH"]}'
+            result = subprocess.run(
+                [
+                    script_path,
+                    "--skip-checkmigrations",
+                    "--skip-checkendline",
+                    "--skip-flake8",
+                    "--skip-isort",
+                    "--skip-black",
+                    "--skip-checkcommit",
+                    "--skip-checkmakemigrations",
+                ],
+                cwd=temp_dir,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with open(args_path) as f:
+                args = f.read().splitlines()
+            self.assertIn("--extend-exclude", args)
+            self.assertIn("node_modules", args)

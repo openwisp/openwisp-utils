@@ -200,3 +200,5 @@ app name that should be passed to ``./manage.py makemigrations``, e.g.:
 
 Checks the syntax of all ReStructuredText files to ensure they can be
 published on Pypi or using python-sphinx.
+
+The ``node_modules`` directory is excluded by default.
