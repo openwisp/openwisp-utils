@@ -103,32 +103,35 @@ def _handle_npm_version(config):
 
 
 def _handle_docker_version(config):
-    """Handles version detection for Docker packages."""
-    if not os.path.exists("Makefile"):
+    """Handles version detection for docker-openwisp.
+
+    docker-openwisp stores its canonical release version in
+    images/common/openwisp/VERSION and bumps it via ``make bump``.
+    """
+    version_path = os.path.join("images", "common", "openwisp", "VERSION")
+    if not os.path.exists(version_path):
         return
-    with open("Makefile", "r") as f:
-        content = f.read()
-        version_match = re.search(
-            r"^OPENWISP_VERSION\s*=\s*([^\s]+)", content, re.MULTILINE
-        )
-        if not version_match:
-            return
-        config["version_path"] = "Makefile"
-        try:
-            version_str = version_match.group(1)
-            parts = version_str.split(".")
-            if len(parts) != 3:
-                raise ValueError(
-                    f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
-                )
-            config["CURRENT_VERSION"] = [
-                int(parts[0]),
-                int(parts[1]),
-                int(parts[2]),
-                "final",
-            ]
-        except (ValueError, SyntaxError):
-            config["CURRENT_VERSION"] = None
+    # Record the path even if the file is empty or malformed, so bump_version
+    # can still recover via ``make bump`` after a manual version entry.
+    config["version_path"] = version_path
+    with open(version_path, "r") as f:
+        version_str = f.read().strip()
+    if not version_str:
+        return
+    try:
+        parts = version_str.split(".")
+        if len(parts) != 3:
+            raise ValueError(
+                f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
+            )
+        config["CURRENT_VERSION"] = [
+            int(parts[0]),
+            int(parts[1]),
+            int(parts[2]),
+            "final",
+        ]
+    except (ValueError, SyntaxError):
+        config["CURRENT_VERSION"] = None
 
 
 def _handle_ansible_version(config):

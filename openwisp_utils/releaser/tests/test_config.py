@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from openwisp_utils.releaser.config import detect_changelog_style, load_config
 
@@ -231,25 +233,32 @@ def test_npm_package_invalid_version(
     assert config["CURRENT_VERSION"] is None
 
 
-# Docker Package Tests
+# Docker (docker-openwisp) Package Tests
+DOCKER_VERSION_PATH = os.path.join("images", "common", "openwisp", "VERSION")
+
+
 def test_docker_package_detection(
-    project_dir, create_docker_compose, create_makefile, create_changelog, init_git_repo
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
 ):
-    """Tests that docker package type is detected when docker-compose.yml exists."""
+    """Tests that docker type is detected when docker-compose.yml exists."""
     create_docker_compose(project_dir)
-    create_makefile(project_dir, version="1.2.3")
+    create_docker_version_file(project_dir, version="1.2.3")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
     assert config["package_type"] == "docker"
-    assert config["version_path"] == "Makefile"
+    assert config["version_path"] == DOCKER_VERSION_PATH
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
 
 
-def test_docker_package_without_makefile(
+def test_docker_package_without_version_file(
     project_dir, create_docker_compose, create_changelog, init_git_repo
 ):
-    """Tests docker package without Makefile - version should be None."""
+    """Tests docker package without the canonical VERSION file."""
     create_docker_compose(project_dir)
     create_changelog(project_dir)
     init_git_repo(project_dir)
@@ -259,19 +268,41 @@ def test_docker_package_without_makefile(
     assert config["CURRENT_VERSION"] is None
 
 
-def test_docker_package_invalid_version(
-    project_dir, create_docker_compose, create_changelog, init_git_repo
+def test_docker_package_empty_version_file(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
 ):
-    """Tests docker package with invalid version in Makefile gracefully."""
+    """Tests docker package with an empty canonical VERSION file."""
     create_docker_compose(project_dir)
-    (project_dir / "Makefile").write_text(
-        "OPENWISP_VERSION = 1.2\n"
-    )  # Invalid: only 2 parts
+    create_docker_version_file(project_dir, version="")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
     assert config["package_type"] == "docker"
-    assert config["version_path"] == "Makefile"
+    # version_path is recorded so make bump can still recover after a
+    # manual version entry, even though the current version is unknown.
+    assert config["version_path"] == DOCKER_VERSION_PATH
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_docker_package_invalid_version(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests docker package with an invalid version in the VERSION file."""
+    create_docker_compose(project_dir)
+    create_docker_version_file(project_dir, version="1.2")  # Invalid: only 2 parts
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "docker"
+    assert config["version_path"] == DOCKER_VERSION_PATH
     assert config["CURRENT_VERSION"] is None
 
 
