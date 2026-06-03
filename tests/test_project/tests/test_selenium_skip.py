@@ -5,6 +5,21 @@ from django.test.runner import RemoteTestRunner
 from openwisp_utils.tests.selenium import SeleniumTestMixin
 
 
+class SeleniumRetryTestMixin(SeleniumTestMixin, SimpleTestCase):
+    retry_delay = 0
+
+    @classmethod
+    def setUpClass(cls):
+        pass
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def setUp(self):
+        pass
+
+
 class TestSeleniumMixinSkipHandling(SimpleTestCase):
     def _run_skipped_standard_test(self):
         class SkippedSeleniumTest(SeleniumTestMixin, SimpleTestCase):
@@ -67,3 +82,56 @@ class TestSeleniumMixinSkipHandling(SimpleTestCase):
                 ("stopTest", 1),
             ],
         )
+
+
+class TestSeleniumMixinRetryHandling(SimpleTestCase):
+    def test_setup_and_call_stops_after_required_successful_retries(self):
+        class FlakySeleniumTest(SeleniumRetryTestMixin):
+            retry_max = 5
+
+            def test_flaky(self):
+                if not hasattr(self, "calls"):
+                    self.calls = 0
+                self.calls += 1
+                if self.calls == 1:
+                    self.fail("failing first call")
+
+        test = FlakySeleniumTest("test_flaky")
+        result = TestResult()
+        test._setup_and_call(result)
+        self.assertTrue(result.wasSuccessful())
+        self.assertEqual(test.calls, 3)
+
+    def test_setup_and_call_allows_non_consecutive_successful_retries(self):
+        class FlakySeleniumTest(SeleniumRetryTestMixin):
+            retry_max = 5
+
+            def test_flaky(self):
+                if not hasattr(self, "calls"):
+                    self.calls = 0
+                self.calls += 1
+                if self.calls in [1, 3]:
+                    self.fail("intermittent failure")
+
+        test = FlakySeleniumTest("test_flaky")
+        result = TestResult()
+        test._setup_and_call(result)
+        self.assertTrue(result.wasSuccessful())
+        self.assertEqual(test.calls, 4)
+
+    def test_setup_and_call_fails_when_retry_successes_are_insufficient(self):
+        class FlakySeleniumTest(SeleniumRetryTestMixin):
+            retry_max = 5
+
+            def test_flaky(self):
+                if not hasattr(self, "calls"):
+                    self.calls = 0
+                self.calls += 1
+                if self.calls != 2:
+                    self.fail("too flaky")
+
+        test = FlakySeleniumTest("test_flaky")
+        result = TestResult()
+        test._setup_and_call(result)
+        self.assertFalse(result.wasSuccessful())
+        self.assertEqual(test.calls, 6)

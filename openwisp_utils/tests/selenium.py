@@ -1,5 +1,6 @@
 import os
 import time
+from math import ceil
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -22,11 +23,15 @@ class SeleniumTestMixin:
 
     retry_max = 5
     retry_delay = 0
-    retry_threshold = 0.8
+    retry_successes_required = 2
+    retry_threshold = None
+
+    def _get_retry_successes_required(self):
+        if self.retry_threshold is not None:
+            return ceil(self.retry_max * self.retry_threshold)
+        return self.retry_successes_required
 
     def _print_retry_message(self, test_name, attempt):
-        if attempt == 0:
-            return
         print("-" * 80)
         print(f'[Retry] Retrying "{test_name}", attempt {attempt}/{self.retry_max}. ')
         print("-" * 80)
@@ -42,6 +47,7 @@ class SeleniumTestMixin:
         test_name = self.id()
         success_count = 0
         failed_result = None
+        retry_successes_required = self._get_retry_successes_required()
         # Manually call startTest to ensure TimeLoggingTestResult can
         # measure the execution time for the test.
         original_result.startTest(self)
@@ -71,16 +77,19 @@ class SeleniumTestMixin:
                     return
                 else:
                     success_count += 1
+                    if success_count >= retry_successes_required:
+                        original_result.addSuccess(self)
+                        return
             else:
                 failed_result = result
-            self._print_retry_message(test_name, attempt)
-            if self.retry_delay:
-                time.sleep(self.retry_delay)
+            if attempt < self.retry_max:
+                self._print_retry_message(test_name, attempt + 1)
+                if self.retry_delay:
+                    time.sleep(self.retry_delay)
 
-        if success_count / self.retry_max < self.retry_threshold:
-            # If the success rate of retries is below the threshold then,
-            # copy errors and failures from the last failed result to the
-            # original result.
+        if success_count < retry_successes_required:
+            # If there are too few successful retries, copy the last failed
+            # result to the original result.
             original_result.failures = failed_result.failures
             original_result.errors = failed_result.errors
             if hasattr(original_result, "events"):
