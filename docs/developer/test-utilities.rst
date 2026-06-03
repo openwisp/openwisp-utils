@@ -180,8 +180,10 @@ methods that must be used across all OpenWISP modules based on Django to
 enforce best practices and avoid flaky tests.
 
 It includes a built-in retry mechanism that can automatically repeat
-failing tests to identify transient (flaky) failures. You can customize
-this behavior using the following class attributes:
+failing tests to mitigate transient (flaky) failures. When a Selenium test
+fails, it must pass 2 successful retry runs by default before it is
+considered successful. You can customize this behavior using the following
+class attributes:
 
 - ``retry_max``: The maximum number of times to retry a failing test.
   Defaults to ``5``.
