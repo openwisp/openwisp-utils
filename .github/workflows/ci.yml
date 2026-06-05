@@ -75,6 +75,15 @@ jobs:
       - name: QA checks
         run: ./run-qa-checks
 
+      - name: Install Firefox with MV2 fully removed
+        run: |
+          wget -q "https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US" -O /tmp/firefox.tar.bz2
+          tar xjf /tmp/firefox.tar.bz2 -C /tmp
+          echo "GECKO_BIN=/tmp/firefox/firefox" >> $GITHUB_ENV
+
+      - name: Check Firefox version
+        run: /tmp/firefox/firefox --version
+
       - name: Tests
         if: ${{ !cancelled() && steps.deps.conclusion == 'success' }}
         run: ./runtests
