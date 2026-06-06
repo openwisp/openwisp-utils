@@ -391,6 +391,26 @@ def main():
     ):
         print("::warning::Skipping: No failure logs to analyse.", file=sys.stderr)
         return
+    if not error_log.strip():
+        print("::warning::Skipping: Empty failure logs.", file=sys.stderr)
+        return
+    if not tests_failed and not transient_only:
+        try:
+            with open("failed_logs.txt") as f:
+                raw = f.read()
+            no_failure_patterns = [
+                "No failed jobs found",
+                "Failed jobs found but logs unavailable",
+                "Could not fetch failed jobs",
+            ]
+            if any(p in raw for p in no_failure_patterns):
+                print(
+                    "::notice::No CI failures detected; skipping analysis.",
+                    file=sys.stderr,
+                )
+                return
+        except OSError:
+            pass
     # Only fetch the full repository code context when automated tests
     # actually failed.  For QA-only or commit-message failures the code
     # is not needed and would waste prompt tokens.
