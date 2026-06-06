@@ -68,11 +68,17 @@ def _normalize_for_dedup(text):
 
 
 def _is_transient_failure(body):
+    """Return True if the log body looks like a transient/infra failure."""
     body_lower = body.lower()
     return any(marker.lower() in body_lower for marker in TRANSIENT_FAILURE_MARKERS)
 
 
 def _extract_failed_tests(body):
+    """Return only the failing test sections from a test-runner log.
+
+    Keeps every block that sits between two separator lines (====…)
+    and contains at least one failure marker.
+    """
     # Split on the "======…" separators that unittest / pytest emit.
     blocks = re.split(r"(?:={50,})", body)
     failed = [
@@ -89,6 +95,12 @@ def _extract_failed_tests(body):
 
 
 def _strip_slow_test_output(text):
+    """Remove the openwisp-utils slow-test report from log output.
+
+    The TimeLoggingTestRunner prints a summary of tests that exceeded a
+    time threshold.  This is purely informational and must not be fed to
+    the LLM, which tends to misinterpret the count as test failures.
+    """
     # Strip the full block: header, individual slow-test lines, and total.
     # The header varies (e.g. "Summary of slow tests (>0.3s)" or
     # "Slow tests (threshold 2.00s)") so we match generically.
