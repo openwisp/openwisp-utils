@@ -14,48 +14,6 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-_db_conn_lock = threading.RLock()
-_db_conn_serialized = False
-
-
-def serialize_db_connection_lifecycle():
-    """Serialize SQLite connection open/close for the live-server tests.
-
-    The selenium live-server test cases (WSGI ``StaticLiveServerTestCase``
-    and the Daphne/ASGI ``ChannelsLiveServerTestCase``) serve requests
-    from several threads, so SQLite connections are opened and closed
-    concurrently. On Python 3.13 this intermittently corrupts the C heap
-    ("double free or corruption" / segmentation fault). Serializing
-    connection open and close with a single process-wide lock removes the
-    race. Together with the memoized ``find_library`` in
-    ``openwisp_utils.db.backends.spatialite.base`` (which stops the
-    per-connection ``ldconfig`` fork) this makes the live-server tests
-    crash-free. No-op for non-SQLite backends.
-    """
-    global _db_conn_serialized
-    if _db_conn_serialized:
-        return
-    engine = settings.DATABASES.get("default", {}).get("ENGINE", "")
-    if "sqlite" not in engine and "spatialite" not in engine:
-        _db_conn_serialized = True
-        return
-    _orig_connect = BaseDatabaseWrapper.connect
-    _orig_close = BaseDatabaseWrapper._close
-
-    @functools.wraps(_orig_connect)
-    def connect(self):
-        with _db_conn_lock:
-            return _orig_connect(self)
-
-    @functools.wraps(_orig_close)
-    def _close(self):
-        with _db_conn_lock:
-            return _orig_close(self)
-
-    BaseDatabaseWrapper.connect = connect
-    BaseDatabaseWrapper._close = _close
-    _db_conn_serialized = True
-
 
 class SeleniumTestMixin:
     """A base Mixin Class for Selenium Browser Tests.
@@ -71,6 +29,59 @@ class SeleniumTestMixin:
     retry_delay = 0
     retry_successes_required = 2
     retry_threshold = None
+    _db_conn_lock = threading.RLock()
+    _db_conn_serialized = False
+
+    @classmethod
+    def setUpClass(cls):
+        # Apply before super().setUpClass() so the patch is active before the
+        # live server (and any forked Daphne process) starts.
+        cls._serialize_db_connection_lifecycle()
+        super().setUpClass()
+        cls.web_driver = cls.get_webdriver()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_driver.quit()
+        super().tearDownClass()
+
+    @classmethod
+    def _serialize_db_connection_lifecycle(cls):
+        """Serialize SQLite connection open/close for the live-server tests.
+
+        The selenium live-server test cases (WSGI
+        ``StaticLiveServerTestCase`` and the Daphne/ASGI
+        ``ChannelsLiveServerTestCase``) serve requests from several
+        threads, so SQLite connections are opened and closed concurrently.
+        On Python 3.13 this intermittently corrupts the C heap ("double
+        free or corruption" / segmentation fault). Serializing connection
+        open and close with a single process-wide lock removes the race.
+        Together with the memoized ``find_library`` in
+        ``openwisp_utils.db.backends.spatialite.base`` (which stops the
+        per-connection ``ldconfig`` fork) this makes the live-server tests
+        crash-free. No-op for non-SQLite backends.
+        """
+        if SeleniumTestMixin._db_conn_serialized:
+            return
+        engine = settings.DATABASES.get("default", {}).get("ENGINE", "")
+        if "sqlite" not in engine and "spatialite" not in engine:
+            return
+        _orig_connect = BaseDatabaseWrapper.connect
+        _orig_close = BaseDatabaseWrapper._close
+
+        @functools.wraps(_orig_connect)
+        def connect(self):
+            with cls._db_conn_lock:
+                return _orig_connect(self)
+
+        @functools.wraps(_orig_close)
+        def _close(self):
+            with cls._db_conn_lock:
+                return _orig_close(self)
+
+        BaseDatabaseWrapper.connect = connect
+        BaseDatabaseWrapper._close = _close
+        SeleniumTestMixin._db_conn_serialized = True
 
     def _get_retry_successes_required(self):
         if self.retry_threshold is not None:
@@ -144,14 +155,6 @@ class SeleniumTestMixin:
         else:
             # Mark the test as passed in the original result
             original_result.addSuccess(self)
-
-    @classmethod
-    def setUpClass(cls):
-        # Apply before super().setUpClass() so the patch is active before the
-        # live server (and any forked Daphne process) starts.
-        serialize_db_connection_lifecycle()
-        super().setUpClass()
-        cls.web_driver = cls.get_webdriver()
 
     @classmethod
     def get_webdriver(cls):
@@ -237,11 +240,6 @@ class SeleniumTestMixin:
         return webdriver.Chrome(
             options=options,
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.web_driver.quit()
-        super().tearDownClass()
 
     def setUp(self):
         self.admin = self._create_admin(
