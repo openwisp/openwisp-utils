@@ -703,6 +703,20 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         )
         self.assertEqual(filter.is_parent_active, True)
 
+    def test_sub_filter_is_parent_active_exact_parent_parameter_name(self):
+        class ExactParentSubFilter(SubFilterMixin, SimpleInputFilter):
+            title = "Test"
+            parameter_name = "test"
+            parent_parameter_name = "shelf__books_type"
+            parent_active_values = ("HORROR",)
+
+        request = HttpRequest()
+        request.GET = {"shelf__books_type__exact": "HORROR"}
+        filter = ExactParentSubFilter(
+            request=request, params={}, model=Book, model_admin=BookAdmin
+        )
+        self.assertEqual(filter.is_parent_active, True)
+
     def test_sub_filter_empty_active_values(self):
         class EmptyActiveSubFilter(SubFilterMixin, SimpleInputFilter):
             title = "Test"
@@ -743,7 +757,6 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.assertContains(response, 'data-sub-filter-parent="shelf__books_type"')
 
     def test_orphaned_sub_filter_not_rendered_and_logged(self):
-
         class OrphanedSubFilter(SubFilterMixin, SimpleListFilter):
             title = "Orphaned Filter"
             parameter_name = "orphaned"

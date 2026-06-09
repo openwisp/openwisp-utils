@@ -766,7 +766,7 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     def test_sub_filter_visible_when_parent_active(self):
         self.login()
         url = reverse("admin:test_project_book_changelist")
-        self.open(f"{url}?shelf__books_type=HORROR")
+        self.open(f"{url}?shelf__books_type__exact=HORROR")
         self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
         sub_filter = self.wait_for_visibility(
             By.CSS_SELECTOR, ".ow-filter.created-date"
@@ -776,7 +776,7 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     def test_sub_filter_hidden_when_parent_inactive(self):
         self.login()
         url = reverse("admin:test_project_book_changelist")
-        self.open(f"{url}?shelf__books_type=FANTASY")
+        self.open(f"{url}?shelf__books_type__exact=FANTASY")
         self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
         sub_filter = self.find_element(
             By.CSS_SELECTOR,
@@ -788,7 +788,7 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     def test_sub_filter_on_page_navigation(self):
         self.login()
         url = reverse("admin:test_project_book_changelist")
-        self.open(f"{url}?shelf__books_type=HORROR")
+        self.open(f"{url}?shelf__books_type__exact=HORROR")
         self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
         paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
         self.assertEqual(paginator.text.strip(), "3 books")
@@ -796,7 +796,7 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
     def test_sub_filter_applies_backend_filter(self):
         self.login()
         url = reverse("admin:test_project_book_changelist")
-        self.open(f"{url}?shelf__books_type=HORROR&created=has_date")
+        self.open(f"{url}?shelf__books_type__exact=HORROR&created=has_date")
         self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
         paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
         self.assertEqual(paginator.text.strip(), "3 books")

@@ -147,6 +147,10 @@ class SubFilterMixin:
     parent_parameter_name = None
     parent_active_values = ()
 
+    def __init__(self, request, params, model, model_admin):
+        self.request = request
+        super().__init__(request, params, model, model_admin)
+
     @property
     def is_parent_active(self):
         if not self.parent_parameter_name:
@@ -163,6 +167,7 @@ class SubFilterMixin:
         return value in self.parent_active_values
 
     def queryset(self, request, queryset):
+        self.request = request
         if self.value() is not None and not self.is_parent_active:
             raise IncorrectLookupParameters
         if not self.is_parent_active:
