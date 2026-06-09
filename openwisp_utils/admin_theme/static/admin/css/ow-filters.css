@@ -12,7 +12,7 @@
   margin-right: 0px;
 }
 #ow-changelist-filter {
-  padding: 1.25rem 2.5rem;
+  padding: 1.25rem 2.5rem 0rem 2.5rem;
   background-color: var(--body-bg);
   border-bottom: 2px solid var(--ow-color-fg-lighter);
   display: flex;
@@ -240,10 +240,25 @@ a.field-clear {
   position: absolute;
 }
 
+.ow-filter-group {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.ow-sub-filter-group {
+  padding-left: 0.4rem;
+  margin-left: 0.5rem;
+  margin-top: 0.8rem;
+}
+.ow-sub-filter-group > .ow-filter {
+  padding-left: 0.4rem;
+}
+
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   #ow-changelist-filter {
-    padding: 1.25rem 1.875rem;
+    padding: 1.25rem 1.875rem 0rem 1.875rem;
   }
   .filters-bottom {
     margin: auto 30px;

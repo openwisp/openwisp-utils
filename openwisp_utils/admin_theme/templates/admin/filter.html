@@ -1,6 +1,6 @@
 {% load i18n ow_tags %}
 
-<div class="ow-filter {{ title|join_string }}">
+<div class="ow-filter {{ title|join_string }}{% if spec.parent_parameter_name %} ow-sub-filter{% endif %}"{% if spec.parent_parameter_name %} data-sub-filter-parent="{{ spec.parent_parameter_name }}" data-sub-filter-active-values="{{ spec.parent_active_values|join:',' }}"{% if not spec.is_parent_active %} style="display: none;" {% endif %}{% endif %}>
   {% for choice in choices %}
     {% if choice.selected %}
       <div id="{{title|join_string}}" aria-label="by {{title}}"

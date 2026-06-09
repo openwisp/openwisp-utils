@@ -15,6 +15,7 @@ var gettext;
       initSliderHandlers();
       initInputFilterHandler();
       filterHandlers();
+      initSubFilterVisibility();
       if (slider) {
         setArrowButtonVisibility();
       }
@@ -130,6 +131,7 @@ function initFilterDropdownHandler() {
       selectedOption.innerHTML = text;
       filter.querySelector(".filter-title").setAttribute("title", text);
       hideFilterOptions(filter);
+      updateSubFilters();
     });
   });
 }
@@ -213,6 +215,58 @@ function initSliderHandlers() {
     slider.addEventListener("scroll", setArrowButtonVisibility);
   }
   window.addEventListener("resize", setArrowButtonVisibility);
+}
+
+function getFilterValue(filter) {
+  var select = filter.querySelector("select");
+  if (select) {
+    return select.value;
+  }
+  var selected = filter.querySelector(".filter-options a.selected");
+  return selected ? selected.title : null;
+}
+
+function updateSubFilters() {
+  var subFilters = document.querySelectorAll(".ow-sub-filter");
+  subFilters.forEach(function (subFilter) {
+    var group = subFilter.closest(".ow-filter-group");
+    if (!group) {
+      return;
+    }
+    var parentFilter = group.querySelector(".ow-filter:not(.ow-sub-filter)");
+    if (!parentFilter) {
+      return;
+    }
+    var activeValues = subFilter.dataset.subFilterActiveValues.split(",");
+    var parentValue = getFilterValue(parentFilter);
+    if (parentValue !== null && activeValues.indexOf(parentValue) !== -1) {
+      subFilter.style.display = "";
+    } else {
+      subFilter.style.display = "none";
+    }
+  });
+  adjustFiltersBottomHeight();
+}
+
+function adjustFiltersBottomHeight() {
+  // Explicitly set the height of .filters-bottom to match the
+  // slider's content height. This allows sub-filters to expand
+  // the container without dropdowns inflating it.
+  var filtersBottom = document.querySelector(".filters-bottom");
+  var slider = document.querySelector(".ow-filter-slider");
+  if (!filtersBottom || !slider) {
+    return;
+  }
+  filtersBottom.style.height = "";
+  var scrollHeight = slider.scrollHeight;
+  filtersBottom.style.height = scrollHeight + "px";
+}
+
+function initSubFilterVisibility() {
+  if (!document.querySelector(".ow-sub-filter")) {
+    return;
+  }
+  updateSubFilters();
 }
 
 function filterHandlers() {

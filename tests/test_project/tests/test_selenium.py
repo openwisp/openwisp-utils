@@ -719,6 +719,90 @@ class TestAutocompleteFilter(
 
 
 @tag("selenium_tests")
+class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
+    shelf_model = Shelf
+    book_model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.web_driver.set_window_size(1600, 768)
+        self._create_test_data()
+
+    def _create_test_data(self):
+        horror_shelf = self._create_shelf(
+            name="horror-shelf",
+            books_type="HORROR",
+            owner=self.admin,
+        )
+        fantasy_shelf = self._create_shelf(
+            name="fantasy-shelf",
+            books_type="FANTASY",
+            owner=self.admin,
+        )
+        for i in range(3):
+            self._create_book(
+                name="horror_book_" + str(i),
+                author="author",
+                shelf=horror_shelf,
+            )
+        self._create_book(
+            name="fantasy_book",
+            author="author",
+            shelf=fantasy_shelf,
+        )
+
+    def test_sub_filter_hidden_by_default(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(url)
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        sub_filter = self.find_element(
+            By.CSS_SELECTOR,
+            ".ow-filter.created-date",
+            wait_for="presence",
+        )
+        self.assertEqual(sub_filter.value_of_css_property("display"), "none")
+
+    def test_sub_filter_visible_when_parent_active(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type=HORROR")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        sub_filter = self.wait_for_visibility(
+            By.CSS_SELECTOR, ".ow-filter.created-date"
+        )
+        self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+
+    def test_sub_filter_hidden_when_parent_inactive(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type=FANTASY")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        sub_filter = self.find_element(
+            By.CSS_SELECTOR,
+            ".ow-filter.created-date",
+            wait_for="presence",
+        )
+        self.assertEqual(sub_filter.value_of_css_property("display"), "none")
+
+    def test_sub_filter_on_page_navigation(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type=HORROR")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
+        self.assertEqual(paginator.text.strip(), "3 books")
+
+    def test_sub_filter_applies_backend_filter(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type=HORROR&created=has_date")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
+        self.assertEqual(paginator.text.strip(), "3 books")
+
+
+@tag("selenium_tests")
 class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
     def setUp(self):
         super().setUp()

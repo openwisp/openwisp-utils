@@ -16,3 +16,13 @@ is greater than 4. When filters in use are less or equal to 4 the "apply
 filter" button is not visible and filters work like in the original django
 implementation (as soon as a filter option is selected the filter is
 applied and the page is reloaded).
+
+Sub-Filters
+-----------
+
+Sub-filters are conditional filters that are automatically shown or hidden
+based on the selected value of another filter.
+
+This allows additional filtering options to appear only when they are
+relevant. For example, a "Status" filter might display extra filtering
+options only when "Active" is selected.

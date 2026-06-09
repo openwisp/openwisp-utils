@@ -53,7 +53,7 @@
         </span>
         <div  aria-label="changelist filters region" tabindex="0" class="ow-filter-slider">
           <div class="slider">
-            {% for spec in cl.filter_specs %}{% ow_create_filter cl spec cl.filter_specs|length %}{% endfor %}
+            {% ow_render_filters cl cl.filter_specs %}
           </div>
         </div>
       </div>

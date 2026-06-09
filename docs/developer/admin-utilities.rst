@@ -225,6 +225,58 @@ To customize or know more about it, please refer to the
 `django-admin-autocomplete-filter documentation
 <https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_.
 
+``openwisp_utils.admin_theme.filters.SubFilterMixin``
+-----------------------------------------------------
+
+A mixin that allows admin list filters to be displayed and applied only
+when a parent filter has specific values. This is useful for creating
+hierarchical filter relationships where sub-filters provide more specific
+filtering options based on the parent filter's selection.
+
+Code example:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin_theme.filters import SubFilterMixin
+
+
+    class StatusSubFilter(SubFilterMixin, admin.SimpleListFilter):
+        title = "Detailed Status"
+        parameter_name = "detailed_status"
+        parent_parameter_name = "status"
+        parent_active_values = ("active",)
+
+        def lookups(self, request, model_admin):
+            return [
+                ("online", "Online"),
+                ("offline", "Offline"),
+            ]
+
+        def filter_queryset(self, request, queryset):
+            if self.value() == "online":
+                return queryset.filter(is_online=True)
+            elif self.value() == "offline":
+                return queryset.filter(is_online=False)
+            return queryset
+
+
+    @admin.register(MyModel)
+    class MyModelAdmin(admin.ModelAdmin):
+        list_filter = ["status", StatusSubFilter]
+
+The ``parent_parameter_name`` attribute specifies the query parameter of
+the parent filter. This can refer either to a field filter (for example
+``"status"`` or ``"organization__name"``) or to the ``parameter_name`` of
+a custom list filter.
+
+When the parent filter is inactive, the sub-filter is hidden and its value
+is ignored. If a sub-filter value is supplied while the parent is
+inactive, ``IncorrectLookupParameters`` is raised.
+
+Orphaned sub-filters (those whose ``parent_parameter_name`` doesn't match
+any parent filter) are not rendered and are logged as errors.
+
 Customizing the Submit Row in OpenWISP Admin
 --------------------------------------------
 
