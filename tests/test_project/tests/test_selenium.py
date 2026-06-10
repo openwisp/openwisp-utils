@@ -819,9 +819,7 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
             By.CSS_SELECTOR, ".filter-title"
         )
 
-        with self.subTest(
-            "Sub-filter is hidden when parent filter dropdown is open"
-        ):
+        with self.subTest("Sub-filter is hidden when parent filter dropdown is open"):
             # Open the dropdown
             parent_filter_title.click()
             self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter.ow-active")
