@@ -801,6 +801,41 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
         paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
         self.assertEqual(paginator.text.strip(), "3 books")
 
+    def test_sub_filter_hidden_when_parent_filter_dropdown_open(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type__exact=HORROR")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        # Get the sub-filter element
+        sub_filter = self.find_element(By.CSS_SELECTOR, ".ow-filter.created-date")
+        # Sub-filter should be visible initially when parent filter is HORROR
+        self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+        # Get the parent filter in the group and its title
+        filter_group = self.find_element(By.CSS_SELECTOR, ".ow-filter-group")
+        parent_filter = filter_group.find_element(
+            By.CSS_SELECTOR, ".ow-filter:not(.ow-sub-filter)"
+        )
+        parent_filter_title = parent_filter.find_element(
+            By.CSS_SELECTOR, ".filter-title"
+        )
+
+        with self.subTest(
+            "Sub-filter is hidden when parent filter dropdown is open"
+        ):
+            # Open the dropdown
+            parent_filter_title.click()
+            self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter.ow-active")
+            # Check that sub-filter is hidden
+            self.assertEqual(sub_filter.value_of_css_property("display"), "none")
+
+        with self.subTest(
+            "Sub-filter is visible again when parent filter dropdown is closed"
+        ):
+            # Close the dropdown
+            parent_filter_title.click()
+            # Check that sub-filter is visible again
+            self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+
 
 @tag("selenium_tests")
 class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):

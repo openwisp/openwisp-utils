@@ -34,6 +34,11 @@ function showFilterOptions(filter, callback = null) {
   if (!filter) {
     return;
   }
+  // Hide related sub-filters when showing parent filter options
+  if (!filter.classList.contains("ow-sub-filter")) {
+    hideRelatedSubFilters(filter);
+  }
+
   filter.querySelector(".filter-options").style.display = "block";
   filter.querySelector(".filter-title").setAttribute("aria-expanded", "true");
   setTimeout(function () {
@@ -44,6 +49,18 @@ function showFilterOptions(filter, callback = null) {
   }, 10);
 }
 
+function hideRelatedSubFilters(parentFilter) {
+  var group = parentFilter.closest(".ow-filter-group");
+  if (!group) {
+    return;
+  }
+
+  var subFilters = group.querySelectorAll(".ow-sub-filter");
+  subFilters.forEach(function (subFilter) {
+    subFilter.classList.add("hidden");
+  });
+}
+
 function hideFilterOptions(filter) {
   if (!filter) {
     return;
@@ -51,6 +68,8 @@ function hideFilterOptions(filter) {
   filter.querySelector(".filter-options").style = "";
   filter.querySelector(".filter-title").setAttribute("aria-expanded", "false");
   filter.classList.remove("ow-active");
+  // Restore sub-filter visibility based on current parent filter value
+  updateSubFilters();
 }
 
 function toggleFilter(filter, callback = null) {
