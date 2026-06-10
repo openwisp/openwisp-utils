@@ -240,9 +240,9 @@ function updateSubFilters() {
     var activeValues = subFilter.dataset.subFilterActiveValues.split(",");
     var parentValue = getFilterValue(parentFilter);
     if (parentValue !== null && activeValues.indexOf(parentValue) !== -1) {
-      subFilter.style.display = "";
+      subFilter.classList.remove("hidden");
     } else {
-      subFilter.style.display = "none";
+      subFilter.classList.add("hidden");
     }
   });
   adjustFiltersBottomHeight();
