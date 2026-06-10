@@ -247,9 +247,8 @@ a.field-clear {
 }
 
 .ow-sub-filter-group {
-  padding-left: 0.4rem;
-  margin-left: 0.5rem;
-  margin-top: 0.8rem;
+  margin-left: 0.25rem;
+  margin-top: 1rem;
 }
 .ow-sub-filter-group > .ow-filter {
   padding-left: 0.4rem;
