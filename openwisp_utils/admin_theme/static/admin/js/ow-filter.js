@@ -292,7 +292,11 @@ function updateSubFilters() {
     if (!parentFilter) {
       return;
     }
-    var activeValues = subFilter.dataset.subFilterActiveValues.split(",");
+    var subFilterActiveValues = subFilter.dataset.subFilterActiveValues;
+    if (!subFilterActiveValues) {
+      return;
+    }
+    var activeValues = subFilterActiveValues.split(",");
     var parentParamName = subFilter.getAttribute("data-sub-filter-parent");
     var parentValue = getFilterValue(parentFilter, parentParamName);
     if (parentValue !== null && activeValues.indexOf(parentValue) !== -1) {
