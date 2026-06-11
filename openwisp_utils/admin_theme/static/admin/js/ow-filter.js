@@ -315,9 +315,11 @@ function adjustFiltersBottomHeight() {
   if (!filtersBottom || !slider) {
     return;
   }
-  filtersBottom.style.height = "";
-  var scrollHeight = slider.scrollHeight;
-  filtersBottom.style.height = scrollHeight + "px";
+  if (!document.querySelector(".ow-sub-filter:not(.hidden)")) {
+    filtersBottom.style.height = "";
+    return;
+  }
+  filtersBottom.style.height = slider.scrollHeight - 8 + "px";
 }
 
 function initSubFilterVisibility() {
