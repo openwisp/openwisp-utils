@@ -134,14 +134,14 @@ function initFilterDropdownHandler() {
   });
 
   // Handle change in filter option
-  if (filters.length <= 4) {
-    return;
-  }
   const filterValues = document.querySelectorAll(".filter-options a");
   filterValues.forEach(function (filterValue) {
     filterValue.addEventListener("click", function (e) {
       e.preventDefault();
-      var filter = document.querySelector(".ow-filter.ow-active");
+      var filter = filterValue.closest(".ow-filter");
+      if (!filter.classList.contains("ow-active")) {
+        return;
+      }
       var selectedOption = filter.querySelector(".selected-option");
       var selectedElement = filter.querySelector(".selected");
       selectedElement.classList.remove("selected");
@@ -151,6 +151,10 @@ function initFilterDropdownHandler() {
       filter.querySelector(".filter-title").setAttribute("title", text);
       hideFilterOptions(filter);
       updateSubFilters();
+      // Only auto-submit when no Apply button is visible
+      if (!document.querySelector("#ow-apply-filter")) {
+        window.location.href = filterValue.getAttribute("href");
+      }
     });
   });
 }
@@ -233,16 +237,48 @@ function initSliderHandlers() {
   if (slider) {
     slider.addEventListener("scroll", setArrowButtonVisibility);
   }
-  window.addEventListener("resize", setArrowButtonVisibility);
+  window.addEventListener("resize", function () {
+    setArrowButtonVisibility();
+    adjustFiltersBottomHeight();
+  });
 }
 
-function getFilterValue(filter) {
+function clearSubFilterSelection(subFilter) {
+  var selected = subFilter.querySelector(".filter-options a.selected");
+  if (selected) {
+    selected.classList.remove("selected");
+  }
+  var allOptions = subFilter.querySelectorAll(".filter-options a");
+  if (allOptions.length > 0) {
+    allOptions[0].classList.add("selected");
+  }
+}
+
+function getFilterValue(filter, parentParamName = null) {
   var select = filter.querySelector("select");
   if (select) {
     return select.value;
   }
   var selected = filter.querySelector(".filter-options a.selected");
-  return selected ? selected.title : null;
+  if (!selected) {
+    return null;
+  }
+  // For sub-filters, extract actual value from href using parent param name
+  if (parentParamName) {
+    var href = selected.getAttribute("href");
+    if (href) {
+      var queryString = href.substring(1);
+      var params = queryString.split("&");
+      for (var i = 0; i < params.length; i++) {
+        var param = params[i].split("=");
+        // Match either the exact param name or the param name with __exact suffix
+        if (param[0] === parentParamName || param[0] === parentParamName + "__exact") {
+          return decodeURIComponent(param[1]);
+        }
+      }
+    }
+  }
+  return null;
 }
 
 function updateSubFilters() {
@@ -257,11 +293,14 @@ function updateSubFilters() {
       return;
     }
     var activeValues = subFilter.dataset.subFilterActiveValues.split(",");
-    var parentValue = getFilterValue(parentFilter);
+    var parentParamName = subFilter.getAttribute("data-sub-filter-parent");
+    var parentValue = getFilterValue(parentFilter, parentParamName);
     if (parentValue !== null && activeValues.indexOf(parentValue) !== -1) {
       subFilter.classList.remove("hidden");
     } else {
       subFilter.classList.add("hidden");
+      // Clear the sub-filter's selected option when it becomes hidden
+      clearSubFilterSelection(subFilter);
     }
   });
   adjustFiltersBottomHeight();

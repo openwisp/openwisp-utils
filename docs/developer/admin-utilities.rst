@@ -271,8 +271,10 @@ the parent filter. This can refer either to a field filter (for example
 a custom list filter.
 
 When the parent filter is inactive, the sub-filter is hidden and its value
-is ignored. If a sub-filter value is supplied while the parent is
-inactive, ``IncorrectLookupParameters`` is raised.
+is ignored. When a sub-filter is present on the page, the "apply filter"
+button is always displayed. In this case, filter selections are applied
+only when the button is clicked. If a sub-filter value is supplied while
+the parent is inactive, ``IncorrectLookupParameters`` is raised.
 
 Orphaned sub-filters (those whose ``parent_parameter_name`` doesn't match
 any parent filter) are not rendered and are logged as errors.

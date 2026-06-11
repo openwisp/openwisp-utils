@@ -65,7 +65,7 @@
               <a href="{{ cl.clear_all_filters_qs }}">&#10006; {% trans "Clear all filters" %}</a>
             </h3>
           {% endif %}
-          {% if cl.filter_specs|length > 4 %}
+          {% if cl.filter_specs|length > 4 or cl.filter_specs|has_sub_filters %}
             <button id="ow-apply-filter" class="button">Apply Filters</button>
           {% endif %}
         </div>

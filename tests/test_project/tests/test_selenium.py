@@ -834,6 +834,53 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
             # Check that sub-filter is visible again
             self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
 
+    def test_sub_filter_selection_cleared_on_parent_change(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        # Start with HORROR parent and "today" sub-filter selected
+        self.open(f"{url}?shelf__books_type__exact=HORROR&created=today")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+
+        with self.subTest(
+            "Sub-filter is visible when parent is HORROR (which is in parent_active_values)"
+        ):
+            sub_filter = self.find_element(By.CSS_SELECTOR, ".ow-filter.created-date")
+            self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+
+        with self.subTest(
+            "Changing parent filter to FANTASY (not in parent_active_values) "
+            "does not cause error page (?e=1)"
+        ):
+            # Get the parent filter in the group
+            filter_group = self.find_element(By.CSS_SELECTOR, ".ow-filter-group")
+            parent_filter = filter_group.find_element(
+                By.CSS_SELECTOR, ".ow-filter:not(.ow-sub-filter)"
+            )
+            parent_filter_title = parent_filter.find_element(
+                By.CSS_SELECTOR, ".filter-title"
+            )
+            # Open parent filter dropdown
+            parent_filter_title.click()
+            self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter.ow-active")
+            # Click on FANTASY option (not in parent_active_values)
+            fantasy_option = parent_filter.find_element(
+                By.XPATH, ".//a[contains(text(), 'Fantasy')]"
+            )
+            fantasy_option.click()
+            # Apply button should be visible when sub-filters are present
+            # Click the Apply button to submit
+            apply_button = self.find_element(By.CSS_SELECTOR, "#ow-apply-filter")
+            apply_button.click()
+            # Wait for page to settle
+            self.wait_for(
+                "presence_of_element_located",
+                By.CSS_SELECTOR,
+                "#changelist",
+            )
+            # Verify URL does NOT contain error page marker
+            current_url = self.web_driver.current_url
+            self.assertNotIn("&e=1", current_url)
+
 
 @tag("selenium_tests")
 class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
