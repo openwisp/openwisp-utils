@@ -13,7 +13,10 @@
     <div id="main-content">console log capture test</div>
     {# A secondary (iframe) browsing context that navigates after the top-level #}
     {# page has logged, to verify its navigation does not clear the buffer. #}
-    <iframe id="console-log-test-frame"></iframe>
+    <iframe
+      id="console-log-test-frame"
+      title="Console log test frame"
+    ></iframe>
     <script>
       document.getElementById("console-log-test-frame").src =
         "data:text/html,<p>iframe</p>";
