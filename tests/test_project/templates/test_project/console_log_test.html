@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Console log capture test</title>
+    {# Emitted while the page is still parsing, before readyState === "complete", #}
+    {# to verify console logs produced during page load are captured. #}
+    <script>
+      console.log("page-load-marker");
+    </script>
+  </head>
+  <body>
+    <div id="main-content">console log capture test</div>
+  </body>
+</html>

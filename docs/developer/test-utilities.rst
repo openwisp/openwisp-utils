@@ -259,8 +259,10 @@ Applies a number of settings by default to improve test reliability.
     (``gfx.webrender.force-disabled``, ``layers.acceleration.disabled``).
   - Increases script timeout (``dom.max_script_run_time = 30``).
   - Uses a free port for Marionette to support parallel test execution.
-  - Injects a Firefox extension to capture browser console logs, since
-    Firefox does not support the WebDriver ``get_log`` API.
+  - Captures browser console logs over WebDriver BiDi, since Firefox does
+    not support the WebDriver ``get_log`` API. Logs emitted during page
+    load are captured as well, and are retrieved via
+    ``get_browser_logs()``.
 
 - Chrome-specific options:
 
