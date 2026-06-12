@@ -28,6 +28,9 @@ Sub-Filters
 Sub-filters are conditional filters that are automatically shown or hidden
 based on the selected value of another filter.
 
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/filter.gif
+    :align: center
+
 This allows additional filtering options to appear only when they are
-relevant. For example, a "Status" filter might display extra filtering
-options only when "Active" is selected.
+relevant. In the example above, the "By problematic metric" filter
+is only shown when the "By health status" filter is set to ``problem``.
