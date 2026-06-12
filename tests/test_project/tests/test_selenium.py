@@ -744,7 +744,9 @@ class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
     def test_get_browser_logs_captures_page_load_logs(self):
         # Logs emitted during page load (before readyState === "complete") must
         # be captured too; this is what distinguishes the BiDi capture from a
-        # plain execute_script that only runs once the page is ready.
+        # plain execute_script that only runs once the page is ready. The test
+        # page also navigates an iframe after logging, which must not clear the
+        # top-level page's logs (a secondary-context navigation regression).
         self.open(reverse("console-log-test-view"))
         messages = [log["message"] for log in self.get_browser_logs()]
         self.assertIn("page-load-marker", messages)

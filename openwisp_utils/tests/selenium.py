@@ -219,7 +219,8 @@ class SeleniumTestMixin:
         # messages over WebDriver BiDi, which records logs emitted during page
         # load (including errors) without relying on a browser extension. The
         # entries accumulate in driver._console_logs and are reset on every
-        # navigation to mirror the per-page semantics get_browser_logs expects.
+        # top-level navigation to mirror the per-page semantics
+        # get_browser_logs expects.
         web_driver._console_logs = []
         web_driver.script.add_console_message_handler(
             lambda entry: web_driver._console_logs.append(
@@ -229,8 +230,20 @@ class SeleniumTestMixin:
                 }
             )
         )
+        # Reset the buffer only when the top-level context under test navigates.
+        # The id of that context stays stable across navigations, while iframes
+        # and other secondary contexts have different ids; clearing on their
+        # navigations would wipe the page's logs before get_browser_logs() reads
+        # them. Subscribing with contexts=[id] still delivers child-context
+        # events, so the context is filtered here in the callback instead.
+        top_level_context = web_driver.current_window_handle
+
+        def reset_logs_on_top_level_navigation(info):
+            if info.context == top_level_context:
+                web_driver._console_logs.clear()
+
         web_driver.browsing_context.add_event_handler(
-            "navigation_started", lambda *args: web_driver._console_logs.clear()
+            "navigation_started", reset_logs_on_top_level_navigation
         )
         return web_driver
 
