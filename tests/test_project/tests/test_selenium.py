@@ -719,6 +719,170 @@ class TestAutocompleteFilter(
 
 
 @tag("selenium_tests")
+class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
+    shelf_model = Shelf
+    book_model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.web_driver.set_window_size(1600, 768)
+        self._create_test_data()
+
+    def _create_test_data(self):
+        horror_shelf = self._create_shelf(
+            name="horror-shelf",
+            books_type="HORROR",
+            owner=self.admin,
+        )
+        fantasy_shelf = self._create_shelf(
+            name="fantasy-shelf",
+            books_type="FANTASY",
+            owner=self.admin,
+        )
+        for i in range(3):
+            self._create_book(
+                name="horror_book_" + str(i),
+                author="author",
+                shelf=horror_shelf,
+            )
+        self._create_book(
+            name="fantasy_book",
+            author="author",
+            shelf=fantasy_shelf,
+        )
+
+    def test_sub_filter_hidden_by_default(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(url)
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        sub_filter = self.find_element(
+            By.CSS_SELECTOR,
+            ".ow-filter.created-date",
+            wait_for="presence",
+        )
+        self.assertEqual(sub_filter.value_of_css_property("display"), "none")
+
+    def test_sub_filter_visible_when_parent_active(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type__exact=HORROR")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        sub_filter = self.wait_for_visibility(
+            By.CSS_SELECTOR, ".ow-filter.created-date"
+        )
+        self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+
+    def test_sub_filter_hidden_when_parent_inactive(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type__exact=FANTASY")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        sub_filter = self.find_element(
+            By.CSS_SELECTOR,
+            ".ow-filter.created-date",
+            wait_for="presence",
+        )
+        self.assertEqual(sub_filter.value_of_css_property("display"), "none")
+
+    def test_sub_filter_on_page_navigation(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type__exact=HORROR")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
+        self.assertEqual(paginator.text.strip(), "3 books")
+
+    def test_sub_filter_applies_backend_filter(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type__exact=HORROR&created=has_date")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
+        self.assertEqual(paginator.text.strip(), "3 books")
+
+    def test_sub_filter_hidden_when_parent_filter_dropdown_open(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        self.open(f"{url}?shelf__books_type__exact=HORROR")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+        # Get the sub-filter element
+        sub_filter = self.find_element(By.CSS_SELECTOR, ".ow-filter.created-date")
+        # Sub-filter should be visible initially when parent filter is HORROR
+        self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+        # Get the parent filter in the group and its title
+        filter_group = self.find_element(By.CSS_SELECTOR, ".ow-filter-group")
+        parent_filter = filter_group.find_element(
+            By.CSS_SELECTOR, ".ow-filter:not(.ow-sub-filter)"
+        )
+        parent_filter_title = parent_filter.find_element(
+            By.CSS_SELECTOR, ".filter-title"
+        )
+
+        with self.subTest("Sub-filter is hidden when parent filter dropdown is open"):
+            # Open the dropdown
+            parent_filter_title.click()
+            self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter.ow-active")
+            # Check that sub-filter is hidden
+            self.assertEqual(sub_filter.value_of_css_property("display"), "none")
+
+        with self.subTest(
+            "Sub-filter is visible again when parent filter dropdown is closed"
+        ):
+            # Close the dropdown
+            parent_filter_title.click()
+            # Check that sub-filter is visible again
+            self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+
+    def test_sub_filter_selection_cleared_on_parent_change(self):
+        self.login()
+        url = reverse("admin:test_project_book_changelist")
+        # Start with HORROR parent and "today" sub-filter selected
+        self.open(f"{url}?shelf__books_type__exact=HORROR&created=today")
+        self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
+
+        with self.subTest(
+            "Sub-filter is visible when parent is HORROR (which is in parent_active_values)"
+        ):
+            sub_filter = self.find_element(By.CSS_SELECTOR, ".ow-filter.created-date")
+            self.assertNotEqual(sub_filter.value_of_css_property("display"), "none")
+
+        with self.subTest(
+            "Changing parent filter to FANTASY (not in parent_active_values) "
+            "does not cause error page (?e=1)"
+        ):
+            # Get the parent filter in the group
+            filter_group = self.find_element(By.CSS_SELECTOR, ".ow-filter-group")
+            parent_filter = filter_group.find_element(
+                By.CSS_SELECTOR, ".ow-filter:not(.ow-sub-filter)"
+            )
+            parent_filter_title = parent_filter.find_element(
+                By.CSS_SELECTOR, ".filter-title"
+            )
+            # Open parent filter dropdown
+            parent_filter_title.click()
+            self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter.ow-active")
+            # Click on FANTASY option (not in parent_active_values)
+            fantasy_option = parent_filter.find_element(
+                By.XPATH, ".//a[contains(text(), 'Fantasy')]"
+            )
+            fantasy_option.click()
+            # Apply button should be visible when sub-filters are present
+            # Click the Apply button to submit
+            apply_button = self.find_element(By.CSS_SELECTOR, "#ow-apply-filter")
+            apply_button.click()
+            # Wait for page to settle
+            self.wait_for(
+                "presence_of_element_located",
+                By.CSS_SELECTOR,
+                "#changelist",
+            )
+            # Verify URL does NOT contain error page marker
+            current_url = self.web_driver.current_url
+            self.assertNotIn("&e=1", current_url)
+
+
+@tag("selenium_tests")
 class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
     def setUp(self):
         super().setUp()
