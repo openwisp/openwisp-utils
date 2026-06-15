@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Console log capture test</title>
+    {# Emitted while the page is still parsing, before readyState === "complete", #}
+    {# to verify console logs produced during page load are captured. #}
+    <script>
+      console.log("page-load-marker");
+    </script>
+  </head>
+  <body>
+    <div id="main-content">console log capture test</div>
+    {# A secondary (iframe) browsing context that navigates after the top-level #}
+    {# page has logged, to verify its navigation does not clear the buffer. #}
+    <iframe
+      id="console-log-test-frame"
+      title="Console log test frame"
+    ></iframe>
+    <script>
+      document.getElementById("console-log-test-frame").src =
+        "data:text/html,<p>iframe</p>";
+    </script>
+  </body>
+</html>
