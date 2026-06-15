@@ -433,7 +433,7 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
             fantasy_option.click()
             self.assertEqual(dropdown.is_displayed(), False)
             self.assertNotEqual(selected_option.get_attribute("innerText"), old_value)
-            self.assertEqual(selected_option.get_attribute("innerText"), "FANTASY")
+            self.assertEqual(selected_option.get_attribute("innerText"), "Fantasy")
 
         filter_button = self._get_filter_button()
         with self.subTest("Test apply filter"):
