@@ -22,15 +22,27 @@ no sub-filters are present, the button is hidden and filters behave like
 the default Django implementation: selecting a filter option immediately
 applies the filter and reloads the page.
 
+.. note::
+
+    For more technical information on how the admin filter functionality
+    is used across the OpenWISP codebase, see :ref:`the reusable admin
+    filter classes <utils_admin_filters>`.
+
 Sub-Filters
 -----------
 
 Sub-filters are conditional filters that are automatically shown or hidden
 based on the selected value of another filter.
 
-.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/filter.gif
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/sub-filter.gif
     :align: center
 
 This allows additional filtering options to appear only when they are
-relevant. In the example above, the "By problematic metric" filter
-is only shown when the "By health status" filter is set to ``problem``.
+relevant. In the example above, the "By problematic metric" filter is only
+shown when the "By health status" filter is set to ``problem``.
+
+.. note::
+
+    For more technical information on how the admin sub-filter
+    functionality is used across the OpenWISP codebase, see
+    :ref:`SubFilterMixin <utils_sub_filter_mixin>`.

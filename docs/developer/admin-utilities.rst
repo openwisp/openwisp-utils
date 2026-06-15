@@ -103,8 +103,13 @@ object. Following is an example:
             "image_url": "/static/admin/img/icon-alert.svg",
         }
 
+.. _utils_admin_filters:
+
 ``openwisp_utils.admin_theme.filters.InputFilter``
 --------------------------------------------------
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/filter.gif
+    :align: center
 
 The ``admin_theme`` sub app of this package provides an input filter that
 can be used in the *changelist* page to filter ``UUIDField`` or
@@ -225,8 +230,13 @@ To customize or know more about it, please refer to the
 `django-admin-autocomplete-filter documentation
 <https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_.
 
+.. _utils_sub_filter_mixin:
+
 ``openwisp_utils.admin_theme.filters.SubFilterMixin``
 -----------------------------------------------------
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/sub-filter.gif
+    :align: center
 
 A mixin that allows admin list filters to be displayed and applied only
 when a parent filter has specific values. This is useful for creating
