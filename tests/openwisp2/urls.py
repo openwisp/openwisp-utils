@@ -13,6 +13,11 @@ urlpatterns = [
         TemplateView.as_view(template_name="test_project/menu_test.html"),
         name="menu-test-view",
     ),
+    path(
+        "console-log-test-view/",
+        TemplateView.as_view(template_name="test_project/console_log_test.html"),
+        name="console-log-test-view",
+    ),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
