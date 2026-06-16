@@ -1,19 +1,28 @@
 from unittest.mock import MagicMock, patch
 
+from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ImproperlyConfigured
+from django.http import HttpRequest
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.timezone import now, timedelta
+from freezegun import freeze_time
 from openwisp_utils.admin import CopyableFieldError, CopyableFieldsAdmin, ReadOnlyAdmin
 from openwisp_utils.admin_theme import settings as admin_theme_settings
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig, _staticfy
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
-from openwisp_utils.admin_theme.filters import InputFilter, SimpleInputFilter
+from openwisp_utils.admin_theme.filters import (
+    InputFilter,
+    SimpleInputFilter,
+    SubFilterMixin,
+)
 
-from ..admin import ProjectAdmin, ShelfAdmin
+from ..admin import BookAdmin, CreatedSubFilter, ProjectAdmin, ShelfAdmin
 from ..models import (
+    Book,
     Operator,
     OrganizationRadiusSettings,
     Project,
@@ -29,6 +38,8 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
     TEST_KEY = "w1gwJxKaHcamUw62TQIPgYchwLKn3AA0"
     accounting_model = RadiusAccounting
     org_radius_settings_model = OrganizationRadiusSettings
+    shelf_model = Shelf
+    book_model = Book
 
     def test_radiusaccounting_change(self):
         options = dict(username="bobby", session_id="1")
@@ -613,3 +624,166 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertNotContains(response, "<h2>OpenWISP Version")
             _assert_system_information(response)
+
+    def test_sub_filter_applies_when_parent_active(self):
+        shelf = self._create_shelf(name="horror-shelf", books_type="HORROR")
+        with freeze_time(now() - timedelta(days=1)):
+            self._create_book(name="b1", author="a1", shelf=shelf)
+        self._create_book(name="b2", author="a2", shelf=shelf)
+        fantasy_shelf = self._create_shelf(name="fantasy-shelf", books_type="FANTASY")
+        self._create_book(name="b3", author="a3", shelf=fantasy_shelf)
+        url = reverse("admin:test_project_book_changelist")
+        response = self.client.get(
+            url,
+            {
+                "shelf__books_type": "HORROR",
+                "created": "today",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "b2</a>")
+        self.assertNotContains(response, "b1</a>")
+        self.assertNotContains(response, "b3</a>")
+        self.assertContains(response, "1 book")
+
+    def test_sub_filter_invalid_when_parent_not_active(self):
+        url = reverse("admin:test_project_book_changelist")
+        response = self.client.get(url, {"created": "has_date"})
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, url + "?e=1")
+
+    def test_sub_filter_invalid_with_wrong_parent_value(self):
+        url = reverse("admin:test_project_book_changelist")
+        response = self.client.get(
+            url,
+            {
+                "shelf__books_type": "FANTASY",
+                "created": "has_date",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, url + "?e=1")
+
+    def test_sub_filter_valid_when_parent_inactive_no_value(self):
+        horror_shelf = Shelf.objects.create(name="horror-shelf", books_type="HORROR")
+        fantasy_shelf = Shelf.objects.create(name="fantasy-shelf", books_type="FANTASY")
+        Book.objects.create(name="b1", author="a1", shelf=horror_shelf)
+        Book.objects.create(name="b2", author="a2", shelf=fantasy_shelf)
+        url = reverse("admin:test_project_book_changelist")
+        response = self.client.get(url, {"shelf__books_type": "FANTASY"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "1 book")
+
+    def test_sub_filter_valid_when_parent_missing_no_value(self):
+        horror_shelf = Shelf.objects.create(name="horror-shelf", books_type="HORROR")
+        fantasy_shelf = Shelf.objects.create(name="fantasy-shelf", books_type="FANTASY")
+        b1 = Book.objects.create(name="b1", author="a1", shelf=horror_shelf)
+        b2 = Book.objects.create(name="b2", author="a2", shelf=fantasy_shelf)
+        url = reverse("admin:test_project_book_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, b1.name)
+        self.assertContains(response, b2.name)
+
+    def test_sub_filter_is_parent_active_no_parent(self):
+        filter = CreatedSubFilter(
+            request=None, params={}, model=Book, model_admin=BookAdmin
+        )
+        self.assertEqual(filter.is_parent_active, True)
+
+    def test_sub_filter_is_parent_active_no_request(self):
+        class NoRequestSubFilter(SubFilterMixin, SimpleInputFilter):
+            title = "Test"
+            parameter_name = "test"
+            parent_parameter_name = "shelf__books_type"
+            parent_active_values = ("HORROR",)
+
+        filter = NoRequestSubFilter(
+            request=None, params={}, model=Book, model_admin=BookAdmin
+        )
+        self.assertEqual(filter.is_parent_active, True)
+
+    def test_sub_filter_is_parent_active_exact_parent_parameter_name(self):
+        class ExactParentSubFilter(SubFilterMixin, SimpleInputFilter):
+            title = "Test"
+            parameter_name = "test"
+            parent_parameter_name = "shelf__books_type"
+            parent_active_values = ("HORROR",)
+
+        request = HttpRequest()
+        request.GET = {"shelf__books_type__exact": "HORROR"}
+        filter = ExactParentSubFilter(
+            request=request, params={}, model=Book, model_admin=BookAdmin
+        )
+        self.assertEqual(filter.is_parent_active, True)
+
+    def test_sub_filter_empty_active_values(self):
+        class EmptyActiveSubFilter(SubFilterMixin, SimpleInputFilter):
+            title = "Test"
+            parameter_name = "test"
+            parent_parameter_name = "shelf__books_type"
+            parent_active_values = ()
+
+        request = HttpRequest()
+        request.GET = {"shelf__books_type": "HORROR"}
+        filter = EmptyActiveSubFilter(
+            request=request, params={}, model=Book, model_admin=BookAdmin
+        )
+        self.assertFalse(EmptyActiveSubFilter.parent_active_values)
+        self.assertEqual(filter.is_parent_active, False)
+
+    def test_sub_filter_default_filter_queryset(self):
+        class DefaultSubFilter(SubFilterMixin, SimpleInputFilter):
+            title = "Test"
+            parameter_name = "test"
+            parent_parameter_name = "shelf__books_type"
+            parent_active_values = ("HORROR",)
+
+        qs = Shelf.objects.all()
+        filter = DefaultSubFilter(
+            request=None, params={}, model=Shelf, model_admin=ShelfAdmin
+        )
+        result = filter.filter_queryset(None, qs)
+        self.assertIs(result, qs)
+
+    def test_sub_filter_renders_in_group(self):
+        url = reverse("admin:test_project_book_changelist")
+        response = self.client.get(url)
+        self.assertContains(response, '<div class="ow-filter-group">')
+        self.assertContains(response, '<div class="ow-sub-filter-group">')
+        self.assertContains(response, "created-date")
+        self.assertContains(response, "ow-sub-filter")
+        self.assertContains(response, "Created date")
+        self.assertContains(response, 'data-sub-filter-parent="shelf__books_type"')
+
+    def test_orphaned_sub_filter_not_rendered_and_logged(self):
+        class OrphanedSubFilter(SubFilterMixin, SimpleListFilter):
+            title = "Orphaned Filter"
+            parameter_name = "orphaned"
+            parent_parameter_name = "non_existent_parent"
+            parent_active_values = ("value",)
+
+            def lookups(self, request, model_admin):
+                return (("value", "Value"),)
+
+            def queryset(self, request, queryset):
+                return queryset
+
+        original_list_filter = BookAdmin.list_filter
+        BookAdmin.list_filter = list(original_list_filter) + [OrphanedSubFilter]
+        try:
+            url = reverse("admin:test_project_book_changelist")
+            with patch(
+                "openwisp_utils.admin_theme.templatetags.ow_tags.logger"
+            ) as mock_logger:
+                response = self.client.get(url)
+            # Verify orphaned sub-filter is not rendered
+            self.assertNotContains(response, "Orphaned Filter")
+            # Verify error was logged
+            mock_logger.error.assert_called_once_with(
+                "Orphaned sub-filter detected: %s with parent_parameter_name='%s'",
+                "OrphanedSubFilter",
+                "non_existent_parent",
+            )
+        finally:
+            BookAdmin.list_filter = original_list_filter
