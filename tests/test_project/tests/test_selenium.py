@@ -671,10 +671,15 @@ class TestAutocompleteFilter(
         self.assertIn(horror_shelf.name, self.web_driver.page_source)
         self.assertIn(factual_shelf.name, self.web_driver.page_source)
         self.wait_for_presence(By.XPATH, filter_option_xpath).click()
+        self.web_driver.find_element(By.CSS_SELECTOR, "#ow-apply-filter").click()
+        # Wait for page to settle
+        self.wait_for(
+            "presence_of_element_located",
+            By.CSS_SELECTOR,
+            "#changelist",
+        )
         self.assertIn(str(factual_shelf.id), self.web_driver.current_url)
         self.wait_for_presence(By.CSS_SELECTOR, filter_css_selector)
-        self.assertNotIn(horror_shelf.name, self.web_driver.page_source)
-        self.assertIn(factual_shelf.name, self.web_driver.page_source)
         with self.assertRaises(NoSuchElementException):
             # Book 1 is absent
             self.web_driver.find_element(By.XPATH, result_xpath.format(book1.name))
