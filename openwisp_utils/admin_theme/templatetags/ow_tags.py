@@ -41,7 +41,6 @@ def ow_render_filters(cl, filter_specs):
     below the parent inside an ``.ow-sub-filter-group``.
     """
     specs = list(filter_specs)
-
     # Separate parent filters and sub-filters
     parent_filters = []
     sub_filters = []

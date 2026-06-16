@@ -481,8 +481,10 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
         with self.subTest("Test visibility of filter"):
             self.assertEqual(self.check_exists_by_id("ow-changelist-filter"), True)
 
-        with self.subTest("Test filter button is not visible"):
-            self.assertEqual(self.check_exists_by_id("ow-apply-filter"), False)
+        with self.subTest("Test filter button is visible"):
+            # The filter button should be visible even if there are less than 4 filters,
+            # because it is required for the sub filter to work.
+            self.assertEqual(self.check_exists_by_id("ow-apply-filter"), True)
 
         with self.subTest("Test anchor tag in filter options"):
             self.assertEqual(
@@ -504,6 +506,13 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
             selected_option = self._get_filter_selected_option("name")
             self.assertNotEqual(old_value, selected_option.get_attribute("innerText"))
             self.assertEqual(selected_option.get_attribute("innerText"), "horror book")
+            self.web_driver.find_element(By.CSS_SELECTOR, "#ow-apply-filter").click()
+            # Wait for page to settle
+            self.wait_for(
+                "presence_of_element_located",
+                By.CSS_SELECTOR,
+                "#changelist",
+            )
             paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
             self.assertEqual(paginator.get_attribute("innerText"), "1 book")
 
