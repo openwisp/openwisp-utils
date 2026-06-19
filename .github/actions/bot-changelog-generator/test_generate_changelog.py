@@ -392,6 +392,7 @@ class TestBuildPrompt(unittest.TestCase):
             f"within {COMMIT_SUBJECT_LIMIT} characters, including the tag and spaces",
             system_instruction,
         )
+        self.assertIn("Use past tense for the commit message", system_instruction)
         self.assertIn(
             "If any rule below is broken, the output is invalid.",
             system_instruction,

@@ -465,6 +465,7 @@ def build_prompt(
         f"- Keep the first line within {COMMIT_SUBJECT_LIMIT} characters, "
         "including the tag and spaces\n"
         "- Capitalize the first word after the tag\n"
+        "- Use past tense for the commit message (e.g., 'Added', 'Fixed', 'Changed')\n"
         "- The message must contain a body after one blank line\n"
         "- If an issue number appears in the title, the same issue number must "
         "appear in the body footer\n"
