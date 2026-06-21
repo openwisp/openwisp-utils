@@ -79,22 +79,6 @@ def create_package_json():
     return _create_package_json
 
 
-def _create_makefile(path: Path, version="1.2.3"):
-    """Helper to create a Makefile for docker projects."""
-    makefile_content = f"""OPENWISP_VERSION = {version}
-DOCKER_IMAGE = openwisp/test
-
-build:
-\tdocker build -t $(DOCKER_IMAGE):$(OPENWISP_VERSION) .
-"""
-    (path / "Makefile").write_text(makefile_content)
-
-
-@pytest.fixture
-def create_makefile():
-    return _create_makefile
-
-
 def _create_docker_compose(path: Path):
     """Helper to create a docker-compose.yml file."""
     (path / "docker-compose.yml").write_text(
@@ -105,6 +89,18 @@ def _create_docker_compose(path: Path):
 @pytest.fixture
 def create_docker_compose():
     return _create_docker_compose
+
+
+def _create_docker_version_file(path: Path, version="1.2.3"):
+    """Helper to create images/common/openwisp/VERSION for docker-openwisp."""
+    version_dir = path / "images" / "common" / "openwisp"
+    version_dir.mkdir(parents=True, exist_ok=True)
+    (version_dir / "VERSION").write_text(f"{version}\n")
+
+
+@pytest.fixture
+def create_docker_version_file():
+    return _create_docker_version_file
 
 
 def _create_ansible_lint(path: Path):

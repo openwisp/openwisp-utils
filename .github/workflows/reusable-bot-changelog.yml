@@ -56,3 +56,4 @@ jobs:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           pr-number: ${{ inputs.pr_number }}
           repo-name: ${{ github.repository }}
+          gemini-model: ${{ vars.GEMINI_MODEL }}

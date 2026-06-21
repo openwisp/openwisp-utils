@@ -1,80 +1,54 @@
-# Agent guidelines for openwisp-utils
+# AGENTS.md
 
-Conventions for AI coding agents working in this repo. These sit on
-top of the project's `CONTRIBUTING.rst` and the upstream
-[OpenWISP contributing guidelines](http://openwisp.io/docs/developer/contributing.html);
-read those first — everything below assumes them.
+## Project Overview
 
-## QA tooling: format and lint before declaring done
+`openwisp-utils` provides shared utilities, QA tooling, test helpers, admin utilities, storage helpers, API utilities, and release tooling used across OpenWISP Python packages.
 
-The repo ships two scripts you must run before considering a change
-complete:
+Core code lives in `openwisp_utils/`:
 
-- `openwisp-qa-format` — reformats Python (and adjacent) files in
-  place. Run it after editing; do not hand-format.
-- `./run-qa-checks` — runs `openwisp-qa-check` with the project's
-  linter configuration (CSS, JS, migration paths). Treat any failure
-  as blocking, even if the diff looks small.
+- `qa.py`, `openwisp-qa-format`, and `openwisp-qa-check` implement formatting and QA tooling.
+- `releaser/` contains release and commitizen utilities.
+- `api/`, `admin_theme/`, `db/`, `metric_collection/`, `storage.py`, and `utils.py` provide reusable Django and Python helpers.
+- Tests live in `openwisp_utils/tests/` and `tests/`.
 
-If `./run-qa-checks` flags something `openwisp-qa-format` didn't fix,
-investigate the rule rather than suppressing it.
+## Source of Truth
 
-## Bug fixes start with a failing test
+- Use `docs/developer/installation.rst` and `docs/developer/index.rst` for local setup, utilities, and baseline test commands.
+- Use `.github/workflows/ci.yml` for CI-tested dependencies, QA/test commands, env vars, and supported Python/Django versions.
+- Use GitHub issue/PR templates when asked to open issues or PRs.
 
-When fixing a bug, write a test that reproduces it **before** writing
-the fix. Run the test, confirm it fails for the reported reason, then
-implement the fix and confirm the test goes green. This sequence is
-what proves the test actually covers the bug — adding the test
-afterwards risks writing one that passes against the buggy code too.
-The PR description should reflect this order: failing test, then fix.
+Follow the DRY principle: do not duplicate information or code across files.
 
-## Comments and docstrings: explain why, not what
+If instructions conflict, repository config and CI workflows win first, official docs next, and this file is supplemental.
 
-Lean comments and docstrings toward human-level explanation:
+## Development Notes
 
-- **Why** the code is shaped this way (constraints, trade-offs,
-  references to issues or upstream behavior).
-- **What problem** it solves at a level a reader would not get from
-  the code itself.
+- Keep changes focused. Avoid unrelated refactors and formatting churn.
+- Preserve public APIs, CLI behavior, reusable workflow contracts, migrations, and integration points unless explicitly required.
+- Place imports at the top of the file. Only defer imports when necessary (e.g., Django model imports inside functions or methods where the app registry is not yet ready).
+- Avoid unnecessary blank lines inside function and method bodies.
+- Update docs when behavior, settings, public APIs, setup steps, QA rules, or supported versions change.
 
-Avoid comments that translate code into prose ("increment the
-counter", "loop over results") — well-named identifiers already say
-what; the reader gains nothing from the translation. If a function
-needs a wall of comments to be understood, the function probably
-needs a refactor, not more comments.
+## Testing and QA
 
-## Verify subprocess-based tests aren't hiding coverage gaps
+- Add or update tests for every behavior change.
+- For bug fixes, write the regression test first, run it against the unfixed code, confirm it fails for the expected reason, then implement the fix.
+- Run `openwisp-qa-format` after editing.
+- Run `./run-qa-checks` before considering the change complete. Treat failures as blocking unless confirmed unrelated and reported.
+- Use targeted tests while iterating, then run the documented full test command.
 
-Some test suites in this repo invoke external commands via
-`subprocess.run` instead of importing the code under test in-process.
-The clearest example is `openwisp_utils/releaser/tests/test_commitizen_rules.py`,
-which drives the `OpenWispCommitizen` plugin through the `cz` CLI.
+## Coverage Notes
 
-Coverage is configured for the parent test process only
-(`.coveragerc` does not enable subprocess instrumentation via
-`coverage.process_startup()`), so any code reached _only_ through a
-subprocess call is invisible to coveralls. The file looks "tested" but
-contributes 0% to the coverage report.
+- Prefer in-process tests so coverage tools can measure changed code.
+- Some tests invoke external commands with `subprocess.run`; `openwisp_utils/releaser/tests/test_commitizen_rules.py` is the clearest example.
+- Code reached only through subprocesses is invisible to the parent coverage process. Add direct unit tests when changing that code, following `openwisp_utils/releaser/tests/test_commitizen_unit.py` where applicable.
+- When checking coverage for a changed module, use `python -m pytest <test_path> --cov=<dotted.module.path> --cov-report=term-missing`.
 
-When adding a test or modifying code that is currently exercised through
-a subprocess, do one of the following:
+## Security and Review Notes
 
-1. Prefer adding **in-process unit tests** that import the module and
-   call its public methods directly. The subprocess test stays as an
-   integration check; the unit tests give coverage tooling something to
-   measure. See `openwisp_utils/releaser/tests/test_commitizen_unit.py`
-   for the established pattern.
-2. If in-process testing is impossible (the code only makes sense as a
-   CLI invocation), explicitly note the coverage trade-off in the PR
-   description so reviewers know not to chase the gap.
+- Watch for unsafe file paths, unsafe subprocess usage, token or secret exposure, and changes that could weaken QA or release safeguards.
+- Write comments and docstrings only when they explain why code is shaped a certain way. Put comments before the relevant code block instead of scattering them inside it.
 
-Before declaring a test suite complete, run with `--cov` against the
-file under test and confirm the coverage number reflects what you
-expect:
+## Troubleshooting
 
-```bash
-python -m pytest <test_path> --cov=<dotted.module.path> --cov-report=term-missing
-```
-
-A subprocess-only test will report ~0% with most of the file under
-"Missing" — that is the signal to add in-process tests.
+- If setup, QA, or tests fail, check docs first, then compare with CI. If commands diverge, follow CI.

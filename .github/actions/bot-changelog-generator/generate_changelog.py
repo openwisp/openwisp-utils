@@ -10,6 +10,7 @@ and OpenWISP squash merges:
 - [feature] for new features
 - [fix] for bug fixes
 - [change] for changes
+- [change!] for backward incompatible changes
 
 
 Usage:
@@ -20,7 +21,8 @@ Environment Variables:
     PR_NUMBER: The PR number to analyze
     REPO_NAME: The repository name (e.g., openwisp/openwisp-utils)
     GITHUB_TOKEN: GitHub token for API access
-    GEMINI_MODEL: Model to use (default: 'gemini-2.5-flash-lite')
+    GEMINI_MODEL: Model to use (default: 'gemini-2.5-flash-lite'). An unset or
+        empty value falls back to the default, mirroring the CI-failure bot.
 """
 
 import os
@@ -28,6 +30,7 @@ import re
 import secrets
 import subprocess
 import sys
+import textwrap
 from html import escape
 
 from google import genai
@@ -39,12 +42,20 @@ CHANGELOG_BOT_MARKER = "<!-- openwisp-changelog-bot -->"
 CHANGELOG_COMMENT_INTRO = "Proposed change log entry:"
 COMMIT_SUBJECT_LIMIT = 72
 COMMIT_BODY_MAX_NONEMPTY_LINES = 10
-MAX_GENERATION_ATTEMPTS = 3
+# Keep this low: each attempt is one Gemini request, and the bot shares a
+# per-model daily request quota (RPD) with the other OpenWISP bots.
+MAX_GENERATION_ATTEMPTS = 2
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
 COMMIT_MESSAGE_RULE_CONTEXT_FILES = (
     "openwisp_utils/releaser/commitizen.py",
     "openwisp_utils/releaser/tests/test_commitizen_rules.py",
 )
 COMMIT_MESSAGE_RULE_CONTEXT_LIMIT = 6000
+ISSUE_FOOTER_RE = re.compile(
+    r"^(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to)"
+    r"(?:\s+#\d+)+\.?$",
+    re.IGNORECASE,
+)
 
 
 class _CommitizenConfig:
@@ -61,6 +72,80 @@ def get_env_or_exit(name: str) -> str:
         print(f"Error: {name} environment variable is required", file=sys.stderr)
         sys.exit(1)
     return value
+
+
+def resolve_model() -> str:
+    """Resolve the Gemini model from the environment.
+
+    Mirrors the CI-failure bot: an unset, empty, or whitespace-only
+    ``GEMINI_MODEL`` (for example an empty ``${{ vars.GEMINI_MODEL }}``)
+    falls back to the default model.
+    """
+    raw_model = os.environ.get("GEMINI_MODEL", "").strip()
+    return raw_model or DEFAULT_GEMINI_MODEL
+
+
+def _is_quota_error(error_message: str) -> bool:
+    """Return True if the error looks like a Gemini quota / rate-limit error."""
+    lowered = error_message.lower()
+    return (
+        "429" in lowered
+        or "resource_exhausted" in lowered
+        or "quota" in lowered
+        or "rate limit" in lowered
+        or "rate-limit" in lowered
+    )
+
+
+def _flush_body_paragraph(
+    normalized_body_lines: list[str], paragraph: list[str]
+) -> None:
+    """Wrap buffered body text into normalized commit-message lines."""
+    if not paragraph:
+        return
+    paragraph_text = " ".join(line.strip() for line in paragraph)
+    normalized_body_lines.extend(
+        textwrap.wrap(
+            paragraph_text,
+            width=COMMIT_SUBJECT_LIMIT,
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
+    )
+    paragraph.clear()
+
+
+def normalize_changelog_output(text: str) -> str:
+    """Normalize locally fixable formatting in a generated commit message."""
+    text = text.strip()
+    if "\n\n" not in text:
+        return text
+    subject, _, body = text.partition("\n\n")
+    if not body.strip():
+        return text
+    normalized_body_lines = []
+    paragraph = []
+    # Buffer regular body lines so existing hard-wrapped text is reflowed as
+    # one paragraph instead of preserving Gemini's arbitrary line breaks.
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            _flush_body_paragraph(normalized_body_lines, paragraph)
+            if normalized_body_lines and normalized_body_lines[-1] != "":
+                normalized_body_lines.append("")
+        elif ISSUE_FOOTER_RE.match(stripped):
+            # Issue footers are semantically meaningful commit metadata, so do
+            # not merge or wrap them into the preceding paragraph.
+            _flush_body_paragraph(normalized_body_lines, paragraph)
+            normalized_body_lines.append(stripped)
+        else:
+            paragraph.append(stripped)
+    _flush_body_paragraph(normalized_body_lines, paragraph)
+    while normalized_body_lines and normalized_body_lines[-1] == "":
+        normalized_body_lines.pop()
+    if not normalized_body_lines:
+        return subject.strip()
+    return f"{subject.strip()}\n\n" + "\n".join(normalized_body_lines)
 
 
 def github_api_request(endpoint: str, token: str) -> dict:
@@ -228,6 +313,16 @@ def call_gemini(
         error_msg = str(e)
         error_msg = re.sub(r"key=\S+", "key=***", error_msg)
         error_msg = re.sub(r"Bearer\s+\S+", "Bearer ***", error_msg)
+        if _is_quota_error(error_msg):
+            # Daily quota (RPD) exhaustion is not a code problem and must not
+            # mark the workflow as failed. Skip gracefully like the CI-failure
+            # bot does on API errors.
+            print(
+                f"::warning::Gemini quota exhausted; skipping changelog "
+                f"suggestion: {error_msg}",
+                file=sys.stderr,
+            )
+            sys.exit(0)
         print(f"Gemini API error: {error_msg}", file=sys.stderr)
         sys.exit(1)
 
@@ -365,10 +460,12 @@ def build_prompt(
         "If any rule below is broken, the output is invalid.\n"
         "RULES YOU MUST FOLLOW:\n"
         "- Output exactly one plain-text git commit message\n"
-        "- Start the first line with exactly one tag: [feature], [fix], or [change]\n"
+        "- Start the first line with exactly one tag: [feature], [fix], "
+        "[change], or [change!]\n"
         f"- Keep the first line within {COMMIT_SUBJECT_LIMIT} characters, "
         "including the tag and spaces\n"
         "- Capitalize the first word after the tag\n"
+        "- Use past tense for the commit message (e.g., 'Added', 'Fixed', 'Changed')\n"
         "- The message must contain a body after one blank line\n"
         "- If an issue number appears in the title, the same issue number must "
         "appear in the body footer\n"
@@ -384,7 +481,10 @@ def build_prompt(
         "  from the user's perspective\n"
         "- Focus the body on user-visible behavior, fixes, configuration changes,\n"
         "  compatibility notes, or important implementation consequences\n"
-        f"- Wrap the body around {COMMIT_SUBJECT_LIMIT} characters per line\n"
+        f"- Every non-empty body line must be {COMMIT_SUBJECT_LIMIT} "
+        "characters or shorter\n"
+        "- Insert real newline characters to wrap long body sentences; do not "
+        "return one long paragraph\n"
         f"- Keep the body concise, using no more than "
         f"{COMMIT_BODY_MAX_NONEMPTY_LINES} non-empty lines after the title,\n"
         "  including any issue footer lines\n"
@@ -399,6 +499,7 @@ def build_prompt(
         "- [feature] - New functionality\n"
         "- [fix] - Bug fixes\n"
         "- [change] - Non-breaking changes, refactors, updates\n"
+        "- [change!] - Backward incompatible changes\n"
         "Length: Provide enough body detail to help "
         "a maintainer reuse the output as a high-quality squash merge commit "
         "message.\n"
@@ -456,9 +557,9 @@ def generate_changelog_entry(
             validation_errors=validation_errors or None,
             attempt=attempt,
         )
-        latest_entry = call_gemini(
-            user_data_prompt, system_instruction, api_key, model
-        ).strip()
+        latest_entry = normalize_changelog_output(
+            call_gemini(user_data_prompt, system_instruction, api_key, model)
+        )
         validation_errors = get_changelog_validation_errors(
             latest_entry, changelog_format
         )
@@ -509,7 +610,7 @@ def get_commit_message_validation_errors(text: str) -> list[str]:
 def get_changelog_bot_validation_errors(text: str) -> list[str]:
     """Validate bot-specific safety and formatting requirements."""
     errors = []
-    required_tags = ("[feature]", "[fix]", "[change]")
+    required_tags = ("[feature]", "[fix]", "[change]", "[change!]")
     suspicious_patterns = [
         r"ignore\s+previous\s+instructions",
         r"ignore_[a-z_]*instructions",
@@ -520,7 +621,9 @@ def get_changelog_bot_validation_errors(text: str) -> list[str]:
     ]
 
     if not any(text.startswith(tag) for tag in required_tags):
-        errors.append("Commit message must start with [feature], [fix], or [change].")
+        errors.append(
+            "Commit message must start with [feature], [fix], [change], or [change!]."
+        )
     if "```" in text:
         errors.append("Commit message must not contain fenced code blocks.")
     if CHANGELOG_COMMENT_INTRO.lower() in text.lower():
@@ -529,6 +632,14 @@ def get_changelog_bot_validation_errors(text: str) -> list[str]:
         errors.append("Commit message must include a body after a blank line.")
     elif not text.partition("\n\n")[2].strip():
         errors.append("Commit message body cannot be empty.")
+    else:
+        body = text.partition("\n\n")[2]
+        for line_number, line in enumerate(body.splitlines(), 1):
+            if line.strip() and len(line) > COMMIT_SUBJECT_LIMIT:
+                errors.append(
+                    f"Commit message body line {line_number} must be "
+                    f"{COMMIT_SUBJECT_LIMIT} characters or shorter."
+                )
     for pattern in suspicious_patterns:
         if re.search(pattern, text, re.IGNORECASE):
             errors.append(f"Commit message matched a blocked safety pattern: {pattern}")
@@ -607,7 +718,7 @@ def main():
         print("Changelog comment already exists, skipping.")
         return
     api_key = get_env_or_exit("GEMINI_API_KEY")
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    model = resolve_model()
     pr_details = get_pr_details(repo, pr_number, github_token)
     base_branch = pr_details["base_branch"]
     diff = get_pr_diff(base_branch)
@@ -627,8 +738,8 @@ def main():
     if validation_errors:
         print(
             "::warning::Generated changelog entry failed validation against "
-            "OpenWISP commit message rules after 3 attempts. Posting the last "
-            "attempt anyway.",
+            "OpenWISP commit message rules after "
+            f"{MAX_GENERATION_ATTEMPTS} attempts. Posting the last attempt anyway.",
             file=sys.stderr,
         )
         for error in validation_errors:

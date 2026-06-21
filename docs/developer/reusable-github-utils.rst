@@ -394,6 +394,8 @@ not yet merged, the workflow exits safely without failing.
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
+.. _utils_ci_failure_bot:
+
 Automated CI Failure Bot
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -423,6 +425,15 @@ The bot supports a configurable retry classifier mode via
 - ``both``: retries when either heuristic or LLM indicates transient; the
   LLM call is skipped when the heuristic already matched.
 - Any other value (including empty/typo): heuristic-only retry.
+
+**Model configuration**
+
+By default the bot uses ``gemini-2.5-flash-lite``. To use a different
+model (for example a paid tier with a higher or unlimited daily request
+quota), set the ``GEMINI_MODEL`` repository or organization variable. An
+unset or empty value keeps the default. The same variable also controls
+the :ref:`Changelog bot <utils_changelog_bot>`, so setting it once at the
+organization level changes the model for both bots at the same time.
 
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
@@ -525,13 +536,16 @@ job:
           APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
+.. _utils_changelog_bot:
+
 Changelog Bot
 ~~~~~~~~~~~~~
 
 This workflow automatically generates changelog entry suggestions for Pull
 Requests using Google Gemini. It gets triggered when a PR with a title
-prefixed with ``[feature]``, ``[fix]``, or ``[change]`` is approved by a
-maintainer. It analyzes the PR's title, description, code changes, and
+prefixed with ``[feature]``, ``[fix]``, ``[change]``, or ``[change!]`` is
+approved by a maintainer. ``[change!]`` marks backward incompatible
+changes. The bot analyzes the PR's title, description, code changes, and
 linked issues, then posts a properly formatted changelog entry as a
 comment on the PR.
 
@@ -549,6 +563,18 @@ to secrets, and is the one that generates and posts the changelog comment.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
 
+**Model configuration**
+
+The changelog bot uses ``gemini-2.5-flash-lite`` by default and honors the
+same ``GEMINI_MODEL`` repository or organization variable as the :ref:`CI
+failure bot <utils_ci_failure_bot>`. Setting it once at the organization
+level changes the model for both bots at the same time.
+
+The bot normalizes generated commit-message body text locally before
+validation, wrapping long body lines while preserving issue footers such
+as ``Closes #123``. This avoids spending extra Gemini requests on
+formatting issues that can be fixed deterministically.
+
 **Setup for Other Repositories**
 
 To enable the changelog bot in any OpenWISP repository, create the
@@ -559,7 +585,8 @@ following two workflow files under ``.github/workflows/``.
 
 The trigger workflow runs when a PR review is submitted. If the PR is
 approved by a maintainer and its title starts with ``[feature]``,
-``[fix]``, or ``[change]``, it stores the PR number as workflow metadata.
+``[fix]``, ``[change]``, or ``[change!]``, it stores the PR number as
+workflow metadata.
 
 **1. Changelog Bot Trigger**
 (``.github/workflows/bot-changelog-trigger.yml``)
@@ -588,7 +615,7 @@ approved by a maintainer and its title starts with ``[feature]``,
             env:
               PR_TITLE: ${{ github.event.pull_request.title }}
             run: |
-              if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change)\]'; then
+              if echo "$PR_TITLE" | grep -qiE '^\[(feature|fix|change!?)\]'; then
                 echo "has_noteworthy=true" >> $GITHUB_OUTPUT
               fi
 

@@ -308,7 +308,7 @@ def test_main_flow_no_version_prefix_style(mock_all):
     full_print_output = "".join(str(call) for call in mock_all["print"].call_args_list)
     assert "The following block will be added to the changelog" in full_print_output
     # Verify the header shown to the user is also in the correct style
-    assert "1.3.0  [2025-08-11]" in full_print_output
+    assert "1.3.0 [2025-08-11]" in full_print_output
     assert "Version 1.3.0" not in full_print_output
 
 

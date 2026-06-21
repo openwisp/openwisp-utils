@@ -1,7 +1,9 @@
 """Tests for the changelog generator GitHub action."""
 
 import os
+import re
 import sys
+from pathlib import Path
 
 # Add the directory to path for importing (must be before local imports)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +29,9 @@ from generate_changelog import (  # noqa: E402
     get_pr_details,
     get_pr_diff,
     has_existing_changelog_comment,
+    normalize_changelog_output,
     post_github_comment,
+    resolve_model,
     validate_changelog_output,
 )
 
@@ -51,6 +55,32 @@ class TestGetEnvOrExit(unittest.TestCase):
             with self.assertRaises(SystemExit) as context:
                 get_env_or_exit("EMPTY_VAR")
             self.assertEqual(context.exception.code, 1)
+
+
+class TestResolveModel(unittest.TestCase):
+    """Tests for resolve_model: GEMINI_MODEL env resolution."""
+
+    def test_returns_env_model_when_set(self):
+        with patch.dict(os.environ, {"GEMINI_MODEL": "gemini-2.5-flash"}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash")
+
+    def test_returns_default_when_unset(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+
+    def test_returns_default_when_empty(self):
+        # Regression: an empty ``${{ vars.GEMINI_MODEL }}`` forwards an empty
+        # string, which must still fall back to the default model.
+        with patch.dict(os.environ, {"GEMINI_MODEL": ""}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+
+    def test_returns_default_when_whitespace(self):
+        with patch.dict(os.environ, {"GEMINI_MODEL": "   "}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+
+    def test_strips_surrounding_whitespace(self):
+        with patch.dict(os.environ, {"GEMINI_MODEL": "  gemini-2.5-flash  "}):
+            self.assertEqual(resolve_model(), "gemini-2.5-flash")
 
 
 class TestGetPrDetails(unittest.TestCase):
@@ -309,6 +339,21 @@ class TestCallGemini(unittest.TestCase):
         self.assertEqual(context.exception.code, 1)
 
     @patch("generate_changelog.genai")
+    def test_exits_zero_on_quota_error(self, mock_genai):
+        # Quota / RPD exhaustion must not turn the workflow red; it should skip
+        # gracefully (exit 0) like the CI-failure bot does on API errors.
+        mock_client = MagicMock()
+        mock_client.models.generate_content.side_effect = Exception(
+            "429 RESOURCE_EXHAUSTED: Quota exceeded for requests per day"
+        )
+        mock_genai.Client.return_value = mock_client
+        with self.assertRaises(SystemExit) as context:
+            call_gemini(
+                "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+            )
+        self.assertEqual(context.exception.code, 0)
+
+    @patch("generate_changelog.genai")
     def test_passes_prompt_as_contents(self, mock_genai):
         mock_client = MagicMock()
         mock_response = MagicMock()
@@ -342,16 +387,23 @@ class TestBuildPrompt(unittest.TestCase):
         self.assertIn("[feature]", system_instruction)
         self.assertIn("[fix]", system_instruction)
         self.assertIn("[change]", system_instruction)
+        self.assertIn("[change!]", system_instruction)
         self.assertIn(
             f"within {COMMIT_SUBJECT_LIMIT} characters, including the tag and spaces",
             system_instruction,
         )
+        self.assertIn("Use past tense for the commit message", system_instruction)
         self.assertIn(
             "If any rule below is broken, the output is invalid.",
             system_instruction,
         )
         self.assertIn(
             "Do not use ReStructuredText/Markdown syntax to link issues",
+            system_instruction,
+        )
+        self.assertIn(
+            f"Every non-empty body line must be {COMMIT_SUBJECT_LIMIT} "
+            "characters or shorter",
             system_instruction,
         )
         self.assertIn(
@@ -598,6 +650,43 @@ class TestGetOpenwispCommitizen(unittest.TestCase):
 class TestValidateChangelogOutput(unittest.TestCase):
     """Tests for validate_changelog_output function."""
 
+    def test_normalizes_long_body_lines(self):
+        text = (
+            "[feature] Added new functionality\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so the bot can wrap it locally without asking Gemini again."
+        )
+        normalized = normalize_changelog_output(text)
+        body = normalized.partition("\n\n")[2]
+        self.assertIn("\n", body)
+        self.assertTrue(
+            all(
+                len(line) <= COMMIT_SUBJECT_LIMIT
+                for line in body.splitlines()
+                if line.strip()
+            )
+        )
+
+    def test_normalization_preserves_issue_footers_and_blank_lines(self):
+        text = (
+            "[feature] Added new functionality #123\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so it needs to be wrapped locally before validation.\n\n"
+            "Closes #123"
+        )
+        normalized = normalize_changelog_output(text)
+        self.assertTrue(normalized.endswith("\n\nCloses #123"))
+        self.assertEqual(normalized.count("\n\n"), 2)
+
+    def test_normalization_does_not_shorten_subject(self):
+        subject = (
+            "[feature] Added a very long subject that remains invalid because "
+            "shortening it could remove important context"
+        )
+        text = f"{subject}\n\nUseful body."
+        normalized = normalize_changelog_output(text)
+        self.assertEqual(normalized.splitlines()[0], subject)
+
     @patch("generate_changelog.get_openwisp_commitizen")
     def test_valid_feature_tag_rst(self, mock_get_commitizen):
         mock_plugin = MagicMock()
@@ -615,6 +704,29 @@ class TestValidateChangelogOutput(unittest.TestCase):
         self.assertTrue(result)
         mock_plugin.validate_commit_message.assert_called_once()
 
+    @patch("generate_changelog.get_openwisp_commitizen")
+    def test_valid_backward_incompatible_change_tag(self, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=True, errors=[]
+        )
+        mock_get_commitizen.return_value = mock_plugin
+
+        text = (
+            "[change!] Removed legacy setting\n\n"
+            "Drops the deprecated setting so users must update their configuration."
+        )
+
+        errors = get_changelog_validation_errors(text, "rst")
+
+        self.assertEqual(
+            errors,
+            [],
+            "[change!] marks backward incompatible changes and must be accepted "
+            "by the changelog bot validation.",
+        )
+
     def test_invalid_no_tag(self):
         text = "Added new functionality\n\nAdds useful context.\n\nCloses #123"
         result = validate_changelog_output(text, "rst")
@@ -624,6 +736,35 @@ class TestValidateChangelogOutput(unittest.TestCase):
         text = "[feature] Added new functionality"
         result = validate_changelog_output(text, "rst")
         self.assertFalse(result)
+
+    def test_invalid_body_line_too_long(self):
+        text = (
+            "[feature] Added new functionality\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so the bot asks Gemini to wrap it."
+        )
+        errors = get_changelog_validation_errors(text, "rst")
+        self.assertEqual(
+            errors,
+            [
+                f"Commit message body line 1 must be {COMMIT_SUBJECT_LIMIT} "
+                "characters or shorter."
+            ],
+        )
+
+    def test_invalid_subject_too_long(self):
+        text = (
+            "[feature] Added a very long subject that remains invalid because "
+            "shortening it could remove important context\n\n"
+            "Useful body."
+        )
+
+        errors = get_changelog_validation_errors(text, "rst")
+
+        self.assertEqual(
+            errors,
+            [f"commit message length exceeds the limit ({COMMIT_SUBJECT_LIMIT} chars)"],
+        )
 
     def test_invalid_empty_text(self):
         result = validate_changelog_output("", "rst")
@@ -745,30 +886,84 @@ class TestGenerateChangelogEntry(unittest.TestCase):
         self.assertIn("<validation_feedback>", second_prompt)
         self.assertIn("Title invalid", second_prompt)
 
+    @patch("generate_changelog.get_openwisp_commitizen")
+    @patch("generate_changelog.call_gemini")
+    def test_wraps_body_without_retrying(self, mock_call_gemini, mock_get_commitizen):
+        mock_plugin = MagicMock()
+        mock_plugin.schema_pattern.return_value = ".*"
+        mock_plugin.validate_commit_message.return_value = MagicMock(
+            is_valid=True, errors=[]
+        )
+        mock_get_commitizen.return_value = mock_plugin
+        pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
+        mock_call_gemini.return_value = (
+            "[change] Updated changelog bot\n\n"
+            "This body line is intentionally longer than seventy two characters "
+            "so the bot can wrap it locally without asking Gemini again.\n\n"
+            "Closes #123"
+        )
+
+        entry, errors = generate_changelog_entry(
+            pr_details, "", [], [], "rst", "api_key", "gemini-test"
+        )
+
+        self.assertEqual(errors, [])
+        self.assertEqual(mock_call_gemini.call_count, 1)
+        self.assertTrue(entry.endswith("\n\nCloses #123"))
+        body = entry.partition("\n\n")[2]
+        self.assertTrue(
+            all(
+                len(line) <= COMMIT_SUBJECT_LIMIT
+                for line in body.splitlines()
+                if line.strip()
+            )
+        )
+
     @patch("generate_changelog.get_changelog_validation_errors")
     @patch("generate_changelog.call_gemini")
     def test_returns_last_attempt_after_max_retries(
         self, mock_call_gemini, mock_get_validation_errors
     ):
         pr_details = {"number": 1, "title": "Test", "body": "", "labels": []}
+        # Provide one entry/error per allowed attempt so the test tracks the
+        # configured MAX_GENERATION_ATTEMPTS instead of a hardcoded count.
+        attempts = MAX_GENERATION_ATTEMPTS
         mock_call_gemini.side_effect = [
-            "[change] Attempt 1\n\nBody",
-            "[change] Attempt 2\n\nBody",
-            "[change] Attempt 3\n\nBody",
+            f"[change] Attempt {i}\n\nBody" for i in range(1, attempts + 1)
         ]
         mock_get_validation_errors.side_effect = [
-            ["Error 1"],
-            ["Error 2"],
-            ["Error 3"],
+            [f"Error {i}"] for i in range(1, attempts + 1)
         ]
 
         entry, errors = generate_changelog_entry(
             pr_details, "", [], [], "rst", "api_key", "gemini-test"
         )
 
-        self.assertEqual(entry, "[change] Attempt 3\n\nBody")
-        self.assertEqual(errors, ["Error 3"])
+        self.assertEqual(entry, f"[change] Attempt {attempts}\n\nBody")
+        self.assertEqual(errors, [f"Error {attempts}"])
         self.assertEqual(mock_call_gemini.call_count, MAX_GENERATION_ATTEMPTS)
+
+
+class TestChangelogTriggerWorkflow(unittest.TestCase):
+    """Tests for the workflow that decides whether the bot should run."""
+
+    def test_noteworthy_regex_matches_backward_incompatible_changes(self):
+        workflow_path = (
+            Path(__file__).resolve().parents[2]
+            / "workflows"
+            / "bot-changelog-trigger.yml"
+        )
+        workflow = workflow_path.read_text(encoding="utf-8")
+        match = re.search(r"grep -qiE '([^']+)'", workflow)
+        self.assertIsNotNone(match, "Could not find the noteworthy PR regex.")
+        noteworthy_regex = match.group(1)
+
+        self.assertRegex(
+            "[change!] Removed legacy behavior",
+            noteworthy_regex,
+            "PRs titled with [change!] mark backward incompatible changes and "
+            "must trigger the changelog bot.",
+        )
 
 
 if __name__ == "__main__":

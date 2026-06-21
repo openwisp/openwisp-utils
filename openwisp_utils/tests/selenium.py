@@ -1,6 +1,12 @@
+import functools
 import os
+import threading
 import time
+from math import ceil
+from uuid import uuid4
 
+from django.conf import settings
+from django.db.backends.base.base import BaseDatabaseWrapper
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -8,6 +14,19 @@ from selenium.webdriver.common.utils import free_port
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+# Maps the console method that produced a log entry to the level names also
+# returned by Chrome's get_log("browser") API, so get_browser_logs() yields a
+# consistent format across browsers.
+FIREFOX_CONSOLE_LEVELS = {
+    "log": "INFO",
+    "info": "INFO",
+    "debug": "DEBUG",
+    "warn": "WARNING",
+    "error": "SEVERE",
+    "trace": "DEBUG",
+    "assert": "SEVERE",
+}
 
 
 class SeleniumTestMixin:
@@ -22,11 +41,68 @@ class SeleniumTestMixin:
 
     retry_max = 5
     retry_delay = 0
-    retry_threshold = 0.8
+    retry_successes_required = 2
+    retry_threshold = None
+    _db_conn_lock = threading.RLock()
+    _db_conn_serialized = False
+
+    @classmethod
+    def setUpClass(cls):
+        # Apply before super().setUpClass() so the patch is active before the
+        # live server (and any forked Daphne process) starts.
+        cls._serialize_db_connection_lifecycle()
+        super().setUpClass()
+        cls.web_driver = cls.get_webdriver()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_driver.quit()
+        super().tearDownClass()
+
+    @classmethod
+    def _serialize_db_connection_lifecycle(cls):
+        """Serialize SQLite connection open/close for the live-server tests.
+
+        The selenium live-server test cases (WSGI
+        ``StaticLiveServerTestCase`` and the Daphne/ASGI
+        ``ChannelsLiveServerTestCase``) serve requests from several
+        threads, so SQLite connections are opened and closed concurrently.
+        On Python 3.13 this intermittently corrupts the C heap ("double
+        free or corruption" / segmentation fault). Serializing connection
+        open and close with a single process-wide lock removes the race.
+        Together with the memoized ``find_library`` in
+        ``openwisp_utils.db.backends.spatialite.base`` (which stops the
+        per-connection ``ldconfig`` fork) this makes the live-server tests
+        crash-free. No-op for non-SQLite backends.
+        """
+        if SeleniumTestMixin._db_conn_serialized:
+            return
+        engine = settings.DATABASES.get("default", {}).get("ENGINE", "")
+        if "sqlite" not in engine and "spatialite" not in engine:
+            return
+        _orig_connect = BaseDatabaseWrapper.connect
+        _orig_close = BaseDatabaseWrapper._close
+
+        @functools.wraps(_orig_connect)
+        def connect(self):
+            with cls._db_conn_lock:
+                return _orig_connect(self)
+
+        @functools.wraps(_orig_close)
+        def _close(self):
+            with cls._db_conn_lock:
+                return _orig_close(self)
+
+        BaseDatabaseWrapper.connect = connect
+        BaseDatabaseWrapper._close = _close
+        SeleniumTestMixin._db_conn_serialized = True
+
+    def _get_retry_successes_required(self):
+        if self.retry_threshold is not None:
+            return ceil(self.retry_max * self.retry_threshold)
+        return self.retry_successes_required
 
     def _print_retry_message(self, test_name, attempt):
-        if attempt == 0:
-            return
         print("-" * 80)
         print(f'[Retry] Retrying "{test_name}", attempt {attempt}/{self.retry_max}. ')
         print("-" * 80)
@@ -42,6 +118,7 @@ class SeleniumTestMixin:
         test_name = self.id()
         success_count = 0
         failed_result = None
+        retry_successes_required = self._get_retry_successes_required()
         # Manually call startTest to ensure TimeLoggingTestResult can
         # measure the execution time for the test.
         original_result.startTest(self)
@@ -71,16 +148,19 @@ class SeleniumTestMixin:
                     return
                 else:
                     success_count += 1
+                    if success_count >= retry_successes_required:
+                        original_result.addSuccess(self)
+                        return
             else:
                 failed_result = result
-            self._print_retry_message(test_name, attempt)
-            if self.retry_delay:
-                time.sleep(self.retry_delay)
+            if attempt < self.retry_max:
+                self._print_retry_message(test_name, attempt + 1)
+                if self.retry_delay:
+                    time.sleep(self.retry_delay)
 
-        if success_count / self.retry_max < self.retry_threshold:
-            # If the success rate of retries is below the threshold then,
-            # copy errors and failures from the last failed result to the
-            # original result.
+        if success_count < retry_successes_required:
+            # If there are too few successful retries, copy the last failed
+            # result to the original result.
             original_result.failures = failed_result.failures
             original_result.errors = failed_result.errors
             if hasattr(original_result, "events"):
@@ -89,11 +169,6 @@ class SeleniumTestMixin:
         else:
             # Mark the test as passed in the original result
             original_result.addSuccess(self)
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.web_driver = cls.get_webdriver()
 
     @classmethod
     def get_webdriver(cls):
@@ -119,6 +194,9 @@ class SeleniumTestMixin:
         # Increase timeouts
         options.set_preference("marionette.defaultPrefs.update.disabled", True)
         options.set_preference("dom.max_script_run_time", 30)
+        # Firefox does not support the WebDriver.get_log API, so console logs are
+        # captured over WebDriver BiDi instead (see get_firefox_webdriver below).
+        options.enable_bidi = True
         # When running Selenium tests with the "--parallel" flag,
         # each TestCase class requires its own browser instance.
         # If the same "remote-debugging-port" is used for all
@@ -137,18 +215,36 @@ class SeleniumTestMixin:
         if GECKO_LOG:
             kwargs["service"] = webdriver.FirefoxService(log_output="geckodriver.log")
         web_driver = webdriver.Firefox(**kwargs)
-        # Firefox does not support the WebDriver.get_log API. To work around this,
-        # we inject JavaScript into the page to override window.console within the
-        # browser's JS runtime. This allows us to capture and retrieve console errors
-        # directly from the page.
-        extension_path = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "firefox-extensions",
-                "console_capture_extension",
+        # Firefox does not support the WebDriver.get_log API. Capture console
+        # messages over WebDriver BiDi, which records logs emitted during page
+        # load (including errors) without relying on a browser extension. The
+        # entries accumulate in driver._console_logs and are reset on every
+        # top-level navigation to mirror the per-page semantics
+        # get_browser_logs expects.
+        web_driver._console_logs = []
+        web_driver.script.add_console_message_handler(
+            lambda entry: web_driver._console_logs.append(
+                {
+                    "level": FIREFOX_CONSOLE_LEVELS.get(entry.method, "INFO"),
+                    "message": entry.text,
+                }
             )
         )
-        web_driver.install_addon(extension_path, temporary=True)
+        # Reset the buffer only when the top-level context under test navigates.
+        # The id of that context stays stable across navigations, while iframes
+        # and other secondary contexts have different ids; clearing on their
+        # navigations would wipe the page's logs before get_browser_logs() reads
+        # them. Subscribing with contexts=[id] still delivers child-context
+        # events, so the context is filtered here in the callback instead.
+        top_level_context = web_driver.current_window_handle
+
+        def reset_logs_on_top_level_navigation(info):
+            if info.context == top_level_context:
+                web_driver._console_logs.clear()
+
+        web_driver.browsing_context.add_event_handler(
+            "navigation_started", reset_logs_on_top_level_navigation
+        )
         return web_driver
 
     @classmethod
@@ -179,11 +275,6 @@ class SeleniumTestMixin:
         return webdriver.Chrome(
             options=options,
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.web_driver.quit()
-        super().tearDownClass()
 
     def setUp(self):
         self.admin = self._create_admin(
@@ -217,8 +308,29 @@ class SeleniumTestMixin:
     def get_browser_logs(self, driver=None):
         driver = driver or self.web_driver
         if self.browser == "firefox":
-            return driver.execute_script("return window._console_logs")
+            self._flush_firefox_console_logs(driver)
+            return list(driver._console_logs)
         return driver.get_log("browser")
+
+    def _flush_firefox_console_logs(self, driver, timeout=2):
+        """Wait for pending BiDi console messages to be delivered.
+
+        BiDi console events arrive asynchronously, so a log emitted right
+        before get_browser_logs() may not have been recorded yet. Emit a
+        sentinel message and wait until it is seen: because console events
+        are delivered in order, all earlier messages have arrived by then.
+        The sentinel is removed before returning.
+        """
+        sentinel = f"__owisp_console_flush_{uuid4().hex}__"
+        driver.execute_script("console.debug(arguments[0]);", sentinel)
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if any(sentinel in entry["message"] for entry in driver._console_logs):
+                break
+            time.sleep(0.02)
+        driver._console_logs[:] = [
+            entry for entry in driver._console_logs if sentinel not in entry["message"]
+        ]
 
     def login(self, username=None, password=None, driver=None):
         """Log in to the admin dashboard.
