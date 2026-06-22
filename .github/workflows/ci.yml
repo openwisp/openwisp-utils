@@ -97,6 +97,7 @@ jobs:
           fail-on-error: false
 
   coveralls:
+    if: github.repository == 'openwisp/openwisp-utils'
     needs: build
     runs-on: ubuntu-latest
     steps:

@@ -16,6 +16,7 @@ concurrency:
 
 jobs:
   manage-stale-prs-python:
+    if: github.repository == 'openwisp/openwisp-utils'
     runs-on: ubuntu-latest
     steps:
       - name: Generate GitHub App token
