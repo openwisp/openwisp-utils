@@ -67,6 +67,22 @@ def test_bump_version_success(mock_config):
     assert expected_content in written_content
 
 
+def test_bump_version_version_py():
+    """Tests bumping version when VERSION is in version.py."""
+    config = {
+        "package_type": "python",
+        "version_path": "my_test_package/version.py",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    version_py_content = "VERSION = (1, 2, 3, 'final')\n"
+    m_open = mock_open(read_data=version_py_content)
+    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+        result = bump_version(config, "1.2.4")
+    assert result is True
+    written_content = m_open().write.call_args[0][0]
+    assert 'VERSION = (1, 2, 4, "final")' in written_content
+
+
 def test_bump_version_no_path_in_config(mock_config_no_path):
     result = bump_version(mock_config_no_path, "1.2.0")
     assert result is False

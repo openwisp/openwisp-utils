@@ -169,6 +169,66 @@ def test_config_malformed_version_literal_eval_fails(
     assert config["CURRENT_VERSION"] is None
 
 
+def test_python_version_detection_from_version_py(
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version_in_version_py,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that Python version is detected from version.py when __init__.py has no VERSION."""
+    create_setup_py(project_dir)
+    create_package_dir_with_version_in_version_py(project_dir)
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/version.py"
+    assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
+
+
+def test_python_version_prefers_init_py_over_version_py(
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that __init__.py is preferred over version.py when both have VERSION."""
+    create_setup_py(project_dir)
+    # Create both __init__.py and version.py with VERSION
+    pkg_dir = project_dir / "my_test_package"
+    pkg_dir.mkdir(exist_ok=True)
+    (pkg_dir / "__init__.py").write_text("VERSION = (1, 0, 0, 'final')")
+    (pkg_dir / "version.py").write_text("VERSION = (2, 0, 0, 'final')")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/__init__.py"
+    assert config["CURRENT_VERSION"] == [1, 0, 0, "final"]
+
+
+def test_python_version_fallback_to_version_py_when_init_py_has_no_version(
+    project_dir,
+    create_setup_py,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests fallback to version.py when __init__.py exists but has no VERSION tuple."""
+    create_setup_py(project_dir)
+    pkg_dir = project_dir / "my_test_package"
+    pkg_dir.mkdir(exist_ok=True)
+    (pkg_dir / "__init__.py").write_text("# No version here\n")
+    (pkg_dir / "version.py").write_text("VERSION = (3, 4, 5, 'final')")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/version.py"
+    assert config["CURRENT_VERSION"] == [3, 4, 5, "final"]
+
+
 # NPM Package Tests
 def test_npm_package_detection(
     project_dir, create_package_json, create_changelog, init_git_repo

@@ -52,24 +52,32 @@ def detect_changelog_style(changelog_path):
 
 
 def _handle_python_version(config):
-    """Handles version detection for Python packages."""
+    """Handles version detection for Python packages.
+
+    Checks __init__.py first, then falls back to version.py.
+    """
     project_name = get_package_name_from_setup()
     if not project_name:
         return
     package_directory = project_name.replace("-", "_")
-    init_py_path = os.path.join(package_directory, "__init__.py")
-    if not os.path.exists(init_py_path):
-        return
-    with open(init_py_path, "r") as f:
-        content = f.read()
-        version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
-        if version_match:
-            config["version_path"] = init_py_path
-            try:
-                version_tuple = ast.literal_eval(f"({version_match.group(1)})")
-                config["CURRENT_VERSION"] = list(version_tuple)
-            except (ValueError, SyntaxError):
-                config["CURRENT_VERSION"] = None
+    candidate_files = [
+        os.path.join(package_directory, "__init__.py"),
+        os.path.join(package_directory, "version.py"),
+    ]
+    for version_path in candidate_files:
+        if not os.path.exists(version_path):
+            continue
+        with open(version_path, "r") as f:
+            content = f.read()
+            version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
+            if version_match:
+                config["version_path"] = version_path
+                try:
+                    version_tuple = ast.literal_eval(f"({version_match.group(1)})")
+                    config["CURRENT_VERSION"] = list(version_tuple)
+                except (ValueError, SyntaxError):
+                    config["CURRENT_VERSION"] = None
+                return
 
 
 def _handle_npm_version(config):

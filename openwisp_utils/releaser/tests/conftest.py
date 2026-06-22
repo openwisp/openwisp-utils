@@ -41,6 +41,20 @@ def create_package_dir_with_version():
     return _create_package_dir_with_version
 
 
+def _create_package_dir_with_version_in_version_py(
+    path: Path, name="my-test-package", version_str="VERSION = (1, 2, 3, 'final')"
+):
+    """Creates a package with VERSION tuple in version.py instead of __init__.py."""
+    pkg_dir = path / name.replace("-", "_")
+    pkg_dir.mkdir(exist_ok=True)
+    (pkg_dir / "version.py").write_text(version_str)
+
+
+@pytest.fixture
+def create_package_dir_with_version_in_version_py():
+    return _create_package_dir_with_version_in_version_py
+
+
 def _create_changelog(path: Path, ext="rst"):
     (path / f"CHANGES.{ext}").write_text("Changelog")
 
