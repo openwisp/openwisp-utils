@@ -169,6 +169,22 @@ def test_config_malformed_version_literal_eval_fails(
     assert config["CURRENT_VERSION"] is None
 
 
+def test_config_version_non_iterable_type_error(
+    project_dir, create_setup_py, create_package_dir_with_version, create_changelog
+):
+    """Tests that TypeError is caught when version tuple is non-iterable.
+
+    For example, VERSION = (1) evaluates to an integer, and list(1) raises
+    TypeError.
+    """
+    create_setup_py(project_dir)
+    create_package_dir_with_version(project_dir, version_str="VERSION = (1)")
+    create_changelog(project_dir)
+    config = load_config()
+    # Should gracefully handle the TypeError and return None
+    assert config["CURRENT_VERSION"] is None
+
+
 def test_python_version_detection_from_version_py(
     project_dir,
     create_setup_py,

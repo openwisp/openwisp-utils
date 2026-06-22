@@ -75,7 +75,7 @@ def _handle_python_version(config):
                 try:
                     version_tuple = ast.literal_eval(f"({version_match.group(1)})")
                     config["CURRENT_VERSION"] = list(version_tuple)
-                except (ValueError, SyntaxError):
+                except (ValueError, SyntaxError, TypeError):
                     config["CURRENT_VERSION"] = None
                 return
 
