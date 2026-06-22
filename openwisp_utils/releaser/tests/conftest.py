@@ -44,8 +44,7 @@ def create_package_dir_with_version():
 def _create_package_dir_with_version_in_version_py(
     path: Path, name="my-test-package", version_str="VERSION = (1, 2, 3, 'final')"
 ):
-    """
-    Create a package using the netjsonconfig/netdiff version layout.
+    """Create a package using the netjsonconfig/netdiff version layout.
 
     Unlike the standard layout, the VERSION tuple is defined in
     ``version.py`` instead of ``__init__.py``.
