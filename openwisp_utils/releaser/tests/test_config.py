@@ -185,14 +185,18 @@ def test_config_version_non_iterable_type_error(
     assert config["CURRENT_VERSION"] is None
 
 
-def test_python_version_detection_from_version_py(
+def test_python_version_detection_from_version_py_for_netjsonconfig_compatibility(
     project_dir,
     create_setup_py,
     create_package_dir_with_version_in_version_py,
     create_changelog,
     init_git_repo,
 ):
-    """Tests that Python version is detected from version.py when __init__.py has no VERSION."""
+    """Ensure version detection supports the netjsonconfig/netdiff layout.
+
+    These projects define VERSION in ``version.py`` rather than in
+    ``__init__.py``, which differs from the standard project layout.
+    """
     create_setup_py(project_dir)
     create_package_dir_with_version_in_version_py(project_dir)
     create_changelog(project_dir)
@@ -203,14 +207,13 @@ def test_python_version_detection_from_version_py(
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
 
 
-def test_python_version_prefers_init_py_over_version_py(
+def test_python_version_ignores_version_py_when_init_py_defines_version(
     project_dir,
     create_setup_py,
     create_package_dir_with_version,
     create_changelog,
     init_git_repo,
 ):
-    """Tests that __init__.py is preferred over version.py when both have VERSION."""
     create_setup_py(project_dir)
     # Create both __init__.py and version.py with VERSION
     pkg_dir = project_dir / "my_test_package"
@@ -225,13 +228,12 @@ def test_python_version_prefers_init_py_over_version_py(
     assert config["CURRENT_VERSION"] == [1, 0, 0, "final"]
 
 
-def test_python_version_fallback_to_version_py_when_init_py_has_no_version(
+def test_python_version_detection_for_netjsonconfig_when_init_py_lacks_version(
     project_dir,
     create_setup_py,
     create_changelog,
     init_git_repo,
 ):
-    """Tests fallback to version.py when __init__.py exists but has no VERSION tuple."""
     create_setup_py(project_dir)
     pkg_dir = project_dir / "my_test_package"
     pkg_dir.mkdir(exist_ok=True)

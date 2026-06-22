@@ -54,7 +54,8 @@ def detect_changelog_style(changelog_path):
 def _handle_python_version(config):
     """Handles version detection for Python packages.
 
-    Checks __init__.py first, then falls back to version.py.
+    Checks __init__.py first, then falls back to version.py (eg:
+    netjsonconfig, netdiff).
     """
     project_name = get_package_name_from_setup()
     if not project_name:
