@@ -341,11 +341,11 @@ def test_bump_version_ansible():
     assert '__openwisp_version__ = "1.2.4"' in written_content
 
 
-# VERSION File Package Version Tests
-def test_get_current_version_version_file():
+# Generic Package Version Tests
+def test_get_current_version_generic():
     """Tests getting current version from a root VERSION file."""
     config = {
-        "package_type": "version_file",
+        "package_type": "generic",
         "version_path": "VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
@@ -354,10 +354,10 @@ def test_get_current_version_version_file():
     assert version_type == "final"
 
 
-def test_bump_version_version_file():
+def test_bump_version_generic():
     """Tests bumping version for a package using a root VERSION file."""
     config = {
-        "package_type": "version_file",
+        "package_type": "generic",
         "version_path": "VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }

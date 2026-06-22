@@ -136,7 +136,7 @@ def create_ansible_version_file():
 
 
 def _create_version_file(path: Path, version="1.2.3"):
-    """Helper to create VERSION file for version_file package type."""
+    """Helper to create VERSION file for generic package type."""
     (path / "VERSION").write_text(version)
 
 

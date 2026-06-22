@@ -27,7 +27,7 @@ def get_package_type_from_setup():
         ".ansible-lint": "ansible",
         # The VERSION file check should be last to avoid false positives
         # with other package types
-        "VERSION": "version_file",
+        "VERSION": "generic",
     }
     for filename, package_type in package_type_files.items():
         if os.path.exists(filename):
@@ -168,7 +168,7 @@ def _handle_ansible_version(config):
             config["CURRENT_VERSION"] = None
 
 
-def _handle_version_file_version(config):
+def _handle_generic_version(config):
     """Handles version detection for packages using a root VERSION file."""
     with open("VERSION", "r") as f:
         version_str = f.read().strip()
@@ -197,7 +197,7 @@ PACKAGE_VERSION_HANDLERS = {
     "npm": _handle_npm_version,
     "docker": _handle_docker_version,
     "ansible": _handle_ansible_version,
-    "version_file": _handle_version_file_version,
+    "generic": _handle_generic_version,
 }
 
 

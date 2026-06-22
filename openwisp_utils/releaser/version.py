@@ -111,7 +111,7 @@ def _bump_ansible_version(content, new_version, version_path):
     )
 
 
-def _bump_version_file_version(content, new_version, version_path):
+def _bump_generic_version(content, new_version, version_path):
     """Handles version bumping for packages using a root VERSION file."""
     return f"{new_version}\n"
 
@@ -122,7 +122,7 @@ VERSION_BUMP_HANDLERS = {
     "npm": _bump_npm_version,
     "docker": _bump_docker_version,
     "ansible": _bump_ansible_version,
-    "version_file": _bump_version_file_version,
+    "generic": _bump_generic_version,
 }
 
 

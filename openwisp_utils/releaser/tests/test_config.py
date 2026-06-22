@@ -354,21 +354,21 @@ def test_ansible_package_malformed_version(
     assert config["CURRENT_VERSION"] is None
 
 
-# VERSION File Package Tests
-def test_version_file_package_detection(
+# Generic Package Tests
+def test_generic_package_detection(
     project_dir, create_version_file, create_changelog, init_git_repo
 ):
-    """Tests that version_file package type is detected when VERSION file exists."""
+    """Tests that generic package type is detected when VERSION file exists."""
     create_version_file(project_dir, version="1.2.3")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "version_file"
+    assert config["package_type"] == "generic"
     assert config["version_path"] == "VERSION"
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
 
 
-def test_version_file_fallback_without_other_config(
+def test_generic_fallback_without_other_config(
     project_dir, create_version_file, create_changelog, init_git_repo
 ):
     """Tests that VERSION file is used as fallback when no other package type is detected."""
@@ -376,25 +376,25 @@ def test_version_file_fallback_without_other_config(
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "version_file"
+    assert config["package_type"] == "generic"
     assert config["version_path"] == "VERSION"
     assert config["CURRENT_VERSION"] == [2, 0, 1, "final"]
 
 
-def test_version_file_invalid_version(
+def test_generic_invalid_version(
     project_dir, create_version_file, create_changelog, init_git_repo
 ):
-    """Tests version_file package with invalid version format gracefully."""
+    """Tests generic package with invalid version format gracefully."""
     create_version_file(project_dir, version="1.2")  # Invalid: only 2 parts
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "version_file"
+    assert config["package_type"] == "generic"
     assert config["version_path"] == "VERSION"
     assert config["CURRENT_VERSION"] is None
 
 
-def test_version_file_not_fallback_when_other_type_detected(
+def test_generic_not_fallback_when_other_type_detected(
     project_dir,
     create_setup_py,
     create_package_dir_with_version,
