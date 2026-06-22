@@ -25,7 +25,9 @@ def get_package_type_from_setup():
         "package.json": "npm",
         "docker-compose.yml": "docker",
         ".ansible-lint": "ansible",
-        ".luacheckrc": "openwrt",
+        # The VERSION file check should be last to avoid false positives
+        # with other package types
+        "VERSION": "version_file",
     }
     for filename, package_type in package_type_files.items():
         if os.path.exists(filename):
@@ -166,10 +168,8 @@ def _handle_ansible_version(config):
             config["CURRENT_VERSION"] = None
 
 
-def _handle_openwrt_version(config):
-    """Handles version detection for OpenWRT packages."""
-    if not os.path.exists("VERSION"):
-        return
+def _handle_version_file_version(config):
+    """Handles version detection for packages using a root VERSION file."""
     with open("VERSION", "r") as f:
         version_str = f.read().strip()
         if not version_str:
@@ -197,7 +197,7 @@ PACKAGE_VERSION_HANDLERS = {
     "npm": _handle_npm_version,
     "docker": _handle_docker_version,
     "ansible": _handle_ansible_version,
-    "openwrt": _handle_openwrt_version,
+    "version_file": _handle_version_file_version,
 }
 
 

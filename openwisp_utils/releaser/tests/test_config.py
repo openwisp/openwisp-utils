@@ -354,45 +354,75 @@ def test_ansible_package_malformed_version(
     assert config["CURRENT_VERSION"] is None
 
 
-# OpenWRT Package Tests
-def test_openwrt_package_detection(
-    project_dir, create_luacheckrc, create_version_file, create_changelog, init_git_repo
+# VERSION File Package Tests
+def test_version_file_package_detection(
+    project_dir, create_version_file, create_changelog, init_git_repo
 ):
-    """Tests that openwrt package type is detected when .luacheckrc exists."""
-    create_luacheckrc(project_dir)
+    """Tests that version_file package type is detected when VERSION file exists."""
     create_version_file(project_dir, version="1.2.3")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "openwrt"
+    assert config["package_type"] == "version_file"
     assert config["version_path"] == "VERSION"
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
 
 
-def test_openwrt_without_version_file(
-    project_dir, create_luacheckrc, create_changelog, init_git_repo
+def test_version_file_fallback_without_other_config(
+    project_dir, create_version_file, create_changelog, init_git_repo
 ):
-    """Tests openwrt package without VERSION file."""
-    create_luacheckrc(project_dir)
+    """Tests that VERSION file is used as fallback when no other package type is detected."""
+    create_version_file(project_dir, version="2.0.1")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "openwrt"
-    assert config["version_path"] is None
+    assert config["package_type"] == "version_file"
+    assert config["version_path"] == "VERSION"
+    assert config["CURRENT_VERSION"] == [2, 0, 1, "final"]
+
+
+def test_version_file_invalid_version(
+    project_dir, create_version_file, create_changelog, init_git_repo
+):
+    """Tests version_file package with invalid version format gracefully."""
+    create_version_file(project_dir, version="1.2")  # Invalid: only 2 parts
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "version_file"
+    assert config["version_path"] == "VERSION"
     assert config["CURRENT_VERSION"] is None
 
 
-def test_openwrt_invalid_version(
-    project_dir, create_luacheckrc, create_changelog, init_git_repo
+def test_version_file_not_fallback_when_other_type_detected(
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
 ):
-    """Tests openwrt package with invalid version format gracefully."""
-    create_luacheckrc(project_dir)
-    (project_dir / "VERSION").write_text("1.2")  # Invalid: only 2 parts
+    """Tests that VERSION file is not used as fallback when another package type is detected."""
+    create_setup_py(project_dir)
+    create_package_dir_with_version(project_dir)
+    create_version_file(project_dir, version="1.2.3")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "openwrt"
-    assert config["version_path"] == "VERSION"
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/__init__.py"
+
+
+def test_luacheckrc_does_not_trigger_detection(
+    project_dir, create_luacheckrc, create_changelog, init_git_repo
+):
+    """Tests that .luacheckrc alone does not trigger any package type detection."""
+    create_luacheckrc(project_dir)
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] is None
+    assert config["version_path"] is None
     assert config["CURRENT_VERSION"] is None
 
 
