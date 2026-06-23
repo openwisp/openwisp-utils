@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 from django.contrib import admin
+from django.contrib.admin.filters import SimpleListFilter
 from django.contrib.auth.models import User
 from django.forms import ModelForm
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from openwisp_utils.admin import (
     AlwaysHasChangedMixin,
@@ -14,6 +18,7 @@ from openwisp_utils.admin_theme.filters import (
     AutocompleteFilter,
     InputFilter,
     SimpleInputFilter,
+    SubFilterMixin,
 )
 
 from .models import (
@@ -47,9 +52,46 @@ class UserAdmin(admin.ModelAdmin):
     search_fields = ("username",)
 
 
+class CreatedSubFilter(SubFilterMixin, SimpleListFilter):
+    title = _("Created date")
+    parameter_name = "created"
+    parent_parameter_name = "shelf__books_type"
+    parent_active_values = ("HORROR",)
+
+    def lookups(self, request, model_admin):
+        return (
+            ("today", _("Today")),
+            ("past_7_days", _("Past 7 days")),
+            ("has_date", _("Has date")),
+        )
+
+    def filter_queryset(self, request, queryset):
+        value = self.value()
+        now = timezone.localtime(timezone.now())
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        if value == "today":
+            return queryset.filter(
+                created__gte=today_start,
+                created__lt=today_start + timedelta(days=1),
+            )
+        elif value == "past_7_days":
+            return queryset.filter(
+                created__gte=today_start - timedelta(days=7),
+                created__lt=today_start + timedelta(days=1),
+            )
+        elif value == "has_date":
+            return queryset.exclude(created__isnull=True)
+        return queryset
+
+
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_filter = [AutoShelfFilter, "name"]
+    list_filter = [
+        AutoShelfFilter,
+        "shelf__books_type",
+        CreatedSubFilter,
+        "name",
+    ]
     search_fields = ["name"]
 
 
