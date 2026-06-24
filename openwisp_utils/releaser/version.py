@@ -3,6 +3,14 @@ import re
 import subprocess
 import sys
 
+try:
+    import tomllib  # pragma: no cover
+except ImportError:  # pragma: no cover
+    try:
+        import tomli as tomllib  # pragma: no cover
+    except ImportError:  # pragma: no cover
+        tomllib = None  # pragma: no cover
+
 import questionary
 
 
@@ -51,6 +59,29 @@ def _bump_python_version(content, new_version, version_path):
         f"VERSION = {new_tuple_string}",
         version_path,
         "VERSION tuple",
+    )
+
+
+def _bump_pyproject_toml_version(content, new_version, version_path):
+    """Handles version bumping in pyproject.toml."""
+    if tomllib is not None:
+        try:
+            data = tomllib.loads(content)
+        except Exception:
+            pass
+        else:
+            current = data.get("project", {}).get("version", "")
+            if current:
+                old = f'version = "{current}"'
+                if old in content:
+                    return content.replace(old, f'version = "{new_version}"', 1)
+                # fall through to regex if exact match not found
+    return _bump_with_regex(
+        content,
+        r'^version\s*=\s*"([^"]+)"',
+        f'version = "{new_version}"',
+        version_path,
+        "version in pyproject.toml",
     )
 
 
@@ -119,6 +150,7 @@ def _bump_openwrt_version(content, new_version, version_path):
 # Maps package types to their version bump handlers
 VERSION_BUMP_HANDLERS = {
     "python": _bump_python_version,
+    "pyproject": _bump_pyproject_toml_version,
     "npm": _bump_npm_version,
     "docker": _bump_docker_version,
     "ansible": _bump_ansible_version,
