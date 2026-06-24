@@ -124,8 +124,8 @@ OPENWISP_ADMIN_THEME_LINKS = [
         "media": "all",
     },  # custom css for testing menu icons
     {
-        "type": "image/x-icon",
-        "href": "ui/openwisp/images/favicon.png",
+        "type": "image/svg+xml",
+        "href": "ui/openwisp/images/favicon.svg",
         "rel": "icon",
     },
 ]
