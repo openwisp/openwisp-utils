@@ -48,15 +48,15 @@ class FallbackMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.fallback = kwargs.pop("fallback")
+        self.fallback = kwargs.pop("fallback", None)
         opts = dict(blank=True, null=True, default=None)
         opts.update(kwargs)
         super().__init__(*args, **opts)
 
-    def deconstruct(self):
-        name, path, args, kwargs = super().deconstruct()
-        kwargs["fallback"] = self.fallback
-        return (name, path, args, kwargs)
+    def clone(self):
+        obj = super().clone()
+        obj.fallback = self.fallback
+        return obj
 
     def from_db_value(self, value, expression, connection):
         """Called when fetching value from the database."""
