@@ -470,7 +470,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         response = self.client.get(reverse("admin:index"))
         self.assertContains(response, '/static/admin/css/openwisp.css" media="all"')
         self.assertContains(response, '/static/menu-test.css" media="all"')
-        self.assertContains(response, 'href="/static/ui/openwisp/images/favicon.png"')
+        self.assertContains(response, 'href="/static/ui/openwisp/images/favicon.svg"')
         self.assertContains(response, "/static/dummy.js")
 
     def test_admin_theme_static_backward_compatible(self):
