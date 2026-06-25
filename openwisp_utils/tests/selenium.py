@@ -43,6 +43,11 @@ class SeleniumTestMixin:
     retry_delay = 0
     retry_successes_required = 2
     retry_threshold = None
+    ignored_browser_log_messages = (
+        "BackupService.sys.mjs",
+        "PrivateBrowsingUtils.sys.mjs",
+        "PathUtils.join: PathUtils does not support empty paths",
+    )
     _db_conn_lock = threading.RLock()
     _db_conn_serialized = False
 
@@ -311,6 +316,17 @@ class SeleniumTestMixin:
             self._flush_firefox_console_logs(driver)
             return list(driver._console_logs)
         return driver.get_log("browser")
+
+    def get_browser_errors(self, driver=None):
+        return [
+            log
+            for log in self.get_browser_logs(driver=driver)
+            if log.get("level") == "SEVERE"
+            if not any(
+                ignored_message in log.get("message", "")
+                for ignored_message in self.ignored_browser_log_messages
+            )
+        ]
 
     def _flush_firefox_console_logs(self, driver, timeout=2):
         """Wait for pending BiDi console messages to be delivered.
