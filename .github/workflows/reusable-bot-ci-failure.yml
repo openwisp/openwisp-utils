@@ -133,7 +133,7 @@ jobs:
 
       - name: Auto-retry transient failures
         id: retry
-        if: ${{ hashFiles('transient_failure') != '' }}
+        if: hashFiles('transient_failure') != ''
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           PR_NUM: ${{ inputs.pr_number }}
@@ -173,7 +173,7 @@ jobs:
           fi
 
       - name: Post Comment
-        if: ${{ steps.retry.outputs.retried != 'true' }}
+        if: steps.retry.outputs.retried != 'true'
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           PR_NUM: ${{ inputs.pr_number }}

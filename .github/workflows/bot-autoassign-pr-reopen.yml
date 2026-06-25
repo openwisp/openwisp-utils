@@ -18,7 +18,10 @@ concurrency:
 jobs:
   reassign-on-reopen:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target' && github.event.action == 'reopened'
+    if: >
+      github.repository == 'openwisp/openwisp-utils' &&
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'reopened'
     steps:
       - name: Generate GitHub App token
         id: generate-token
@@ -49,7 +52,10 @@ jobs:
 
   handle-pr-activity:
     runs-on: ubuntu-latest
-    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    if: >
+      github.repository == 'openwisp/openwisp-utils' &&
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request
     steps:
       - name: Generate GitHub App token
         id: generate-token
