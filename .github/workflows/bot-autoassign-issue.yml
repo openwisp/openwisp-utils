@@ -15,7 +15,9 @@ concurrency:
 jobs:
   respond-to-assign-request:
     runs-on: ubuntu-latest
-    if: github.repository == 'openwisp/openwisp-utils' && github.event.issue.pull_request == null
+    if: >
+      github.repository == 'openwisp/openwisp-utils' &&
+      github.event.issue.pull_request == null
     steps:
       - name: Generate GitHub App token
         id: generate-token

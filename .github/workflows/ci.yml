@@ -76,18 +76,20 @@ jobs:
         run: ./run-qa-checks
 
       - name: Tests
-        if: ${{ !cancelled() && steps.deps.conclusion == 'success' }}
+        if: >
+          !cancelled() &&
+          steps.deps.conclusion == 'success'
         run: ./runtests
         env:
           SELENIUM_HEADLESS: 1
           GECKO_LOG: 1
 
       - name: Show gecko web driver log on failures
-        if: ${{ failure() }}
+        if: failure()
         run: cat geckodriver.log
 
       - name: Upload Coverage
-        if: ${{ success() }}
+        if: success()
         uses: coverallsapp/github-action@v2
         with:
           parallel: true
