@@ -132,7 +132,7 @@ def create_ansible_lint():
 
 
 def _create_luacheckrc(path: Path):
-    """Helper to create .luacheckrc file for OpenWRT agents."""
+    """Helper to create .luacheckrc file."""
     (path / ".luacheckrc").write_text("std = 'min'")
 
 

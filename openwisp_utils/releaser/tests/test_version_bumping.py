@@ -383,4 +383,4 @@ def test_bump_version_generic():
         result = bump_version(config, "1.2.4")
     assert result is True
     written_content = m_open().write.call_args[0][0]
-    assert "1.2.4" in written_content
+    assert written_content == "1.2.4\n"

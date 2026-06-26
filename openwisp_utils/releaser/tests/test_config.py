@@ -491,6 +491,61 @@ def test_generic_not_fallback_when_other_type_detected(
     assert config["version_path"] == "my_test_package/__init__.py"
 
 
+def test_generic_not_fallback_when_npm_detected(
+    project_dir,
+    create_package_json,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that VERSION file is not used as fallback when npm package is detected."""
+    create_package_json(project_dir, version="1.2.3")
+    create_version_file(project_dir, version="1.5.0")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "npm"
+    assert config["version_path"] == "package.json"
+
+
+def test_generic_not_fallback_when_docker_detected(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that VERSION file is not used as fallback when docker package is detected."""
+    create_docker_compose(project_dir)
+    create_docker_version_file(project_dir, version="1.2.3")
+    create_version_file(project_dir, version="1.5.0")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "docker"
+    assert config["version_path"] == DOCKER_VERSION_PATH
+
+
+def test_generic_not_fallback_when_ansible_detected(
+    project_dir,
+    create_ansible_lint,
+    create_ansible_version_file,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that VERSION file is not used as fallback when ansible package is detected."""
+    create_ansible_lint(project_dir)
+    create_ansible_version_file(project_dir, version="1.2.3")
+    create_version_file(project_dir, version="1.5.0")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "ansible"
+    assert config["version_path"] == "templates/openwisp2/version.py"
+
+
 def test_luacheckrc_does_not_trigger_detection(
     project_dir, create_luacheckrc, create_changelog, init_git_repo
 ):
