@@ -75,7 +75,6 @@ def _bump_pyproject_toml_version(content, new_version, version_path):
                 old = f'version = "{current}"'
                 if old in content:
                     return content.replace(old, f'version = "{new_version}"', 1)
-                # fall through to regex if exact match not found
     return _bump_with_regex(
         content,
         r'^version\s*=\s*"([^"]+)"',
