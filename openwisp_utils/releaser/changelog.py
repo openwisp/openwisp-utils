@@ -9,6 +9,19 @@ import questionary
 
 from .utils import _call_docstrfmt
 
+CHANGELOG_BODY_MARKER = "OW_CHANGELOG_BODY:"
+
+
+def _get_changelog_line_content(line):
+    stripped_line = line.strip()
+    if stripped_line.startswith(CHANGELOG_BODY_MARKER):
+        return stripped_line.removeprefix(CHANGELOG_BODY_MARKER).strip()
+    return stripped_line
+
+
+def _convert_markdown_links_to_rst(text):
+    return re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"`\1 <\2>`__", text)
+
 
 def find_cliff_config():
     # Locates the cliff.toml file packaged within 'openwisp_utils'.
@@ -76,9 +89,71 @@ def run_git_cliff(version=None):
         sys.exit(1)
 
 
-def process_changelog(changelog_text):
+def _clean_commit_metadata(lines):
+    cleaned_lines = []
+    skip_dependabot_metadata = False
+    dependabot_metadata_start = re.compile(r"^\s*---\s*$")
+    trailer_pattern = re.compile(
+        r"^\s*(?:Signed-off-by|Co-authored-by):|cherry picked from commit",
+        re.IGNORECASE,
+    )
+
+    for index, line in enumerate(lines):
+        is_body_line = line.strip().startswith(CHANGELOG_BODY_MARKER)
+        stripped_line = _get_changelog_line_content(line)
+        if skip_dependabot_metadata:
+            if stripped_line == "...":
+                skip_dependabot_metadata = False
+            continue
+        if stripped_line == "updated-dependencies:":
+            skip_dependabot_metadata = True
+            continue
+        if dependabot_metadata_start.match(stripped_line):
+            has_dependabot_metadata = any(
+                _get_changelog_line_content(remaining_line) == "updated-dependencies:"
+                for remaining_index, remaining_line in enumerate(lines)
+                if remaining_index > index
+            )
+            if has_dependabot_metadata:
+                skip_dependabot_metadata = True
+                continue
+        if is_body_line and len(stripped_line) > 3 and set(stripped_line) == {"-"}:
+            continue
+        if trailer_pattern.search(stripped_line):
+            continue
+        cleaned_lines.append(line)
+    return cleaned_lines
+
+
+def _format_commit_body_lines(lines, changelog_format="rst"):
+    formatted_lines = []
+    previous_line_was_body = False
+    for line in lines:
+        stripped_line = line.strip()
+        if stripped_line.startswith(CHANGELOG_BODY_MARKER):
+            body_line = stripped_line.removeprefix(CHANGELOG_BODY_MARKER).strip()
+            if body_line:
+                if changelog_format == "rst":
+                    body_line = _convert_markdown_links_to_rst(body_line)
+                if not previous_line_was_body and formatted_lines[-1:] != [""]:
+                    formatted_lines.append("")
+                formatted_lines.append(f"  {body_line}")
+                previous_line_was_body = True
+            elif previous_line_was_body and formatted_lines[-1:] != [""]:
+                formatted_lines.append("")
+            continue
+        if previous_line_was_body and stripped_line.startswith("- "):
+            formatted_lines.append("")
+        formatted_lines.append(line)
+        previous_line_was_body = False
+    return formatted_lines
+
+
+def process_changelog(changelog_text, changelog_format="rst"):
     """Processes raw changelog text to reorder and clean the Dependencies section."""
-    lines = changelog_text.splitlines()
+    lines = _format_commit_body_lines(
+        _clean_commit_metadata(changelog_text.splitlines()), changelog_format
+    )
 
     # Iterate through the lines to find the start and end of the section
     # to isolate it for Dependency processing
@@ -111,7 +186,7 @@ def process_changelog(changelog_text):
 
     # If no Dependencies section was found, just return
     if dep_start_index == -1:
-        return changelog_text.strip()
+        return "\n".join(lines).strip()
 
     lines_before_deps = lines[:dep_start_index]
     dependency_lines_start = dep_start_index + 2
@@ -127,25 +202,32 @@ def process_changelog(changelog_text):
         r"-\s*(?:Update|Bump)\s+`?`?([\w-]+)`?`?\s+requirement.*to\s+([~<>=!0-9a-zA-Z.,-]+)"
     )
 
+    current_entry = None
     for line in dependency_lines:
         match = dep_update_pattern.search(line)
         if match:
             package_name = match.group(1)
             version_spec = match.group(2)
             final_version_spec = version_spec.split(",")[-1]
-            bumped_dependencies[package_name] = (
-                f"- Bumped ``{package_name}{final_version_spec}``"
-            )
+            current_entry = [f"- Bumped ``{package_name}{final_version_spec}``"]
+            bumped_dependencies[package_name] = current_entry
+        elif line.startswith("- "):
+            current_entry = [line]
+            other_dependencies.append(current_entry)
         else:
-            if line.strip() and line not in other_dependencies:
-                other_dependencies.append(line)
+            if current_entry is not None:
+                current_entry.append(line)
+            elif line.strip():
+                other_dependencies.append([line])
 
     final_lines = lines_before_deps
     final_lines.append(lines[dep_start_index])
     final_lines.append(section_separator)
 
-    final_lines.extend(sorted(bumped_dependencies.values()))
-    final_lines.extend(other_dependencies)
+    for dependency_entry in sorted(bumped_dependencies.values()):
+        final_lines.extend(dependency_entry)
+    for dependency_entry in other_dependencies:
+        final_lines.extend(dependency_entry)
 
     # new line after Dependencies section
     if lines_after_deps:
