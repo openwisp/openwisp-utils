@@ -149,7 +149,9 @@ Create the following workflow files in your repository.
       cancel-in-progress: true
     jobs:
       respond-to-assign-request:
-        if: github.event.issue.pull_request == null
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event.issue.pull_request == null
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: issue_assignment
@@ -175,7 +177,9 @@ Create the following workflow files in your repository.
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
-        if: github.event.action != 'closed' || github.event.pull_request.merged == false
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          (github.event.action != 'closed' || github.event.pull_request.merged == false)
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: issue_assignment
@@ -202,7 +206,10 @@ Create the following workflow files in your repository.
       cancel-in-progress: true
     jobs:
       reassign-on-reopen:
-        if: github.event_name == 'pull_request_target' && github.event.action == 'reopened'
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event_name == 'pull_request_target' &&
+          github.event.action == 'reopened'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: pr_reopen
@@ -210,7 +217,11 @@ Create the following workflow files in your repository.
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
       handle-pr-activity:
-        if: github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.issue.user.login == github.event.comment.user.login
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          github.event.issue.user.login == github.event.comment.user.login
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: pr_reopen
@@ -244,6 +255,7 @@ Create the following workflow files in your repository.
       cancel-in-progress: false
     jobs:
       manage-stale-prs-python:
+        if: github.repository == 'openwisp/your-repo'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: stale_pr
@@ -309,6 +321,7 @@ example:
 
     jobs:
       version-branch:
+        if: github.repository == 'openwisp/your-repo'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-version-branch.yml@master
         with:
           # The name of the Python package (required)
@@ -370,7 +383,9 @@ not yet merged, the workflow exits safely without failing.
 
     jobs:
       backport-on-push:
-        if: github.event_name == 'push'
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event_name == 'push'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-backport.yml@master
         with:
           commit_sha: ${{ github.sha }}
@@ -380,6 +395,7 @@ not yet merged, the workflow exits safely without failing.
 
       backport-on-comment:
         if: >
+          github.repository == 'openwisp/your-repo' &&
           github.event_name == 'issue_comment' &&
           github.event.issue.pull_request &&
           github.event.issue.pull_request.merged_at != null &&
@@ -468,7 +484,10 @@ job:
     jobs:
       find-pr:
         runs-on: ubuntu-latest
-        if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'pull_request' }}
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event.workflow_run.conclusion == 'failure' &&
+          github.event.workflow_run.event == 'pull_request'
         outputs:
           pr_number: ${{ steps.pr.outputs.number }}
           pr_author: ${{ steps.pr.outputs.author }}
@@ -517,7 +536,9 @@ job:
 
       call-ci-failure-bot:
         needs: find-pr
-        if: ${{ needs.find-pr.outputs.pr_number != '' }}
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          needs.find-pr.outputs.pr_number != ''
         permissions:
           pull-requests: write
           actions: write
@@ -603,7 +624,8 @@ workflow metadata.
 
     jobs:
       check:
-        if: |
+        if: >
+          github.repository == 'openwisp/your-repo' &&
           github.event.review.state == 'approved' &&
           (github.event.review.author_association == 'OWNER' ||
             github.event.review.author_association == 'MEMBER' ||
@@ -655,7 +677,9 @@ retrieves the PR metadata and calls the reusable changelog workflow.
     jobs:
       fetch-metadata:
         runs-on: ubuntu-latest
-        if: github.event.workflow_run.conclusion == 'success'
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event.workflow_run.conclusion == 'success'
         permissions:
           actions: read
         outputs:
@@ -683,7 +707,9 @@ retrieves the PR metadata and calls the reusable changelog workflow.
 
       changelog:
         needs: fetch-metadata
-        if: needs.fetch-metadata.outputs.pr_number != ''
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          needs.fetch-metadata.outputs.pr_number != ''
         permissions:
           contents: read
           pull-requests: write

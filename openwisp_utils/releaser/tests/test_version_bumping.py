@@ -67,6 +67,22 @@ def test_bump_version_success(mock_config):
     assert expected_content in written_content
 
 
+def test_bump_version_version_py():
+    """Tests bumping version when VERSION is in version.py."""
+    config = {
+        "package_type": "python",
+        "version_path": "my_test_package/version.py",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    version_py_content = "VERSION = (1, 2, 3, 'final')\n"
+    m_open = mock_open(read_data=version_py_content)
+    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+        result = bump_version(config, "1.2.4")
+    assert result is True
+    written_content = m_open().write.call_args[0][0]
+    assert 'VERSION = (1, 2, 4, "final")' in written_content
+
+
 def test_bump_version_no_path_in_config(mock_config_no_path):
     result = bump_version(mock_config_no_path, "1.2.0")
     assert result is False
@@ -341,11 +357,11 @@ def test_bump_version_ansible():
     assert '__openwisp_version__ = "1.2.4"' in written_content
 
 
-# OpenWRT Agents Package Version Tests
-def test_get_current_version_openwrt():
-    """Tests getting current version from OpenWRT VERSION file."""
+# Generic Package Version Tests
+def test_get_current_version_generic():
+    """Tests getting current version from a root VERSION file."""
     config = {
-        "package_type": "openwrt",
+        "package_type": "generic",
         "version_path": "VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
@@ -354,10 +370,10 @@ def test_get_current_version_openwrt():
     assert version_type == "final"
 
 
-def test_bump_version_openwrt():
-    """Tests bumping version for OpenWRT in VERSION file."""
+def test_bump_version_generic():
+    """Tests bumping version for a package using a root VERSION file."""
     config = {
-        "package_type": "openwrt",
+        "package_type": "generic",
         "version_path": "VERSION",
         "CURRENT_VERSION": [1, 2, 3, "final"],
     }
@@ -451,3 +467,4 @@ def test_bump_version_pyproject_toml_malformed():
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         with pytest.raises(RuntimeError, match="Failed to find"):
             bump_version(config, "1.2.4")
+    assert written_content == "1.2.4\n"

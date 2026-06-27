@@ -34,7 +34,9 @@ def get_package_type_from_setup():
         "package.json": "npm",
         "docker-compose.yml": "docker",
         ".ansible-lint": "ansible",
-        ".luacheckrc": "openwrt",
+        # The VERSION file check should be last to avoid false positives
+        # with other package types
+        "VERSION": "generic",
     }
     for filename, package_type in package_type_files.items():
         if os.path.exists(filename):
@@ -59,7 +61,11 @@ def detect_changelog_style(changelog_path):
 
 
 def _handle_python_version(config):
-    """Handles version detection for Python packages."""
+    """Handles version detection for Python packages.
+
+    Checks __init__.py first, then falls back to version.py (eg:
+    netjsonconfig, netdiff).
+    """
     project_name = get_package_name_from_setup()
     if project_name:
         package_directory = project_name.replace("-", "_")
@@ -104,6 +110,25 @@ def _handle_pyproject_toml_version(config):
     config["package_type"] = "pyproject"
     config["version_path"] = "pyproject.toml"
     config["CURRENT_VERSION"] = current_version
+    package_directory = project_name.replace("-", "_")
+    candidate_files = [
+        os.path.join(package_directory, "__init__.py"),
+        os.path.join(package_directory, "version.py"),
+    ]
+    for version_path in candidate_files:
+        if not os.path.exists(version_path):
+            continue
+        with open(version_path, "r") as f:
+            content = f.read()
+            version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
+            if version_match:
+                config["version_path"] = version_path
+                try:
+                    version_tuple = ast.literal_eval(f"({version_match.group(1)})")
+                    config["CURRENT_VERSION"] = list(version_tuple)
+                except (ValueError, SyntaxError, TypeError):
+                    config["CURRENT_VERSION"] = None
+                return
 
 
 def _handle_npm_version(config):
@@ -202,10 +227,8 @@ def _handle_ansible_version(config):
             config["CURRENT_VERSION"] = None
 
 
-def _handle_openwrt_version(config):
-    """Handles version detection for OpenWRT packages."""
-    if not os.path.exists("VERSION"):
-        return
+def _handle_generic_version(config):
+    """Handles version detection for packages using a root VERSION file."""
     with open("VERSION", "r") as f:
         version_str = f.read().strip()
         if not version_str:
@@ -234,7 +257,7 @@ PACKAGE_VERSION_HANDLERS = {
     "npm": _handle_npm_version,
     "docker": _handle_docker_version,
     "ansible": _handle_ansible_version,
-    "openwrt": _handle_openwrt_version,
+    "generic": _handle_generic_version,
 }
 
 

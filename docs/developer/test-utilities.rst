@@ -299,6 +299,24 @@ Logs into the Django admin dashboard.
 - Defaults to using ``admin`` / ``password`` credentials.
 - Navigates to ``/admin/login/`` and fills in the login form.
 
+``get_browser_logs(driver=None)``
++++++++++++++++++++++++++++++++++
+
+Returns all browser console logs captured for the current page.
+
+This includes ``INFO``, ``WARNING`` and ``SEVERE`` entries, so tests which
+only need to assert the absence of JavaScript errors should prefer
+``get_browser_errors()``.
+
+``get_browser_errors(driver=None)``
++++++++++++++++++++++++++++++++++++
+
+Returns relevant ``SEVERE`` browser console entries only.
+
+This helper filters known Firefox internal messages emitted in headless
+environments, for example ``BackupService.sys.mjs``. Use this method when
+a test needs to assert that a page did not emit JavaScript errors.
+
 ``find_element(by, value, timeout=2, driver=None, wait_for='visibility')``
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
