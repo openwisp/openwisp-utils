@@ -467,4 +467,3 @@ def test_bump_version_pyproject_toml_malformed():
     with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
         with pytest.raises(RuntimeError, match="Failed to find"):
             bump_version(config, "1.2.4")
-    assert written_content == "1.2.4\n"

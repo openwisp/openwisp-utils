@@ -69,17 +69,22 @@ def _handle_python_version(config):
     project_name = get_package_name_from_setup()
     if project_name:
         package_directory = project_name.replace("-", "_")
-        init_py_path = os.path.join(package_directory, "__init__.py")
-        if os.path.exists(init_py_path):
-            with open(init_py_path, "r") as f:
+        candidate_files = [
+            os.path.join(package_directory, "__init__.py"),
+            os.path.join(package_directory, "version.py"),
+        ]
+        for version_path in candidate_files:
+            if not os.path.exists(version_path):
+                continue
+            with open(version_path, "r") as f:
                 content = f.read()
                 version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
                 if version_match:
-                    config["version_path"] = init_py_path
+                    config["version_path"] = version_path
                     try:
                         version_tuple = ast.literal_eval(f"({version_match.group(1)})")
                         config["CURRENT_VERSION"] = list(version_tuple)
-                    except (ValueError, SyntaxError):
+                    except (ValueError, SyntaxError, TypeError):
                         config["CURRENT_VERSION"] = None
                     return
     _handle_pyproject_toml_version(config)
@@ -110,25 +115,6 @@ def _handle_pyproject_toml_version(config):
     config["package_type"] = "pyproject"
     config["version_path"] = "pyproject.toml"
     config["CURRENT_VERSION"] = current_version
-    package_directory = project_name.replace("-", "_")
-    candidate_files = [
-        os.path.join(package_directory, "__init__.py"),
-        os.path.join(package_directory, "version.py"),
-    ]
-    for version_path in candidate_files:
-        if not os.path.exists(version_path):
-            continue
-        with open(version_path, "r") as f:
-            content = f.read()
-            version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
-            if version_match:
-                config["version_path"] = version_path
-                try:
-                    version_tuple = ast.literal_eval(f"({version_match.group(1)})")
-                    config["CURRENT_VERSION"] = list(version_tuple)
-                except (ValueError, SyntaxError, TypeError):
-                    config["CURRENT_VERSION"] = None
-                return
 
 
 def _handle_npm_version(config):
