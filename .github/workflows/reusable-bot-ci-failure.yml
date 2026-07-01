@@ -49,14 +49,14 @@ jobs:
           private-key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Checkout Reusable Workflow
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: openwisp/openwisp-utils
           ref: master
           path: trusted_scripts
 
       - name: Checkout PR Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.head_repo }}
           ref: ${{ inputs.head_sha }}
