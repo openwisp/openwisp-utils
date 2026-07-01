@@ -52,7 +52,7 @@ setup(
             "isort>=6.0.1,<8.1.0",
             "coverage>=7.10.0,<7.15.0",
             "tblib~=3.2.2",
-            "docstrfmt>=2.0.0,<2.1.0",
+            "docstrfmt>=2.0.0,<2.3.0",
             "commitizen>=4.13.0,<5.0.0",
         ],
         "rest": [
