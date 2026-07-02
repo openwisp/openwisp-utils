@@ -88,6 +88,16 @@ class TestMenuSchema(TestCase):
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_group(position=1, config=model_link_config)
 
+        with self.subTest(
+            "Registering identical config at an occupied position is idempotent"
+        ):
+            with self.assertLogs(
+                "openwisp_utils.admin_theme.menu", level="INFO"
+            ) as captured:
+                register_menu_group(position=1, config=menu_link_config)
+            self.assertIn("already registered", captured.output[0])
+            self.assertIsInstance(MENU[1], MenuLink)
+
         with self.subTest("Registering with invalid position"):
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_group(
@@ -143,7 +153,9 @@ class TestMenuSchema(TestCase):
                 register_menu_subitem(group_position=100, item_position=1, config=[])
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_subitem(
-                    group_position=100, item_position=1, config=config
+                    group_position=100,
+                    item_position=1,
+                    config=self._get_menu_link_config(label="a different label"),
                 )
             with self.assertRaises(ImproperlyConfigured):
                 register_menu_subitem(
@@ -155,6 +167,18 @@ class TestMenuSchema(TestCase):
                     item_position=3,
                     config=self._get_menu_group_config(),
                 )
+
+        with self.subTest(
+            "Registering identical config at an occupied item position is idempotent"
+        ):
+            with self.assertLogs(
+                "openwisp_utils.admin_theme.menu", level="INFO"
+            ) as captured:
+                register_menu_subitem(
+                    group_position=100, item_position=1, config=config
+                )
+            self.assertIn("already registered", captured.output[0])
+            self.assertIsInstance(MENU[100].items[1], MenuLink)
 
         with self.subTest("Test menu subitem with valid data"):
             model_link_config = self._get_model_link_config()
