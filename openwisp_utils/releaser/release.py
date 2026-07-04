@@ -105,7 +105,7 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
         # The body has already been adjusted for the file, so no heading changes are needed.
         full_block_to_port = f"{version_header}\n\n{changelog_body}"
     else:  # rst
-        version_header = f"{prefix}{version}  [{changelog_date_str}]"
+        version_header = f"{prefix}{version} [{changelog_date_str}]"
         underline = "-" * len(version_header)
         full_block_to_port = f"{version_header}\n{underline}\n\n{changelog_body}"
 
@@ -248,7 +248,7 @@ def main():
         version_header = f"## {prefix}{new_version} [{changelog_date_str}]"
         full_release_block = f"{version_header}\n\n{md_body}"
     else:  # rst
-        version_header = f"{prefix}{new_version}  [{changelog_date_str}]"
+        version_header = f"{prefix}{new_version} [{changelog_date_str}]"
         underline = "-" * len(version_header)
         full_release_block = f"{version_header}\n{underline}\n\n{changelog_body}"
 

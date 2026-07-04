@@ -260,8 +260,8 @@ Version 1.1.2 [2025-06-18]
 - A previous fix.
 """
 
-NEW_RELEASE_BLOCK = """Version 1.1.3  [2025-08-11]
----------------------------
+NEW_RELEASE_BLOCK = """Version 1.1.3 [2025-08-11]
+--------------------------
 
 Bugfixes
 ~~~~~~~~

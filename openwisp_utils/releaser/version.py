@@ -1,5 +1,6 @@
 import json
 import re
+import subprocess
 import sys
 
 import questionary
@@ -64,14 +65,39 @@ def _bump_npm_version(content, new_version, version_path):
 
 
 def _bump_docker_version(content, new_version, version_path):
-    """Handles version bumping for Docker packages."""
-    return _bump_with_regex(
-        content,
-        r"^OPENWISP_VERSION\s*=\s*[^\s]+",
-        f"OPENWISP_VERSION = {new_version}",
-        version_path,
-        "OPENWISP_VERSION",
-    )
+    """Handles version bumping for docker-openwisp.
+
+    Delegates to docker-openwisp's canonical ``make bump`` target so the
+    releaser does not need to know how the version is stored on disk.
+    Verifies the canonical VERSION file was updated, then returns ``None``
+    so the caller skips the write-back (``make bump`` already wrote it).
+    """
+    try:
+        subprocess.run(
+            ["make", "bump", f"VERSION={new_version}"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        # Surface Make's output so the failure is diagnosable.
+        raise RuntimeError(
+            f"`make bump VERSION={new_version}` failed:\n{e.stdout}{e.stderr}"
+        ) from e
+    except FileNotFoundError as e:
+        raise RuntimeError(
+            "`make` is required to bump docker-openwisp but was not found on PATH."
+        ) from e
+    # A zero-exit ``make bump`` does not guarantee the file changed; verify it
+    # so a no-op target cannot silently produce a stale release.
+    with open(version_path, "r") as f:
+        bumped_version = f.read().strip()
+    if bumped_version != new_version:
+        raise RuntimeError(
+            f"`make bump VERSION={new_version}` completed but {version_path} "
+            f"contains {bumped_version!r}."
+        )
+    return None
 
 
 def _bump_ansible_version(content, new_version, version_path):
@@ -85,8 +111,8 @@ def _bump_ansible_version(content, new_version, version_path):
     )
 
 
-def _bump_openwrt_version(content, new_version, version_path):
-    """Handles version bumping for OpenWRT packages."""
+def _bump_generic_version(content, new_version, version_path):
+    """Handles version bumping for packages using a root VERSION file."""
     return f"{new_version}\n"
 
 
@@ -96,7 +122,7 @@ VERSION_BUMP_HANDLERS = {
     "npm": _bump_npm_version,
     "docker": _bump_docker_version,
     "ansible": _bump_ansible_version,
-    "openwrt": _bump_openwrt_version,
+    "generic": _bump_generic_version,
 }
 
 
@@ -120,8 +146,11 @@ def bump_version(config, new_version):
     if not handler:
         raise RuntimeError(f"Unknown package type: {package_type}")
     new_content = handler(content, new_version, version_path)
-    with open(version_path, "w") as f:
-        f.write(new_content)
+    # A handler may return None to signal it already wrote the file itself
+    # (e.g. docker-openwisp delegates the write to ``make bump``).
+    if new_content is not None:
+        with open(version_path, "w") as f:
+            f.write(new_content)
     return True
 
 

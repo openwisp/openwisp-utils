@@ -157,6 +157,27 @@ For more information about optional parameters check the `drf-yasg
 documentation
 <https://drf-yasg.readthedocs.io/en/stable/readme.html#quickstart>`_.
 
+.. _openwisp_default_api_page_size:
+
+``OPENWISP_API_DEFAULT_PAGE_SIZE``
+----------------------------------
+
+**Default**: ``10``
+
+Default number of items per page returned by :ref:`OpenWispPagination
+<utils_openwisp_pagination>`.
+
+.. _openwisp_api_max_page_size:
+
+``OPENWISP_API_MAX_PAGE_SIZE``
+------------------------------
+
+**Default**: ``100``
+
+Maximum number of items per page that clients can request via the
+``?page_size=N`` query parameter on views using :ref:`OpenWispPagination
+<utils_openwisp_pagination>`. Requests above this value are capped.
+
 .. _openwisp_slow_test_threshold:
 
 ``OPENWISP_SLOW_TEST_THRESHOLD``

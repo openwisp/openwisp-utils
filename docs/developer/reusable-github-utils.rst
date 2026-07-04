@@ -149,7 +149,9 @@ Create the following workflow files in your repository.
       cancel-in-progress: true
     jobs:
       respond-to-assign-request:
-        if: github.event.issue.pull_request == null
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event.issue.pull_request == null
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: issue_assignment
@@ -175,7 +177,9 @@ Create the following workflow files in your repository.
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
-        if: github.event.action != 'closed' || github.event.pull_request.merged == false
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          (github.event.action != 'closed' || github.event.pull_request.merged == false)
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: issue_assignment
@@ -202,7 +206,10 @@ Create the following workflow files in your repository.
       cancel-in-progress: true
     jobs:
       reassign-on-reopen:
-        if: github.event_name == 'pull_request_target' && github.event.action == 'reopened'
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event_name == 'pull_request_target' &&
+          github.event.action == 'reopened'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: pr_reopen
@@ -210,7 +217,11 @@ Create the following workflow files in your repository.
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
       handle-pr-activity:
-        if: github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.issue.user.login == github.event.comment.user.login
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          github.event.issue.user.login == github.event.comment.user.login
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: pr_reopen
@@ -244,6 +255,7 @@ Create the following workflow files in your repository.
       cancel-in-progress: false
     jobs:
       manage-stale-prs-python:
+        if: github.repository == 'openwisp/your-repo'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-autoassign.yml@master
         with:
           bot_command: stale_pr
@@ -309,6 +321,7 @@ example:
 
     jobs:
       version-branch:
+        if: github.repository == 'openwisp/your-repo'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-version-branch.yml@master
         with:
           # The name of the Python package (required)
@@ -370,7 +383,9 @@ not yet merged, the workflow exits safely without failing.
 
     jobs:
       backport-on-push:
-        if: github.event_name == 'push'
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event_name == 'push'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-backport.yml@master
         with:
           commit_sha: ${{ github.sha }}
@@ -380,6 +395,7 @@ not yet merged, the workflow exits safely without failing.
 
       backport-on-comment:
         if: >
+          github.repository == 'openwisp/your-repo' &&
           github.event_name == 'issue_comment' &&
           github.event.issue.pull_request &&
           github.event.issue.pull_request.merged_at != null &&
@@ -393,6 +409,8 @@ not yet merged, the workflow exits safely without failing.
         secrets:
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+.. _utils_ci_failure_bot:
 
 Automated CI Failure Bot
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -423,6 +441,15 @@ The bot supports a configurable retry classifier mode via
 - ``both``: retries when either heuristic or LLM indicates transient; the
   LLM call is skipped when the heuristic already matched.
 - Any other value (including empty/typo): heuristic-only retry.
+
+**Model configuration**
+
+By default the bot uses ``gemini-2.5-flash-lite``. To use a different
+model (for example a paid tier with a higher or unlimited daily request
+quota), set the ``GEMINI_MODEL`` repository or organization variable. An
+unset or empty value keeps the default. The same variable also controls
+the :ref:`Changelog bot <utils_changelog_bot>`, so setting it once at the
+organization level changes the model for both bots at the same time.
 
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
@@ -457,7 +484,10 @@ job:
     jobs:
       find-pr:
         runs-on: ubuntu-latest
-        if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.event == 'pull_request' }}
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event.workflow_run.conclusion == 'failure' &&
+          github.event.workflow_run.event == 'pull_request'
         outputs:
           pr_number: ${{ steps.pr.outputs.number }}
           pr_author: ${{ steps.pr.outputs.author }}
@@ -506,7 +536,9 @@ job:
 
       call-ci-failure-bot:
         needs: find-pr
-        if: ${{ needs.find-pr.outputs.pr_number != '' }}
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          needs.find-pr.outputs.pr_number != ''
         permissions:
           pull-requests: write
           actions: write
@@ -524,6 +556,8 @@ job:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
           PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+
+.. _utils_changelog_bot:
 
 Changelog Bot
 ~~~~~~~~~~~~~
@@ -549,6 +583,18 @@ to secrets, and is the one that generates and posts the changelog comment.
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
+
+**Model configuration**
+
+The changelog bot uses ``gemini-2.5-flash-lite`` by default and honors the
+same ``GEMINI_MODEL`` repository or organization variable as the :ref:`CI
+failure bot <utils_ci_failure_bot>`. Setting it once at the organization
+level changes the model for both bots at the same time.
+
+The bot normalizes generated commit-message body text locally before
+validation, wrapping long body lines while preserving issue footers such
+as ``Closes #123``. This avoids spending extra Gemini requests on
+formatting issues that can be fixed deterministically.
 
 **Setup for Other Repositories**
 
@@ -578,7 +624,8 @@ workflow metadata.
 
     jobs:
       check:
-        if: |
+        if: >
+          github.repository == 'openwisp/your-repo' &&
           github.event.review.state == 'approved' &&
           (github.event.review.author_association == 'OWNER' ||
             github.event.review.author_association == 'MEMBER' ||
@@ -630,7 +677,9 @@ retrieves the PR metadata and calls the reusable changelog workflow.
     jobs:
       fetch-metadata:
         runs-on: ubuntu-latest
-        if: github.event.workflow_run.conclusion == 'success'
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          github.event.workflow_run.conclusion == 'success'
         permissions:
           actions: read
         outputs:
@@ -658,7 +707,9 @@ retrieves the PR metadata and calls the reusable changelog workflow.
 
       changelog:
         needs: fetch-metadata
-        if: needs.fetch-metadata.outputs.pr_number != ''
+        if: >
+          github.repository == 'openwisp/your-repo' &&
+          needs.fetch-metadata.outputs.pr_number != ''
         permissions:
           contents: read
           pull-requests: write

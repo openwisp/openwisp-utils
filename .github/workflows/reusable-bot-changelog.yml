@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Checkout PR repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: refs/pull/${{ inputs.pr_number }}/head
           fetch-depth: 0
@@ -41,7 +41,7 @@ jobs:
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
       - name: Checkout openwisp-utils for action
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: openwisp/openwisp-utils
           ref: master
@@ -56,3 +56,4 @@ jobs:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           pr-number: ${{ inputs.pr_number }}
           repo-name: ${{ github.repository }}
+          gemini-model: ${{ vars.GEMINI_MODEL }}

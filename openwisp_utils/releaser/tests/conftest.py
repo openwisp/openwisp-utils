@@ -41,6 +41,24 @@ def create_package_dir_with_version():
     return _create_package_dir_with_version
 
 
+def _create_package_dir_with_version_in_version_py(
+    path: Path, name="my-test-package", version_str="VERSION = (1, 2, 3, 'final')"
+):
+    """Create a package using the netjsonconfig/netdiff version layout.
+
+    Unlike the standard layout, the VERSION tuple is defined in
+    ``version.py`` instead of ``__init__.py``.
+    """
+    pkg_dir = path / name.replace("-", "_")
+    pkg_dir.mkdir(exist_ok=True)
+    (pkg_dir / "version.py").write_text(version_str)
+
+
+@pytest.fixture
+def create_package_dir_with_version_in_version_py():
+    return _create_package_dir_with_version_in_version_py
+
+
 def _create_changelog(path: Path, ext="rst"):
     (path / f"CHANGES.{ext}").write_text("Changelog")
 
@@ -79,22 +97,6 @@ def create_package_json():
     return _create_package_json
 
 
-def _create_makefile(path: Path, version="1.2.3"):
-    """Helper to create a Makefile for docker projects."""
-    makefile_content = f"""OPENWISP_VERSION = {version}
-DOCKER_IMAGE = openwisp/test
-
-build:
-\tdocker build -t $(DOCKER_IMAGE):$(OPENWISP_VERSION) .
-"""
-    (path / "Makefile").write_text(makefile_content)
-
-
-@pytest.fixture
-def create_makefile():
-    return _create_makefile
-
-
 def _create_docker_compose(path: Path):
     """Helper to create a docker-compose.yml file."""
     (path / "docker-compose.yml").write_text(
@@ -107,6 +109,18 @@ def create_docker_compose():
     return _create_docker_compose
 
 
+def _create_docker_version_file(path: Path, version="1.2.3"):
+    """Helper to create images/common/openwisp/VERSION for docker-openwisp."""
+    version_dir = path / "images" / "common" / "openwisp"
+    version_dir.mkdir(parents=True, exist_ok=True)
+    (version_dir / "VERSION").write_text(f"{version}\n")
+
+
+@pytest.fixture
+def create_docker_version_file():
+    return _create_docker_version_file
+
+
 def _create_ansible_lint(path: Path):
     """Helper to create .ansible-lint file."""
     (path / ".ansible-lint").write_text("skip_list:\n  - '106'")
@@ -115,6 +129,16 @@ def _create_ansible_lint(path: Path):
 @pytest.fixture
 def create_ansible_lint():
     return _create_ansible_lint
+
+
+def _create_luacheckrc(path: Path):
+    """Helper to create .luacheckrc file."""
+    (path / ".luacheckrc").write_text("std = 'min'")
+
+
+@pytest.fixture
+def create_luacheckrc():
+    return _create_luacheckrc
 
 
 def _create_ansible_version_file(path: Path, version="1.2.3"):
@@ -129,18 +153,8 @@ def create_ansible_version_file():
     return _create_ansible_version_file
 
 
-def _create_luacheckrc(path: Path):
-    """Helper to create .luacheckrc file for OpenWRT agents."""
-    (path / ".luacheckrc").write_text("std = 'min'")
-
-
-@pytest.fixture
-def create_luacheckrc():
-    return _create_luacheckrc
-
-
 def _create_version_file(path: Path, version="1.2.3"):
-    """Helper to create VERSION file for OpenWRT agents."""
+    """Helper to create VERSION file for generic package type."""
     (path / "VERSION").write_text(version)
 
 
