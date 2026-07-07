@@ -10,6 +10,7 @@ from github import GithubException  # noqa: E402
 
 try:
     from issue_assignment_bot import IssueAssignmentBot  # noqa: E402
+    from utils import extract_all_linked_issues  # noqa: E402
 except ImportError:
     IssueAssignmentBot = None
 
@@ -23,7 +24,7 @@ pytestmark = pytest.mark.skipif(
 def bot_env(monkeypatch):
     """Set up environment and mock GitHub client for all tests."""
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
-    monkeypatch.setenv("GITHUB_VALIDATION_TOKEN", "test_validation_token")
+    monkeypatch.setenv("VALIDATION_GITHUB_TOKEN", "test_validation_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
     monkeypatch.setenv("GITHUB_EVENT_NAME", "issue_comment")
     monkeypatch.setattr("utils.time.sleep", lambda _seconds: None)
@@ -952,7 +953,6 @@ class TestExtractAllLinkedIssues:
         ],
     )
     def test_extract_all_linked_issues(self, pr_body, expected, bot_env):
-        from utils import extract_all_linked_issues
 
         assert extract_all_linked_issues(pr_body, "openwisp/openwisp-utils") == expected
 
@@ -1201,7 +1201,78 @@ class TestPRValidation:
         ):
             assert bot.validate_pr_issues(mock_pr)
 
+    def test_client_segregation_mutations_vs_validation(self, bot_env):
+        """Proves cross-repository validation uses the read-only validation client,
+        while all mutations use the repository-scoped write client.
+        """
+        bot = IssueAssignmentBot()
+        bot.event_name = "pull_request_target"
+
+        # Mocks for validation (reads)
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue.labels = [label_bug]
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": {
+                                "nodes": [{"project": {"id": "PVT_kwDOABGNI84Amkl7"}}]
+                            }
+                        }
+                    }
+                }
+            },
+        )
+
+        # Mocks for mutations (writes)
+        mock_pr = Mock()
+        mock_pr.number = 12
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #123"
+        invalid_label = Mock()
+        invalid_label.name = "invalid"
+        mock_pr.labels = [invalid_label]
+        bot_env["repo"].get_pull.return_value = mock_pr
+
+        # Execute handler
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 12,
+                    "merged": False,
+                    "user": {"login": "external-contributor"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        bot.handle_pull_request()
+
+        # Assert Reads used VALIDATION client
+        bot_env["github_validation"].get_repo.assert_any_call("openwisp/openwisp-utils")
+        bot_env["repo_validation"].get_issue.assert_called_once_with(123)
+        bot.github_validation.requester.graphql_query.assert_called_once()
+
+        # Assert Writes used WRITE client (bot_env["repo"] / bot_env["github"])
+        bot_env["repo"].get_pull.assert_called_once_with(12)
+        mock_pr.remove_from_labels.assert_called_once_with("invalid")
+
+        # Ensure validation client is strictly read-only in this flow (no label/edit calls)
+        assert (
+            not hasattr(bot_env["repo_validation"], "remove_from_labels")
+            or not bot_env["repo_validation"].remove_from_labels.called
+        )
+
     def test_handle_pull_request_invalid_label_and_comment(self, bot_env):
+
         bot = IssueAssignmentBot()
         bot.event_name = "pull_request_target"
         bot.load_event_payload(

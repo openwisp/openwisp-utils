@@ -19,7 +19,7 @@ INVALID_ISSUE_LABELS = frozenset({"invalid", "wontfix"})
 class GitHubBot:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
-        self.github_validation_token = os.environ.get("GITHUB_VALIDATION_TOKEN")
+        self.github_validation_token = os.environ.get("VALIDATION_GITHUB_TOKEN")
         self.repository_name = os.environ.get("REPOSITORY")
         self.event_name = os.environ.get("GITHUB_EVENT_NAME")
         self.event_payload = None
@@ -49,7 +49,7 @@ class GitHubBot:
                 self.github_validation = None
         else:
             print(
-                "Warning: GITHUB_VALIDATION_TOKEN env var not set, falling back to GITHUB_TOKEN"
+                "Warning: VALIDATION_GITHUB_TOKEN env var not set, falling back to GITHUB_TOKEN"
             )
             self.github_validation = self.github
 
