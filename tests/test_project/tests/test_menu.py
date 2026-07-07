@@ -98,9 +98,7 @@ class TestMenuSchema(TestCase):
             self.assertIn("already registered", captured.output[0])
             self.assertIsInstance(MENU[1], MenuLink)
 
-        with self.subTest(
-            "Re-registering identical ModelLink config is idempotent"
-        ):
+        with self.subTest("Re-registering identical ModelLink config is idempotent"):
             with self.assertLogs(
                 "openwisp_utils.admin_theme.menu", level="INFO"
             ) as captured:
@@ -108,9 +106,7 @@ class TestMenuSchema(TestCase):
             self.assertIn("already registered", captured.output[0])
             self.assertIsInstance(MENU[2], ModelLink)
 
-        with self.subTest(
-            "Re-registering identical MenuGroup config is idempotent"
-        ):
+        with self.subTest("Re-registering identical MenuGroup config is idempotent"):
             with self.assertLogs(
                 "openwisp_utils.admin_theme.menu", level="INFO"
             ) as captured:
