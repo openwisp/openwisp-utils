@@ -72,6 +72,12 @@ OpenWISP repositories. The bot provides the following features:
   marks stale and unassigns after 14 days, and closes after 60 days.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
+- **PR validation**: Flags invalid pull requests from external contributors
+  that do not reference a validated issue belonging to the OpenWISP organization
+  (an open issue assigned to one of the required project boards with at least
+  one label other than ``invalid`` or ``wontfix``). Invalid pull requests are
+  labeled ``invalid``, receive a warning comment, and are automatically closed
+  after 24 hours if the issue is not resolved.
 
 **Secrets**
 
@@ -132,7 +138,7 @@ Create the following workflow files in your repository.
     name: PR Issue Auto-Assignment
     on:
       pull_request_target:
-        types: [opened, reopened, closed]
+        types: [opened, reopened, closed, edited, ready_for_review]
     permissions:
       contents: read
       issues: write

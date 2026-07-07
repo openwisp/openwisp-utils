@@ -63,3 +63,41 @@ def unassign_linked_issues_helper(repo, repository_name, pr_body, pr_author):
         except Exception as e:
             print(f"Error unassigning issue #{issue_number}: {e}")
     return unassigned_issues
+
+
+def extract_all_linked_issues(pr_body, default_repo_full_name):
+    """Extract all linked issues (including cross-repository and URLs).
+
+    Returns a list of tuples: (owner, repo_name, issue_number)
+    """
+    if not pr_body:
+        return []
+    # Pattern to match:
+    # 1. URL: https://github.com/owner/repo/issues/num
+    # 2. owner/repo#num
+    # 3. #num
+    pattern = (
+        r"\b(?:fix(?:e[sd])?|close[sd]?|resolve[sd]?|relat(?:e[sd]?|ed)\s+to)\s*:?\s*"
+        r"(?:"
+        r"https://github\.com/([\w-]+)/([\w.-]+)/issues/(\d+)"
+        r"|([\w-]+)/([\w.-]+)#(\d+)"
+        r"|#(\d+)"
+        r")"
+    )
+    matches = re.findall(pattern, pr_body, re.IGNORECASE)
+    results = []
+    default_owner, default_repo = default_repo_full_name.split("/")
+    for m in matches:
+        if m[0] and m[1] and m[2]:  # URL
+            results.append((m[0], m[1], int(m[2])))
+        elif m[3] and m[4] and m[5]:  # owner/repo#num
+            results.append((m[3], m[4], int(m[5])))
+        elif m[6]:  # #num
+            results.append((default_owner, default_repo, int(m[6])))
+    # Remove duplicates while preserving order
+    unique_results = []
+    for r in results:
+        if r not in unique_results:
+            unique_results.append(r)
+    return unique_results
+

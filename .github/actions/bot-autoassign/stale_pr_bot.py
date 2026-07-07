@@ -104,29 +104,6 @@ class StalePRBot(GitHubBot):
             print("Error getting reviews" f" for PR #{pr.number}: {e}")
             return None
 
-    def has_bot_comment(self, pr, comment_type, after_date=None, issue_comments=None):
-        """Check if PR already has a specific type of bot comment.
-
-        Uses HTML markers. If ``after_date`` is provided,
-        only considers comments posted after that date.
-        """
-        try:
-            if issue_comments is None:
-                issue_comments = list(pr.get_issue_comments())
-            marker = f"<!-- bot:{comment_type} -->"
-            for comment in issue_comments:
-                if (
-                    comment.user
-                    and comment.user.type == "Bot"
-                    and marker in comment.body
-                ):
-                    if after_date and comment.created_at <= after_date:
-                        continue
-                    return True
-            return False
-        except Exception as e:
-            print("Error checking bot comments" f" for PR #{pr.number}: {e}")
-            return False
 
     def unassign_linked_issues(self, pr):
         try:
@@ -329,6 +306,64 @@ class StalePRBot(GitHubBot):
             for pr in open_prs:
                 pr_count += 1
                 try:
+                    pr_labels = [label.name for label in pr.labels]
+                    if "invalid" in pr_labels:
+                        if self.validate_pr_issues(pr):
+                            pr.remove_from_labels("invalid")
+                            print(f"PR #{pr.number} is now valid. Removed 'invalid' label.")
+                        else:
+                            warning_comment = None
+                            comments = list(pr.get_issue_comments())
+                            for comment in comments:
+                                if (
+                                    comment.user
+                                    and comment.user.type == "Bot"
+                                    and "<!-- bot:invalid_unvalidated_issue -->" in comment.body
+                                ):
+                                    warning_comment = comment
+                                    break
+                            if warning_comment:
+                                from datetime import datetime, timezone
+                                now = datetime.now(timezone.utc)
+                                if (now - warning_comment.created_at).total_seconds() >= 24 * 3600:
+                                    close_message = (
+                                        "<!-- bot:invalid_unvalidated_issue_closed -->\n\n"
+                                        "This pull request has been automatically closed because it has been flagged as "
+                                        "invalid (not referencing a validated issue) for more than 24 hours."
+                                    )
+                                    try:
+                                        pr.create_issue_comment(close_message)
+                                    except Exception as comment_error:
+                                        print(f"Warning: Could not post close comment on PR #{pr.number}: {comment_error}")
+                                    pr.edit(state="closed")
+                                    print(f"Closed PR #{pr.number} automatically after 24 hours.")
+                                    processed_count += 1
+                            else:
+                                pr_author = pr.user.login if pr.user else ""
+                                comment_body = (
+                                    "<!-- bot:invalid_unvalidated_issue -->\n\n"
+                                    f"Hi @{pr_author},\n\n"
+                                    "Thank you for your interest in contributing to OpenWISP.\n\n"
+                                    "This pull request has been flagged because external contributors must target an "
+                                    "issue validated by maintainers before requesting review.\n\n"
+                                    "Please link this pull request to a validated issue by adding "
+                                    "`Fixes #ISSUE_NUMBER`, `Closes #ISSUE_NUMBER`, or `Related to #ISSUE_NUMBER` to the pull request description. "
+                                    "The issue may be in this repository or another OpenWISP repository.\n\n"
+                                    "If there is no validated issue yet, please open one first and wait for "
+                                    "maintainer validation before continuing with this pull request.\n\n"
+                                    "An issue is considered validated when it is open, has an appropriate label other than "
+                                    "`invalid` or `wontfix`, and is assigned to one of the OpenWISP contributor project boards "
+                                    "mentioned in the contributing guidelines.\n\n"
+                                    "Please see the OpenWISP policy on unsolicited and AI-assisted contributions:\n"
+                                    "https://openwisp.io/docs/dev/general/code-of-conduct.html\n\n"
+                                    "If this is not resolved within 24 hours, this pull request will be closed automatically. "
+                                    "Thank you for your understanding."
+                                )
+                                pr.create_issue_comment(comment_body)
+                                print(f"Posted missing warning comment on PR #{pr.number}")
+                                processed_count += 1
+                        continue
+
                     all_reviews = list(pr.get_reviews())
                     last_changes_requested = self.get_last_changes_requested(
                         pr, all_reviews

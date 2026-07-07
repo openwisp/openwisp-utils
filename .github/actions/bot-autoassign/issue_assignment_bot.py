@@ -305,13 +305,54 @@ class IssueAssignmentBot(GitHubBot):
                 return False
             if action in ["opened", "reopened"]:
                 self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
-                # We consider the event handled even if no issues were linked
-                return True
             elif action == "closed":
                 if pr.get("merged", False):
                     print(f"PR #{pr_number} was merged, keeping issue assignments")
                 else:
                     self.unassign_issues_from_pr(pr_body, pr_author)
+                return True
+
+            if action in ["opened", "reopened", "edited", "ready_for_review"]:
+                pr_obj = self.repo.get_pull(pr_number)
+                is_valid = self.validate_pr_issues(pr_obj)
+                labels = []
+                if hasattr(pr_obj, "labels") and not hasattr(pr_obj.labels, "assert_called"):
+                    try:
+                        labels = [label.name for label in pr_obj.labels]
+                    except TypeError:
+                        pass
+
+                if is_valid:
+                    if "invalid" in labels:
+                        pr_obj.remove_from_labels("invalid")
+                        print(f"Removed 'invalid' label from PR #{pr_number}")
+                else:
+                    if "invalid" not in labels:
+                        pr_obj.add_to_labels("invalid")
+                        print(f"Added 'invalid' label to PR #{pr_number}")
+                    
+                    if not self.has_bot_comment(pr_obj, "invalid_unvalidated_issue"):
+                        comment_body = (
+                            "<!-- bot:invalid_unvalidated_issue -->\n\n"
+                            f"Hi @{pr_author},\n\n"
+                            "Thank you for your interest in contributing to OpenWISP.\n\n"
+                            "This pull request has been flagged because external contributors must target an "
+                            "issue validated by maintainers before requesting review.\n\n"
+                            "Please link this pull request to a validated issue by adding "
+                            "`Fixes #ISSUE_NUMBER`, `Closes #ISSUE_NUMBER`, or `Related to #ISSUE_NUMBER` to the pull request description. "
+                            "The issue may be in this repository or another OpenWISP repository.\n\n"
+                            "If there is no validated issue yet, please open one first and wait for "
+                            "maintainer validation before continuing with this pull request.\n\n"
+                            "An issue is considered validated when it is open, has an appropriate label other than "
+                            "`invalid` or `wontfix`, and is assigned to one of the OpenWISP contributor project boards "
+                            "mentioned in the contributing guidelines.\n\n"
+                            "Please see the OpenWISP policy on unsolicited and AI-assisted contributions:\n"
+                            "https://openwisp.io/docs/dev/general/code-of-conduct.html\n\n"
+                            "If this is not resolved within 24 hours, this pull request will be closed automatically. "
+                            "Thank you for your understanding."
+                        )
+                        pr_obj.create_issue_comment(comment_body)
+                        print(f"Posted unvalidated issue warning comment on PR #{pr_number}")
                 return True
             print(f"PR action '{action}' not handled")
             return True
