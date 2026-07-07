@@ -12,6 +12,21 @@ on:
         type: string
         default: "openwisp-companion"
         description: "The GitHub App username used to detect bot mentions and bot-authored comments"
+      openwisp_utils_repo:
+        required: false
+        type: string
+        default: "openwisp/openwisp-utils"
+        description: "The repository to check out"
+      openwisp_utils_ref:
+        required: false
+        type: string
+        default: "master"
+        description: "The ref to check out"
+      exclude_pr_authors:
+        required: false
+        type: string
+        default: "dependabot[bot]"
+        description: "Comma-separated GitHub usernames exempt from external PR validation"
     secrets:
       OPENWISP_BOT_APP_ID:
         required: true
@@ -28,12 +43,13 @@ jobs:
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
 
       - name: Checkout openwisp-utils
         uses: actions/checkout@v7
         with:
-          repository: openwisp/openwisp-utils
-          ref: master
+          repository: ${{ inputs.openwisp_utils_repo }}
+          ref: ${{ inputs.openwisp_utils_ref }}
           path: openwisp-utils
 
       - name: Set up Python
@@ -51,6 +67,7 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           BOT_COMMAND: ${{ inputs.bot_command }}
           BOT_USERNAME: ${{ inputs.bot_username }}
+          EXCLUDE_PR_AUTHORS: ${{ inputs.exclude_pr_authors }}
         run: |
           if [ -n "$GITHUB_EVENT_PATH" ]; then
             python openwisp-utils/.github/actions/bot-autoassign/__main__.py "$BOT_COMMAND" "$GITHUB_EVENT_PATH"

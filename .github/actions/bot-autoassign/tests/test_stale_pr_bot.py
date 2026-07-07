@@ -860,3 +860,91 @@ class TestRun:
         bot.github = None
         bot.repo = None
         assert not bot.run()
+
+
+class TestStalePRBotInvalidCheck:
+    def test_invalid_pr_becomes_valid(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+
+        with patch.object(bot, "validate_pr_issues", return_value=True):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_called_once_with("invalid")
+            mock_pr.edit.assert_not_called()
+
+    def test_invalid_pr_still_invalid_under_24h(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+
+        mock_comment = Mock()
+        mock_comment.user.login = bot.bot_login
+        mock_comment.body = "<!-- bot:invalid_unvalidated_issue --> Warning comment"
+        mock_comment.created_at = datetime.now(timezone.utc)
+        mock_pr.get_issue_comments.return_value = [mock_comment]
+
+        with patch.object(bot, "validate_pr_issues", return_value=False):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_not_called()
+            mock_pr.edit.assert_not_called()
+
+    def test_invalid_pr_still_invalid_over_24h_closes(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+
+        mock_comment = Mock()
+        mock_comment.user.login = bot.bot_login
+        mock_comment.body = "<!-- bot:invalid_unvalidated_issue --> Warning comment"
+        from datetime import timedelta
+
+        mock_comment.created_at = datetime.now(timezone.utc) - timedelta(hours=25)
+        mock_pr.get_issue_comments.return_value = [mock_comment]
+
+        with patch.object(bot, "validate_pr_issues", return_value=False):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_not_called()
+            mock_pr.create_issue_comment.assert_called_once()
+            assert (
+                "automatically closed" in mock_pr.create_issue_comment.call_args[0][0]
+            )
+            mock_pr.edit.assert_called_once_with(state="closed")
+
+    def test_invalid_pr_missing_warning_comment_posts_warning(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        mock_pr.user.login = "contributor"
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+
+        mock_pr.get_issue_comments.return_value = []
+
+        with patch.object(bot, "validate_pr_issues", return_value=False):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_not_called()
+            mock_pr.create_issue_comment.assert_called_once()
+            assert (
+                "<!-- bot:invalid_unvalidated_issue -->"
+                in mock_pr.create_issue_comment.call_args[0][0]
+            )
+            mock_pr.edit.assert_not_called()

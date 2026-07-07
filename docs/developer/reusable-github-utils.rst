@@ -73,6 +73,56 @@ OpenWISP repositories. The bot provides the following features:
   encouragement after 60 days. The bot does not auto-close PRs.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
+- **PR validation**: Flags invalid pull requests from external
+  contributors that do not reference a validated issue belonging to the
+  OpenWISP organization (an open issue assigned to one of the required
+  project boards with at least one label other than ``invalid`` or
+  ``wontfix``). Invalid pull requests are labeled ``invalid``, receive a
+  warning comment, and are automatically closed after 24 hours if the
+  issue is not resolved.
+
+**How External PR Validation Works**
+
+The PR issue-link workflow runs on ``pull_request_target`` events
+(``opened``, ``reopened``, ``closed``, ``edited``, and
+``ready_for_review``). For each pull request:
+
+1. **Maintainer exemption.** Pull requests authored by users with
+   ``OWNER``, ``MEMBER``, or ``COLLABORATOR`` ``author_association``
+   values proceed normally without issue validation. The same applies to
+   authors listed in the ``EXCLUDE_PR_AUTHORS`` environment variable
+   (``dependabot[bot]`` by default).
+2. **Validated issue requirement.** External contributors must reference
+   at least one validated issue in the pull request description using
+   ``Fixes #ISSUE_NUMBER``, ``Closes #ISSUE_NUMBER``, ``Related to
+   #ISSUE_NUMBER``, or an equivalent cross-repository reference. Only the
+   pull request description is checked (not commit messages or the title).
+3. **Validated issue criteria.** A linked issue is considered validated
+   when all of the following are true:
+
+   - it is open;
+   - it belongs to the same GitHub organization as the repository;
+   - it has at least one label other than ``invalid`` or ``wontfix``;
+   - it is assigned to one of these OpenWISP contributor project boards:
+
+     - OpenWISP Contributor's Board
+     - OpenWISP Priorities for next releases
+
+4. **Invalid pull request handling.** When validation fails, the bot adds
+   the standard ``invalid`` label, posts a single explanatory comment
+   (tracked with a hidden HTML marker), and explains how to fix the pull
+   request. Draft and documentation-only pull requests are not exempt.
+5. **Recovery and auto-close.** When a contributor updates the pull
+   request description to reference a validated issue, the next workflow
+   run removes the ``invalid`` label automatically. The daily stale PR job
+   re-checks pull requests labeled ``invalid``: if validation still fails
+   24 hours after the warning comment, the pull request is closed
+   automatically. Maintainers should validate the linked issue (open,
+   labeled, and assigned to a contributor project board) rather than
+   removing the ``invalid`` label manually.
+6. **API failures.** If the bot cannot verify project-board assignment
+   because of a GitHub API or permission error, the workflow fails and is
+   retried on the next run as usual.
 
 **How Stale PR Detection Works**
 
@@ -116,6 +166,13 @@ defaults to ``openwisp-companion``).
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
+
+The OpenWISP Bot GitHub App must also have **Projects: Read** permission
+(enabled at the organization level). PR validation uses a lightweight
+GraphQL query on each linked issue's ``projectItems`` to read only the
+assigned project title — it does not traverse or modify project boards.
+Without this permission, the API returns no project data and external pull
+requests may be falsely flagged as ``invalid``.
 
 **Setup for Other Repositories**
 
@@ -167,11 +224,11 @@ Create the following workflow files in your repository.
     name: PR Issue Auto-Assignment
     on:
       pull_request_target:
-        types: [opened, reopened, closed]
+        types: [opened, reopened, closed, edited, ready_for_review]
     permissions:
       contents: read
       issues: write
-      pull-requests: read
+      pull-requests: write
     concurrency:
       group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}-${{ github.event.action }}
       cancel-in-progress: true
