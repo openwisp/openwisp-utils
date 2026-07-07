@@ -885,3 +885,295 @@ class TestHandleIssueCommentBotCommand:
         )
         assert bot.handle_issue_comment()
         bot_env["repo"].get_issue.assert_not_called()
+
+
+class TestExtractAllLinkedIssues:
+    @pytest.mark.parametrize(
+        "pr_body,expected",
+        [
+            ("Fixes #123", [("openwisp", "openwisp-utils", 123)]),
+            (
+                "Fixes openwisp/openwisp-utils#709",
+                [("openwisp", "openwisp-utils", 709)],
+            ),
+            (
+                "Fixes https://github.com/openwisp/openwisp-utils/issues/709",
+                [("openwisp", "openwisp-utils", 709)],
+            ),
+            ("Related to #99", [("openwisp", "openwisp-utils", 99)]),
+            (
+                "Closes #456 and resolves #789",
+                [
+                    ("openwisp", "openwisp-utils", 456),
+                    ("openwisp", "openwisp-utils", 789),
+                ],
+            ),
+            ("Closes openwisp-utils#42", []),
+            ("", []),
+            (None, []),
+        ],
+    )
+    def test_extract_all_linked_issues(self, pr_body, expected, bot_env):
+        from utils import extract_all_linked_issues
+
+        assert extract_all_linked_issues(pr_body, "openwisp/openwisp-utils") == expected
+
+
+class TestPRValidation:
+    def test_get_issue_projects_success(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": {
+                                "nodes": [
+                                    {
+                                        "project": {
+                                            "title": "OpenWISP Contributor's Board"
+                                        }
+                                    },
+                                    {"project": {"title": "Some Other Board"}},
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+        assert projects == ["OpenWISP Contributor's Board", "Some Other Board"]
+        bot.github.requester.graphql_query.assert_called_once()
+
+    def test_get_issue_projects_single_project(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": {
+                                "nodes": [
+                                    {"project": {"title": "Classic Project Board"}},
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+        assert projects == ["Classic Project Board"]
+
+    def test_get_issue_projects_graphql_error(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github.requester.graphql_query.side_effect = GithubException(
+            400, {"errors": [{"message": "Some error"}]}, {}
+        )
+        with pytest.raises(GithubException):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_get_issue_projects_null_project_items(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": None,
+                        }
+                    }
+                }
+            },
+        )
+        with pytest.raises(ValueError, match="could not read project assignments"):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_get_issue_projects_null_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github.requester.graphql_query.return_value = (
+            {},
+            {"data": {"repository": {"issue": None}}},
+        )
+        with pytest.raises(ValueError, match="could not access issue"):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_validate_pr_issues_excluded_author(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "dependabot[bot]"
+        assert bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_exempt_association(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "some-member"
+        mock_pr.author_association = "MEMBER"
+        assert bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_no_issues(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "No references here"
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_cross_org_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes otherorg/repo#12"
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_is_pr(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+
+        mock_issue = Mock()
+        mock_issue.pull_request = {"url": "..."}
+        bot_env["repo"].get_issue.return_value = mock_issue
+
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_closed(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "closed"
+        bot_env["repo"].get_issue.return_value = mock_issue
+
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_invalid_labels(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+
+        # Test case 1: No labels
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = []
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert not bot.validate_pr_issues(mock_pr)
+
+        # Test case 2: Has wontfix/invalid labels
+        label_wontfix = Mock()
+        label_wontfix.name = "wontfix"
+        mock_issue.labels = [label_wontfix]
+        assert not bot.validate_pr_issues(mock_pr)
+
+        # Test case 3: Has a mix of valid and invalid/wontfix labels
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue.labels = [label_bug, label_wontfix]
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_not_in_project(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = [label_bug]
+        bot_env["repo"].get_issue.return_value = mock_issue
+
+        with patch.object(
+            bot, "get_issue_projects", return_value=["Some Other Project"]
+        ):
+            assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_fully_valid(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = [label_bug]
+        bot_env["repo"].get_issue.return_value = mock_issue
+
+        with patch.object(
+            bot, "get_issue_projects", return_value=["OpenWISP Contributor's Board"]
+        ):
+            assert bot.validate_pr_issues(mock_pr)
+
+    def test_handle_pull_request_invalid_label_and_comment(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.event_name = "pull_request_target"
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+
+        mock_pr_obj = Mock()
+        mock_pr_obj.labels = []
+        bot_env["repo"].get_pull.return_value = mock_pr_obj
+
+        with patch.object(bot, "validate_pr_issues", return_value=False), patch.object(
+            bot, "has_bot_comment", return_value=False
+        ):
+            assert bot.handle_pull_request()
+            mock_pr_obj.add_to_labels.assert_called_once_with("invalid")
+            mock_pr_obj.create_issue_comment.assert_called_once()
+            assert (
+                "invalid_unvalidated_issue"
+                in mock_pr_obj.create_issue_comment.call_args[0][0].lower()
+            )
+
+    def test_handle_pull_request_valid_removes_label(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.event_name = "pull_request_target"
+        bot.load_event_payload(
+            {
+                "action": "edited",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr_obj = Mock()
+        mock_pr_obj.labels = [mock_label]
+        bot_env["repo"].get_pull.return_value = mock_pr_obj
+
+        with patch.object(bot, "validate_pr_issues", return_value=True):
+            assert bot.handle_pull_request()
+            mock_pr_obj.remove_from_labels.assert_called_once_with("invalid")

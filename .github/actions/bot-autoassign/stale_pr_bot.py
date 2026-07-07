@@ -1,16 +1,16 @@
-import os
 import time
 from datetime import datetime, timezone
 
-from base import GitHubBot
+from base import MAINTAINER_ROLES, GitHubBot
 from utils import (
     extract_linked_issues,
     get_valid_linked_issues,
     unassign_linked_issues_helper,
 )
 
-# GitHub author_association values that represent project maintainers.
-MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
+
+class ValidationAPIError(Exception):
+    pass
 
 
 class StalePRBot(GitHubBot):
@@ -19,10 +19,6 @@ class StalePRBot(GitHubBot):
         self.DAYS_BEFORE_STALE_WARNING = 7
         self.DAYS_BEFORE_UNASSIGN = 14
         self.DAYS_BEFORE_FINAL_FOLLOWUP = 60
-        bot_username = os.environ.get("BOT_USERNAME", "openwisp-companion")
-        self.bot_login = (
-            bot_username if bot_username.endswith("[bot]") else f"{bot_username}[bot]"
-        )
 
     @staticmethod
     def _commit_activity_date_for_author(commit, pr_author):
@@ -194,28 +190,6 @@ class StalePRBot(GitHubBot):
             ),
             default=None,
         )
-
-    def has_bot_comment(self, pr, comment_type, after_date=None, issue_comments=None):
-        """Check if this bot has already posted a comment with the given
-        marker. If ``after_date`` is set, only later comments count.
-        """
-        try:
-            if issue_comments is None:
-                issue_comments = list(pr.get_issue_comments())
-            marker = f"<!-- bot:{comment_type} -->"
-            for comment in issue_comments:
-                if (
-                    comment.user
-                    and comment.user.login == self.bot_login
-                    and marker in comment.body
-                ):
-                    if after_date and comment.created_at <= after_date:
-                        continue
-                    return True
-            return False
-        except Exception as e:
-            print(f"Error checking bot comments for PR #{pr.number}: {e}")
-            return False
 
     def unassign_linked_issues(self, pr):
         pr_author = pr.user.login if pr.user else None
@@ -395,6 +369,63 @@ class StalePRBot(GitHubBot):
             for pr in open_prs:
                 pr_count += 1
                 try:
+                    pr_labels = [label.name.lower() for label in pr.labels]
+                    if "invalid" in pr_labels:
+                        try:
+                            is_valid = self.validate_pr_issues(pr)
+                        except Exception as e:
+                            print(
+                                f"Critical issue-project verification error on PR #{pr.number}: {e}"
+                            )
+                            raise ValidationAPIError(e)
+
+                        if is_valid:
+                            pr.remove_from_labels("invalid")
+                            print(
+                                f"PR #{pr.number} is now valid. Removed 'invalid' label."
+                            )
+                        else:
+                            comments = list(pr.get_issue_comments())
+                            warning_comment = self.get_bot_comment(
+                                pr, "invalid_unvalidated_issue", issue_comments=comments
+                            )
+                            if warning_comment:
+                                now = datetime.now(timezone.utc)
+                                if (
+                                    now - warning_comment.created_at
+                                ).total_seconds() >= 24 * 3600:
+                                    close_message = (
+                                        "<!-- bot:invalid_unvalidated_issue_closed -->\n\n"
+                                        "This pull request has been automatically closed because it has "
+                                        "been flagged as invalid (not referencing a validated issue) "
+                                        "for more than 24 hours."
+                                    )
+                                    try:
+                                        pr.create_issue_comment(close_message)
+                                    except Exception as comment_error:
+                                        print(
+                                            f"Warning: Could not post close comment on PR "
+                                            f"#{pr.number}: {comment_error}"
+                                        )
+                                    pr.edit(state="closed")
+                                    print(
+                                        f"Closed PR #{pr.number} automatically after 24 hours."
+                                    )
+                                    processed_count += 1
+                            else:
+                                pr_author = pr.user.login if pr.user else None
+                                comment_body = (
+                                    self.get_invalid_unvalidated_issue_comment(
+                                        pr_author
+                                    )
+                                )
+                                pr.create_issue_comment(comment_body)
+                                print(
+                                    f"Posted missing warning comment on PR #{pr.number}"
+                                )
+                                processed_count += 1
+                        continue
+
                     all_reviews = list(pr.get_reviews())
                     last_changes_requested = self.get_last_changes_requested(
                         pr, all_reviews
@@ -479,6 +510,8 @@ class StalePRBot(GitHubBot):
                             posted_stale_this_run = True
                         if action(pr, days_inactive):
                             processed_count += 1
+                except ValidationAPIError:
+                    raise
                 except Exception as e:
                     print(f"Error processing PR #{pr.number}: {e}")
                     continue
