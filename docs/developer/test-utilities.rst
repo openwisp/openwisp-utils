@@ -268,6 +268,8 @@ Applies a number of settings by default to improve test reliability.
 
   - Uses the ``CHROME_BIN`` environment variable to specify a custom
     Chrome binary location.
+  - Uses the ``CHROMEDRIVER_LOG`` environment variable to enable verbose
+    ChromeDriver logging to ``chromedriver.log``.
   - Uses ``page_load_strategy = "eager"`` to start interacting with the
     page before it's fully loaded.
   - Adds flags: ``--ignore-certificate-errors``, ``--no-sandbox``,

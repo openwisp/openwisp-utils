@@ -277,9 +277,15 @@ class SeleniumTestMixin:
         # generate a unique port for each browser instance.
         options.add_argument(f"--remote-debugging-port={free_port()}")
         options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
-        return webdriver.Chrome(
-            options=options,
-        )
+        kwargs = dict(options=options)
+        # Optional: Store ChromeDriver logs in a file.
+        # Pass CHROMEDRIVER_LOG=1 when running tests.
+        CHROMEDRIVER_LOG = os.environ.get("CHROMEDRIVER_LOG", None)
+        if CHROMEDRIVER_LOG:
+            kwargs["service"] = webdriver.ChromeService(
+                service_args=["--verbose"], log_output="chromedriver.log"
+            )
+        return webdriver.Chrome(**kwargs)
 
     def setUp(self):
         self.admin = self._create_admin(

@@ -1,7 +1,9 @@
 import importlib
+import os
 import sys
 from types import ModuleType
 from unittest import TestResult, TestSuite, skip
+from unittest.mock import patch
 
 from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -23,6 +25,33 @@ class SeleniumRetryTestMixin(SeleniumTestMixin, SimpleTestCase):
 
     def setUp(self):
         pass
+
+
+class TestChromeWebDriverLogging(SimpleTestCase):
+    @patch("openwisp_utils.tests.selenium.webdriver.Chrome")
+    @patch("openwisp_utils.tests.selenium.webdriver.ChromeService")
+    def test_chromedriver_log_enables_verbose_file_logging(
+        self, chrome_service, chrome
+    ):
+        with patch.dict(os.environ, {"CHROMEDRIVER_LOG": "1"}):
+            SeleniumTestMixin.get_chrome_webdriver()
+
+        chrome_service.assert_called_once_with(
+            service_args=["--verbose"], log_output="chromedriver.log"
+        )
+        chrome.assert_called_once_with(
+            options=chrome.call_args.kwargs["options"],
+            service=chrome_service.return_value,
+        )
+
+    @patch("openwisp_utils.tests.selenium.webdriver.Chrome")
+    @patch("openwisp_utils.tests.selenium.webdriver.ChromeService")
+    def test_chromedriver_log_is_opt_in(self, chrome_service, chrome):
+        with patch.dict(os.environ, {}, clear=True):
+            SeleniumTestMixin.get_chrome_webdriver()
+
+        chrome_service.assert_not_called()
+        chrome.assert_called_once_with(options=chrome.call_args.kwargs["options"])
 
 
 class TestSeleniumMixinSkipHandling(SimpleTestCase):
