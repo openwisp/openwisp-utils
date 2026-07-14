@@ -367,26 +367,32 @@ class SeleniumTestMixin:
         driver.get(f"{self.live_server_url}/admin/login/")
         self._wait_until_page_ready(driver=driver)
         if "admin/login" in driver.current_url:
-            driver.find_element(by=By.NAME, value="username").send_keys(username)
-            driver.find_element(by=By.NAME, value="password").send_keys(password)
-            driver.find_element(by=By.XPATH, value='//input[@type="submit"]').click()
+            self.find_element(by=By.NAME, value="username", driver=driver).send_keys(
+                username
+            )
+            self.find_element(by=By.NAME, value="password", driver=driver).send_keys(
+                password
+            )
+            self.find_element(
+                by=By.XPATH, value='//input[@type="submit"]', driver=driver
+            ).click()
         self._wait_until_page_ready(driver=driver)
 
     def logout(self, driver=None):
         driver = driver or self.web_driver
-        self.web_driver.find_element(By.CSS_SELECTOR, ".account-button").click()
-        self.web_driver.find_element(By.CSS_SELECTOR, "#logout-form button").click()
+        self.find_element(By.CSS_SELECTOR, ".account-button", driver=driver).click()
+        self.find_element(By.CSS_SELECTOR, "#logout-form button", driver=driver).click()
 
     def find_element(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_element(by=by, value=value)
 
     def find_elements(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_elements(by=by, value=value)
 
     def wait_for_visibility(self, by, value, timeout=2, driver=None):
