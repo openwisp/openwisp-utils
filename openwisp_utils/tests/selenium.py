@@ -386,13 +386,13 @@ class SeleniumTestMixin:
     def find_element(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_element(by=by, value=value)
 
     def find_elements(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_elements(by=by, value=value)
 
     def wait_for_visibility(self, by, value, timeout=2, driver=None):
