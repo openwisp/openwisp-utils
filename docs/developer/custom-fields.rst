@@ -20,7 +20,7 @@ openwisp modules.
 ----------------------------------------------------
 
 This field extends Django's `BooleanField
-<https://docs.djangoproject.com/en/4.2/ref/models/fields/#booleanfield>`_
+<https://docs.djangoproject.com/en/5.2/ref/models/fields/#booleanfield>`_
 and provides additional functionality for handling choices with a fallback
 value.
 
@@ -45,7 +45,7 @@ between enabled and disabled options.
 -------------------------------------------------
 
 This field extends Django's `CharField
-<https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_ and
+<https://docs.djangoproject.com/en/5.2/ref/models/fields/#charfield>`_ and
 provides additional functionality for handling choices with a fallback
 value.
 
@@ -73,7 +73,7 @@ value.
 -------------------------------------------
 
 This field extends Django's `CharField
-<https://docs.djangoproject.com/en/4.2/ref/models/fields/#charfield>`_ and
+<https://docs.djangoproject.com/en/5.2/ref/models/fields/#charfield>`_ and
 provides additional functionality for handling text fields with a fallback
 value.
 
@@ -96,7 +96,7 @@ value.
 ------------------------------------------
 
 This field extends Django's `URLField
-<https://docs.djangoproject.com/en/4.2/ref/models/fields/#urlfield>`_ and
+<https://docs.djangoproject.com/en/5.2/ref/models/fields/#urlfield>`_ and
 provides additional functionality for handling URL fields with a fallback
 value.
 
@@ -119,7 +119,7 @@ value.
 -------------------------------------------
 
 This extends Django's `TextField
-<https://docs.djangoproject.com/en/4.2/ref/models/fields/#django.db.models.TextField>`_
+<https://docs.djangoproject.com/en/5.2/ref/models/fields/#django.db.models.TextField>`_
 and provides additional functionality for handling text fields with a
 fallback value.
 
@@ -142,7 +142,7 @@ fallback value.
 ------------------------------------------------------
 
 This extends Django's `PositiveIntegerField
-<https://docs.djangoproject.com/en/4.2/ref/models/fields/#positiveintegerfield>`_
+<https://docs.djangoproject.com/en/5.2/ref/models/fields/#positiveintegerfield>`_
 and provides additional functionality for handling positive integer fields
 with a fallback value.
 
@@ -164,7 +164,7 @@ with a fallback value.
 ----------------------------------------------
 
 This extends Django's `DecimalField
-<https://docs.djangoproject.com/en/4.2/ref/models/fields/#decimalfield>`_
+<https://docs.djangoproject.com/en/5.2/ref/models/fields/#decimalfield>`_
 and provides additional functionality for handling decimal fields with a
 fallback value.
 
