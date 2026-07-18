@@ -1,9 +1,13 @@
+import logging
+
 from django.apps import registry
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 
 from ..utils import SortedOrderedDict
+
+logger = logging.getLogger(__name__)
 
 MENU = SortedOrderedDict()
 
@@ -19,6 +23,7 @@ class BaseMenuItem:
             raise ImproperlyConfigured(
                 f'"config" should be a type of "dict". Error for config- {config}'
             )
+        self.config = config
 
     def get_context(self, request=None):
         return self.create_context(request)
@@ -60,7 +65,6 @@ class ModelLink(BaseMenuItem):
         self.model = model
         self.set_label(config)
         self.icon = config.get("icon")
-        self.config = config
 
     def set_label(self, config=None):
         if config.get("label"):
@@ -185,6 +189,12 @@ def register_menu_group(position, config):
     if not isinstance(config, dict):
         raise ImproperlyConfigured('config should be a type of "dict"')
     if position in MENU:
+        if MENU[position].config == config:
+            logger.info(
+                f"A group/link with config {config} is already registered at"
+                f' position "{position}", skipping re-registration.'
+            )
+            return
         item_description = "link"
         if isinstance(MENU[position], MenuGroup):
             item_description = "group"
@@ -244,6 +254,13 @@ def register_menu_subitem(group_position, item_position, config):
             f'Invalid config "{config}" provided for sub group item'
         )
     if item_position in group.items:
+        if group.items[item_position].config == config:
+            logger.info(
+                f"A group item with config {config} is already registered at"
+                f' position "{item_position}" in the group at position'
+                f' "{group_position}", skipping re-registration.'
+            )
+            return
         name = group.items[item_position]
         raise ImproperlyConfigured(
             f'A group item with config {config} is being registered at position\
