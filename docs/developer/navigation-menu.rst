@@ -97,8 +97,12 @@ Code example:
         position=3, config={"label": _("My Link"), "url": "https://link.com"}
     )
 
-An ``ImproperlyConfigured`` exception is raised if a menu element is
-already registered at the same position.
+If the same ``config`` is registered at the same position more than once
+(e.g. because ``AppConfig.ready()`` is called again during testing), the
+call is a no-op and a log message is emitted at ``INFO`` level.
+
+An ``ImproperlyConfigured`` exception is raised if a *different* menu
+element is already registered at the same position.
 
 An ``ImproperlyConfigured`` exception is raised if the supplied
 configuration does not match with the different types of possible
@@ -278,8 +282,10 @@ Code example:
 An ``ImproperlyConfigured`` exception is raised if the group is not
 already registered at ``group_position``.
 
-An ``ImproperlyConfigured`` exception is raised if the group already has
-an item registered at ``item_position``.
+If the same ``config`` is registered at the same ``item_position`` more
+than once, the call is a no-op and a log message is emitted at ``INFO``
+level. An ``ImproperlyConfigured`` exception is raised if a *different*
+item is already registered at ``item_position``.
 
 It is only possible to register links to specific models or custom URL. An
 ``ImproperlyConfigured`` exception is raised if the configuration of group

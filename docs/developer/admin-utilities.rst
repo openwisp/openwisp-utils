@@ -157,7 +157,7 @@ by modifying ``InputFilter`` as following:
 
 To know about other lookups that can be used please check `Django Lookup
 API Reference
-<https://docs.djangoproject.com/en/4.2/ref/models/lookups/#django.db.models.Lookup>`__
+<https://docs.djangoproject.com/en/5.2/ref/models/lookups/#django.db.models.Lookup>`__
 
 ``openwisp_utils.admin_theme.filters.SimpleInputFilter``
 --------------------------------------------------------
