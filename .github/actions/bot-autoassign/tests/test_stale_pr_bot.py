@@ -867,12 +867,10 @@ class TestStalePRBotInvalidCheck:
         bot = StalePRBot()
         mock_label = Mock()
         mock_label.name = "invalid"
-
         mock_pr = Mock()
         mock_pr.labels = [mock_label]
         mock_pr.number = 100
         bot_env["repo"].get_pulls.return_value = [mock_pr]
-
         with patch.object(bot, "validate_pr_issues", return_value=True):
             assert bot.process_stale_prs()
             mock_pr.remove_from_labels.assert_called_once_with("invalid")
@@ -882,18 +880,15 @@ class TestStalePRBotInvalidCheck:
         bot = StalePRBot()
         mock_label = Mock()
         mock_label.name = "invalid"
-
         mock_pr = Mock()
         mock_pr.labels = [mock_label]
         mock_pr.number = 100
         bot_env["repo"].get_pulls.return_value = [mock_pr]
-
         mock_comment = Mock()
         mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:invalid_unvalidated_issue --> Warning comment"
         mock_comment.created_at = datetime.now(timezone.utc)
         mock_pr.get_issue_comments.return_value = [mock_comment]
-
         with patch.object(bot, "validate_pr_issues", return_value=False):
             assert bot.process_stale_prs()
             mock_pr.remove_from_labels.assert_not_called()
@@ -903,20 +898,15 @@ class TestStalePRBotInvalidCheck:
         bot = StalePRBot()
         mock_label = Mock()
         mock_label.name = "invalid"
-
         mock_pr = Mock()
         mock_pr.labels = [mock_label]
         mock_pr.number = 100
         bot_env["repo"].get_pulls.return_value = [mock_pr]
-
         mock_comment = Mock()
         mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:invalid_unvalidated_issue --> Warning comment"
-        from datetime import timedelta
-
         mock_comment.created_at = datetime.now(timezone.utc) - timedelta(hours=25)
         mock_pr.get_issue_comments.return_value = [mock_comment]
-
         with patch.object(bot, "validate_pr_issues", return_value=False):
             assert bot.process_stale_prs()
             mock_pr.remove_from_labels.assert_not_called()
@@ -930,15 +920,12 @@ class TestStalePRBotInvalidCheck:
         bot = StalePRBot()
         mock_label = Mock()
         mock_label.name = "invalid"
-
         mock_pr = Mock()
         mock_pr.labels = [mock_label]
         mock_pr.number = 100
         mock_pr.user.login = "contributor"
         bot_env["repo"].get_pulls.return_value = [mock_pr]
-
         mock_pr.get_issue_comments.return_value = []
-
         with patch.object(bot, "validate_pr_issues", return_value=False):
             assert bot.process_stale_prs()
             mock_pr.remove_from_labels.assert_not_called()

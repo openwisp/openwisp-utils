@@ -1,6 +1,6 @@
 import os
 import sys
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 # Add the parent directory to path for importing bot modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -516,6 +516,7 @@ class TestHandlePullRequest:
         )
         mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
+        bot.validate_pr_issues = MagicMock(return_value=True)
         assert bot.handle_pull_request()
         mock_issue.add_to_assignees.assert_called_once_with("testuser")
 
@@ -533,7 +534,26 @@ class TestHandlePullRequest:
         )
         mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
+        bot.validate_pr_issues = MagicMock(return_value=True)
         assert bot.handle_pull_request()
+
+    def test_skips_auto_assign_if_invalid(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_issue = _make_issue_with_assignment("testuser")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot.validate_pr_issues = MagicMock(return_value=False)
+        assert bot.handle_pull_request()
+        mock_issue.add_to_assignees.assert_not_called()
 
     def test_closed(self, bot_env):
         bot = IssueAssignmentBot()
@@ -1037,11 +1057,9 @@ class TestPRValidation:
         mock_pr.user.login = "external-contributor"
         mock_pr.author_association = "NONE"
         mock_pr.body = "Fixes #12"
-
         mock_issue = Mock()
         mock_issue.pull_request = {"url": "..."}
         bot_env["repo"].get_issue.return_value = mock_issue
-
         assert not bot.validate_pr_issues(mock_pr)
 
     def test_validate_pr_issues_closed(self, bot_env):
@@ -1050,12 +1068,10 @@ class TestPRValidation:
         mock_pr.user.login = "external-contributor"
         mock_pr.author_association = "NONE"
         mock_pr.body = "Fixes #12"
-
         mock_issue = Mock()
         mock_issue.pull_request = None
         mock_issue.state = "closed"
         bot_env["repo"].get_issue.return_value = mock_issue
-
         assert not bot.validate_pr_issues(mock_pr)
 
     def test_validate_pr_issues_invalid_labels(self, bot_env):
@@ -1064,7 +1080,6 @@ class TestPRValidation:
         mock_pr.user.login = "external-contributor"
         mock_pr.author_association = "NONE"
         mock_pr.body = "Fixes #12"
-
         # Test case 1: No labels
         mock_issue = Mock()
         mock_issue.pull_request = None
@@ -1072,13 +1087,11 @@ class TestPRValidation:
         mock_issue.labels = []
         bot_env["repo"].get_issue.return_value = mock_issue
         assert not bot.validate_pr_issues(mock_pr)
-
         # Test case 2: Has wontfix/invalid labels
         label_wontfix = Mock()
         label_wontfix.name = "wontfix"
         mock_issue.labels = [label_wontfix]
         assert not bot.validate_pr_issues(mock_pr)
-
         # Test case 3: Has a mix of valid and invalid/wontfix labels
         label_bug = Mock()
         label_bug.name = "bug"
@@ -1091,7 +1104,6 @@ class TestPRValidation:
         mock_pr.user.login = "external-contributor"
         mock_pr.author_association = "NONE"
         mock_pr.body = "Fixes #12"
-
         label_bug = Mock()
         label_bug.name = "bug"
         mock_issue = Mock()
@@ -1099,7 +1111,6 @@ class TestPRValidation:
         mock_issue.state = "open"
         mock_issue.labels = [label_bug]
         bot_env["repo"].get_issue.return_value = mock_issue
-
         with patch.object(
             bot, "get_issue_projects", return_value=["Some Other Project"]
         ):
@@ -1111,7 +1122,6 @@ class TestPRValidation:
         mock_pr.user.login = "external-contributor"
         mock_pr.author_association = "NONE"
         mock_pr.body = "Fixes #12"
-
         label_bug = Mock()
         label_bug.name = "bug"
         mock_issue = Mock()
@@ -1119,7 +1129,6 @@ class TestPRValidation:
         mock_issue.state = "open"
         mock_issue.labels = [label_bug]
         bot_env["repo"].get_issue.return_value = mock_issue
-
         with patch.object(
             bot, "get_issue_projects", return_value=["OpenWISP Contributor's Board"]
         ):
@@ -1138,11 +1147,9 @@ class TestPRValidation:
                 },
             }
         )
-
         mock_pr_obj = Mock()
         mock_pr_obj.labels = []
         bot_env["repo"].get_pull.return_value = mock_pr_obj
-
         with patch.object(bot, "validate_pr_issues", return_value=False), patch.object(
             bot, "has_bot_comment", return_value=False
         ):
@@ -1167,13 +1174,11 @@ class TestPRValidation:
                 },
             }
         )
-
         mock_label = Mock()
         mock_label.name = "invalid"
         mock_pr_obj = Mock()
         mock_pr_obj.labels = [mock_label]
         bot_env["repo"].get_pull.return_value = mock_pr_obj
-
         with patch.object(bot, "validate_pr_issues", return_value=True):
             assert bot.handle_pull_request()
             mock_pr_obj.remove_from_labels.assert_called_once_with("invalid")
