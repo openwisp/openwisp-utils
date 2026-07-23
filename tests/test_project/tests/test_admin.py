@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
@@ -129,6 +130,95 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             modeladmin.readonly_fields,
             ["id", "session_id", "username", "start_time", "stop_time"],
         )
+
+    def test_readonlyadmin_has_delete_permission(self):
+        modeladmin = ReadOnlyAdmin(RadiusAccounting, AdminSite())
+        # The Django test client keeps the resolved request on the response;
+        # these assertions call the admin permission method directly.
+
+        with self.subTest("changelist URL returns False"):
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_changelist")
+            ).wsgi_request
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+        with self.subTest("change URL returns False"):
+            obj = self._create_radius_accounting(username="test", session_id="1")
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_change", args=[obj.pk])
+            ).wsgi_request
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+        with self.subTest("delete URL returns False"):
+            obj = self._create_radius_accounting(username="delete-test", session_id="2")
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_delete", args=[obj.pk])
+            ).wsgi_request
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+        with self.subTest("cascade delete from parent delete URL returns True"):
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_changelist")
+            ).wsgi_request
+            mock_resolver = MagicMock()
+            mock_resolver.url_name = "test_project_project_delete"
+            request.resolver_match = mock_resolver
+            self.assertTrue(modeladmin.has_delete_permission(request))
+
+        with self.subTest("parent bulk delete returns True"):
+            request = self.client.post(
+                reverse("admin:test_project_project_changelist"),
+                data={"action": "delete_selected"},
+            ).wsgi_request
+            self.assertTrue(modeladmin.has_delete_permission(request))
+
+        with self.subTest("unrelated admin URL returns False"):
+            request = self.client.get(reverse("admin:index")).wsgi_request
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+        with self.subTest("no resolver_match returns False"):
+            request = self.client.get(
+                reverse("admin:test_project_radiusaccounting_changelist")
+            ).wsgi_request
+            request.resolver_match = None
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+        with self.subTest("cascade delete without child permission returns False"):
+            user = User.objects.create(
+                username="readonly-staff",
+                password="pass",
+                is_staff=True,
+                is_superuser=False,
+            )
+            self.client.force_login(user)
+            request = self.client.get(reverse("admin:index")).wsgi_request
+            mock_resolver = MagicMock()
+            mock_resolver.url_name = "test_project_project_delete"
+            request.resolver_match = mock_resolver
+            self.assertFalse(modeladmin.has_delete_permission(request))
+
+    def test_readonlyadmin_allows_parent_cascade_delete(self):
+        original_admin = admin.site._registry[Operator].__class__
+        admin.site.unregister(Operator)
+        admin.site.register(Operator, ReadOnlyAdmin)
+        try:
+            project = Project.objects.create(name="test-parent-delete")
+            operator = Operator.objects.create(
+                first_name="Jane", last_name="Doe", project=project
+            )
+            path = reverse("admin:test_project_project_delete", args=[project.pk])
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 200)
+            self.assertNotContains(
+                response, "your account doesn't have permission to delete"
+            )
+            response = self.client.post(path, data={"post": "yes"}, follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertFalse(Project.objects.filter(pk=project.pk).exists())
+            self.assertFalse(Operator.objects.filter(pk=operator.pk).exists())
+        finally:
+            admin.site.unregister(Operator)
+            admin.site.register(Operator, original_admin)
 
     def test_context_processor(self):
         url = reverse("admin:index")
