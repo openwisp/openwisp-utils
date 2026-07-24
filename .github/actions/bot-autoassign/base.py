@@ -11,6 +11,14 @@ REQUIRED_CONTRIBUTOR_PROJECTS = (
 )
 INVALID_ISSUE_LABELS = frozenset({"invalid", "wontfix"})
 
+MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
+DEFAULT_EXCLUDE_PR_AUTHORS = "dependabot[bot]"
+REQUIRED_CONTRIBUTOR_PROJECTS = (
+    "OpenWISP Contributor's Board",
+    "OpenWISP Priorities for next releases",
+)
+INVALID_ISSUE_LABELS = frozenset({"invalid", "wontfix"})
+
 
 class GitHubBot:
     def __init__(self):
