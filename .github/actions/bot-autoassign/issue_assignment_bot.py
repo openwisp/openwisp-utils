@@ -40,7 +40,6 @@ class IssueAssignmentBot(GitHubBot):
 
     def detect_issue_type(self, issue):
         """Analyzes labels, title and body.
-
         Returns 'bug', 'feature', or None.
         """
         bug_keywords = [
@@ -365,11 +364,9 @@ class IssueAssignmentBot(GitHubBot):
 
     def unassign_issues_from_pr(self, pr_body, pr_author):
         """Unassign linked issues from PR author"""
-
         if not self.repo:
             print("GitHub client not initialized")
             return []
-
         try:
             return unassign_linked_issues_helper(
                 self.repo, self.repository_name, pr_body, pr_author
@@ -442,17 +439,16 @@ class IssueAssignmentBot(GitHubBot):
                 else:
                     self.unassign_issues_from_pr(pr_body, pr_author)
                 return True
-
             if action in ["opened", "reopened", "edited", "ready_for_review"]:
-                self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
                 pr_obj = self.repo.get_pull(pr_number)
                 is_valid = self.validate_pr_issues(pr_obj)
+                if is_valid:
+                    self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
                 labels_lower = set()
                 try:
                     labels_lower = {label.name.lower() for label in pr_obj.labels}
                 except (TypeError, AttributeError):
                     pass
-
                 if is_valid:
                     if "invalid" in labels_lower:
                         pr_obj.remove_from_labels("invalid")
@@ -461,7 +457,6 @@ class IssueAssignmentBot(GitHubBot):
                     if "invalid" not in labels_lower:
                         pr_obj.add_to_labels("invalid")
                         print(f"Added 'invalid' label to PR #{pr_number}")
-
                     if not self.has_bot_comment(pr_obj, "invalid_unvalidated_issue"):
                         comment_body = self.get_invalid_unvalidated_issue_comment(
                             pr_author
