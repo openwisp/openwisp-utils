@@ -519,6 +519,8 @@ class StalePRBot(GitHubBot):
                     time.sleep(0.5)
             print(f"Checked {pr_count} open PRs, processed {processed_count} stale PRs")
             return True
+        except ValidationAPIError:
+            raise
         except Exception as e:
             print(f"Error in process_stale_prs: {e}")
             return False

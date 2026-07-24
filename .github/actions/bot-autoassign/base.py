@@ -5,17 +5,13 @@ from utils import extract_all_linked_issues
 
 MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 DEFAULT_EXCLUDE_PR_AUTHORS = "dependabot[bot]"
-REQUIRED_CONTRIBUTOR_PROJECTS = (
-    "OpenWISP Contributor's Board",
-    "OpenWISP Priorities for next releases",
-)
-INVALID_ISSUE_LABELS = frozenset({"invalid", "wontfix"})
-
-MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
-DEFAULT_EXCLUDE_PR_AUTHORS = "dependabot[bot]"
-REQUIRED_CONTRIBUTOR_PROJECTS = (
-    "OpenWISP Contributor's Board",
-    "OpenWISP Priorities for next releases",
+# Stable ProjectV2 node IDs for the OpenWISP contributor boards.
+# These IDs never change even if a board is renamed.
+REQUIRED_CONTRIBUTOR_PROJECT_IDS = frozenset(
+    {
+        "PVT_kwDOABGNI84Amkl7",  # OpenWISP Contributor's Board (project 42)
+        "PVT_kwDOABGNI84Amkjx",  # OpenWISP Priorities for next releases (project 37)
+    }
 )
 INVALID_ISSUE_LABELS = frozenset({"invalid", "wontfix"})
 
@@ -23,6 +19,7 @@ INVALID_ISSUE_LABELS = frozenset({"invalid", "wontfix"})
 class GitHubBot:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
+        self.github_validation_token = os.environ.get("GITHUB_VALIDATION_TOKEN")
         self.repository_name = os.environ.get("REPOSITORY")
         self.event_name = os.environ.get("GITHUB_EVENT_NAME")
         self.event_payload = None
@@ -36,7 +33,7 @@ class GitHubBot:
                 self.github = Github(self.github_token)
                 self.repo = self.github.get_repo(self.repository_name)
             except Exception as e:
-                print(f"Warning: Could not initialize GitHub client: {e}")
+                print(f"Warning: Could not initialize GitHub write client: {e}")
                 self.github = None
                 self.repo = None
         else:
@@ -44,19 +41,20 @@ class GitHubBot:
             self.github = None
             self.repo = None
 
+        if self.github_validation_token:
+            try:
+                self.github_validation = Github(self.github_validation_token)
+            except Exception as e:
+                print(f"Warning: Could not initialize GitHub validation client: {e}")
+                self.github_validation = None
+        else:
+            print(
+                "Warning: GITHUB_VALIDATION_TOKEN env var not set, falling back to GITHUB_TOKEN"
+            )
+            self.github_validation = self.github
+
     def load_event_payload(self, event_payload):
         self.event_payload = event_payload
-
-    @staticmethod
-    def _normalize_project_title(title: str) -> str:
-        """Normalize project titles for stable comparisons."""
-        return " ".join(title.replace("\u2019", "'").split()).strip()
-
-    @classmethod
-    def _project_title_key(cls, title: str) -> str:
-        """Loose match key: casefold + ignore apostrophes."""
-        normalized = cls._normalize_project_title(title).casefold()
-        return normalized.replace("'", "")
 
     def get_issue_projects(self, owner, repo_name, issue_number):
         query = """
@@ -66,7 +64,7 @@ class GitHubBot:
               projectItems(first: 100, after: $cursor) {
                 nodes {
                   project {
-                    title
+                    id
                   }
                 }
                 pageInfo {
@@ -89,7 +87,9 @@ class GitHubBot:
                 "issueNumber": issue_number,
                 "cursor": cursor,
             }
-            headers, result = self.github.requester.graphql_query(query, variables)
+            headers, result = self.github_validation.requester.graphql_query(
+                query, variables
+            )
 
             if "errors" in result:
                 raise ValueError(f"GraphQL API Permission Error: {result['errors']}")
@@ -121,9 +121,9 @@ class GitHubBot:
                 if not node:
                     continue
                 project = node.get("project") or {}
-                title = project.get("title")
-                if title:
-                    projects.append(self._normalize_project_title(title))
+                project_id = project.get("id")
+                if project_id:
+                    projects.append(project_id)
 
             page_info = project_items.get("pageInfo") or {}
             has_next_page = page_info.get("hasNextPage", False)
@@ -133,8 +133,8 @@ class GitHubBot:
 
     def validate_pr_issues(self, pr):
         """Validate if a pull request is from an exempt user or references a validated issue."""
-        if not self.github or not self.repository_name:
-            print("GitHub client or repository name not initialized")
+        if not self.github_validation or not self.repository_name:
+            print("GitHub validation client or repository name not initialized")
             return False
         pr_author = (
             pr.user.login
@@ -163,9 +163,6 @@ class GitHubBot:
             print("No linked issues found in PR body for external contributor.")
             return False
         current_org = self.repository_name.split("/")[0].lower()
-        required_projects = {
-            self._project_title_key(p) for p in REQUIRED_CONTRIBUTOR_PROJECTS
-        }
         for owner, repo_name, issue_number in linked_issues:
             if owner.lower() != current_org:
                 print(
@@ -174,7 +171,7 @@ class GitHubBot:
                 )
                 continue
             try:
-                target_repo = self.github.get_repo(f"{owner}/{repo_name}")
+                target_repo = self.github_validation.get_repo(f"{owner}/{repo_name}")
                 issue = target_repo.get_issue(issue_number)
             except Exception as e:
                 if isinstance(e, GithubException) and e.status == 404:
@@ -216,8 +213,9 @@ class GitHubBot:
                     f"Error fetching projects for issue {owner}/{repo_name}#{issue_number}: {e}"
                 )
                 raise
-            project_keys = [self._project_title_key(p) for p in projects]
-            has_valid_project = any(key in required_projects for key in project_keys)
+            has_valid_project = bool(
+                REQUIRED_CONTRIBUTOR_PROJECT_IDS.intersection(projects)
+            )
             if has_valid_project:
                 print(
                     f"Issue {owner}/{repo_name}#{issue_number} is validated. PR is valid."

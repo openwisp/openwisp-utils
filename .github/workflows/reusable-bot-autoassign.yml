@@ -37,13 +37,37 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate GitHub App token
-        id: generate-token
+      - name: Generate Write Token
+        id: generate-write-token
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+
+      - name: Generate Validation Token
+        id: generate-validation-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: >-
+            OpenWISP-Website,django-rest-framework-gis,netengine,django-swappable-models,
+            packet-legacy,netdiff,openVPNServer,netjsonconfig,netjsongraph.js,
+            django-owm-legacy,openwisp-config,ansible-openwisp2,ansible-openwisp2-iptables,
+            luci-openwisp,django-x509,ansible-freeitaliawifi-login-page,
+            ansible-openwisp2-imagegenerator,openwisp-controller,openwisp-users,
+            openwisp-docs,openwrt-zabbixd,openwisp-network-topology,openwisp-utils,
+            django-loci,django-jsonschema-widget,coova-chilli-openwrt,openwisp-radius,
+            openwisp-ipam,lxdock-openwisp2,docker-openwisp,openwisp-wifi-login-pages,
+            openwisp-firmware-upgrader,openwisp-monitoring,openwrt-openwisp-monitoring,
+            openwisp-notifications,openwisp-dev-env,django-flat-json-widget,
+            ansible-ow-influxdb,ansible-wireguard-openwisp,ansible-openwisp-wifi-login-pages,
+            openwisp-vxlan-updater,openwisp-sentry-utils,Stouts.postfix,openwisp-sphinx-theme,
+            .github,django-readonly-issue-demo-30577,django-minify-compress-staticfiles,
+            bot-testing-ground
 
       - name: Checkout openwisp-utils
         uses: actions/checkout@v7
@@ -62,7 +86,8 @@ jobs:
 
       - name: Execute bot script
         env:
-          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.generate-write-token.outputs.token }}
+          GITHUB_VALIDATION_TOKEN: ${{ steps.generate-validation-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           BOT_COMMAND: ${{ inputs.bot_command }}

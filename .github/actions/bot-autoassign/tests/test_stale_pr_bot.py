@@ -9,9 +9,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest  # noqa: E402
 
 try:
-    from stale_pr_bot import StalePRBot  # noqa: E402
+    from stale_pr_bot import StalePRBot, ValidationAPIError  # noqa: E402
 except ImportError:
     StalePRBot = None
+    ValidationAPIError = None
 
 pytestmark = pytest.mark.skipif(
     StalePRBot is None,
@@ -22,13 +23,32 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture(autouse=True)
 def bot_env(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
+    monkeypatch.setenv("GITHUB_VALIDATION_TOKEN", "test_validation_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
+
+    mock_github = Mock()
+    mock_repo = Mock()
+    mock_github.get_repo.return_value = mock_repo
+
+    mock_github_validation = Mock()
+    mock_repo_validation = Mock()
+    mock_github_validation.get_repo.return_value = mock_repo_validation
+
+    def github_side_effect(token):
+        if token == "test_token":
+            return mock_github
+        if token == "test_validation_token":
+            return mock_github_validation
+        return Mock()
+
     with patch("base.Github") as mock_github_cls:
-        mock_repo = Mock()
-        mock_github_cls.return_value.get_repo.return_value = mock_repo
+        mock_github_cls.side_effect = github_side_effect
         yield {
             "github_cls": mock_github_cls,
+            "github": mock_github,
             "repo": mock_repo,
+            "github_validation": mock_github_validation,
+            "repo_validation": mock_repo_validation,
         }
 
 
@@ -36,8 +56,10 @@ class TestInit:
     def test_success(self, bot_env):
         bot = StalePRBot()
         assert bot.github_token == "test_token"
+        assert bot.github_validation_token == "test_validation_token"
         assert bot.repository_name == "openwisp/openwisp-utils"
-        bot_env["github_cls"].assert_called_once_with("test_token")
+        bot_env["github_cls"].assert_any_call("test_token")
+        bot_env["github_cls"].assert_any_call("test_validation_token")
 
     def test_thresholds(self, bot_env):
         bot = StalePRBot()
@@ -935,3 +957,27 @@ class TestStalePRBotInvalidCheck:
                 in mock_pr.create_issue_comment.call_args[0][0]
             )
             mock_pr.edit.assert_not_called()
+
+    def test_validation_api_error_reraises_and_no_write_actions(self, bot_env):
+        """ValidationAPIError must propagate so the workflow fails and retries.
+
+        When validate_pr_issues raises, no label, comment, or close action
+        should be performed on the PR.
+        """
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 101
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        with patch.object(
+            bot,
+            "validate_pr_issues",
+            side_effect=Exception("GitHub API timeout"),
+        ):
+            with pytest.raises(ValidationAPIError):
+                bot.process_stale_prs()
+        mock_pr.remove_from_labels.assert_not_called()
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()

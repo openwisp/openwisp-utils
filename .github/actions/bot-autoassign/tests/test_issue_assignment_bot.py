@@ -23,17 +23,33 @@ pytestmark = pytest.mark.skipif(
 def bot_env(monkeypatch):
     """Set up environment and mock GitHub client for all tests."""
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
+    monkeypatch.setenv("GITHUB_VALIDATION_TOKEN", "test_validation_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
     monkeypatch.setenv("GITHUB_EVENT_NAME", "issue_comment")
     monkeypatch.setattr("utils.time.sleep", lambda _seconds: None)
+    mock_github = Mock()
+    mock_repo = Mock()
+    mock_github.get_repo.return_value = mock_repo
+
+    mock_github_validation = Mock()
+    mock_repo_validation = Mock()
+    mock_github_validation.get_repo.return_value = mock_repo_validation
+
+    def github_side_effect(token):
+        if token == "test_token":
+            return mock_github
+        if token == "test_validation_token":
+            return mock_github_validation
+        return Mock()
+
     with patch("base.Github") as mock_github_cls:
-        mock_repo = Mock()
-        mock_github = mock_github_cls.return_value
-        mock_github.get_repo.return_value = mock_repo
+        mock_github_cls.side_effect = github_side_effect
         yield {
             "github_cls": mock_github_cls,
             "github": mock_github,
             "repo": mock_repo,
+            "github_validation": mock_github_validation,
+            "repo_validation": mock_repo_validation,
         }
 
 
@@ -41,9 +57,11 @@ class TestInit:
     def test_init_success(self, bot_env):
         bot = IssueAssignmentBot()
         assert bot.github_token == "test_token"
+        assert bot.github_validation_token == "test_validation_token"
         assert bot.repository_name == "openwisp/openwisp-utils"
         assert bot.event_name == "issue_comment"
-        bot_env["github_cls"].assert_called_once_with("test_token")
+        bot_env["github_cls"].assert_any_call("test_token")
+        bot_env["github_cls"].assert_any_call("test_validation_token")
 
     def test_init_missing_env_vars(self):
         with patch.dict(os.environ, {}, clear=True):
@@ -942,7 +960,7 @@ class TestExtractAllLinkedIssues:
 class TestPRValidation:
     def test_get_issue_projects_success(self, bot_env):
         bot = IssueAssignmentBot()
-        bot.github.requester.graphql_query.return_value = (
+        bot.github_validation.requester.graphql_query.return_value = (
             {},
             {
                 "data": {
@@ -950,12 +968,8 @@ class TestPRValidation:
                         "issue": {
                             "projectItems": {
                                 "nodes": [
-                                    {
-                                        "project": {
-                                            "title": "OpenWISP Contributor's Board"
-                                        }
-                                    },
-                                    {"project": {"title": "Some Other Board"}},
+                                    {"project": {"id": "PVT_kwDOABGNI84Amkl7"}},
+                                    {"project": {"id": "SOME_OTHER_ID"}},
                                 ]
                             }
                         }
@@ -964,12 +978,12 @@ class TestPRValidation:
             },
         )
         projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
-        assert projects == ["OpenWISP Contributor's Board", "Some Other Board"]
-        bot.github.requester.graphql_query.assert_called_once()
+        assert projects == ["PVT_kwDOABGNI84Amkl7", "SOME_OTHER_ID"]
+        bot.github_validation.requester.graphql_query.assert_called_once()
 
     def test_get_issue_projects_single_project(self, bot_env):
         bot = IssueAssignmentBot()
-        bot.github.requester.graphql_query.return_value = (
+        bot.github_validation.requester.graphql_query.return_value = (
             {},
             {
                 "data": {
@@ -977,7 +991,7 @@ class TestPRValidation:
                         "issue": {
                             "projectItems": {
                                 "nodes": [
-                                    {"project": {"title": "Classic Project Board"}},
+                                    {"project": {"id": "CLASSIC_PROJECT_ID"}},
                                 ]
                             }
                         }
@@ -986,19 +1000,72 @@ class TestPRValidation:
             },
         )
         projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
-        assert projects == ["Classic Project Board"]
+        assert projects == ["CLASSIC_PROJECT_ID"]
 
     def test_get_issue_projects_graphql_error(self, bot_env):
         bot = IssueAssignmentBot()
-        bot.github.requester.graphql_query.side_effect = GithubException(
+        bot.github_validation.requester.graphql_query.side_effect = GithubException(
             400, {"errors": [{"message": "Some error"}]}, {}
         )
         with pytest.raises(GithubException):
             bot.get_issue_projects("openwisp", "openwisp-utils", 123)
 
+    def test_get_issue_projects_graphql_payload_error(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {"errors": [{"message": "Insufficient scopes"}]},
+        )
+        with pytest.raises(ValueError, match="GraphQL API Permission Error"):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_get_issue_projects_pagination(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.side_effect = [
+            (
+                {},
+                {
+                    "data": {
+                        "repository": {
+                            "issue": {
+                                "projectItems": {
+                                    "nodes": [{"project": {"id": "PAGE1_ID"}}],
+                                    "pageInfo": {
+                                        "hasNextPage": True,
+                                        "endCursor": "cursor123",
+                                    },
+                                }
+                            }
+                        }
+                    }
+                },
+            ),
+            (
+                {},
+                {
+                    "data": {
+                        "repository": {
+                            "issue": {
+                                "projectItems": {
+                                    "nodes": [{"project": {"id": "PAGE2_ID"}}],
+                                    "pageInfo": {
+                                        "hasNextPage": False,
+                                        "endCursor": None,
+                                    },
+                                }
+                            }
+                        }
+                    }
+                },
+            ),
+        ]
+        projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+        assert projects == ["PAGE1_ID", "PAGE2_ID"]
+        assert bot.github_validation.requester.graphql_query.call_count == 2
+
     def test_get_issue_projects_null_project_items(self, bot_env):
         bot = IssueAssignmentBot()
-        bot.github.requester.graphql_query.return_value = (
+        bot.github_validation.requester.graphql_query.return_value = (
             {},
             {
                 "data": {
@@ -1015,7 +1082,7 @@ class TestPRValidation:
 
     def test_get_issue_projects_null_issue(self, bot_env):
         bot = IssueAssignmentBot()
-        bot.github.requester.graphql_query.return_value = (
+        bot.github_validation.requester.graphql_query.return_value = (
             {},
             {"data": {"repository": {"issue": None}}},
         )
@@ -1128,9 +1195,9 @@ class TestPRValidation:
         mock_issue.pull_request = None
         mock_issue.state = "open"
         mock_issue.labels = [label_bug]
-        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
         with patch.object(
-            bot, "get_issue_projects", return_value=["OpenWISP Contributor's Board"]
+            bot, "get_issue_projects", return_value=["PVT_kwDOABGNI84Amkl7"]
         ):
             assert bot.validate_pr_issues(mock_pr)
 

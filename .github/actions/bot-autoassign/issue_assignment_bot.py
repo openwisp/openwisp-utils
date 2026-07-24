@@ -442,6 +442,9 @@ class IssueAssignmentBot(GitHubBot):
             if action in ["opened", "reopened", "edited", "ready_for_review"]:
                 pr_obj = self.repo.get_pull(pr_number)
                 is_valid = self.validate_pr_issues(pr_obj)
+                # Cross-repo issues are intentionally excluded from auto-assignment
+                # because when multiple PRs in different repos are created for a
+                # single issue, it's likely that multiple people will work on it
                 if is_valid:
                     self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
                 labels_lower = set()
