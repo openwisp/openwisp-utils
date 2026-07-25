@@ -1,6 +1,7 @@
 from admin_auto_filters.filters import AutocompleteFilter as BaseAutocompleteFilter
 from django.contrib import messages
 from django.contrib.admin.filters import FieldListFilter, SimpleListFilter
+from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db.models.fields import CharField, UUIDField
@@ -121,3 +122,57 @@ class AutocompleteFilter(BaseAutocompleteFilter):
             error_msg = " ".join(e.messages)
             messages.error(request, error_msg)
             return queryset
+
+
+class SubFilterMixin:
+    """Mixin for admin list filters that should only be visible when a parent filter has specific values.
+
+    Usage:
+
+    ::
+
+        class MySubFilter(SubFilterMixin, admin.SimpleListFilter):
+            parent_parameter_name = "parent_field"
+            parent_active_values = ("value1", "value2")
+
+            def filter_queryset(self, request, queryset):
+                return queryset.filter(...)
+
+    The mixin automatically calls ``filter_queryset()`` only when the
+    parent filter is active. When the parent is inactive and the
+    sub-filter has a selected value, ``IncorrectLookupParameters`` is
+    raised, which causes Django admin to redirect to ``?e=1``.
+    """
+
+    parent_parameter_name = None
+    parent_active_values = ()
+
+    def __init__(self, request, params, model, model_admin):
+        self.request = request
+        super().__init__(request, params, model, model_admin)
+
+    @property
+    def is_parent_active(self):
+        if not self.parent_parameter_name:
+            return True
+        request = getattr(self, "request", None)
+        if request is None:
+            return True
+        # Check both exact and base parameter names because Django's
+        # FieldListFilter (used for string filters like "monitoring__status")
+        # appends "__exact" to the query parameter.
+        value = request.GET.get(
+            f"{self.parent_parameter_name}__exact"
+        ) or request.GET.get(self.parent_parameter_name)
+        return value in self.parent_active_values
+
+    def queryset(self, request, queryset):
+        self.request = request
+        if self.value() is not None and not self.is_parent_active:
+            raise IncorrectLookupParameters
+        if not self.is_parent_active:
+            return queryset
+        return self.filter_queryset(request, queryset)
+
+    def filter_queryset(self, request, queryset):
+        return queryset

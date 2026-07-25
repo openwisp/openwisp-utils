@@ -15,6 +15,7 @@ var gettext;
       initSliderHandlers();
       initInputFilterHandler();
       filterHandlers();
+      initSubFilterVisibility();
       if (slider) {
         setArrowButtonVisibility();
       }
@@ -33,6 +34,11 @@ function showFilterOptions(filter, callback = null) {
   if (!filter) {
     return;
   }
+  // Hide related sub-filters when showing parent filter options
+  if (!filter.classList.contains("ow-sub-filter")) {
+    hideRelatedSubFilters(filter);
+  }
+
   filter.querySelector(".filter-options").style.display = "block";
   filter.querySelector(".filter-title").setAttribute("aria-expanded", "true");
   setTimeout(function () {
@@ -43,6 +49,18 @@ function showFilterOptions(filter, callback = null) {
   }, 10);
 }
 
+function hideRelatedSubFilters(parentFilter) {
+  var group = parentFilter.closest(".ow-filter-group");
+  if (!group) {
+    return;
+  }
+
+  var subFilters = group.querySelectorAll(".ow-sub-filter");
+  subFilters.forEach(function (subFilter) {
+    subFilter.classList.add("hidden");
+  });
+}
+
 function hideFilterOptions(filter) {
   if (!filter) {
     return;
@@ -50,6 +68,8 @@ function hideFilterOptions(filter) {
   filter.querySelector(".filter-options").style = "";
   filter.querySelector(".filter-title").setAttribute("aria-expanded", "false");
   filter.classList.remove("ow-active");
+  // Restore sub-filter visibility based on current parent filter value
+  updateSubFilters();
 }
 
 function toggleFilter(filter, callback = null) {
@@ -114,14 +134,14 @@ function initFilterDropdownHandler() {
   });
 
   // Handle change in filter option
-  if (filters.length <= 4) {
-    return;
-  }
   const filterValues = document.querySelectorAll(".filter-options a");
   filterValues.forEach(function (filterValue) {
     filterValue.addEventListener("click", function (e) {
       e.preventDefault();
-      var filter = document.querySelector(".ow-filter.ow-active");
+      var filter = filterValue.closest(".ow-filter");
+      if (!filter.classList.contains("ow-active")) {
+        return;
+      }
       var selectedOption = filter.querySelector(".selected-option");
       var selectedElement = filter.querySelector(".selected");
       selectedElement.classList.remove("selected");
@@ -130,6 +150,11 @@ function initFilterDropdownHandler() {
       selectedOption.innerHTML = text;
       filter.querySelector(".filter-title").setAttribute("title", text);
       hideFilterOptions(filter);
+      updateSubFilters();
+      // Only auto-submit when no Apply button is visible
+      if (!document.querySelector("#ow-apply-filter")) {
+        window.location.href = filterValue.getAttribute("href");
+      }
     });
   });
 }
@@ -212,7 +237,100 @@ function initSliderHandlers() {
   if (slider) {
     slider.addEventListener("scroll", setArrowButtonVisibility);
   }
-  window.addEventListener("resize", setArrowButtonVisibility);
+  window.addEventListener("resize", function () {
+    setArrowButtonVisibility();
+    adjustFiltersBottomHeight();
+  });
+}
+
+function clearSubFilterSelection(subFilter) {
+  var selected = subFilter.querySelector(".filter-options a.selected");
+  if (selected) {
+    selected.classList.remove("selected");
+  }
+  var allOptions = subFilter.querySelectorAll(".filter-options a");
+  if (allOptions.length > 0) {
+    allOptions[0].classList.add("selected");
+  }
+}
+
+function getFilterValue(filter, parentParamName = null) {
+  var select = filter.querySelector("select");
+  if (select) {
+    return select.value;
+  }
+  var selected = filter.querySelector(".filter-options a.selected");
+  if (!selected) {
+    return null;
+  }
+  // For sub-filters, extract actual value from href using parent param name
+  if (parentParamName) {
+    var href = selected.getAttribute("href");
+    if (href) {
+      var queryString = href.substring(1);
+      var params = queryString.split("&");
+      for (var i = 0; i < params.length; i++) {
+        var param = params[i].split("=");
+        // Match either the exact param name or the param name with __exact suffix
+        if (param[0] === parentParamName || param[0] === parentParamName + "__exact") {
+          return decodeURIComponent(param[1]);
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function updateSubFilters() {
+  var subFilters = document.querySelectorAll(".ow-sub-filter");
+  subFilters.forEach(function (subFilter) {
+    var group = subFilter.closest(".ow-filter-group");
+    if (!group) {
+      return;
+    }
+    var parentFilter = group.querySelector(".ow-filter:not(.ow-sub-filter)");
+    if (!parentFilter) {
+      return;
+    }
+    var subFilterActiveValues = subFilter.dataset.subFilterActiveValues;
+    if (!subFilterActiveValues) {
+      return;
+    }
+    var activeValues = subFilterActiveValues.split(",");
+    var parentParamName = subFilter.getAttribute("data-sub-filter-parent");
+    var parentValue = getFilterValue(parentFilter, parentParamName);
+    if (parentValue !== null && activeValues.indexOf(parentValue) !== -1) {
+      subFilter.classList.remove("hidden");
+    } else {
+      subFilter.classList.add("hidden");
+      // Clear the sub-filter's selected option when it becomes hidden
+      clearSubFilterSelection(subFilter);
+    }
+  });
+  adjustFiltersBottomHeight();
+}
+
+function adjustFiltersBottomHeight() {
+  // Explicitly set the height of .filters-bottom to match the
+  // slider's content height. This allows sub-filters to expand
+  // the container without dropdowns inflating it.
+  var filtersBottom = document.querySelector(".filters-bottom");
+  var slider = document.querySelector(".ow-filter-slider");
+  if (!filtersBottom || !slider) {
+    return;
+  }
+  if (!document.querySelector(".ow-sub-filter:not(.hidden)")) {
+    filtersBottom.style.height = "";
+    return;
+  }
+  filtersBottom.style.height = slider.scrollHeight - 8 + "px";
+}
+
+function initSubFilterVisibility() {
+  if (!document.querySelector(".ow-sub-filter")) {
+    return;
+  }
+  updateSubFilters();
 }
 
 function filterHandlers() {

@@ -15,17 +15,19 @@ concurrency:
 jobs:
   respond-to-assign-request:
     runs-on: ubuntu-latest
-    if: github.event.issue.pull_request == null
+    if: >
+      github.repository == 'openwisp/openwisp-utils' &&
+      github.event.issue.pull_request == null
     steps:
       - name: Generate GitHub App token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -40,6 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
           REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
+          BOT_USERNAME: openwisp-companion
         run: >
           python .github/actions/bot-autoassign/__main__.py
           issue_assignment "$GITHUB_EVENT_PATH"

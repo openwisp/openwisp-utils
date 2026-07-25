@@ -239,11 +239,23 @@ a.field-clear {
   color: var(--delete-button-bg);
   position: absolute;
 }
+.ow-filter-group {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.ow-sub-filter-group {
+  margin-left: 0.25rem;
+}
+.ow-sub-filter-group > .ow-filter {
+  padding-left: 0.4rem;
+  margin-top: 1rem;
+}
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   #ow-changelist-filter {
-    padding: 1.25rem 1.875rem;
+    padding: 1.25rem 2.5rem;
   }
   .filters-bottom {
     margin: auto 30px;

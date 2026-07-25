@@ -37,12 +37,12 @@ jobs:
             django-version: django~=5.0.0
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Cache APT packages
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: /var/cache/apt/archives
           key: apt-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
@@ -76,18 +76,20 @@ jobs:
         run: ./run-qa-checks
 
       - name: Tests
-        if: ${{ !cancelled() && steps.deps.conclusion == 'success' }}
+        if: >
+          !cancelled() &&
+          steps.deps.conclusion == 'success'
         run: ./runtests
         env:
           SELENIUM_HEADLESS: 1
           GECKO_LOG: 1
 
       - name: Show gecko web driver log on failures
-        if: ${{ failure() }}
+        if: failure()
         run: cat geckodriver.log
 
       - name: Upload Coverage
-        if: ${{ success() }}
+        if: success()
         uses: coverallsapp/github-action@v2
         with:
           parallel: true
@@ -97,6 +99,7 @@ jobs:
           fail-on-error: false
 
   coveralls:
+    if: github.repository == 'openwisp/openwisp-utils'
     needs: build
     runs-on: ubuntu-latest
     steps:

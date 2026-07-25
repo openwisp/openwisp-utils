@@ -25,7 +25,9 @@ def get_package_type_from_setup():
         "package.json": "npm",
         "docker-compose.yml": "docker",
         ".ansible-lint": "ansible",
-        ".luacheckrc": "openwrt",
+        # The VERSION file check should be last to avoid false positives
+        # with other package types
+        "VERSION": "generic",
     }
     for filename, package_type in package_type_files.items():
         if os.path.exists(filename):
@@ -50,24 +52,33 @@ def detect_changelog_style(changelog_path):
 
 
 def _handle_python_version(config):
-    """Handles version detection for Python packages."""
+    """Handles version detection for Python packages.
+
+    Checks __init__.py first, then falls back to version.py (eg:
+    netjsonconfig, netdiff).
+    """
     project_name = get_package_name_from_setup()
     if not project_name:
         return
     package_directory = project_name.replace("-", "_")
-    init_py_path = os.path.join(package_directory, "__init__.py")
-    if not os.path.exists(init_py_path):
-        return
-    with open(init_py_path, "r") as f:
-        content = f.read()
-        version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
-        if version_match:
-            config["version_path"] = init_py_path
-            try:
-                version_tuple = ast.literal_eval(f"({version_match.group(1)})")
-                config["CURRENT_VERSION"] = list(version_tuple)
-            except (ValueError, SyntaxError):
-                config["CURRENT_VERSION"] = None
+    candidate_files = [
+        os.path.join(package_directory, "__init__.py"),
+        os.path.join(package_directory, "version.py"),
+    ]
+    for version_path in candidate_files:
+        if not os.path.exists(version_path):
+            continue
+        with open(version_path, "r") as f:
+            content = f.read()
+            version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
+            if version_match:
+                config["version_path"] = version_path
+                try:
+                    version_tuple = ast.literal_eval(f"({version_match.group(1)})")
+                    config["CURRENT_VERSION"] = list(version_tuple)
+                except (ValueError, SyntaxError, TypeError):
+                    config["CURRENT_VERSION"] = None
+                return
 
 
 def _handle_npm_version(config):
@@ -103,32 +114,35 @@ def _handle_npm_version(config):
 
 
 def _handle_docker_version(config):
-    """Handles version detection for Docker packages."""
-    if not os.path.exists("Makefile"):
+    """Handles version detection for docker-openwisp.
+
+    docker-openwisp stores its canonical release version in
+    images/common/openwisp/VERSION and bumps it via ``make bump``.
+    """
+    version_path = os.path.join("images", "common", "openwisp", "VERSION")
+    if not os.path.exists(version_path):
         return
-    with open("Makefile", "r") as f:
-        content = f.read()
-        version_match = re.search(
-            r"^OPENWISP_VERSION\s*=\s*([^\s]+)", content, re.MULTILINE
-        )
-        if not version_match:
-            return
-        config["version_path"] = "Makefile"
-        try:
-            version_str = version_match.group(1)
-            parts = version_str.split(".")
-            if len(parts) != 3:
-                raise ValueError(
-                    f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
-                )
-            config["CURRENT_VERSION"] = [
-                int(parts[0]),
-                int(parts[1]),
-                int(parts[2]),
-                "final",
-            ]
-        except (ValueError, SyntaxError):
-            config["CURRENT_VERSION"] = None
+    # Record the path even if the file is empty or malformed, so bump_version
+    # can still recover via ``make bump`` after a manual version entry.
+    config["version_path"] = version_path
+    with open(version_path, "r") as f:
+        version_str = f.read().strip()
+    if not version_str:
+        return
+    try:
+        parts = version_str.split(".")
+        if len(parts) != 3:
+            raise ValueError(
+                f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
+            )
+        config["CURRENT_VERSION"] = [
+            int(parts[0]),
+            int(parts[1]),
+            int(parts[2]),
+            "final",
+        ]
+    except (ValueError, SyntaxError):
+        config["CURRENT_VERSION"] = None
 
 
 def _handle_ansible_version(config):
@@ -163,10 +177,8 @@ def _handle_ansible_version(config):
             config["CURRENT_VERSION"] = None
 
 
-def _handle_openwrt_version(config):
-    """Handles version detection for OpenWRT packages."""
-    if not os.path.exists("VERSION"):
-        return
+def _handle_generic_version(config):
+    """Handles version detection for packages using a root VERSION file."""
     with open("VERSION", "r") as f:
         version_str = f.read().strip()
         if not version_str:
@@ -194,7 +206,7 @@ PACKAGE_VERSION_HANDLERS = {
     "npm": _handle_npm_version,
     "docker": _handle_docker_version,
     "ansible": _handle_ansible_version,
-    "openwrt": _handle_openwrt_version,
+    "generic": _handle_generic_version,
 }
 
 

@@ -38,7 +38,7 @@ setup(
     zip_safe=False,
     install_requires=[
         "django-model-utils>=4.5,<5.1",
-        "django-minify-compress-staticfiles~=1.1.0",
+        "django-minify-compress-staticfiles~=1.1.1",
         "django-admin-autocomplete-filter~=0.7.1",
         "swapper~=1.4.0",
         # allow wider range here to avoid interfering with other modules
@@ -47,16 +47,16 @@ setup(
     ],
     extras_require={
         "qa": [
-            "black>=25.1,<26.2",
+            "black>=25.1,<26.6",
             "flake8~=7.3.0",
             "isort>=6.0.1,<8.1.0",
-            "coverage>=7.10.0,<7.14.0",
+            "coverage>=7.10.0,<7.15.0",
             "tblib~=3.2.2",
-            "docstrfmt>=2.0.0,<2.1.0",
+            "docstrfmt>=2.0.0,<2.3.0",
             "commitizen>=4.13.0,<5.0.0",
         ],
         "rest": [
-            "djangorestframework~=3.16.0",
+            "djangorestframework~=3.17.1",
             "django-filter>=25.1,<26.0",  # django-filter uses CalVer
             "drf-yasg>=1.21.14,<1.22.0",
         ],
@@ -65,19 +65,19 @@ setup(
             "channels_redis>=4.2.1,<4.4.0",
         ],
         "channels-test": [
-            "pytest-asyncio>=1.3.0,<1.4.0",
+            "pytest-asyncio>=1.3.0,<1.5.0",
             "pytest-django>=4.10,<4.13",
         ],
         "celery": ["celery~=5.6.1"],
-        "selenium": ["selenium>=4.10,<4.42"],
+        "selenium": ["selenium>=4.32,<4.46"],
         "releaser": [
-            "git-cliff~=2.12.0",
+            "git-cliff~=2.13.1",
             "questionary~=2.1.0",
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",
         ],
         "github_actions": [
-            "google-genai>=1.62.0,<2.0.0",
+            "google-genai>=1.62.0,<3.0.0",
             "PyGithub>=2.0.0,<3.0.0",
         ],
     },

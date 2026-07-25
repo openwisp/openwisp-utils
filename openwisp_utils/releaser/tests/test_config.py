@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from openwisp_utils.releaser.config import detect_changelog_style, load_config
 
@@ -167,6 +169,84 @@ def test_config_malformed_version_literal_eval_fails(
     assert config["CURRENT_VERSION"] is None
 
 
+def test_config_version_non_iterable_type_error(
+    project_dir, create_setup_py, create_package_dir_with_version, create_changelog
+):
+    """Tests that TypeError is caught when version tuple is non-iterable.
+
+    For example, VERSION = (1) evaluates to an integer, and list(1) raises
+    TypeError.
+    """
+    create_setup_py(project_dir)
+    create_package_dir_with_version(project_dir, version_str="VERSION = (1)")
+    create_changelog(project_dir)
+    config = load_config()
+    # Should gracefully handle the TypeError and return None
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_python_version_detection_from_version_py_for_netjsonconfig_compatibility(
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version_in_version_py,
+    create_changelog,
+    init_git_repo,
+):
+    """Ensure version detection supports the netjsonconfig/netdiff layout.
+
+    These projects define VERSION in ``version.py`` rather than in
+    ``__init__.py``, which differs from the standard project layout.
+    """
+    create_setup_py(project_dir)
+    create_package_dir_with_version_in_version_py(project_dir)
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/version.py"
+    assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
+
+
+def test_python_version_ignores_version_py_when_init_py_defines_version(
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version,
+    create_changelog,
+    init_git_repo,
+):
+    create_setup_py(project_dir)
+    # Create both __init__.py and version.py with VERSION
+    pkg_dir = project_dir / "my_test_package"
+    pkg_dir.mkdir(exist_ok=True)
+    (pkg_dir / "__init__.py").write_text("VERSION = (1, 0, 0, 'final')")
+    (pkg_dir / "version.py").write_text("VERSION = (2, 0, 0, 'final')")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/__init__.py"
+    assert config["CURRENT_VERSION"] == [1, 0, 0, "final"]
+
+
+def test_python_version_detection_for_netjsonconfig_when_init_py_lacks_version(
+    project_dir,
+    create_setup_py,
+    create_changelog,
+    init_git_repo,
+):
+    create_setup_py(project_dir)
+    pkg_dir = project_dir / "my_test_package"
+    pkg_dir.mkdir(exist_ok=True)
+    (pkg_dir / "__init__.py").write_text("# No version here\n")
+    (pkg_dir / "version.py").write_text("VERSION = (3, 4, 5, 'final')")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/version.py"
+    assert config["CURRENT_VERSION"] == [3, 4, 5, "final"]
+
+
 # NPM Package Tests
 def test_npm_package_detection(
     project_dir, create_package_json, create_changelog, init_git_repo
@@ -231,25 +311,32 @@ def test_npm_package_invalid_version(
     assert config["CURRENT_VERSION"] is None
 
 
-# Docker Package Tests
+# Docker (docker-openwisp) Package Tests
+DOCKER_VERSION_PATH = os.path.join("images", "common", "openwisp", "VERSION")
+
+
 def test_docker_package_detection(
-    project_dir, create_docker_compose, create_makefile, create_changelog, init_git_repo
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
 ):
-    """Tests that docker package type is detected when docker-compose.yml exists."""
+    """Tests that docker type is detected when docker-compose.yml exists."""
     create_docker_compose(project_dir)
-    create_makefile(project_dir, version="1.2.3")
+    create_docker_version_file(project_dir, version="1.2.3")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
     assert config["package_type"] == "docker"
-    assert config["version_path"] == "Makefile"
+    assert config["version_path"] == DOCKER_VERSION_PATH
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
 
 
-def test_docker_package_without_makefile(
+def test_docker_package_without_version_file(
     project_dir, create_docker_compose, create_changelog, init_git_repo
 ):
-    """Tests docker package without Makefile - version should be None."""
+    """Tests docker package without the canonical VERSION file."""
     create_docker_compose(project_dir)
     create_changelog(project_dir)
     init_git_repo(project_dir)
@@ -259,19 +346,41 @@ def test_docker_package_without_makefile(
     assert config["CURRENT_VERSION"] is None
 
 
-def test_docker_package_invalid_version(
-    project_dir, create_docker_compose, create_changelog, init_git_repo
+def test_docker_package_empty_version_file(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
 ):
-    """Tests docker package with invalid version in Makefile gracefully."""
+    """Tests docker package with an empty canonical VERSION file."""
     create_docker_compose(project_dir)
-    (project_dir / "Makefile").write_text(
-        "OPENWISP_VERSION = 1.2\n"
-    )  # Invalid: only 2 parts
+    create_docker_version_file(project_dir, version="")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
     assert config["package_type"] == "docker"
-    assert config["version_path"] == "Makefile"
+    # version_path is recorded so make bump can still recover after a
+    # manual version entry, even though the current version is unknown.
+    assert config["version_path"] == DOCKER_VERSION_PATH
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_docker_package_invalid_version(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests docker package with an invalid version in the VERSION file."""
+    create_docker_compose(project_dir)
+    create_docker_version_file(project_dir, version="1.2")  # Invalid: only 2 parts
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "docker"
+    assert config["version_path"] == DOCKER_VERSION_PATH
     assert config["CURRENT_VERSION"] is None
 
 
@@ -323,45 +432,130 @@ def test_ansible_package_malformed_version(
     assert config["CURRENT_VERSION"] is None
 
 
-# OpenWRT Package Tests
-def test_openwrt_package_detection(
-    project_dir, create_luacheckrc, create_version_file, create_changelog, init_git_repo
+# Generic Package Tests
+def test_generic_package_detection(
+    project_dir, create_version_file, create_changelog, init_git_repo
 ):
-    """Tests that openwrt package type is detected when .luacheckrc exists."""
-    create_luacheckrc(project_dir)
+    """Tests that generic package type is detected when VERSION file exists."""
     create_version_file(project_dir, version="1.2.3")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "openwrt"
+    assert config["package_type"] == "generic"
     assert config["version_path"] == "VERSION"
     assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
 
 
-def test_openwrt_without_version_file(
-    project_dir, create_luacheckrc, create_changelog, init_git_repo
+def test_generic_fallback_without_other_config(
+    project_dir, create_version_file, create_changelog, init_git_repo
 ):
-    """Tests openwrt package without VERSION file."""
-    create_luacheckrc(project_dir)
+    """Tests that VERSION file is used as fallback when no other package type is detected."""
+    create_version_file(project_dir, version="2.0.1")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "openwrt"
-    assert config["version_path"] is None
+    assert config["package_type"] == "generic"
+    assert config["version_path"] == "VERSION"
+    assert config["CURRENT_VERSION"] == [2, 0, 1, "final"]
+
+
+def test_generic_invalid_version(
+    project_dir, create_version_file, create_changelog, init_git_repo
+):
+    """Tests generic package with invalid version format gracefully."""
+    create_version_file(project_dir, version="1.2")  # Invalid: only 2 parts
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "generic"
+    assert config["version_path"] == "VERSION"
     assert config["CURRENT_VERSION"] is None
 
 
-def test_openwrt_invalid_version(
-    project_dir, create_luacheckrc, create_changelog, init_git_repo
+def test_generic_not_fallback_when_other_type_detected(
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
 ):
-    """Tests openwrt package with invalid version format gracefully."""
-    create_luacheckrc(project_dir)
-    (project_dir / "VERSION").write_text("1.2")  # Invalid: only 2 parts
+    """Tests that VERSION file is not used as fallback when another package type is detected."""
+    create_setup_py(project_dir)
+    create_package_dir_with_version(project_dir)
+    create_version_file(project_dir, version="1.2.3")
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
-    assert config["package_type"] == "openwrt"
-    assert config["version_path"] == "VERSION"
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/__init__.py"
+
+
+def test_generic_not_fallback_when_npm_detected(
+    project_dir,
+    create_package_json,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that VERSION file is not used as fallback when npm package is detected."""
+    create_package_json(project_dir, version="1.2.3")
+    create_version_file(project_dir, version="1.5.0")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "npm"
+    assert config["version_path"] == "package.json"
+
+
+def test_generic_not_fallback_when_docker_detected(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that VERSION file is not used as fallback when docker package is detected."""
+    create_docker_compose(project_dir)
+    create_docker_version_file(project_dir, version="1.2.3")
+    create_version_file(project_dir, version="1.5.0")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "docker"
+    assert config["version_path"] == DOCKER_VERSION_PATH
+
+
+def test_generic_not_fallback_when_ansible_detected(
+    project_dir,
+    create_ansible_lint,
+    create_ansible_version_file,
+    create_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that VERSION file is not used as fallback when ansible package is detected."""
+    create_ansible_lint(project_dir)
+    create_ansible_version_file(project_dir, version="1.2.3")
+    create_version_file(project_dir, version="1.5.0")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "ansible"
+    assert config["version_path"] == "templates/openwisp2/version.py"
+
+
+def test_luacheckrc_does_not_trigger_detection(
+    project_dir, create_luacheckrc, create_changelog, init_git_repo
+):
+    """Tests that .luacheckrc alone does not trigger any package type detection."""
+    create_luacheckrc(project_dir)
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] is None
+    assert config["version_path"] is None
     assert config["CURRENT_VERSION"] is None
 
 

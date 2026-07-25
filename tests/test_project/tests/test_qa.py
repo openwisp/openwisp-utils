@@ -1,4 +1,6 @@
 import os
+import subprocess
+import tempfile
 from os import path
 from unittest.mock import patch
 
@@ -247,3 +249,74 @@ class TestQa(TestCase):
                 except (SystemExit, Exception) as e:
                     msg = "Check failed:\n\n{}\n\nOutput:{}".format(option[-1], e)
                     self.fail(msg)
+
+    def test_checkrst_excludes_node_modules(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-check")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = path.join(temp_dir, "bin")
+            os.mkdir(bin_dir)
+            args_path = path.join(temp_dir, "docstrfmt-args.txt")
+            docstrfmt_path = path.join(bin_dir, "docstrfmt")
+            with open(docstrfmt_path, "w") as f:
+                f.write(
+                    "#!/bin/sh\n"
+                    'for arg in "$@"; do\n'
+                    '    printf "%s\\n" "$arg" >> "$DOCSTRFMT_ARGS"\n'
+                    "done\n"
+                )
+            os.chmod(docstrfmt_path, 0o755)
+            # Create a normal Python file
+            work_file = path.join(temp_dir, "work.py")
+            with open(work_file, "w") as f:
+                f.write("x = 1\n")
+            spaced_file = path.join(temp_dir, "work with spaces.rst")
+            with open(spaced_file, "w") as f:
+                f.write("Test\n====\n")
+            # Create files inside node_modules (should be excluded)
+            node_module_py = path.join(temp_dir, "node_modules", "pkg", "file.py")
+            os.makedirs(path.dirname(node_module_py))
+            with open(node_module_py, "w") as f:
+                f.write("y = 2\n")
+            node_module_rst = path.join(temp_dir, "node_modules", "other", "doc.rst")
+            os.makedirs(path.dirname(node_module_rst))
+            with open(node_module_rst, "w") as f:
+                f.write("Test\n====\n")
+            hidden_py = path.join(temp_dir, ".github", "actions", "script.py")
+            os.makedirs(path.dirname(hidden_py))
+            with open(hidden_py, "w") as f:
+                f.write("z = 3\n")
+            env = os.environ.copy()
+            env["DOCSTRFMT_ARGS"] = args_path
+            env["PATH"] = f'{bin_dir}:{env["PATH"]}'
+            result = subprocess.run(
+                [
+                    script_path,
+                    "--skip-checkmigrations",
+                    "--skip-checkendline",
+                    "--skip-flake8",
+                    "--skip-isort",
+                    "--skip-black",
+                    "--skip-checkcommit",
+                    "--skip-checkmakemigrations",
+                ],
+                cwd=temp_dir,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(
+                result.stdout.count("SUCCESS: ReStructuredText check successful!"),
+                1,
+            )
+            with open(args_path) as f:
+                args = f.read().splitlines()
+            quiet_index = args.index("--quiet")
+            self.assertIn("./work.py", args)
+            self.assertIn("./work with spaces.rst", args)
+            self.assertLess(quiet_index, args.index("./work.py"))
+            self.assertLess(quiet_index, args.index("./work with spaces.rst"))
+            self.assertNotIn("./node_modules/pkg/file.py", args)
+            self.assertNotIn("./node_modules/other/doc.rst", args)
+            self.assertNotIn("./.github/actions/script.py", args)

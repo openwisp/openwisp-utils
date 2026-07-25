@@ -49,16 +49,6 @@ pull requests, tags, and releases on your behalf.
 .. image:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/releaser/github-access-token.png
     :alt: Screenshot showing the required repository permissions for a new fine-grained GitHub Personal Access Token.
 
-**3. OpenAI API Token (Optional)**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The tool can use GPT-4o to generate a human-readable summary of your
-change log. If you wish to use this feature, export your OpenAI API key:
-
-.. code-block:: shell
-
-    export OPENAI_CHATGPT_TOKEN="sk-YourOpenAITokenGoesHere"
-
 Usage
 -----
 
@@ -82,10 +72,8 @@ different version manually.
     :alt: Screenshot showing the tool suggesting a new version number and asking for user confirmation.
 
 **2. Change Log Generation & Review** A changelog is generated from your
-recent commits. If an OpenAI token is configured, the tool will offer to
-generate a more readable summary (this is disabled by default). You will
-then be shown the final changelog block and asked to accept it before the
-files are modified.
+recent commits. You will be shown the final changelog block and asked to
+accept it before the files are modified.
 
 **3. Resilient Error Handling** If any network operation fails (e.g.,
 creating a pull request), the tool won't crash. Instead, it will prompt

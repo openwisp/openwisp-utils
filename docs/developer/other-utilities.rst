@@ -83,6 +83,63 @@ Every openwisp module which has an API should use this class to configure
 its own default settings, which will be merged with the settings of the
 other modules.
 
+.. _utils_openwisp_pagination:
+
+``openwisp_utils.api.pagination.OpenWispPagination``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A reusable pagination class for DRF views that provides consistent
+pagination behavior across OpenWISP modules with sensible defaults.
+
+- **10** items per page (``page_size``), configurable via
+  :ref:`OPENWISP_API_DEFAULT_PAGE_SIZE <openwisp_default_api_page_size>`
+- **100** max items per page (``max_page_size``), configurable via
+  :ref:`OPENWISP_API_MAX_PAGE_SIZE <openwisp_api_max_page_size>`
+- Custom page size via ``?page_size=N`` query parameter (capped at
+  ``max_page_size``)
+
+**Usage in Views:**
+
+.. code-block:: python
+
+    from openwisp_utils.api.pagination import OpenWispPagination
+    from rest_framework.viewsets import ModelViewSet
+
+
+    class DeviceViewSet(ModelViewSet):
+        queryset = Device.objects.order_by("-created")
+        serializer_class = DeviceSerializer
+        pagination_class = OpenWispPagination
+
+
+    class LargeDeviceViewSet(ModelViewSet):
+        queryset = Device.objects.order_by("-created")
+        serializer_class = DeviceSerializer
+        pagination_class = OpenWispPagination
+        pagination_page_size = 20
+
+Views can set ``pagination_page_size`` to override
+:ref:`OPENWISP_API_DEFAULT_PAGE_SIZE <openwisp_default_api_page_size>`
+while keeping the same reusable pagination class. The ``?page_size=N``
+query parameter still takes precedence and is capped by
+:ref:`OPENWISP_API_MAX_PAGE_SIZE <openwisp_api_max_page_size>`.
+
+**API Request Examples:**
+
+.. code-block:: bash
+
+    # Returns first 10 items (default page size)
+    GET /api/v1/controller/device/
+
+    # Returns items 11-20 (second page)
+    GET /api/v1/controller/device/?page=2
+
+    # Returns first 25 items (custom page size)
+    GET /api/v1/controller/device/?page_size=25
+
+    # Returns items 26-50 with custom page size
+    GET /api/v1/controller/device/?page=2&page_size=25
+
 Storage Utilities
 -----------------
 

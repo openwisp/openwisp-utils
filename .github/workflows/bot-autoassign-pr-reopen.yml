@@ -18,17 +18,20 @@ concurrency:
 jobs:
   reassign-on-reopen:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_target' && github.event.action == 'reopened'
+    if: >
+      github.repository == 'openwisp/openwisp-utils' &&
+      github.event_name == 'pull_request_target' &&
+      github.event.action == 'reopened'
     steps:
       - name: Generate GitHub App token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -49,17 +52,20 @@ jobs:
 
   handle-pr-activity:
     runs-on: ubuntu-latest
-    if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+    if: >
+      github.repository == 'openwisp/openwisp-utils' &&
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request
     steps:
       - name: Generate GitHub App token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6

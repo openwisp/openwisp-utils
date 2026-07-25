@@ -1,5 +1,5 @@
 name: "OpenWISP Changelog Generator"
-description: "Analyzes a PR and generates a RestructuredText changelog entry suggestion"
+description: "Analyzes a PR and generates a squash-merge commit message suggestion"
 author: "OpenWISP"
 
 inputs:
@@ -15,6 +15,10 @@ inputs:
   repo-name:
     description: "Repository name in format owner/repo"
     required: true
+  gemini-model:
+    description: "Gemini model to use (empty falls back to gemini-2.5-flash-lite)"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -26,7 +30,9 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install "openwisp-utils[github_actions] @ https://github.com/openwisp/openwisp-utils/archive/refs/heads/master.tar.gz"
+      run: >
+        pip install
+        "openwisp-utils[github_actions, qa] @ https://github.com/openwisp/openwisp-utils/archive/refs/heads/master.tar.gz"
 
     - name: Generate changelog entry
       id: generate
@@ -36,6 +42,7 @@ runs:
         REPO_NAME: ${{ inputs.repo-name }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
         GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+        GEMINI_MODEL: ${{ inputs.gemini-model }}
       run: |
         python ${{ github.action_path }}/generate_changelog.py
 
