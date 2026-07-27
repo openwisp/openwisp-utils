@@ -1,7 +1,9 @@
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
-from django.db import connection
+from django.db import connection, models
+from django.db.migrations.autodetector import MigrationAutodetector
+from django.db.migrations.state import ModelState, ProjectState
 from django.test import TestCase
 
 from ..models import Book, OrganizationRadiusSettings, Project, Shelf
@@ -180,3 +182,70 @@ class TestFallbackFields(CreateMixin, TestCase):
             book.save(update_fields=["price"])
             book.refresh_from_db(fields=["price"])
             self.assertEqual(book.price, 56)
+
+    def test_fallback_field_deconstruct(self):
+        test_cases = [
+            ("FallbackBooleanChoiceField", OrganizationRadiusSettings, "is_active"),
+            ("FallbackCharField", OrganizationRadiusSettings, "greeting_text"),
+            ("FallbackDecimalField", Book, "price"),
+            ("FallbackPositiveIntegerField", Shelf, "books_count"),
+        ]
+        for field_type, model, field_name in test_cases:
+            with self.subTest(field_type):
+                field = model._meta.get_field(field_name)
+                name, path, args, kwargs = field.deconstruct()
+                self.assertIsNone(kwargs["fallback"])
+        with self.subTest("Plain field without fallback"):
+            field = Shelf._meta.get_field("name")
+            name, path, args, kwargs = field.deconstruct()
+            self.assertNotIn("fallback", kwargs)
+
+    def test_fallback_field_no_migration_on_fallback_change(self):
+        fallback_field = OrganizationRadiusSettings._meta.get_field("is_active").clone()
+        changed_fallback_field = fallback_field.clone()
+        changed_fallback_field.fallback = not fallback_field.fallback
+        current_state = ProjectState()
+        current_state.add_model(
+            ModelState(
+                "test_project",
+                "FallbackModel",
+                [
+                    ("id", models.AutoField(primary_key=True)),
+                    ("is_active", fallback_field),
+                ],
+            )
+        )
+        recorded_state = ProjectState()
+        recorded_state.add_model(
+            ModelState(
+                "test_project",
+                "FallbackModel",
+                [
+                    ("id", models.AutoField(primary_key=True)),
+                    ("is_active", changed_fallback_field),
+                ],
+            )
+        )
+
+        changes = MigrationAutodetector(recorded_state, current_state)._detect_changes()
+        self.assertEqual(changes, {})
+
+    def test_fallback_field_clone_preserves_fallback(self):
+        test_cases = [
+            ("FallbackBooleanChoiceField", OrganizationRadiusSettings, "is_active"),
+            (
+                "FallbackCharChoiceField",
+                OrganizationRadiusSettings,
+                "is_first_name_required",
+            ),
+            ("FallbackDecimalField", Book, "price"),
+            ("FallbackPositiveIntegerField", Shelf, "books_count"),
+            ("FallbackTextField", OrganizationRadiusSettings, "extra_config"),
+            ("FallbackURLField", OrganizationRadiusSettings, "password_reset_url"),
+            ("FallbackCharField", OrganizationRadiusSettings, "greeting_text"),
+        ]
+        for field_type, model, field_name in test_cases:
+            with self.subTest(field_type):
+                field = model._meta.get_field(field_name)
+                cloned = field.clone()
+                self.assertEqual(cloned.fallback, field.fallback)
