@@ -73,6 +73,11 @@ OpenWISP repositories. The bot provides the following features:
   encouragement after 60 days. The bot does not auto-close PRs.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
+- **PR validation**: Enforces the `OpenWISP Contributing Guidelines
+  <https://openwisp.io/docs/dev/developer/contributing.html>`_ for
+  external contributors by flagging PRs that do not link a validated
+  issue. The bot removes the ``invalid`` label once the PR is valid and
+  closes unresolved invalid PRs after 24 hours.
 
 **How Stale PR Detection Works**
 
@@ -107,15 +112,21 @@ The Stale PR job runs daily. For each open PR:
 
 **Secrets**
 
-These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
-the ``actions/create-github-app-token`` action. The bot itself consumes
-the following environment variables at runtime: ``GITHUB_TOKEN``,
-``REPOSITORY``, ``GITHUB_EVENT_NAME``, and ``BOT_USERNAME`` (optional;
-defaults to ``openwisp-companion``).
+These secrets let the reusable workflow mint two GitHub App tokens with
+``actions/create-github-app-token``. A repository-scoped write token is
+passed to the bot as ``GITHUB_TOKEN`` for issue assignment, labels,
+comments, and PR closure. A separate read-only validation token, scoped to
+the approved public repositories, is passed as ``VALIDATION_GITHUB_TOKEN``
+to validate linked issues and project assignments. The caller workflow's
+ambient token is not used for these mutations.
 
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
+
+The OpenWISP Bot needs **Projects: Read** permission at the org level to
+check issue project assignments via GraphQL. Without it, valid external
+PRs might be wrongly flagged as ``invalid``.
 
 **Setup for Other Repositories**
 
@@ -167,13 +178,13 @@ Create the following workflow files in your repository.
     name: PR Issue Auto-Assignment
     on:
       pull_request_target:
-        types: [opened, reopened, closed]
+        types: [opened, reopened, closed, edited, ready_for_review]
     permissions:
       contents: read
       issues: write
       pull-requests: read
     concurrency:
-      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}-${{ github.event.action }}
+      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
