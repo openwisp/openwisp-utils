@@ -112,11 +112,13 @@ The Stale PR job runs daily. For each open PR:
 
 **Secrets**
 
-These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
-the ``actions/create-github-app-token`` action. The bot itself consumes
-the following environment variables at runtime: ``GITHUB_TOKEN``,
-``VALIDATION_GITHUB_TOKEN``, ``REPOSITORY``, ``GITHUB_EVENT_NAME``, and
-``BOT_USERNAME`` (optional; defaults to ``openwisp-companion``).
+These secrets let the reusable workflow mint two GitHub App tokens with
+``actions/create-github-app-token``. A repository-scoped write token is
+passed to the bot as ``GITHUB_TOKEN`` for issue assignment, labels,
+comments, and PR closure. A separate read-only validation token, scoped to
+the approved public repositories, is passed as ``VALIDATION_GITHUB_TOKEN``
+to validate linked issues and project assignments. The caller workflow's
+ambient token is not used for these mutations.
 
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
@@ -180,9 +182,9 @@ Create the following workflow files in your repository.
     permissions:
       contents: read
       issues: write
-      pull-requests: write
+      pull-requests: read
     concurrency:
-      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}-${{ github.event.action }}
+      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
