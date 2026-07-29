@@ -953,7 +953,6 @@ class TestExtractAllLinkedIssues:
         ],
     )
     def test_extract_all_linked_issues(self, pr_body, expected, bot_env):
-
         assert extract_all_linked_issues(pr_body, "openwisp/openwisp-utils") == expected
 
 
@@ -1110,6 +1109,20 @@ class TestPRValidation:
         mock_pr.body = "No references here"
         assert not bot.validate_pr_issues(mock_pr)
 
+    def test_validate_pr_issues_limits_linked_issues(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = " ".join(f"Fixes #{number}" for number in range(1, 12))
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = []
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        assert not bot.validate_pr_issues(mock_pr)
+        assert bot_env["repo_validation"].get_issue.call_count == 10
+
     def test_validate_pr_issues_cross_org_issue(self, bot_env):
         bot = IssueAssignmentBot()
         mock_pr = Mock()
@@ -1126,7 +1139,7 @@ class TestPRValidation:
         mock_pr.body = "Fixes #12"
         mock_issue = Mock()
         mock_issue.pull_request = {"url": "..."}
-        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
         assert not bot.validate_pr_issues(mock_pr)
 
     def test_validate_pr_issues_closed(self, bot_env):
@@ -1138,7 +1151,7 @@ class TestPRValidation:
         mock_issue = Mock()
         mock_issue.pull_request = None
         mock_issue.state = "closed"
-        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
         assert not bot.validate_pr_issues(mock_pr)
 
     def test_validate_pr_issues_invalid_labels(self, bot_env):
@@ -1152,7 +1165,7 @@ class TestPRValidation:
         mock_issue.pull_request = None
         mock_issue.state = "open"
         mock_issue.labels = []
-        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
         assert not bot.validate_pr_issues(mock_pr)
         # Test case 2: Has wontfix/invalid labels
         label_wontfix = Mock()
@@ -1177,7 +1190,7 @@ class TestPRValidation:
         mock_issue.pull_request = None
         mock_issue.state = "open"
         mock_issue.labels = [label_bug]
-        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
         with patch.object(
             bot, "get_issue_projects", return_value=["Some Other Project"]
         ):
@@ -1207,7 +1220,6 @@ class TestPRValidation:
         """
         bot = IssueAssignmentBot()
         bot.event_name = "pull_request_target"
-
         # Mocks for validation (reads)
         mock_issue = Mock()
         mock_issue.pull_request = None
@@ -1230,7 +1242,6 @@ class TestPRValidation:
                 }
             },
         )
-
         # Mocks for mutations (writes)
         mock_pr = Mock()
         mock_pr.number = 12
@@ -1241,7 +1252,6 @@ class TestPRValidation:
         invalid_label.name = "invalid"
         mock_pr.labels = [invalid_label]
         bot_env["repo"].get_pull.return_value = mock_pr
-
         # Execute handler
         bot.load_event_payload(
             {
@@ -1255,7 +1265,6 @@ class TestPRValidation:
             }
         )
         bot.handle_pull_request()
-
         # Assert Reads used VALIDATION client
         bot_env["github_validation"].get_repo.assert_any_call("openwisp/openwisp-utils")
         bot_env["repo_validation"].get_issue.assert_called_once_with(123)
@@ -1264,7 +1273,6 @@ class TestPRValidation:
         # Assert Writes used WRITE client (bot_env["repo"] / bot_env["github"])
         bot_env["repo"].get_pull.assert_called_once_with(12)
         mock_pr.remove_from_labels.assert_called_once_with("invalid")
-
         # Ensure validation client is strictly read-only in this flow (no label/edit calls)
         assert (
             not hasattr(bot_env["repo_validation"], "remove_from_labels")
@@ -1272,7 +1280,6 @@ class TestPRValidation:
         )
 
     def test_handle_pull_request_invalid_label_and_comment(self, bot_env):
-
         bot = IssueAssignmentBot()
         bot.event_name = "pull_request_target"
         bot.load_event_payload(

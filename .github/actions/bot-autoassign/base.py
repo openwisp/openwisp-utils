@@ -5,6 +5,7 @@ from utils import extract_all_linked_issues
 
 MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 DEFAULT_EXCLUDE_PR_AUTHORS = "dependabot[bot]"
+MAX_VALIDATION_ISSUES = 10
 # Stable ProjectV2 node IDs for the OpenWISP contributor boards.
 # These IDs never change even if a board is renamed.
 REQUIRED_CONTRIBUTOR_PROJECT_IDS = frozenset(
@@ -162,8 +163,13 @@ class GitHubBot:
         if not linked_issues:
             print("No linked issues found in PR body for external contributor.")
             return False
+        if len(linked_issues) > MAX_VALIDATION_ISSUES:
+            print(
+                f"Found {len(linked_issues)} issue references, validating first "
+                f"{MAX_VALIDATION_ISSUES} to avoid rate limits"
+            )
         current_org = self.repository_name.split("/")[0].lower()
-        for owner, repo_name, issue_number in linked_issues:
+        for owner, repo_name, issue_number in linked_issues[:MAX_VALIDATION_ISSUES]:
             if owner.lower() != current_org:
                 print(
                     f"Issue {owner}/{repo_name}#{issue_number} does not belong "

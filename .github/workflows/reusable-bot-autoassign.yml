@@ -39,38 +39,29 @@ env:
     openwisp/django-rest-framework-gis
     openwisp/netengine
     openwisp/django-swappable-models
-    openwisp/packet-legacy
     openwisp/netdiff
-    openwisp/openVPNServer
     openwisp/netjsonconfig
     openwisp/netjsongraph.js
     openwisp/django-owm-legacy
     openwisp/openwisp-config
     openwisp/ansible-openwisp2
     openwisp/ansible-openwisp2-iptables
-    openwisp/luci-openwisp
     openwisp/django-x509
-    openwisp/ansible-freeitaliawifi-login-page
     openwisp/ansible-openwisp2-imagegenerator
     openwisp/openwisp-controller
     openwisp/openwisp-users
     openwisp/openwisp-docs
-    openwisp/openwrt-zabbixd
     openwisp/openwisp-network-topology
     openwisp/openwisp-utils
     openwisp/django-loci
-    openwisp/django-jsonschema-widget
-    openwisp/coova-chilli-openwrt
     openwisp/openwisp-radius
     openwisp/openwisp-ipam
-    openwisp/lxdock-openwisp2
     openwisp/docker-openwisp
     openwisp/openwisp-wifi-login-pages
     openwisp/openwisp-firmware-upgrader
     openwisp/openwisp-monitoring
     openwisp/openwrt-openwisp-monitoring
     openwisp/openwisp-notifications
-    openwisp/openwisp-dev-env
     openwisp/django-flat-json-widget
     openwisp/ansible-ow-influxdb
     openwisp/ansible-wireguard-openwisp
@@ -78,9 +69,6 @@ env:
     openwisp/openwisp-vxlan-updater
     openwisp/openwisp-sentry-utils
     openwisp/Stouts.postfix
-    openwisp/openwisp-sphinx-theme
-    openwisp/.github
-    openwisp/django-readonly-issue-demo-30577
     openwisp/django-minify-compress-staticfiles
     openwisp/bot-testing-ground
 

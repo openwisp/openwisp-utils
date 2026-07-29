@@ -73,40 +73,11 @@ OpenWISP repositories. The bot provides the following features:
   encouragement after 60 days. The bot does not auto-close PRs.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
-- **PR validation**: Flags invalid pull requests from external
-  contributors that do not reference a validated issue belonging to the
-  OpenWISP organization.
-
-**How External PR Validation Works**
-
-The PR issue-link workflow runs on ``pull_request_target`` events
-(``opened``, ``reopened``, ``closed``, ``edited``, and
-``ready_for_review``). For each pull request:
-
-1. **Maintainer exemption.** Maintainers (``OWNER``, ``MEMBER``, ``COLLABORATOR``)
-       and excluded authors (like ``dependabot[bot]``) bypass issue
-       validation.
-2. **Validated issue requirement.** External contributors must reference
-   at least one validated issue in the pull request description using
-   ``Fixes #ISSUE_NUMBER``, ``Closes #ISSUE_NUMBER``, ``Related to
-   #ISSUE_NUMBER``, or an equivalent cross-repository reference.
-3. **Validated issue criteria.** A linked issue is considered validated
-   when all of the following are true:
-
-   - it is open;
-   - it belongs to the same GitHub organization as the repository;
-   - it has at least one label other than ``invalid`` or ``wontfix``;
-   - it is assigned to one of these OpenWISP contributor project boards:
-
-     - OpenWISP Contributor's Board
-     - OpenWISP Priorities for next releases
-
-4. **Invalid pull request handling.** When validation fails, the bot adds
-   the standard ``invalid`` label, posts a single explanatory comment and
-   explains how to fix the pull request.
-5. **Recovery and auto-close.** When a contributor updates the pull
-   request description to reference a validated issue, the next workflow
-   run removes the ``invalid`` label automatically.
+- **PR validation**: Enforces the `OpenWISP Contributing Guidelines
+  <https://openwisp.io/docs/dev/developer/contributing.html>`_ for
+  external contributors by flagging PRs that do not link a validated
+  issue. The bot removes the ``invalid`` label once the PR is valid and
+  closes unresolved invalid PRs after 24 hours.
 
 **How Stale PR Detection Works**
 
@@ -144,16 +115,16 @@ The Stale PR job runs daily. For each open PR:
 These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
 the ``actions/create-github-app-token`` action. The bot itself consumes
 the following environment variables at runtime: ``GITHUB_TOKEN``,
-``REPOSITORY``, ``GITHUB_EVENT_NAME``, and ``BOT_USERNAME`` (optional;
-defaults to ``openwisp-companion``).
+``VALIDATION_GITHUB_TOKEN``, ``REPOSITORY``, ``GITHUB_EVENT_NAME``, and
+``BOT_USERNAME`` (optional; defaults to ``openwisp-companion``).
 
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
 
 The OpenWISP Bot needs **Projects: Read** permission at the org level to
-check assigned project titles via GraphQL. Without it, valid external PRs
-might be wrongly flagged as ``invalid``.
+check issue project assignments via GraphQL. Without it, valid external
+PRs might be wrongly flagged as ``invalid``.
 
 **Setup for Other Repositories**
 

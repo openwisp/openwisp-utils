@@ -903,7 +903,6 @@ class TestStalePRBotInvalidCheck:
         while all mutations use the repository-scoped write client.
         """
         bot = StalePRBot()
-
         # Mocks for mutations (writes)
         mock_label = Mock()
         mock_label.name = "invalid"
@@ -914,7 +913,6 @@ class TestStalePRBotInvalidCheck:
         mock_pr.author_association = "NONE"
         mock_pr.body = "Fixes #123"
         bot_env["repo"].get_pulls.return_value = [mock_pr]
-
         # Mocks for validation (reads)
         mock_issue = Mock()
         mock_issue.pull_request = None
@@ -937,10 +935,8 @@ class TestStalePRBotInvalidCheck:
                 }
             },
         )
-
         # Execute handler
         assert bot.process_stale_prs()
-
         # Assert Reads used VALIDATION client
         bot_env["github_validation"].get_repo.assert_any_call("openwisp/openwisp-utils")
         bot_env["repo_validation"].get_issue.assert_called_once_with(123)
@@ -949,7 +945,6 @@ class TestStalePRBotInvalidCheck:
         # Assert Writes used WRITE client (bot_env["repo"] / bot_env["github"])
         bot_env["repo"].get_pulls.assert_called_once()
         mock_pr.remove_from_labels.assert_called_once_with("invalid")
-
         # Ensure validation client is strictly read-only in this flow (no label/edit calls)
         assert (
             not hasattr(bot_env["repo_validation"], "remove_from_labels")
