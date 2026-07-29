@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   pypi-publish:
+    if: github.repository == 'openwisp/openwisp-utils'
     name: Release Python Package on Pypi.org
     runs-on: ubuntu-latest
     environment:
@@ -17,7 +18,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

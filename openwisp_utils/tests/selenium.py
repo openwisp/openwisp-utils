@@ -43,6 +43,11 @@ class SeleniumTestMixin:
     retry_delay = 0
     retry_successes_required = 2
     retry_threshold = None
+    ignored_browser_log_messages = (
+        "BackupService.sys.mjs",
+        "PrivateBrowsingUtils.sys.mjs",
+        "PathUtils.join: PathUtils does not support empty paths",
+    )
     _db_conn_lock = threading.RLock()
     _db_conn_serialized = False
 
@@ -312,6 +317,17 @@ class SeleniumTestMixin:
             return list(driver._console_logs)
         return driver.get_log("browser")
 
+    def get_browser_errors(self, driver=None):
+        return [
+            log
+            for log in self.get_browser_logs(driver=driver)
+            if log.get("level") == "SEVERE"
+            if not any(
+                ignored_message in log.get("message", "")
+                for ignored_message in self.ignored_browser_log_messages
+            )
+        ]
+
     def _flush_firefox_console_logs(self, driver, timeout=2):
         """Wait for pending BiDi console messages to be delivered.
 
@@ -351,26 +367,32 @@ class SeleniumTestMixin:
         driver.get(f"{self.live_server_url}/admin/login/")
         self._wait_until_page_ready(driver=driver)
         if "admin/login" in driver.current_url:
-            driver.find_element(by=By.NAME, value="username").send_keys(username)
-            driver.find_element(by=By.NAME, value="password").send_keys(password)
-            driver.find_element(by=By.XPATH, value='//input[@type="submit"]').click()
+            self.find_element(by=By.NAME, value="username", driver=driver).send_keys(
+                username
+            )
+            self.find_element(by=By.NAME, value="password", driver=driver).send_keys(
+                password
+            )
+            self.find_element(
+                by=By.XPATH, value='//input[@type="submit"]', driver=driver
+            ).click()
         self._wait_until_page_ready(driver=driver)
 
     def logout(self, driver=None):
         driver = driver or self.web_driver
-        self.web_driver.find_element(By.CSS_SELECTOR, ".account-button").click()
-        self.web_driver.find_element(By.CSS_SELECTOR, "#logout-form button").click()
+        self.find_element(By.CSS_SELECTOR, ".account-button", driver=driver).click()
+        self.find_element(By.CSS_SELECTOR, "#logout-form button", driver=driver).click()
 
     def find_element(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_element(by=by, value=value)
 
     def find_elements(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_elements(by=by, value=value)
 
     def wait_for_visibility(self, by, value, timeout=2, driver=None):

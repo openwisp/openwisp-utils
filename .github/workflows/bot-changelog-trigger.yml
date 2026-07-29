@@ -6,7 +6,8 @@ on:
 
 jobs:
   check:
-    if: |
+    if: >
+      github.repository == 'openwisp/openwisp-utils' &&
       github.event.review.state == 'approved' &&
       (github.event.review.author_association == 'OWNER' ||
         github.event.review.author_association == 'MEMBER' ||

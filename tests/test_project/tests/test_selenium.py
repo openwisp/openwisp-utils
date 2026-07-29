@@ -919,6 +919,25 @@ class TestFirefoxSeleniumHelpers(SeleniumTestMixin, ChannelsLiveServerTestCase):
             self.get_browser_logs(), [{"level": "INFO", "message": "test"}]
         )
 
+    def test_get_browser_errors(self):
+        self.web_driver._console_logs.extend(
+            [
+                {
+                    "level": "SEVERE",
+                    "message": "resource:///modules/backup/BackupService.sys.mjs",
+                },
+                {
+                    "level": "SEVERE",
+                    "message": "TypeError: application error",
+                },
+                {"level": "INFO", "message": "expected lifecycle log"},
+            ]
+        )
+        self.assertEqual(
+            self.get_browser_errors(),
+            [{"level": "SEVERE", "message": "TypeError: application error"}],
+        )
+
     def test_get_browser_logs_captures_page_load_logs(self):
         # Logs emitted during page load (before readyState === "complete") must
         # be captured too; this is what distinguishes the BiDi capture from a

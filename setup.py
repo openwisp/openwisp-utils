@@ -52,7 +52,7 @@ setup(
             "isort>=6.0.1,<8.1.0",
             "coverage>=7.10.0,<7.15.0",
             "tblib~=3.2.2",
-            "docstrfmt>=2.0.0,<2.1.0",
+            "docstrfmt>=2.0.0,<2.3.0",
             "commitizen>=4.13.0,<5.0.0",
         ],
         "rest": [
@@ -69,7 +69,7 @@ setup(
             "pytest-django>=4.10,<4.13",
         ],
         "celery": ["celery~=5.6.1"],
-        "selenium": ["selenium>=4.32,<4.45"],
+        "selenium": ["selenium>=4.32,<4.46"],
         "releaser": [
             "git-cliff~=2.13.1",
             "questionary~=2.1.0",
