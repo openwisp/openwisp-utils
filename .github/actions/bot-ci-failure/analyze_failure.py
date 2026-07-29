@@ -400,7 +400,7 @@ def main():
             "Failed jobs found but logs unavailable",
             "Could not fetch failed jobs",
         ]
-        if any(p in error_log for p in no_failure_patterns):
+        if any(pattern in error_log for pattern in no_failure_patterns):
             print(
                 "::notice::No CI failures detected; skipping analysis.",
                 file=sys.stderr,
