@@ -11,9 +11,12 @@ files=()
 while IFS= read -r -d '' file; do
   files+=("$file")
 done < <(find . -path "*/.*" -prune -o -path "*/venv/*" -prune \
-  -o -path "*/env/*" -prune -o -type f \( -name "*.py" -o -name "*.rst" \) -print0)
-docstrfmt --no-docstring-trailing-line --ignore-cache \
-  --section-adornments "=-~+^\"\'.:" --line-length 74 "${files[@]}"
+  -o -path "*/env/*" -prune -o -path "*/node_modules/*" -prune \
+  -o -type f \( -name "*.py" -o -name "*.rst" \) -print0)
+if [ ${#files[@]} -gt 0 ]; then
+  docstrfmt --no-docstring-trailing-line --ignore-cache \
+    --section-adornments "=-~+^\"\'.:" --line-length 74 "${files[@]}"
+fi
 
 if which prettier > /dev/null; then
   files=()

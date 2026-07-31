@@ -50,7 +50,12 @@ echoerr() { echo "$@" 1>&2; }
 
 runcheckendline() {
   flag=0
-  for i in $(find . -type f ! -path "*/*.egg-info/*" \
+  while IFS= read -r -d '' i; do
+    if [ "$(tail -c 1 -- "$i")" != "" ]; then
+      echo "$i needs newline at the end"
+      flag=1
+    fi
+  done < <(find . -type f ! -path "*/*.egg-info/*" \
     ! -path "./.*" \
     ! -path "*/.venv/*" \
     ! -path "*/venv/*" \
@@ -60,12 +65,7 @@ runcheckendline() {
     ! -path "*/.coverage*" \
     ! -path "*/coverage.xml" \
     ! -path "*.min.*" \
-    ! -path "*.svg" -exec grep -Iq . {} \; -and -print); do
-    if [ "$(tail -c 1 $i)" != "" ]; then
-      echo "$i needs newline at the end"
-      flag=1
-    fi
-  done
+    ! -path "*.svg" -exec grep -Iq . {} \; -and -print0)
   if [ $flag -ne 0 ]; then
     echoerr "ERROR: Blank endline check failed!"
     FAILURE=1

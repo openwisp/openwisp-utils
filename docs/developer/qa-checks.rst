@@ -56,6 +56,9 @@ Local virtual environments are excluded from all QA and formatting
 commands. The excluded directory names are ``.venv``, ``venv``, ``env``,
 and ``.tox``.
 
+The blank endline check also excludes coverage artifacts: ``.coverage*``,
+``coverage.xml``, and the ``htmlcov/`` directory.
+
 Usage example:
 
 .. code-block::

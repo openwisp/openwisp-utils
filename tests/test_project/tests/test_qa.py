@@ -332,11 +332,19 @@ class TestQa(TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             bin_dir = path.join(temp_dir, "bin")
             os.mkdir(bin_dir)
-            args_path = path.join(temp_dir, "docstrfmt-args.txt")
+            args_paths = {
+                command: path.join(temp_dir, f"{command}-args.txt")
+                for command in ("isort", "black", "prettier", "docstrfmt")
+            }
             for command in ("isort", "black", "prettier"):
                 command_path = path.join(bin_dir, command)
                 with open(command_path, "w") as f:
-                    f.write("#!/bin/sh\n")
+                    f.write(
+                        "#!/bin/sh\n"
+                        'for arg in "$@"; do\n'
+                        f'    printf "%s\\n" "$arg" >> "${{{command.upper()}_ARGS}}"\n'
+                        "done\n"
+                    )
                 os.chmod(command_path, 0o755)
             docstrfmt_path = path.join(bin_dir, "docstrfmt")
             with open(docstrfmt_path, "w") as f:
@@ -350,21 +358,77 @@ class TestQa(TestCase):
             work_file = path.join(temp_dir, "work.rst")
             with open(work_file, "w") as f:
                 f.write("Test\n====\n")
+            prettier_file = path.join(temp_dir, "work.css")
+            with open(prettier_file, "w") as f:
+                f.write("body {}\n")
             venv_file = path.join(temp_dir, ".venv", "package", "doc.rst")
             os.makedirs(path.dirname(venv_file))
             with open(venv_file, "w") as f:
                 f.write("Test\n====\n")
             env = os.environ.copy()
-            env["DOCSTRFMT_ARGS"] = args_path
+            for command, args_path in args_paths.items():
+                env[f"{command.upper()}_ARGS"] = args_path
             env["PATH"] = f'{bin_dir}:{env["PATH"]}'
             result = subprocess.run(
                 [script_path], cwd=temp_dir, env=env, capture_output=True, text=True
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            with open(args_path) as f:
+            with open(args_paths["docstrfmt"]) as f:
                 args = f.read().splitlines()
             self.assertIn("./work.rst", args)
             self.assertNotIn("./.venv/package/doc.rst", args)
+            with open(args_paths["isort"]) as f:
+                isort_args = f.read().splitlines()
+            self.assertEqual(
+                isort_args,
+                [
+                    "--extend-skip",
+                    ".venv",
+                    "--extend-skip",
+                    "venv",
+                    "--extend-skip",
+                    "env",
+                    "--extend-skip",
+                    ".tox",
+                    ".",
+                ],
+            )
+            with open(args_paths["black"]) as f:
+                black_args = f.read().splitlines()
+            self.assertEqual(black_args, ["--extend-exclude", "/(env|ENV)/", "."])
+            with open(args_paths["prettier"]) as f:
+                prettier_args = f.read().splitlines()
+            self.assertIn("./work.css", prettier_args)
+            self.assertNotIn("./.venv/package/doc.rst", prettier_args)
+
+    def test_format_skips_docstrfmt_without_eligible_files(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-format")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = path.join(temp_dir, "bin")
+            os.mkdir(bin_dir)
+            docstrfmt_called_path = path.join(temp_dir, "docstrfmt-called")
+            for command in ("isort", "black", "prettier"):
+                command_path = path.join(bin_dir, command)
+                with open(command_path, "w") as f:
+                    f.write("#!/bin/sh\n")
+                os.chmod(command_path, 0o755)
+            docstrfmt_path = path.join(bin_dir, "docstrfmt")
+            with open(docstrfmt_path, "w") as f:
+                f.write('#!/bin/sh\ntouch "$DOCSTRFMT_CALLED"\n')
+            os.chmod(docstrfmt_path, 0o755)
+            venv_file = path.join(temp_dir, ".venv", "package", "doc.rst")
+            os.makedirs(path.dirname(venv_file))
+            with open(venv_file, "w") as f:
+                f.write("Test\n====\n")
+            env = os.environ.copy()
+            env["DOCSTRFMT_CALLED"] = docstrfmt_called_path
+            env["PATH"] = f'{bin_dir}:{env["PATH"]}'
+            result = subprocess.run(
+                [script_path], cwd=temp_dir, env=env, capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse(path.exists(docstrfmt_called_path))
 
     def test_checkendline_excludes_coverage_artifacts(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
@@ -395,3 +459,30 @@ class TestQa(TestCase):
                 text=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_checkendline_handles_filenames_with_spaces(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-check")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = path.join(temp_dir, "file with spaces.py")
+            with open(file_path, "w") as f:
+                f.write("x = 1")
+            result = subprocess.run(
+                [
+                    script_path,
+                    "--skip-checkmigrations",
+                    "--skip-flake8",
+                    "--skip-isort",
+                    "--skip-black",
+                    "--skip-checkrst",
+                    "--skip-checkcommit",
+                    "--skip-checkmakemigrations",
+                ],
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn(
+                "./file with spaces.py needs newline at the end", result.stdout
+            )
