@@ -362,6 +362,7 @@ class TestQa(TestCase):
             with open(prettier_file, "w") as f:
                 f.write("body {}\n")
             excluded_prettier_files = []
+            excluded_docstrfmt_files = []
             for directory in (".venv", "venv", "env", ".tox"):
                 prettier_file = path.join(temp_dir, directory, "package", "file.css")
                 os.makedirs(path.dirname(prettier_file))
@@ -369,6 +370,12 @@ class TestQa(TestCase):
                     f.write("body {}\n")
                 excluded_prettier_files.append(
                     path.join(".", directory, "package", "file.css")
+                )
+                docstrfmt_file = path.join(temp_dir, directory, "package", "doc.rst")
+                with open(docstrfmt_file, "w") as f:
+                    f.write("Test\n====\n")
+                excluded_docstrfmt_files.append(
+                    path.join(".", directory, "package", "doc.rst")
                 )
             env = os.environ.copy()
             for command, args_path in args_paths.items():
@@ -381,7 +388,8 @@ class TestQa(TestCase):
             with open(args_paths["docstrfmt"]) as f:
                 args = f.read().splitlines()
             self.assertIn("./work.rst", args)
-            self.assertNotIn("./.venv/package/doc.rst", args)
+            for docstrfmt_file in excluded_docstrfmt_files:
+                self.assertNotIn(docstrfmt_file, args)
             with open(args_paths["isort"]) as f:
                 isort_args = f.read().splitlines()
             self.assertEqual(
@@ -414,11 +422,16 @@ class TestQa(TestCase):
             bin_dir = path.join(temp_dir, "bin")
             os.mkdir(bin_dir)
             docstrfmt_called_path = path.join(temp_dir, "docstrfmt-called")
-            for command in ("isort", "black", "prettier"):
+            prettier_called_path = path.join(temp_dir, "prettier-called")
+            for command in ("isort", "black"):
                 command_path = path.join(bin_dir, command)
                 with open(command_path, "w") as f:
                     f.write("#!/bin/sh\n")
                 os.chmod(command_path, 0o755)
+            prettier_path = path.join(bin_dir, "prettier")
+            with open(prettier_path, "w") as f:
+                f.write('#!/bin/sh\ntouch "$PRETTIER_CALLED"\n')
+            os.chmod(prettier_path, 0o755)
             docstrfmt_path = path.join(bin_dir, "docstrfmt")
             with open(docstrfmt_path, "w") as f:
                 f.write('#!/bin/sh\ntouch "$DOCSTRFMT_CALLED"\n')
@@ -429,12 +442,14 @@ class TestQa(TestCase):
                 f.write("Test\n====\n")
             env = os.environ.copy()
             env["DOCSTRFMT_CALLED"] = docstrfmt_called_path
+            env["PRETTIER_CALLED"] = prettier_called_path
             env["PATH"] = f'{bin_dir}:{env["PATH"]}'
             result = subprocess.run(
                 [script_path], cwd=temp_dir, env=env, capture_output=True, text=True
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertFalse(path.exists(docstrfmt_called_path))
+            self.assertFalse(path.exists(prettier_called_path))
 
     def test_checkendline_excludes_coverage_artifacts(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
