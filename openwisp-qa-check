@@ -50,15 +50,23 @@ echoerr() { echo "$@" 1>&2; }
 
 runcheckendline() {
   flag=0
-  for i in $(find . -type f ! -path "*/*.egg-info/*" \
-    ! -path "./.*" \
-    ! -path "*.min.*" \
-    ! -path "*.svg" -exec grep -Iq . {} \; -and -print); do
-    if [ "$(tail -c 1 $i)" != "" ]; then
+  # Read null-delimited paths so filenames containing whitespace stay intact.
+  while IFS= read -r -d '' i; do
+    if [ "$(tail -c 1 -- "$i")" != "" ]; then
       echo "$i needs newline at the end"
       flag=1
     fi
-  done
+  done < <(find . -type f ! -path "*/*.egg-info/*" \
+    ! -path "./.*" \
+    ! -path "*/.venv/*" \
+    ! -path "*/venv/*" \
+    ! -path "*/env/*" \
+    ! -path "*/.tox/*" \
+    ! -path "*/htmlcov/*" \
+    ! -path "*/.coverage*" \
+    ! -path "*/coverage.xml" \
+    ! -path "*.min.*" \
+    ! -path "*.svg" -exec grep -Iq . {} \; -and -print0)
   if [ $flag -ne 0 ]; then
     echoerr "ERROR: Blank endline check failed!"
     FAILURE=1
@@ -69,20 +77,28 @@ runcheckendline() {
 
 runprettiercheck() {
   if which prettier > /dev/null; then
-    JS_PATTERN=""
-    CSS_PATTERN=""
-    [[ "$1" != "true" ]] && JS_PATTERN="|js|json"
-    [[ "$2" != "true" ]] && CSS_PATTERN="|css"
-    PATTERN="**/*.+(yml|yaml|md${JS_PATTERN}${CSS_PATTERN})"
+    local files=()
+    local patterns=(-name "*.yml" -o -name "*.yaml" -o -name "*.md")
+    [[ "$1" != "true" ]] && patterns+=(-o -name "*.js" -o -name "*.json")
+    [[ "$2" != "true" ]] && patterns+=(-o -name "*.css")
+    # Collect null-delimited paths so formatter arguments preserve whitespace.
+    while IFS= read -r -d '' file; do
+      files+=("$file")
+    done < <(find . -path "*/.venv/*" -prune -o -path "*/venv/*" -prune \
+      -o -path "*/env/*" -prune -o -path "*/.tox/*" -prune -o -type f \
+      \( "${patterns[@]}" \) -print0)
 
-    prettier --check $PATTERN --print-width 88 &&
-      echo "SUCCESS: Prettier check successful!" ||
-      {
-        echoerr "ERROR: Prettier check failed! Hint: did you forget to run openwisp-qa-format?"
-        echoerr "For more information refer to:"
-        echoerr "https://openwisp.io/docs/dev/developer/contributing.html#css-and-javascript-code-conventions"
-        FAILURE=1
-      }
+    # Prettier excludes node_modules by default unless --with-node-modules is used.
+    if [ ${#files[@]} -gt 0 ]; then
+      prettier --check "${files[@]}" --print-width 88 &&
+        echo "SUCCESS: Prettier check successful!" ||
+        {
+          echoerr "ERROR: Prettier check failed! Hint: did you forget to run openwisp-qa-format?"
+          echoerr "For more information refer to:"
+          echoerr "https://openwisp.io/docs/dev/developer/contributing.html#css-and-javascript-code-conventions"
+          FAILURE=1
+        }
+    fi
   else
     echoerr "MODULE NOT FOUND: Please install prettier, e.g.:"
     echoerr "sudo npm install -g prettier"
@@ -110,7 +126,7 @@ runcheckmigrations() {
 }
 
 runflake8() {
-  flake8 && echo "SUCCESS: Flake8 check successful!" ||
+  flake8 --extend-exclude=.venv,venv,env,.tox && echo "SUCCESS: Flake8 check successful!" ||
     {
       echoerr "ERROR: Flake8 check failed!"
       FAILURE=1
@@ -124,6 +140,7 @@ runrstcheck() {
   while IFS= read -r -d '' file; do
     files+=("$file")
   done < <(find . -path "*/.*" -prune -o -path "*/node_modules/*" -prune \
+    -o -path "*/venv/*" -prune -o -path "*/env/*" -prune \
     -o -type f \( -name "*.py" -o -name "*.rst" \) -print0)
   if [ ${#files[@]} -gt 0 ]; then
     local cmd=(docstrfmt --no-docstring-trailing-line -i -c -l 74 -s "=-~+^\"'.:")
@@ -138,7 +155,8 @@ runrstcheck() {
 }
 
 runisort() {
-  isort --check-only --diff --quiet . &&
+  isort --check-only --diff --quiet --extend-skip .venv --extend-skip venv \
+    --extend-skip env --extend-skip .tox . &&
     echo "SUCCESS: Isort check successful!" ||
     {
       echoerr "ERROR: Isort check failed! Hint: did you forget to run openwisp-qa-format?"
@@ -147,7 +165,9 @@ runisort() {
 }
 
 runblack() {
-  black --check --diff --quiet . &&
+  # Black excludes .venv, venv, and .tox by default. Extend its defaults to
+  # cover env and ENV without replacing the built-in exclusions.
+  black --check --diff --quiet --extend-exclude '/(env|ENV)/' . &&
     echo "SUCCESS: Black check successful!" ||
     {
       echoerr "ERROR: Black check failed! Hint: did you forget to run openwisp-qa-format?"
