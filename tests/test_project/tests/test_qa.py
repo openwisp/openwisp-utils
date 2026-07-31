@@ -309,22 +309,27 @@ class TestQa(TestCase):
                 capture_output=True,
                 text=True,
             )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(
-                result.stdout.count("SUCCESS: ReStructuredText check successful!"),
-                1,
-            )
+            with self.subTest("Check that docstrfmt completes successfully"):
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(
+                    result.stdout.count("SUCCESS: ReStructuredText check successful!"),
+                    1,
+                )
             with open(args_path) as f:
                 args = f.read().splitlines()
             quiet_index = args.index("--quiet")
-            self.assertIn("./work.py", args)
-            self.assertIn("./work with spaces.rst", args)
-            self.assertLess(quiet_index, args.index("./work.py"))
-            self.assertLess(quiet_index, args.index("./work with spaces.rst"))
-            self.assertNotIn("./node_modules/pkg/file.py", args)
-            self.assertNotIn("./node_modules/other/doc.rst", args)
-            self.assertNotIn("./.venv/package/doc.rst", args)
-            self.assertNotIn("./.github/actions/script.py", args)
+            for filename in ("./work.py", "./work with spaces.rst"):
+                with self.subTest(f"Check that docstrfmt formats {filename}"):
+                    self.assertIn(filename, args)
+                    self.assertLess(quiet_index, args.index(filename))
+            for filename in (
+                "./node_modules/pkg/file.py",
+                "./node_modules/other/doc.rst",
+                "./.venv/package/doc.rst",
+                "./.github/actions/script.py",
+            ):
+                with self.subTest(f"Check that docstrfmt ignores {filename}"):
+                    self.assertNotIn(filename, args)
 
     def test_format_excludes_virtual_environments(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
@@ -387,33 +392,41 @@ class TestQa(TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             with open(args_paths["docstrfmt"]) as f:
                 args = f.read().splitlines()
-            self.assertIn("./work.rst", args)
-            for docstrfmt_file in excluded_docstrfmt_files:
-                self.assertNotIn(docstrfmt_file, args)
+            with self.subTest(
+                "Check that docstrfmt excludes virtual-environment files"
+            ):
+                self.assertIn("./work.rst", args)
+                for docstrfmt_file in excluded_docstrfmt_files:
+                    self.assertNotIn(docstrfmt_file, args)
             with open(args_paths["isort"]) as f:
                 isort_args = f.read().splitlines()
-            self.assertEqual(
-                isort_args,
-                [
-                    "--extend-skip",
-                    ".venv",
-                    "--extend-skip",
-                    "venv",
-                    "--extend-skip",
-                    "env",
-                    "--extend-skip",
-                    ".tox",
-                    ".",
-                ],
-            )
+            with self.subTest(
+                "Check that isort receives all virtual-environment exclusions"
+            ):
+                self.assertEqual(
+                    isort_args,
+                    [
+                        "--extend-skip",
+                        ".venv",
+                        "--extend-skip",
+                        "venv",
+                        "--extend-skip",
+                        "env",
+                        "--extend-skip",
+                        ".tox",
+                        ".",
+                    ],
+                )
             with open(args_paths["black"]) as f:
                 black_args = f.read().splitlines()
-            self.assertEqual(black_args, ["--extend-exclude", "/(env|ENV)/", "."])
+            with self.subTest("Check that Black receives its environment exclusion"):
+                self.assertEqual(black_args, ["--extend-exclude", "/(env|ENV)/", "."])
             with open(args_paths["prettier"]) as f:
                 prettier_args = f.read().splitlines()
-            self.assertIn("./work.css", prettier_args)
-            for prettier_file in excluded_prettier_files:
-                self.assertNotIn(prettier_file, prettier_args)
+            with self.subTest("Check that Prettier excludes virtual-environment files"):
+                self.assertIn("./work.css", prettier_args)
+                for prettier_file in excluded_prettier_files:
+                    self.assertNotIn(prettier_file, prettier_args)
 
     def test_format_skips_docstrfmt_without_eligible_files(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
@@ -447,9 +460,11 @@ class TestQa(TestCase):
             result = subprocess.run(
                 [script_path], cwd=temp_dir, env=env, capture_output=True, text=True
             )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertFalse(path.exists(docstrfmt_called_path))
-            self.assertFalse(path.exists(prettier_called_path))
+            with self.subTest("Check that docstrfmt is skipped without eligible files"):
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertFalse(path.exists(docstrfmt_called_path))
+            with self.subTest("Check that Prettier is skipped without eligible files"):
+                self.assertFalse(path.exists(prettier_called_path))
 
     def test_checkendline_excludes_coverage_artifacts(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))

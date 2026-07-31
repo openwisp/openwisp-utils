@@ -50,6 +50,7 @@ echoerr() { echo "$@" 1>&2; }
 
 runcheckendline() {
   flag=0
+  # Read null-delimited paths so filenames containing whitespace stay intact.
   while IFS= read -r -d '' i; do
     if [ "$(tail -c 1 -- "$i")" != "" ]; then
       echo "$i needs newline at the end"
@@ -80,6 +81,7 @@ runprettiercheck() {
     local patterns=(-name "*.yml" -o -name "*.yaml" -o -name "*.md")
     [[ "$1" != "true" ]] && patterns+=(-o -name "*.js" -o -name "*.json")
     [[ "$2" != "true" ]] && patterns+=(-o -name "*.css")
+    # Collect null-delimited paths so formatter arguments preserve whitespace.
     while IFS= read -r -d '' file; do
       files+=("$file")
     done < <(find . -path "*/.venv/*" -prune -o -path "*/venv/*" -prune \
