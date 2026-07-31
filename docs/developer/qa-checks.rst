@@ -50,7 +50,11 @@ Usage example:
 
     openwisp-qa-check --migration-path <path> --message <commit-message>
 
-Any unneeded checks can be skipped by passing ``--skip-<check-name>``
+Any unneeded checks can be skipped by passing ``--skip-<check-name>``.
+
+Local virtual environments are excluded from all QA and formatting
+commands. The excluded directory names are ``.venv``, ``venv``, ``env``,
+and ``.tox``.
 
 Usage example:
 

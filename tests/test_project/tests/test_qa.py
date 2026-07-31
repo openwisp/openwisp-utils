@@ -282,6 +282,10 @@ class TestQa(TestCase):
             os.makedirs(path.dirname(node_module_rst))
             with open(node_module_rst, "w") as f:
                 f.write("Test\n====\n")
+            venv_rst = path.join(temp_dir, ".venv", "package", "doc.rst")
+            os.makedirs(path.dirname(venv_rst))
+            with open(venv_rst, "w") as f:
+                f.write("Test\n====\n")
             hidden_py = path.join(temp_dir, ".github", "actions", "script.py")
             os.makedirs(path.dirname(hidden_py))
             with open(hidden_py, "w") as f:
@@ -319,4 +323,75 @@ class TestQa(TestCase):
             self.assertLess(quiet_index, args.index("./work with spaces.rst"))
             self.assertNotIn("./node_modules/pkg/file.py", args)
             self.assertNotIn("./node_modules/other/doc.rst", args)
+            self.assertNotIn("./.venv/package/doc.rst", args)
             self.assertNotIn("./.github/actions/script.py", args)
+
+    def test_format_excludes_virtual_environments(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-format")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = path.join(temp_dir, "bin")
+            os.mkdir(bin_dir)
+            args_path = path.join(temp_dir, "docstrfmt-args.txt")
+            for command in ("isort", "black", "prettier"):
+                command_path = path.join(bin_dir, command)
+                with open(command_path, "w") as f:
+                    f.write("#!/bin/sh\n")
+                os.chmod(command_path, 0o755)
+            docstrfmt_path = path.join(bin_dir, "docstrfmt")
+            with open(docstrfmt_path, "w") as f:
+                f.write(
+                    "#!/bin/sh\n"
+                    'for arg in "$@"; do\n'
+                    '    printf "%s\\n" "$arg" >> "$DOCSTRFMT_ARGS"\n'
+                    "done\n"
+                )
+            os.chmod(docstrfmt_path, 0o755)
+            work_file = path.join(temp_dir, "work.rst")
+            with open(work_file, "w") as f:
+                f.write("Test\n====\n")
+            venv_file = path.join(temp_dir, ".venv", "package", "doc.rst")
+            os.makedirs(path.dirname(venv_file))
+            with open(venv_file, "w") as f:
+                f.write("Test\n====\n")
+            env = os.environ.copy()
+            env["DOCSTRFMT_ARGS"] = args_path
+            env["PATH"] = f'{bin_dir}:{env["PATH"]}'
+            result = subprocess.run(
+                [script_path], cwd=temp_dir, env=env, capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with open(args_path) as f:
+                args = f.read().splitlines()
+            self.assertIn("./work.rst", args)
+            self.assertNotIn("./.venv/package/doc.rst", args)
+
+    def test_checkendline_excludes_coverage_artifacts(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-check")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for filename in (
+                ".coverage",
+                "coverage.xml",
+                path.join("htmlcov", "index.html"),
+            ):
+                file_path = path.join(temp_dir, filename)
+                os.makedirs(path.dirname(file_path), exist_ok=True)
+                with open(file_path, "w") as f:
+                    f.write("coverage artifact")
+            result = subprocess.run(
+                [
+                    script_path,
+                    "--skip-checkmigrations",
+                    "--skip-flake8",
+                    "--skip-isort",
+                    "--skip-black",
+                    "--skip-checkrst",
+                    "--skip-checkcommit",
+                    "--skip-checkmakemigrations",
+                ],
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
