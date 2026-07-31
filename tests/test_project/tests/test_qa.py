@@ -361,10 +361,15 @@ class TestQa(TestCase):
             prettier_file = path.join(temp_dir, "work.css")
             with open(prettier_file, "w") as f:
                 f.write("body {}\n")
-            venv_file = path.join(temp_dir, ".venv", "package", "doc.rst")
-            os.makedirs(path.dirname(venv_file))
-            with open(venv_file, "w") as f:
-                f.write("Test\n====\n")
+            excluded_prettier_files = []
+            for directory in (".venv", "venv", "env", ".tox"):
+                prettier_file = path.join(temp_dir, directory, "package", "file.css")
+                os.makedirs(path.dirname(prettier_file))
+                with open(prettier_file, "w") as f:
+                    f.write("body {}\n")
+                excluded_prettier_files.append(
+                    path.join(".", directory, "package", "file.css")
+                )
             env = os.environ.copy()
             for command, args_path in args_paths.items():
                 env[f"{command.upper()}_ARGS"] = args_path
@@ -399,7 +404,8 @@ class TestQa(TestCase):
             with open(args_paths["prettier"]) as f:
                 prettier_args = f.read().splitlines()
             self.assertIn("./work.css", prettier_args)
-            self.assertNotIn("./.venv/package/doc.rst", prettier_args)
+            for prettier_file in excluded_prettier_files:
+                self.assertNotIn(prettier_file, prettier_args)
 
     def test_format_skips_docstrfmt_without_eligible_files(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
