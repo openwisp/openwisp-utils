@@ -45,7 +45,7 @@ class BlockDeleteAllowCascadeMixin:
         return False
 
 
-class ReadOnlyAdmin(BlockDeleteAllowCascadeMixin, ModelAdmin):
+class ReadOnlyAdmin(ModelAdmin):
     """Disables all editing capabilities."""
 
     exclude = tuple()
@@ -64,6 +64,11 @@ class ReadOnlyAdmin(BlockDeleteAllowCascadeMixin, ModelAdmin):
         return actions
 
     def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if BlockDeleteAllowCascadeMixin.is_admin_cascade_delete_request(self, request):
+            return super().has_delete_permission(request, obj)
         return False
 
     def save_model(self, request, obj, form, change):  # pragma: nocover

@@ -197,6 +197,21 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             request.resolver_match = mock_resolver
             self.assertFalse(modeladmin.has_delete_permission(request))
 
+    def test_readonlyadmin_preserves_mro_for_delete_permission_overrides(self):
+        class BaseAdmin(admin.ModelAdmin):
+            pass
+
+        class DeletableReadOnlyAdmin(ReadOnlyAdmin, BaseAdmin):
+            def has_delete_permission(self, request, obj=None):
+                return super(ReadOnlyAdmin, self).has_delete_permission(request, obj)
+
+        modeladmin = DeletableReadOnlyAdmin(RadiusAccounting, AdminSite())
+        obj = self._create_radius_accounting(username="deletable", session_id="3")
+        request = self.client.get(
+            reverse("admin:test_project_radiusaccounting_delete", args=[obj.pk])
+        ).wsgi_request
+        self.assertTrue(modeladmin.has_delete_permission(request, obj))
+
     def test_readonlyadmin_allows_parent_cascade_delete(self):
         original_admin = admin.site._registry[Operator].__class__
         admin.site.unregister(Operator)
