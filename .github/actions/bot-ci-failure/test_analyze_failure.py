@@ -575,6 +575,41 @@ class TestMain(unittest.TestCase):
     @patch("builtins.print")
     @patch("analyze_failure.genai")
     @patch("analyze_failure.get_error_logs")
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "fake_key"})
+    def test_exits_early_without_ci_failures(
+        self, mock_get_logs, mock_genai, mock_print
+    ):
+        for error_log in (
+            "No failed jobs found.",
+            "Failed jobs found but logs unavailable.",
+            "Could not fetch failed jobs for run 123.",
+        ):
+            with self.subTest(error_log=error_log):
+                mock_get_logs.return_value = (error_log, False, False)
+                main()
+                mock_genai.Client.return_value.models.generate_content.assert_not_called()
+                mock_print.assert_any_call(
+                    "::notice::No CI failures detected; skipping analysis.",
+                    file=sys.stderr,
+                )
+
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
+    @patch.dict(os.environ, {"GEMINI_API_KEY": "fake_key"})
+    def test_exits_early_with_empty_failure_logs(
+        self, mock_get_logs, mock_genai, mock_print
+    ):
+        mock_get_logs.return_value = ("  \n", False, False)
+        main()
+        mock_genai.Client.return_value.models.generate_content.assert_not_called()
+        mock_print.assert_called_once_with(
+            "::warning::Skipping: Empty failure logs.", file=sys.stderr
+        )
+
+    @patch("builtins.print")
+    @patch("analyze_failure.genai")
+    @patch("analyze_failure.get_error_logs")
     @patch("analyze_failure.get_repo_context")
     @patch("analyze_failure._should_retry_ci")
     @patch.dict(

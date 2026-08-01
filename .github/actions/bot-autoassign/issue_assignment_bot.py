@@ -1,4 +1,3 @@
-import os
 import re
 
 from base import GitHubBot
@@ -14,9 +13,6 @@ from utils import (
 
 
 class IssueAssignmentBot(GitHubBot):
-    def __init__(self):
-        super().__init__()
-        self.bot_username = os.environ.get("BOT_USERNAME", "openwisp-companion")
 
     def is_bot_assign_command(self, comment_body):
         if not comment_body:
@@ -44,7 +40,6 @@ class IssueAssignmentBot(GitHubBot):
 
     def detect_issue_type(self, issue):
         """Analyzes labels, title and body.
-
         Returns 'bug', 'feature', or None.
         """
         bug_keywords = [
@@ -369,11 +364,9 @@ class IssueAssignmentBot(GitHubBot):
 
     def unassign_issues_from_pr(self, pr_body, pr_author):
         """Unassign linked issues from PR author"""
-
         if not self.repo:
             print("GitHub client not initialized")
             return []
-
         try:
             return unassign_linked_issues_helper(
                 self.repo, self.repository_name, pr_body, pr_author
@@ -440,15 +433,41 @@ class IssueAssignmentBot(GitHubBot):
             if not all([pr_number, pr_author]):
                 print("Missing required PR data")
                 return False
-            if action in ["opened", "reopened"]:
-                self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
-                # We consider the event handled even if no issues were linked
-                return True
-            elif action == "closed":
+            if action == "closed":
                 if pr.get("merged", False):
                     print(f"PR #{pr_number} was merged, keeping issue assignments")
                 else:
                     self.unassign_issues_from_pr(pr_body, pr_author)
+                return True
+            if action in ["opened", "reopened", "edited", "ready_for_review"]:
+                pr_obj = self.repo.get_pull(pr_number)
+                is_valid = self.validate_pr_issues(pr_obj)
+                # Cross-repo issues are intentionally excluded from auto-assignment
+                # because when multiple PRs in different repos are created for a
+                # single issue, it's likely that multiple people will work on it
+                if is_valid:
+                    self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
+                labels_lower = set()
+                try:
+                    labels_lower = {label.name.lower() for label in pr_obj.labels}
+                except (TypeError, AttributeError):
+                    pass
+                if is_valid:
+                    if "invalid" in labels_lower:
+                        pr_obj.remove_from_labels("invalid")
+                        print(f"Removed 'invalid' label from PR #{pr_number}")
+                else:
+                    if "invalid" not in labels_lower:
+                        pr_obj.add_to_labels("invalid")
+                        print(f"Added 'invalid' label to PR #{pr_number}")
+                    if not self.has_bot_comment(pr_obj, "invalid_unvalidated_issue"):
+                        comment_body = self.get_invalid_unvalidated_issue_comment(
+                            pr_author
+                        )
+                        pr_obj.create_issue_comment(comment_body)
+                        print(
+                            f"Posted unvalidated issue warning comment on PR #{pr_number}"
+                        )
                 return True
             print(f"PR action '{action}' not handled")
             return True

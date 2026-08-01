@@ -282,6 +282,10 @@ class TestQa(TestCase):
             os.makedirs(path.dirname(node_module_rst))
             with open(node_module_rst, "w") as f:
                 f.write("Test\n====\n")
+            venv_rst = path.join(temp_dir, ".venv", "package", "doc.rst")
+            os.makedirs(path.dirname(venv_rst))
+            with open(venv_rst, "w") as f:
+                f.write("Test\n====\n")
             hidden_py = path.join(temp_dir, ".github", "actions", "script.py")
             os.makedirs(path.dirname(hidden_py))
             with open(hidden_py, "w") as f:
@@ -305,18 +309,216 @@ class TestQa(TestCase):
                 capture_output=True,
                 text=True,
             )
-            self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertEqual(
-                result.stdout.count("SUCCESS: ReStructuredText check successful!"),
-                1,
-            )
+            with self.subTest("Check that docstrfmt completes successfully"):
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(
+                    result.stdout.count("SUCCESS: ReStructuredText check successful!"),
+                    1,
+                )
             with open(args_path) as f:
                 args = f.read().splitlines()
             quiet_index = args.index("--quiet")
-            self.assertIn("./work.py", args)
-            self.assertIn("./work with spaces.rst", args)
-            self.assertLess(quiet_index, args.index("./work.py"))
-            self.assertLess(quiet_index, args.index("./work with spaces.rst"))
-            self.assertNotIn("./node_modules/pkg/file.py", args)
-            self.assertNotIn("./node_modules/other/doc.rst", args)
-            self.assertNotIn("./.github/actions/script.py", args)
+            for filename in ("./work.py", "./work with spaces.rst"):
+                with self.subTest(f"Check that docstrfmt formats {filename}"):
+                    self.assertIn(filename, args)
+                    self.assertLess(quiet_index, args.index(filename))
+            for filename in (
+                "./node_modules/pkg/file.py",
+                "./node_modules/other/doc.rst",
+                "./.venv/package/doc.rst",
+                "./.github/actions/script.py",
+            ):
+                with self.subTest(f"Check that docstrfmt ignores {filename}"):
+                    self.assertNotIn(filename, args)
+
+    def test_format_excludes_virtual_environments(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-format")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = path.join(temp_dir, "bin")
+            os.mkdir(bin_dir)
+            args_paths = {
+                command: path.join(temp_dir, f"{command}-args.txt")
+                for command in ("isort", "black", "prettier", "docstrfmt")
+            }
+            for command in ("isort", "black", "prettier"):
+                command_path = path.join(bin_dir, command)
+                with open(command_path, "w") as f:
+                    f.write(
+                        "#!/bin/sh\n"
+                        'for arg in "$@"; do\n'
+                        f'    printf "%s\\n" "$arg" >> "${{{command.upper()}_ARGS}}"\n'
+                        "done\n"
+                    )
+                os.chmod(command_path, 0o755)
+            docstrfmt_path = path.join(bin_dir, "docstrfmt")
+            with open(docstrfmt_path, "w") as f:
+                f.write(
+                    "#!/bin/sh\n"
+                    'for arg in "$@"; do\n'
+                    '    printf "%s\\n" "$arg" >> "$DOCSTRFMT_ARGS"\n'
+                    "done\n"
+                )
+            os.chmod(docstrfmt_path, 0o755)
+            work_file = path.join(temp_dir, "work.rst")
+            with open(work_file, "w") as f:
+                f.write("Test\n====\n")
+            prettier_file = path.join(temp_dir, "work.css")
+            with open(prettier_file, "w") as f:
+                f.write("body {}\n")
+            excluded_prettier_files = []
+            excluded_docstrfmt_files = []
+            for directory in (".venv", "venv", "env", ".tox"):
+                prettier_file = path.join(temp_dir, directory, "package", "file.css")
+                os.makedirs(path.dirname(prettier_file))
+                with open(prettier_file, "w") as f:
+                    f.write("body {}\n")
+                excluded_prettier_files.append(
+                    path.join(".", directory, "package", "file.css")
+                )
+                docstrfmt_file = path.join(temp_dir, directory, "package", "doc.rst")
+                with open(docstrfmt_file, "w") as f:
+                    f.write("Test\n====\n")
+                excluded_docstrfmt_files.append(
+                    path.join(".", directory, "package", "doc.rst")
+                )
+            env = os.environ.copy()
+            for command, args_path in args_paths.items():
+                env[f"{command.upper()}_ARGS"] = args_path
+            env["PATH"] = f'{bin_dir}:{env["PATH"]}'
+            result = subprocess.run(
+                [script_path], cwd=temp_dir, env=env, capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with open(args_paths["docstrfmt"]) as f:
+                args = f.read().splitlines()
+            with self.subTest(
+                "Check that docstrfmt excludes virtual-environment files"
+            ):
+                self.assertIn("./work.rst", args)
+                for docstrfmt_file in excluded_docstrfmt_files:
+                    self.assertNotIn(docstrfmt_file, args)
+            with open(args_paths["isort"]) as f:
+                isort_args = f.read().splitlines()
+            with self.subTest(
+                "Check that isort receives all virtual-environment exclusions"
+            ):
+                self.assertEqual(
+                    isort_args,
+                    [
+                        "--extend-skip",
+                        ".venv",
+                        "--extend-skip",
+                        "venv",
+                        "--extend-skip",
+                        "env",
+                        "--extend-skip",
+                        ".tox",
+                        ".",
+                    ],
+                )
+            with open(args_paths["black"]) as f:
+                black_args = f.read().splitlines()
+            with self.subTest("Check that Black receives its environment exclusion"):
+                self.assertEqual(black_args, ["--extend-exclude", "/(env|ENV)/", "."])
+            with open(args_paths["prettier"]) as f:
+                prettier_args = f.read().splitlines()
+            with self.subTest("Check that Prettier excludes virtual-environment files"):
+                self.assertIn("./work.css", prettier_args)
+                for prettier_file in excluded_prettier_files:
+                    self.assertNotIn(prettier_file, prettier_args)
+
+    def test_format_skips_docstrfmt_without_eligible_files(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-format")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = path.join(temp_dir, "bin")
+            os.mkdir(bin_dir)
+            docstrfmt_called_path = path.join(temp_dir, "docstrfmt-called")
+            prettier_called_path = path.join(temp_dir, "prettier-called")
+            for command in ("isort", "black"):
+                command_path = path.join(bin_dir, command)
+                with open(command_path, "w") as f:
+                    f.write("#!/bin/sh\n")
+                os.chmod(command_path, 0o755)
+            prettier_path = path.join(bin_dir, "prettier")
+            with open(prettier_path, "w") as f:
+                f.write('#!/bin/sh\ntouch "$PRETTIER_CALLED"\n')
+            os.chmod(prettier_path, 0o755)
+            docstrfmt_path = path.join(bin_dir, "docstrfmt")
+            with open(docstrfmt_path, "w") as f:
+                f.write('#!/bin/sh\ntouch "$DOCSTRFMT_CALLED"\n')
+            os.chmod(docstrfmt_path, 0o755)
+            venv_file = path.join(temp_dir, ".venv", "package", "doc.rst")
+            os.makedirs(path.dirname(venv_file))
+            with open(venv_file, "w") as f:
+                f.write("Test\n====\n")
+            env = os.environ.copy()
+            env["DOCSTRFMT_CALLED"] = docstrfmt_called_path
+            env["PRETTIER_CALLED"] = prettier_called_path
+            env["PATH"] = f'{bin_dir}:{env["PATH"]}'
+            result = subprocess.run(
+                [script_path], cwd=temp_dir, env=env, capture_output=True, text=True
+            )
+            with self.subTest("Check that docstrfmt is skipped without eligible files"):
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertFalse(path.exists(docstrfmt_called_path))
+            with self.subTest("Check that Prettier is skipped without eligible files"):
+                self.assertFalse(path.exists(prettier_called_path))
+
+    def test_checkendline_excludes_coverage_artifacts(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-check")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for filename in (
+                ".coverage",
+                "coverage.xml",
+                path.join("htmlcov", "index.html"),
+            ):
+                file_path = path.join(temp_dir, filename)
+                os.makedirs(path.dirname(file_path), exist_ok=True)
+                with open(file_path, "w") as f:
+                    f.write("coverage artifact")
+            result = subprocess.run(
+                [
+                    script_path,
+                    "--skip-checkmigrations",
+                    "--skip-flake8",
+                    "--skip-isort",
+                    "--skip-black",
+                    "--skip-checkrst",
+                    "--skip-checkcommit",
+                    "--skip-checkmakemigrations",
+                ],
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_checkendline_handles_filenames_with_spaces(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-check")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = path.join(temp_dir, "file with spaces.py")
+            with open(file_path, "w") as f:
+                f.write("x = 1")
+            result = subprocess.run(
+                [
+                    script_path,
+                    "--skip-checkmigrations",
+                    "--skip-flake8",
+                    "--skip-isort",
+                    "--skip-black",
+                    "--skip-checkrst",
+                    "--skip-checkcommit",
+                    "--skip-checkmakemigrations",
+                ],
+                cwd=temp_dir,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertIn(
+                "./file with spaces.py needs newline at the end", result.stdout
+            )

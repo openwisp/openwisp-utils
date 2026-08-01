@@ -1,14 +1,35 @@
 #!/bin/bash
 set -e
 
-isort .
-black .
-docstrfmt --no-docstring-trailing-line --ignore-cache \
-  --section-adornments "=-~+^\"\'.:" \
-  --line-length 74 .
+isort --extend-skip .venv --extend-skip venv --extend-skip env \
+  --extend-skip .tox .
+# Black excludes .venv, venv, and .tox by default. Extend its defaults to
+# cover env and ENV without replacing the built-in exclusions.
+black --extend-exclude '/(env|ENV)/' .
+
+files=()
+while IFS= read -r -d '' file; do
+  files+=("$file")
+done < <(find . -path "*/.*" -prune -o -path "*/venv/*" -prune \
+  -o -path "*/env/*" -prune -o -path "*/node_modules/*" -prune \
+  -o -type f \( -name "*.py" -o -name "*.rst" \) -print0)
+if [ ${#files[@]} -gt 0 ]; then
+  docstrfmt --no-docstring-trailing-line --ignore-cache \
+    --section-adornments "=-~+^\"\'.:" --line-length 74 "${files[@]}"
+fi
 
 if which prettier > /dev/null; then
-  prettier --write "**/*.+(yml|yaml|md|js|json|css)" --print-width 88
+  files=()
+  while IFS= read -r -d '' file; do
+    files+=("$file")
+  done < <(find . -path "*/.venv/*" -prune -o -path "*/venv/*" -prune \
+    -o -path "*/env/*" -prune -o -path "*/.tox/*" -prune -o -type f \
+    \( -name "*.yml" -o -name "*.yaml" -o -name "*.md" -o -name "*.js" \
+    -o -name "*.json" -o -name "*.css" \) -print0)
+  # Prettier excludes node_modules by default unless --with-node-modules is used.
+  if [ ${#files[@]} -gt 0 ]; then
+    prettier --write "${files[@]}" --print-width 88
+  fi
 else
   echo "SKIPPED CSS FILES: Please install prettier"
 fi

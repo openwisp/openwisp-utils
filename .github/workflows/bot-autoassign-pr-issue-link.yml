@@ -2,7 +2,7 @@ name: PR Issue Auto-Assignment
 
 on:
   pull_request_target:
-    types: [opened, reopened, closed]
+    types: [opened, reopened, closed, edited, ready_for_review]
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}-${{ github.event.action }}
+  group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -18,32 +18,9 @@ jobs:
     if: >
       github.repository == 'openwisp/openwisp-utils' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == false)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate GitHub App token
-        id: generate-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
-
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Install dependencies
-        run: pip install -e .[github_actions]
-
-      - name: Run issue assignment bot
-        env:
-          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
-          REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          BOT_USERNAME: openwisp-companion
-        run: >
-          python .github/actions/bot-autoassign/__main__.py
-          issue_assignment "$GITHUB_EVENT_PATH"
+    uses: ./.github/workflows/reusable-bot-autoassign.yml
+    with:
+      bot_command: issue_assignment
+    secrets:
+      OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+      OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
