@@ -13,6 +13,10 @@ from . import CreateMixin
 class TestModel(TestCase):
     TEST_KEY = "w1gwJxKaHcamUw62TQIPgYchwLKn3AA0"
 
+    def test_timestamped_model_ordering(self):
+        self.assertEqual(Shelf._meta.ordering, ("-created",))
+        self.assertEqual(Book._meta.ordering, ("-created",))
+
     def test_key_validator(self):
         p = Project.objects.create(name="test_project")
         p.key = "key/key"

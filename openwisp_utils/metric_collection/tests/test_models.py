@@ -22,6 +22,9 @@ from . import (
 
 
 class TestOpenwispVersion(TestCase):
+    def test_consent_ordering(self):
+        self.assertEqual(Consent._meta.ordering, ("-created",))
+
     def setUp(self):
         # The post_migrate signal creates the first OpenwispVersion object
         # and uses the actual modules installed in the Python environment.

@@ -56,7 +56,7 @@ class Shelf(TimeStampedEditableModel):
     def __str__(self):
         return self.name
 
-    class Meta:
+    class Meta(TimeStampedEditableModel.Meta):
         abstract = False
 
     def clean(self):
@@ -74,7 +74,7 @@ class Book(TimeStampedEditableModel):
     def __str__(self):
         return self.name
 
-    class Meta:
+    class Meta(TimeStampedEditableModel.Meta):
         abstract = False
 
 
