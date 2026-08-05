@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name="book",
-            options={"ordering": ("-created", "-pk")},
+            options={"ordering": ("name", "pk")},
         ),
         migrations.AlterModelOptions(
             name="shelf",

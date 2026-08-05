@@ -76,6 +76,7 @@ class Book(TimeStampedEditableModel):
 
     class Meta(TimeStampedEditableModel.Meta):
         abstract = False
+        ordering = ("name", "pk")
 
 
 class RadiusAccounting(models.Model):

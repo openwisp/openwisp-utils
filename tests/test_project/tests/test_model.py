@@ -27,19 +27,19 @@ class TestModel(TestCase):
         )
         old_book = Book.objects.create(
             id=UUID("00000000-0000-0000-0000-000000000004"),
-            name="Old book",
+            name="Same book",
             author="Author",
             shelf=old_shelf,
         )
         tied_book = Book.objects.create(
             id=UUID("00000000-0000-0000-0000-000000000005"),
-            name="Tied book",
+            name="Same book",
             author="Author",
             shelf=tied_shelf,
         )
         newest_book = Book.objects.create(
             id=UUID("00000000-0000-0000-0000-000000000006"),
-            name="Newest book",
+            name="Other book",
             author="Author",
             shelf=newest_shelf,
         )
@@ -55,14 +55,14 @@ class TestModel(TestCase):
             created=created + timedelta(days=1)
         )
         self.assertEqual(Shelf._meta.ordering, ("-created", "-pk"))
-        self.assertEqual(Book._meta.ordering, ("-created", "-pk"))
+        self.assertEqual(Book._meta.ordering, ("name", "pk"))
         self.assertEqual(
             list(Shelf.objects.values_list("pk", flat=True)),
             [newest_shelf.pk, tied_shelf.pk, old_shelf.pk],
         )
         self.assertEqual(
             list(Book.objects.values_list("pk", flat=True)),
-            [newest_book.pk, tied_book.pk, old_book.pk],
+            [newest_book.pk, old_book.pk, tied_book.pk],
         )
         self.assertEqual(
             list(Shelf.objects.order_by("name").values_list("pk", flat=True)),
