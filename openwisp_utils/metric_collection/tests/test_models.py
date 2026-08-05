@@ -1,5 +1,6 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
+from uuid import UUID
 
 import requests
 from django.apps import apps
@@ -23,7 +24,22 @@ from . import (
 
 class TestOpenwispVersion(TestCase):
     def test_consent_ordering(self):
-        self.assertEqual(Consent._meta.ordering, ("-created",))
+        old = Consent.objects.create(id=UUID("00000000-0000-0000-0000-000000000001"))
+        tied = Consent.objects.create(id=UUID("00000000-0000-0000-0000-000000000002"))
+        newest = Consent.objects.create(id=UUID("00000000-0000-0000-0000-000000000003"))
+        created = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        Consent.objects.filter(pk__in=[old.pk, tied.pk]).update(created=created)
+        Consent.objects.filter(pk=newest.pk).update(created=created + timedelta(days=1))
+
+        self.assertEqual(Consent._meta.ordering, ("-created", "-pk"))
+        self.assertEqual(
+            list(Consent.objects.values_list("pk", flat=True)),
+            [newest.pk, tied.pk, old.pk],
+        )
+        self.assertEqual(
+            list(Consent.objects.order_by("pk").values_list("pk", flat=True)),
+            [old.pk, tied.pk, newest.pk],
+        )
 
     def setUp(self):
         # The post_migrate signal creates the first OpenwispVersion object

@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name="consent",
-            options={"ordering": ("-created",)},
+            options={"ordering": ("-created", "-pk")},
         ),
     ]

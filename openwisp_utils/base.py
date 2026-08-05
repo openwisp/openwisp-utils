@@ -23,4 +23,4 @@ class TimeStampedEditableModel(UUIDModel):
 
     class Meta:
         abstract = True
-        ordering = ("-created",)
+        ordering = ("-created", "-pk")
