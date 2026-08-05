@@ -30,7 +30,6 @@ class TestOpenwispVersion(TestCase):
         created = datetime(2026, 1, 1, tzinfo=timezone.utc)
         Consent.objects.filter(pk__in=[old.pk, tied.pk]).update(created=created)
         Consent.objects.filter(pk=newest.pk).update(created=created + timedelta(days=1))
-
         self.assertEqual(Consent._meta.ordering, ("-created", "-pk"))
         self.assertEqual(
             list(Consent.objects.values_list("pk", flat=True)),

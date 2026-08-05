@@ -54,7 +54,6 @@ class TestModel(TestCase):
         Book.objects.filter(pk=newest_book.pk).update(
             created=created + timedelta(days=1)
         )
-
         self.assertEqual(Shelf._meta.ordering, ("-created", "-pk"))
         self.assertEqual(Book._meta.ordering, ("-created", "-pk"))
         self.assertEqual(
