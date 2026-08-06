@@ -53,6 +53,7 @@ If instructions conflict, repository config and CI workflows win first, official
 ## Coverage Notes
 
 - Prefer in-process tests so coverage tools can measure changed code.
+- Keep helpers and classes used by only one test method inside that method. Promote them to class or module scope only when genuinely reused.
 - Some tests invoke external commands with `subprocess.run`; `openwisp_utils/releaser/tests/test_commitizen_rules.py` is the clearest example.
 - Code reached only through subprocesses is invisible to the parent coverage process. Add direct unit tests when changing that code, following `openwisp_utils/releaser/tests/test_commitizen_unit.py` where applicable.
 - When checking coverage for a changed module, use `python -m pytest <test_path> --cov=<dotted.module.path> --cov-report=term-missing`.
