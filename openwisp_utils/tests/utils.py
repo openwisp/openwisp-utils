@@ -1,6 +1,7 @@
 import io
 import sys
 from contextlib import contextmanager
+from inspect import signature
 from time import time
 from unittest import TextTestResult, mock
 
@@ -81,22 +82,34 @@ class TimeLoggingTestRunner(DiscoverRunner):
 
 
 class CaptureOutput(object):
+    """Capture test output and optionally pass the streams to the test."""
+
     def __call__(self, function):
         def wrapped_function(*args, **kwargs):
             if hasattr(self, "stdout"):
                 sys.stdout = self.stdout
             if hasattr(self, "stderr"):
                 sys.stderr = self.stderr
-            original_args = list(args)
-            args = list(args)
+            capture_args = []
+            if hasattr(self, "stdout"):
+                capture_args.append(self.stdout)
+            if hasattr(self, "stderr"):
+                capture_args.append(self.stderr)
+            # mock.patch appends positional mocks when its wrapper runs. Include
+            # placeholders so the signature check reflects the eventual call.
+            patch_args = [
+                None
+                for patching in getattr(function, "patchings", [])
+                if patching.attribute_name is None and patching.new is mock.DEFAULT
+            ]
+            # Check the call shape without executing the test. Captured streams
+            # are omitted when the decorated function does not accept them.
             try:
-                if hasattr(self, "stdout"):
-                    args.append(self.stdout)
-                if hasattr(self, "stderr"):
-                    args.append(self.stderr)
-                function(*args, **kwargs)
+                signature(function).bind(*args, *capture_args, *patch_args, **kwargs)
             except TypeError:
-                function(*original_args, **kwargs)
+                capture_args = []
+            try:
+                function(*args, *capture_args, **kwargs)
             finally:
                 if hasattr(self, "stdout"):
                     self.stdout.close()
