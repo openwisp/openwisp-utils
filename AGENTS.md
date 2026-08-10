@@ -35,7 +35,7 @@ If instructions conflict, repository config and CI workflows win first, official
 - Add an explanatory commit body only for substantial changes, new features, or non-obvious bug fixes. The releaser automatically publishes the subject of `[feature]`, `[change]`, `[change!]`, `[deps]`, and `[fix]` commits, including scoped variants, in the changelog. Write those subjects in clear, user-friendly language suitable for release notes.
 - Send new commits in response to review feedback instead of amending existing commits.
 
-## Development Notes
+## Development Rules
 
 - Respect module boundaries and encapsulation. The module that owns a model, stored state, lifecycle, or domain invariant must expose the cohesive public operation that reads or changes it. Integrations must use that operation, not write its fields, coordinate multi-step changes to its internal state, or depend on its storage representation. Prefer behavior-oriented public APIs over setters for internal flags. When an integration needs a missing capability, add it to the owning module with invariant tests, then call it from the integration.
 - Preserve public APIs, CLI behavior, reusable workflow contracts, migrations, and integration points unless explicitly required.
@@ -53,7 +53,7 @@ If instructions conflict, repository config and CI workflows win first, official
 - Run the full test suite with a timeout of at least 15 minutes (`timeout=900000`).
 - Keep tests quiet on success. When code under test writes to stdout or stderr, use `capture_stdout`, `capture_stderr`, or `capture_any_output` from `openwisp_utils.tests` and assert the expected output. Do not leave unasserted output, logs, or warnings in test runs.
 
-## Coverage Notes
+## Coverage Rules
 
 - Prefer in-process tests so coverage tools can measure changed code.
 - Keep helpers and classes used by only one test method inside that method. Promote them to class or module scope only when genuinely reused.
@@ -61,7 +61,7 @@ If instructions conflict, repository config and CI workflows win first, official
 - Code reached only through subprocesses is invisible to the parent coverage process. Add direct unit tests when changing that code, following `openwisp_utils/releaser/tests/test_commitizen_unit.py` where applicable.
 - When checking coverage for a changed module, use `python -m pytest <test_path> --cov=<dotted.module.path> --cov-report=term-missing`.
 
-## Security and Review Notes
+## Security and Review Rules
 
 - Watch for unsafe file paths, unsafe subprocess usage, token or secret exposure, and changes that could weaken QA or release safeguards.
 
