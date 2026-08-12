@@ -1,5 +1,6 @@
 from importlib import reload
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -12,7 +13,9 @@ from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
+from rest_framework.settings import api_settings
 from rest_framework.test import APIRequestFactory
+from test_project.api.throttling import CustomScopedRateThrottle
 from test_project.serializers import ShelfSerializer
 
 from ..models import Shelf
@@ -74,7 +77,17 @@ class TestApi(CreateMixin, TestCase):
         serializer = NestedShelfSerializer(instance=s1)
         self.assertEqual(serializer.validate(data), data)
 
+    @override_settings(
+        REST_FRAMEWORK={
+            "DEFAULT_THROTTLE_CLASSES": [
+                "test_project.api.throttling.CustomScopedRateThrottle"
+            ],
+            "DEFAULT_THROTTLE_RATES": {"anon": "20/hour"},
+        }
+    )
     def test_rest_framework_settings_override(self):
+        self.assertEqual(api_settings.DEFAULT_THROTTLE_RATES, {"anon": "20/hour"})
+        apps.get_app_config("test_project").configure_rest_framework_defaults()
         drf_conf = getattr(settings, "REST_FRAMEWORK", {})
         self.assertEqual(
             drf_conf,
@@ -85,6 +98,13 @@ class TestApi(CreateMixin, TestCase):
                 "DEFAULT_THROTTLE_RATES": {"anon": "20/hour", "test": "10/minute"},
                 "TEST": True,
             },
+        )
+        self.assertEqual(
+            api_settings.DEFAULT_THROTTLE_CLASSES, [CustomScopedRateThrottle]
+        )
+        self.assertEqual(
+            api_settings.DEFAULT_THROTTLE_RATES,
+            {"anon": "20/hour", "test": "10/minute"},
         )
 
     def test_crud_shelf(self):

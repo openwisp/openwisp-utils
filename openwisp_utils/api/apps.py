@@ -1,5 +1,6 @@
 from django.apps import AppConfig
 from django.conf import settings
+from rest_framework.settings import api_settings
 
 from ..utils import deep_merge_dicts, default_or_test
 
@@ -44,3 +45,4 @@ class ApiAppConfig(AppConfig):
 
         # explicitly set it in settings.py
         setattr(settings, "REST_FRAMEWORK", current_settings)
+        api_settings.reload()
