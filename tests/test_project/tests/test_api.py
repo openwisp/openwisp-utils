@@ -15,6 +15,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.settings import api_settings
 from rest_framework.test import APIRequestFactory
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
 from test_project.api.throttling import CustomScopedRateThrottle
 from test_project.serializers import ShelfSerializer
 
@@ -106,6 +108,17 @@ class TestApi(CreateMixin, TestCase):
             api_settings.DEFAULT_THROTTLE_RATES,
             {"anon": "20/hour", "test": "10/minute"},
         )
+
+    @override_settings(REST_FRAMEWORK={"DEFAULT_THROTTLE_RATES": {"anon": "20/hour"}})
+    def test_rest_framework_settings_update_existing_api_views(self):
+        self.assertEqual(APIView.throttle_classes, [CustomScopedRateThrottle])
+        apps.get_app_config("test_project").configure_rest_framework_defaults()
+        self.assertEqual(
+            settings.REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"],
+            ["rest_framework.throttling.ScopedRateThrottle"],
+        )
+        self.assertEqual(api_settings.DEFAULT_THROTTLE_CLASSES, [ScopedRateThrottle])
+        self.assertEqual(APIView.throttle_classes, [ScopedRateThrottle])
 
     def test_crud_shelf(self):
         list_url = reverse("shelf_list")
