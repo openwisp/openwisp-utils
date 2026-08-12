@@ -1,7 +1,5 @@
 from django.apps import AppConfig
 from django.conf import settings
-from rest_framework.settings import api_settings
-from rest_framework.views import APIView
 
 from ..utils import deep_merge_dicts, default_or_test
 
@@ -14,7 +12,8 @@ DEFAULT_REST_FRAMEWORK_SETTINGS = {
 class ApiAppConfig(AppConfig):
     API_ENABLED = False
 
-    def ready(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if self.api_enabled:
             self.configure_rest_framework_defaults()
 
@@ -46,5 +45,7 @@ class ApiAppConfig(AppConfig):
 
         # explicitly set it in settings.py
         setattr(settings, "REST_FRAMEWORK", current_settings)
+
+        from rest_framework.settings import api_settings
+
         api_settings.reload()
-        APIView.throttle_classes = api_settings.DEFAULT_THROTTLE_CLASSES
