@@ -294,6 +294,7 @@ django.setup()
             capture_output=True,
             env=env,
             text=True,
+            timeout=30,
         )
 
 
