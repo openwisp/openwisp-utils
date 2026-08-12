@@ -86,6 +86,7 @@ jobs:
           repositories: ${{ github.event.repository.name }}
           permission-issues: write
           permission-pull-requests: write
+          permission-members: read
 
       - name: Check validation repository list
         run: |
