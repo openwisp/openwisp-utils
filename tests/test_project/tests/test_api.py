@@ -234,6 +234,24 @@ class TestApi(CreateMixin, TestCase):
 
 
 class TestApiAppConfig(TestCase):
+    def _run_startup_test(self, settings_module, code):
+        env = os.environ | {
+            "DJANGO_SETTINGS_MODULE": settings_module,
+            "PYTHONPATH": os.pathsep.join(
+                [
+                    str(Path(__file__).parents[2]),
+                    os.environ.get("PYTHONPATH", ""),
+                ]
+            ),
+        }
+        return subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            env=env,
+            text=True,
+            timeout=30,
+        )
+
     def test_defaults_are_available_before_models_are_imported(self):
         """Run startup in a clean process before Django and DRF caches exist."""
         code = """
@@ -292,24 +310,6 @@ django.setup()
 """
         result = self._run_startup_test("api_app_config.no_rest_settings", code)
         self.assertEqual(result.returncode, 0, result.stderr)
-
-    def _run_startup_test(self, settings_module, code):
-        env = os.environ | {
-            "DJANGO_SETTINGS_MODULE": settings_module,
-            "PYTHONPATH": os.pathsep.join(
-                [
-                    str(Path(__file__).parents[2]),
-                    os.environ.get("PYTHONPATH", ""),
-                ]
-            ),
-        }
-        return subprocess.run(
-            [sys.executable, "-c", code],
-            capture_output=True,
-            env=env,
-            text=True,
-            timeout=30,
-        )
 
 
 class TestOpenWispPagination(CreateMixin, TestCase):
