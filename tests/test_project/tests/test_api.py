@@ -235,6 +235,7 @@ class TestApi(CreateMixin, TestCase):
 
 class TestApiAppConfig(TestCase):
     def test_defaults_are_available_before_models_are_imported(self):
+        """Run startup in a clean process before Django and DRF caches exist."""
         code = """
 import django
 

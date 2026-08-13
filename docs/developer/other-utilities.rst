@@ -85,8 +85,7 @@ other modules. Defaults are applied while Django initializes app configs,
 before models and DRF policy classes are imported. Explicit values in
 ``settings.REST_FRAMEWORK`` take precedence over module defaults. When
 multiple enabled modules define the same default, the first one in
-``INSTALLED_APPS`` takes precedence. Set ``API_ENABLED = False`` to
-disable the module's contribution.
+``INSTALLED_APPS`` takes precedence.
 
 .. _utils_openwisp_pagination:
 

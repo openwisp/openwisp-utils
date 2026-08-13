@@ -14,6 +14,7 @@ class ApiAppConfig(AppConfig):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Configure defaults before Django imports models, which may cache DRF settings.
         if self.api_enabled:
             self.configure_rest_framework_defaults()
 
@@ -43,9 +44,8 @@ class ApiAppConfig(AppConfig):
             # otherwise just set it as default value
             current_settings.setdefault(key, value)
 
-        # explicitly set it in settings.py
+        # Set merged defaults before DRF reads and caches them.
         setattr(settings, "REST_FRAMEWORK", current_settings)
-
         from rest_framework.settings import api_settings
 
         api_settings.reload()
