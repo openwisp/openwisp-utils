@@ -244,17 +244,30 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.throttling import ScopedRateThrottle, SimpleRateThrottle
 from rest_framework.views import APIView
 
-assert APIView.permission_classes == [IsAuthenticated]
-assert SimpleRateThrottle.THROTTLE_RATES == {
+expected_permission_classes = [IsAuthenticated]
+if APIView.permission_classes != expected_permission_classes:
+    raise AssertionError(
+        f"Expected {expected_permission_classes!r}, "
+        f"got {APIView.permission_classes!r}"
+    )
+
+expected_throttle_rates = {
     "anon": None,
     "first": "99/minute",
     "second": "20/minute",
 }
+if SimpleRateThrottle.THROTTLE_RATES != expected_throttle_rates:
+    raise AssertionError(
+        f"Expected {expected_throttle_rates!r}, "
+        f"got {SimpleRateThrottle.THROTTLE_RATES!r}"
+    )
 
 class SecondScopedRateThrottle(ScopedRateThrottle):
     scope = "second"
 
-assert SecondScopedRateThrottle().get_rate() == "20/minute"
+actual_rate = SecondScopedRateThrottle().get_rate()
+if actual_rate != "20/minute":
+    raise AssertionError(f"Expected '20/minute', got {actual_rate!r}")
 """
         result = self._run_startup_test("api_app_config.settings", code)
         self.assertEqual(result.returncode, 0, result.stderr)
