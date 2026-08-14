@@ -552,25 +552,6 @@ class TestParseRetryDecision(unittest.TestCase):
         self.assertIsNone(_parse_retry_decision("   \n  "))
 
 
-class TestRetryClassifier(unittest.TestCase):
-    """Tests for the LLM retry classifier."""
-
-    @patch("builtins.print")
-    @patch("analyze_failure.types")
-    def test_uses_minimal_thinking(self, mock_types, mock_print):
-        client = MagicMock()
-        client.models.generate_content.return_value.text = "NO"
-        self.assertFalse(_should_retry_ci(client, "Error log", "gemini-test", "tag"))
-        call_kwargs = mock_types.GenerateContentConfig.call_args[1]
-        self.assertEqual(
-            call_kwargs["thinking_config"], mock_types.ThinkingConfig.return_value
-        )
-        mock_types.ThinkingConfig.assert_called_once_with(thinking_level="minimal")
-        mock_print.assert_called_once_with(
-            "::notice::Retry classifier model=gemini-test output=NO", file=sys.stderr
-        )
-
-
 class TestMain(unittest.TestCase):
     """Tests for the main execution block."""
 
@@ -875,6 +856,21 @@ class TestMain(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         main()
         mock_file.assert_any_call("transient_failure", "w")
+
+    @patch("builtins.print")
+    @patch("analyze_failure.types")
+    def test_retry_classifier_uses_minimal_thinking(self, mock_types, mock_print):
+        client = MagicMock()
+        client.models.generate_content.return_value.text = "NO"
+        self.assertFalse(_should_retry_ci(client, "Error log", "gemini-test", "tag"))
+        call_kwargs = mock_types.GenerateContentConfig.call_args[1]
+        self.assertEqual(
+            call_kwargs["thinking_config"], mock_types.ThinkingConfig.return_value
+        )
+        mock_types.ThinkingConfig.assert_called_once_with(thinking_level="minimal")
+        mock_print.assert_called_once_with(
+            "::notice::Retry classifier model=gemini-test output=NO", file=sys.stderr
+        )
 
     @patch("builtins.open", new_callable=mock_open)
     @patch("builtins.print")
