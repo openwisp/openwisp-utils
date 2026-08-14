@@ -456,11 +456,11 @@ The bot supports a configurable retry classifier mode via
 **Model configuration**
 
 By default the bot uses ``gemini-3.5-flash-lite`` with minimal thinking.
-To use a different model, set the ``GEMINI_MODEL`` repository or
-organization variable. An unset or empty value keeps the default. The same
-variable also controls the :ref:`Changelog bot <utils_changelog_bot>`, so
-setting it once at the organization level changes the model for both bots
-at the same time.
+To use a different Gemini 3.5 or later model, set the ``GEMINI_MODEL``
+repository or organization variable. An unset or empty value keeps the
+default. The same variable also controls the :ref:`Changelog bot
+<utils_changelog_bot>`, so setting it once at the organization level
+changes the model for both bots at the same time.
 
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
@@ -599,9 +599,9 @@ to secrets, and is the one that generates and posts the changelog comment.
 
 The changelog bot uses ``gemini-3.5-flash-lite`` with minimal thinking by
 default and honors the same ``GEMINI_MODEL`` repository or organization
-variable as the :ref:`CI failure bot <utils_ci_failure_bot>`. Setting it
-once at the organization level changes the model for both bots at the same
-time.
+variable as the :ref:`CI failure bot <utils_ci_failure_bot>`. Both bots
+require a Gemini 3.5 or later model. Setting it once at the organization
+level changes the model for both bots at the same time.
 
 The bot normalizes generated commit-message body text locally before
 validation, wrapping long body lines while preserving issue footers such

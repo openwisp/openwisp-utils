@@ -61,8 +61,8 @@ class TestResolveModel(unittest.TestCase):
     """Tests for resolve_model: GEMINI_MODEL env resolution."""
 
     def test_returns_env_model_when_set(self):
-        with patch.dict(os.environ, {"GEMINI_MODEL": "gemini-2.5-flash"}):
-            self.assertEqual(resolve_model(), "gemini-2.5-flash")
+        with patch.dict(os.environ, {"GEMINI_MODEL": "gemini-3.5-flash"}):
+            self.assertEqual(resolve_model(), "gemini-3.5-flash")
 
     def test_returns_default_when_unset(self):
         with patch.dict(os.environ, {}, clear=True):
@@ -79,8 +79,8 @@ class TestResolveModel(unittest.TestCase):
             self.assertEqual(resolve_model(), "gemini-3.5-flash-lite")
 
     def test_strips_surrounding_whitespace(self):
-        with patch.dict(os.environ, {"GEMINI_MODEL": "  gemini-2.5-flash  "}):
-            self.assertEqual(resolve_model(), "gemini-2.5-flash")
+        with patch.dict(os.environ, {"GEMINI_MODEL": "  gemini-3.5-flash  "}):
+            self.assertEqual(resolve_model(), "gemini-3.5-flash")
 
 
 class TestGetPrDetails(unittest.TestCase):
@@ -260,7 +260,7 @@ class TestCallGemini(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         result = call_gemini(
-            "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+            "Test prompt", "System instruction", "api_key", "gemini-3.5-flash-lite"
         )
         self.assertEqual(result, "Generated changelog")
         mock_genai.Client.assert_called_once()
@@ -277,10 +277,10 @@ class TestCallGemini(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         call_gemini(
-            "Test prompt", "System instruction", "api_key", model="gemini-1.5-pro"
+            "Test prompt", "System instruction", "api_key", model="gemini-3.5-flash"
         )
         call_kwargs = mock_client.models.generate_content.call_args[1]
-        self.assertEqual(call_kwargs["model"], "gemini-1.5-pro")
+        self.assertEqual(call_kwargs["model"], "gemini-3.5-flash")
 
     @patch("generate_changelog.types")
     @patch("generate_changelog.genai")
@@ -292,7 +292,7 @@ class TestCallGemini(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         system_instruction = "Test system instruction"
         call_gemini(
-            "Test prompt", system_instruction, "api_key", "gemini-2.5-flash-lite"
+            "Test prompt", system_instruction, "api_key", "gemini-3.5-flash-lite"
         )
         mock_types.GenerateContentConfig.assert_called_once()
         call_kwargs = mock_types.GenerateContentConfig.call_args[1]
@@ -308,7 +308,7 @@ class TestCallGemini(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         call_gemini(
-            "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+            "Test prompt", "System instruction", "api_key", "gemini-3.5-flash-lite"
         )
         call_kwargs = mock_types.GenerateContentConfig.call_args[1]
         self.assertEqual(call_kwargs["temperature"], 0.3)
@@ -327,7 +327,7 @@ class TestCallGemini(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         with self.assertRaises(SystemExit) as context:
             call_gemini(
-                "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+                "Test prompt", "System instruction", "api_key", "gemini-3.5-flash-lite"
             )
         self.assertEqual(context.exception.code, 1)
 
@@ -338,7 +338,7 @@ class TestCallGemini(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         with self.assertRaises(SystemExit) as context:
             call_gemini(
-                "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+                "Test prompt", "System instruction", "api_key", "gemini-3.5-flash-lite"
             )
         self.assertEqual(context.exception.code, 1)
 
@@ -353,7 +353,7 @@ class TestCallGemini(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         with self.assertRaises(SystemExit) as context:
             call_gemini(
-                "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+                "Test prompt", "System instruction", "api_key", "gemini-3.5-flash-lite"
             )
         self.assertEqual(context.exception.code, 0)
 
@@ -365,7 +365,7 @@ class TestCallGemini(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         call_gemini(
-            "Test prompt", "System instruction", "api_key", "gemini-2.5-flash-lite"
+            "Test prompt", "System instruction", "api_key", "gemini-3.5-flash-lite"
         )
         call_kwargs = mock_client.models.generate_content.call_args[1]
         self.assertEqual(call_kwargs["contents"], "Test prompt")

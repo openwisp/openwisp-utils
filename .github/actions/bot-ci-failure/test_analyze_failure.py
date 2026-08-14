@@ -655,6 +655,10 @@ class TestMain(unittest.TestCase):
         mock_genai.Client.return_value = mock_client
         main()
         self.assertEqual(mock_retry.call_args.args[2], "gemini-3.5-flash-lite")
+        self.assertEqual(
+            mock_client.models.generate_content.call_args[1]["model"],
+            "gemini-3.5-flash-lite",
+        )
         call_kwargs = mock_types.GenerateContentConfig.call_args[1]
         self.assertEqual(
             call_kwargs["thinking_config"], mock_types.ThinkingConfig.return_value
