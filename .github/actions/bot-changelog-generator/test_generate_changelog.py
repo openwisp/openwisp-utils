@@ -66,17 +66,17 @@ class TestResolveModel(unittest.TestCase):
 
     def test_returns_default_when_unset(self):
         with patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+            self.assertEqual(resolve_model(), "gemini-3.5-flash-lite")
 
     def test_returns_default_when_empty(self):
         # Regression: an empty ``${{ vars.GEMINI_MODEL }}`` forwards an empty
         # string, which must still fall back to the default model.
         with patch.dict(os.environ, {"GEMINI_MODEL": ""}):
-            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+            self.assertEqual(resolve_model(), "gemini-3.5-flash-lite")
 
     def test_returns_default_when_whitespace(self):
         with patch.dict(os.environ, {"GEMINI_MODEL": "   "}):
-            self.assertEqual(resolve_model(), "gemini-2.5-flash-lite")
+            self.assertEqual(resolve_model(), "gemini-3.5-flash-lite")
 
     def test_strips_surrounding_whitespace(self):
         with patch.dict(os.environ, {"GEMINI_MODEL": "  gemini-2.5-flash  "}):
@@ -313,6 +313,10 @@ class TestCallGemini(unittest.TestCase):
         call_kwargs = mock_types.GenerateContentConfig.call_args[1]
         self.assertEqual(call_kwargs["temperature"], 0.3)
         self.assertEqual(call_kwargs["max_output_tokens"], 1000)
+        self.assertEqual(
+            call_kwargs["thinking_config"], mock_types.ThinkingConfig.return_value
+        )
+        mock_types.ThinkingConfig.assert_called_once_with(thinking_level="minimal")
 
     @patch("generate_changelog.genai")
     def test_exits_on_empty_response(self, mock_genai):

@@ -12,6 +12,7 @@ from analyze_failure import (  # noqa: E402
     _is_transient_failure,
     _normalize_for_dedup,
     _parse_retry_decision,
+    _should_retry_ci,
     _strip_slow_test_output,
     get_error_logs,
     get_repo_context,
@@ -551,6 +552,25 @@ class TestParseRetryDecision(unittest.TestCase):
         self.assertIsNone(_parse_retry_decision("   \n  "))
 
 
+class TestRetryClassifier(unittest.TestCase):
+    """Tests for the LLM retry classifier."""
+
+    @patch("builtins.print")
+    @patch("analyze_failure.types")
+    def test_uses_minimal_thinking(self, mock_types, mock_print):
+        client = MagicMock()
+        client.models.generate_content.return_value.text = "NO"
+        self.assertFalse(_should_retry_ci(client, "Error log", "gemini-test", "tag"))
+        call_kwargs = mock_types.GenerateContentConfig.call_args[1]
+        self.assertEqual(
+            call_kwargs["thinking_config"], mock_types.ThinkingConfig.return_value
+        )
+        mock_types.ThinkingConfig.assert_called_once_with(thinking_level="minimal")
+        mock_print.assert_called_once_with(
+            "::notice::Retry classifier model=gemini-test output=NO", file=sys.stderr
+        )
+
+
 class TestMain(unittest.TestCase):
     """Tests for the main execution block."""
 
@@ -609,6 +629,7 @@ class TestMain(unittest.TestCase):
 
     @patch("builtins.print")
     @patch("analyze_failure.genai")
+    @patch("analyze_failure.types")
     @patch("analyze_failure.get_error_logs")
     @patch("analyze_failure.get_repo_context")
     @patch("analyze_failure._should_retry_ci")
@@ -617,7 +638,7 @@ class TestMain(unittest.TestCase):
         {"GEMINI_API_KEY": "fake_key", "PR_AUTHOR": "test", "COMMIT_SHA": "abc"},
     )
     def test_successful_api_call_prints_response(
-        self, mock_retry, mock_repo, mock_logs, mock_genai, mock_print
+        self, mock_retry, mock_repo, mock_logs, mock_types, mock_genai, mock_print
     ):
         mock_logs.return_value = ("Fake error log", True, False)
         mock_repo.return_value = "<file path='test.py'>code</file>"
@@ -633,6 +654,12 @@ class TestMain(unittest.TestCase):
         mock_client.models.generate_content.return_value = mock_response
         mock_genai.Client.return_value = mock_client
         main()
+        self.assertEqual(mock_retry.call_args.args[2], "gemini-3.5-flash-lite")
+        call_kwargs = mock_types.GenerateContentConfig.call_args[1]
+        self.assertEqual(
+            call_kwargs["thinking_config"], mock_types.ThinkingConfig.return_value
+        )
+        mock_types.ThinkingConfig.assert_called_once_with(thinking_level="minimal")
         mock_print.assert_any_call(
             "### Test Failed\n"
             "Hello @testuser\n"
