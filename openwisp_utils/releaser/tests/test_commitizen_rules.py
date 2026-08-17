@@ -260,6 +260,27 @@ def test_message_no_issue_returns_prefix_and_body():
     assert msg == "[chores] Updated docs\n\nDid stuff."
 
 
+def test_message_without_body_returns_title_only():
+    """message() allows title-only commits without a blank body separator."""
+    msg = _PLUGIN.message({"change_type": "chores", "title": "Updated docs", "how": ""})
+    assert msg == "[chores] Updated docs"
+
+
+def test_questions_mark_body_as_optional():
+    """The interactive prompt allows the description to be skipped."""
+    body_question = _PLUGIN.questions()[2]
+    assert body_question["message"] == "Describe what you changed (optional)"
+    assert "validate" not in body_question
+
+
+def test_message_auto_appends_related_to_when_body_is_empty():
+    """A title-only issue reference still receives the required footer."""
+    msg = _PLUGIN.message(
+        {"change_type": "feature", "title": "Added retries #42", "how": ""}
+    )
+    assert msg == "[feature] Added retries #42\n\nRelated to #42"
+
+
 def test_message_auto_appends_related_to_when_body_missing_issue():
     """message() auto-appends 'Related to' so the generated commit is symmetric."""
     msg = _PLUGIN.message(

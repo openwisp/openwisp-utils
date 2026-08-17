@@ -81,10 +81,7 @@ class OpenWispCommitizen(BaseCommitizen):
             {
                 "type": "input",
                 "name": "how",
-                "message": ("Describe what you changed"),
-                "validate": lambda v: (
-                    True if v.strip() else "Commit body cannot be empty."
-                ),
+                "message": "Describe what you changed (optional)",
             },
         ]
 
@@ -104,7 +101,10 @@ class OpenWispCommitizen(BaseCommitizen):
             body += "\n"
             for issue in sorted(missing_issues):
                 body += f"\nRelated to #{issue}"
-        return f"{prefix} {title}\n\n{body.strip()}"
+        message = f"{prefix} {title}"
+        if body.strip():
+            message += f"\n\n{body.strip()}"
+        return message
 
     def _extract_title_issues(self, commit_msg: str) -> set[str]:
         """Extract issue numbers from the commit title."""
