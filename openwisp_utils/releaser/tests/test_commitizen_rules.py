@@ -185,6 +185,14 @@ def test_info_includes_all_prefixes():
     assert "- bump" in info
 
 
+def test_info_documents_optional_description_and_title_only_example():
+    """The convention guide matches title-only commit support."""
+    info = _PLUGIN.info()
+    assert "<optional description>" in info
+    assert "Title-only example:" in info
+    assert "[chores] Updated documentation" in info
+
+
 def test_openwisp_commit_info_shortcut():
     """The wrapper exposes the Commitizen convention guide."""
     result = subprocess.run(
@@ -195,6 +203,22 @@ def test_openwisp_commit_info_shortcut():
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout == _PLUGIN.info() + "\n"
+
+
+def test_openwisp_commit_rejects_conflicting_modes():
+    """The wrapper rejects ambiguous combinations of mode flags."""
+    result = subprocess.run(
+        [
+            str(Path(__file__).parents[3] / "openwisp-commit"),
+            "--check",
+            "--info",
+        ],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "--check, --amend, and --info are mutually exclusive" in result.stdout
 
 
 def test_error_message_is_user_friendly():
@@ -208,6 +232,8 @@ def test_error_message_is_user_friendly():
     assert "Expected format:" in output
     assert "[prefix]" in output
     assert "[feature]" in output
+    assert "<optional description>" in output
+    assert "Title-only example:" in output
     assert "openwisp-commit --amend" in output
     assert "openwisp-commit --check" in output
     assert "openwisp-commit --info" in output

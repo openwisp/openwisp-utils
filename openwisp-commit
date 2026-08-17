@@ -16,20 +16,27 @@ show_help() {
 }
 
 REV_RANGE="HEAD^!"
-CHECK_MODE=false
-AMEND_MODE=false
-INFO_MODE=false
+MODE=""
+
+set_mode() {
+  if [ -n "$MODE" ]; then
+    printf "Error: --check, --amend, and --info are mutually exclusive\n\n"
+    show_help
+    exit 1
+  fi
+  MODE="$1"
+}
 
 while [ "$1" != "" ]; do
   case "$1" in
     --check)
-      CHECK_MODE=true
+      set_mode "check"
       ;;
     --amend)
-      AMEND_MODE=true
+      set_mode "amend"
       ;;
     --info)
-      INFO_MODE=true
+      set_mode "info"
       ;;
     --rev-range)
       shift
@@ -64,12 +71,17 @@ run_commit_and_check() {
   $CZ_COMMIT && $CZ_CHECK
 }
 
-if $CHECK_MODE; then
-  $CZ_CHECK
-elif $AMEND_MODE; then
-  git reset --soft HEAD~1 && run_commit_and_check
-elif $INFO_MODE; then
-  $CZ_INFO
-else
-  run_commit_and_check
-fi
+case "$MODE" in
+  check)
+    $CZ_CHECK
+    ;;
+  amend)
+    git reset --soft HEAD~1 && run_commit_and_check
+    ;;
+  info)
+    $CZ_INFO
+    ;;
+  *)
+    run_commit_and_check
+    ;;
+esac
