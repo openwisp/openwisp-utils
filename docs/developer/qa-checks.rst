@@ -148,8 +148,8 @@ Contributors can use the ``openwisp-commit`` shortcut:
 
 This command interactively prompts for the commit prefix, title
 (optionally including the reference to a github issue) and a short
-description of the changes, and generates a commit message which follows
-the OpenWISP commit message conventions.
+optional description of the changes, and generates a commit message which
+follows the OpenWISP commit message conventions.
 
 If you reference an issue in the title (e.g., ``[feature] Add support
 #123``) but don't reference it in the body, the tool will automatically
@@ -173,6 +173,12 @@ To check whether your commit message follows the conventions, use:
 
 This validates the latest commit message against the defined conventions
 and reports any formatting issues.
+
+To view the full commit message conventions and the allowed prefixes, use:
+
+.. code-block::
+
+    openwisp-commit --info
 
 For advanced use cases, you can also use Commitizen directly:
 

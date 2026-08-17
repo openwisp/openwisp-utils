@@ -28,21 +28,32 @@ class OpenWispCommitizen(BaseCommitizen):
     ]
 
     ERROR_TEMPLATE = (
-        "Invalid commit message format\n\n"
+        "Invalid commit message format!\n\n"
         "Expected format:\n\n"
         "  [prefix] Capitalized title\n\n"
-        "  <description>\n\n"
+        "  <optional description>\n\n"
         "Or with issue reference (must be symmetric):\n\n"
         "  [prefix] Capitalized title #<issue>\n\n"
-        "  <description>\n\n"
+        "  <optional description>\n\n"
         "  Fixes #<issue>\n\n"
         "Examples:\n\n"
+        "Title-only example:\n\n"
+        "  [chores] Updated documentation\n\n"
+        "Example with a description:\n\n"
         "  [chores] Updated documentation\n\n"
         "  Added new installation instructions.\n\n"
         "Or with issue reference:\n\n"
         "  [feature] Added subnet import support #104\n\n"
         "  Added support for importing multiple subnets from a CSV file.\n\n"
         "  Closes #104\n\n"
+        "To amend the invalid commit message:\n\n"
+        "  openwisp-commit --amend\n\n"
+        "For new commits:\n\n"
+        "  openwisp-commit\n\n"
+        "To check commit messages:\n\n"
+        "  openwisp-commit --check\n\n"
+        "For the full convention:\n\n"
+        "  openwisp-commit --info\n"
     )
 
     def _validate_title(self, value: str) -> bool | str:
@@ -73,10 +84,7 @@ class OpenWispCommitizen(BaseCommitizen):
             {
                 "type": "input",
                 "name": "how",
-                "message": ("Describe what you changed"),
-                "validate": lambda v: (
-                    True if v.strip() else "Commit body cannot be empty."
-                ),
+                "message": "Describe what you changed (optional)",
             },
         ]
 
@@ -96,7 +104,10 @@ class OpenWispCommitizen(BaseCommitizen):
             body += "\n"
             for issue in sorted(missing_issues):
                 body += f"\nRelated to #{issue}"
-        return f"{prefix} {title}\n\n{body.strip()}"
+        message = f"{prefix} {title}"
+        if body.strip():
+            message += f"\n\n{body.strip()}"
+        return message
 
     def _extract_title_issues(self, commit_msg: str) -> set[str]:
         """Extract issue numbers from the commit title."""
@@ -258,11 +269,14 @@ class OpenWispCommitizen(BaseCommitizen):
             "Commit messages must follow this structure:\n\n"
             "With issue reference (symmetric, must be in both title and body):\n\n"
             "  [type] Capitalized title #<issue_number>\n\n"
-            "  <description>\n\n"
+            "  <optional description>\n\n"
             "  Fixes #<issue_number>\n\n"
-            "Without issue reference (for minor changes or urgent fixes):\n\n"
+            "Without issue reference (for minor changes or urgent fixes, "
+            "the description is optional):\n\n"
             "  [type] Capitalized title\n\n"
-            "  <description>\n\n"
+            "  <optional description>\n\n"
+            "Title-only example:\n\n"
+            "  [chores] Updated documentation\n\n"
             f"Allowed commit prefixes:\n\n{prefixes_list}\n\n"
             "If in doubt, use chores."
         )

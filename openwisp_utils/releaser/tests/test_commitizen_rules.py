@@ -1,4 +1,6 @@
 import re
+import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 # ``commitizen.cz`` must be imported before ``openwisp_utils.releaser.commitizen``
@@ -183,6 +185,42 @@ def test_info_includes_all_prefixes():
     assert "- bump" in info
 
 
+def test_info_documents_optional_description_and_title_only_example():
+    """The convention guide matches title-only commit support."""
+    info = _PLUGIN.info()
+    assert "<optional description>" in info
+    assert "Title-only example:" in info
+    assert "[chores] Updated documentation" in info
+
+
+def test_openwisp_commit_info_shortcut():
+    """The wrapper exposes the Commitizen convention guide."""
+    result = subprocess.run(
+        [str(Path(__file__).parents[3] / "openwisp-commit"), "--info"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == _PLUGIN.info() + "\n"
+
+
+def test_openwisp_commit_rejects_conflicting_modes():
+    """The wrapper rejects ambiguous combinations of mode flags."""
+    result = subprocess.run(
+        [
+            str(Path(__file__).parents[3] / "openwisp-commit"),
+            "--check",
+            "--info",
+        ],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert "--check, --amend, and --info are mutually exclusive" in result.stdout
+
+
 def test_error_message_is_user_friendly():
     """Check that error messages are helpful and don't expose regex."""
     message = "INVALID COMMIT MESSAGE"
@@ -194,6 +232,11 @@ def test_error_message_is_user_friendly():
     assert "Expected format:" in output
     assert "[prefix]" in output
     assert "[feature]" in output
+    assert "<optional description>" in output
+    assert "Title-only example:" in output
+    assert "openwisp-commit --amend" in output
+    assert "openwisp-commit --check" in output
+    assert "openwisp-commit --info" in output
     # Make sure raw regex pattern is NOT shown
     assert "(?sm)" not in output
     assert "pattern:" not in output.lower()
@@ -241,6 +284,27 @@ def test_message_no_issue_returns_prefix_and_body():
         {"change_type": "chores", "title": "Updated docs", "how": "Did stuff."}
     )
     assert msg == "[chores] Updated docs\n\nDid stuff."
+
+
+def test_message_without_body_returns_title_only():
+    """message() allows title-only commits without a blank body separator."""
+    msg = _PLUGIN.message({"change_type": "chores", "title": "Updated docs", "how": ""})
+    assert msg == "[chores] Updated docs"
+
+
+def test_questions_mark_body_as_optional():
+    """The interactive prompt allows the description to be skipped."""
+    body_question = _PLUGIN.questions()[2]
+    assert body_question["message"] == "Describe what you changed (optional)"
+    assert "validate" not in body_question
+
+
+def test_message_auto_appends_related_to_when_body_is_empty():
+    """A title-only issue reference still receives the required footer."""
+    msg = _PLUGIN.message(
+        {"change_type": "feature", "title": "Added retries #42", "how": ""}
+    )
+    assert msg == "[feature] Added retries #42\n\nRelated to #42"
 
 
 def test_message_auto_appends_related_to_when_body_missing_issue():
