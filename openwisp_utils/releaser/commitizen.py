@@ -28,7 +28,7 @@ class OpenWispCommitizen(BaseCommitizen):
     ]
 
     ERROR_TEMPLATE = (
-        "Invalid commit message format\n\n"
+        "Invalid commit message format!\n\n"
         "Expected format:\n\n"
         "  [prefix] Capitalized title\n\n"
         "  <description>\n\n"
@@ -43,6 +43,14 @@ class OpenWispCommitizen(BaseCommitizen):
         "  [feature] Added subnet import support #104\n\n"
         "  Added support for importing multiple subnets from a CSV file.\n\n"
         "  Closes #104\n\n"
+        "To amend the invalid commit message:\n\n"
+        "  openwisp-commit --amend\n\n"
+        "For new commits:\n\n"
+        "  openwisp-commit\n\n"
+        "To check commit messages:\n\n"
+        "  openwisp-commit --check\n\n"
+        "For the full convention:\n\n"
+        "  openwisp-commit --info\n"
     )
 
     def _validate_title(self, value: str) -> bool | str:

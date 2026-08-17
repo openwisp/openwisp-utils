@@ -1,4 +1,6 @@
 import re
+import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 # ``commitizen.cz`` must be imported before ``openwisp_utils.releaser.commitizen``
@@ -183,6 +185,18 @@ def test_info_includes_all_prefixes():
     assert "- bump" in info
 
 
+def test_openwisp_commit_info_shortcut():
+    """The wrapper exposes the Commitizen convention guide."""
+    result = subprocess.run(
+        [str(Path(__file__).parents[3] / "openwisp-commit"), "--info"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == _PLUGIN.info() + "\n"
+
+
 def test_error_message_is_user_friendly():
     """Check that error messages are helpful and don't expose regex."""
     message = "INVALID COMMIT MESSAGE"
@@ -194,6 +208,9 @@ def test_error_message_is_user_friendly():
     assert "Expected format:" in output
     assert "[prefix]" in output
     assert "[feature]" in output
+    assert "openwisp-commit --amend" in output
+    assert "openwisp-commit --check" in output
+    assert "openwisp-commit --info" in output
     # Make sure raw regex pattern is NOT shown
     assert "(?sm)" not in output
     assert "pattern:" not in output.lower()

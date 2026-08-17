@@ -174,6 +174,12 @@ To check whether your commit message follows the conventions, use:
 This validates the latest commit message against the defined conventions
 and reports any formatting issues.
 
+To view the full commit message conventions and the allowed prefixes, use:
+
+.. code-block::
+
+    openwisp-commit --info
+
 For advanced use cases, you can also use Commitizen directly:
 
 .. code-block::
