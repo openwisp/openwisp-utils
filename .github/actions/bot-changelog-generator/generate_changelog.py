@@ -21,7 +21,7 @@ Environment Variables:
     PR_NUMBER: The PR number to analyze
     REPO_NAME: The repository name (e.g., openwisp/openwisp-utils)
     GITHUB_TOKEN: GitHub token for API access
-    GEMINI_MODEL: Model to use (default: 'gemini-2.5-flash-lite'). An unset or
+    GEMINI_MODEL: Model to use (default: 'gemini-3.5-flash-lite'). An unset or
         empty value falls back to the default, mirroring the CI-failure bot.
 """
 
@@ -45,7 +45,7 @@ COMMIT_BODY_MAX_NONEMPTY_LINES = 10
 # Keep this low: each attempt is one Gemini request, and the bot shares a
 # per-model daily request quota (RPD) with the other OpenWISP bots.
 MAX_GENERATION_ATTEMPTS = 2
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-lite"
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite"
 COMMIT_MESSAGE_RULE_CONTEXT_FILES = (
     "openwisp_utils/releaser/commitizen.py",
     "openwisp_utils/releaser/tests/test_commitizen_rules.py",
@@ -304,6 +304,7 @@ def call_gemini(
                 system_instruction=system_instruction,
                 temperature=0.3,
                 max_output_tokens=1000,
+                thinking_config=types.ThinkingConfig(thinking_level="minimal"),
             ),
         )
         if not response.text:

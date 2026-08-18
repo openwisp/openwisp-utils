@@ -4,26 +4,39 @@ show_help() {
   printf "Usage:\n"
   printf "  openwisp-commit [--amend]\n"
   printf "  openwisp-commit --check [--rev-range <range>]\n"
+  printf "  openwisp-commit --info\n"
   printf "\n"
   printf "Creates or validates commits following OpenWISP commit conventions.\n"
   printf "\n"
   printf "Options:\n"
   printf "  --amend              Amend the last commit (soft reset + recommit)\n"
   printf "  --check              Validate commit messages instead of creating one\n"
+  printf "  --info               Show the OpenWISP commit conventions\n"
   printf "  --rev-range <range>  Git revision range to check (default: HEAD^!)\n"
 }
 
 REV_RANGE="HEAD^!"
-CHECK_MODE=false
-AMEND_MODE=false
+MODE=""
+
+set_mode() {
+  if [ -n "$MODE" ]; then
+    printf "Error: --check, --amend, and --info are mutually exclusive\n\n"
+    show_help
+    exit 1
+  fi
+  MODE="$1"
+}
 
 while [ "$1" != "" ]; do
   case "$1" in
     --check)
-      CHECK_MODE=true
+      set_mode "check"
       ;;
     --amend)
-      AMEND_MODE=true
+      set_mode "amend"
+      ;;
+    --info)
+      set_mode "info"
       ;;
     --rev-range)
       shift
@@ -52,15 +65,23 @@ done
 CZ_CMD="cz -n cz_openwisp"
 CZ_COMMIT="$CZ_CMD commit"
 CZ_CHECK="$CZ_CMD check --rev-range $REV_RANGE"
+CZ_INFO="$CZ_CMD info"
 
 run_commit_and_check() {
   $CZ_COMMIT && $CZ_CHECK
 }
 
-if $CHECK_MODE; then
-  $CZ_CHECK
-elif $AMEND_MODE; then
-  git reset --soft HEAD~1 && run_commit_and_check
-else
-  run_commit_and_check
-fi
+case "$MODE" in
+  check)
+    $CZ_CHECK
+    ;;
+  amend)
+    git reset --soft HEAD~1 && run_commit_and_check
+    ;;
+  info)
+    $CZ_INFO
+    ;;
+  *)
+    run_commit_and_check
+    ;;
+esac
