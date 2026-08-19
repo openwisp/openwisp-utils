@@ -1327,3 +1327,38 @@ class TestPRValidation:
         with patch.object(bot, "validate_pr_issues", return_value=True):
             assert bot.handle_pull_request()
             mock_pr_obj.remove_from_labels.assert_called_once_with("invalid")
+
+    def test_workflow_has_members_read_permission(self):
+        """Verify that the reusable workflow requests permission-members: read."""
+        workflow_path = os.path.join(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+            ),
+            "workflows",
+            "reusable-bot-autoassign.yml",
+        )
+        assert os.path.exists(
+            workflow_path
+        ), f"Workflow file not found at {workflow_path}"
+        in_write_token_step = False
+        with_indent = None
+        with open(workflow_path, "r") as f:
+            for raw_line in f:
+                stripped = raw_line.strip()
+                if stripped == "- name: Generate repository write token":
+                    in_write_token_step = True
+                    with_indent = None
+                elif in_write_token_step and stripped.startswith("- name:"):
+                    in_write_token_step = False
+                    with_indent = None
+                elif in_write_token_step and stripped == "with:":
+                    with_indent = len(raw_line) - len(raw_line.lstrip())
+                elif with_indent is not None:
+                    current_indent = len(raw_line) - len(raw_line.lstrip())
+                    if current_indent <= with_indent:
+                        with_indent = None
+                    elif stripped == "permission-members: read":
+                        return
+        pytest.fail("permission-members: read is not requested in write-token step")
