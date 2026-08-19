@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, Mock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest  # noqa: E402
-import yaml  # noqa: E402
 from github import GithubException  # noqa: E402
 
 try:
@@ -1330,29 +1329,24 @@ class TestPRValidation:
             mock_pr_obj.remove_from_labels.assert_called_once_with("invalid")
 
 
-class TestWorkflowConfig:
-    def test_workflow_has_members_read_permission(self):
-        """Verify that the reusable workflow requests organization members: read permission."""
-        workflow_path = os.path.join(
-            os.path.dirname(
-                os.path.dirname(
-                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                )
-            ),
-            "workflows",
-            "reusable-bot-autoassign.yml",
-        )
-        assert os.path.exists(
-            workflow_path
-        ), f"Workflow file not found at {workflow_path}"
-        with open(workflow_path, "r") as f:
-            workflow = yaml.safe_load(f)
-        steps = workflow.get("jobs", {}).get("run-bot", {}).get("steps", [])
-        write_token_step = next(
-            (step for step in steps if step.get("id") == "write-token"), None
-        )
-        assert write_token_step is not None, "write-token step not found in workflow"
-        permissions = write_token_step.get("with", {})
-        assert (
-            permissions.get("permission-members") == "read"
-        ), "permission-members: read is not requested in write-token"
+def test_workflow_has_members_read_permission():
+    """Verify that the reusable workflow requests permission-members: read."""
+    workflow_path = os.path.join(
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        ),
+        "workflows",
+        "reusable-bot-autoassign.yml",
+    )
+    assert os.path.exists(workflow_path), f"Workflow file not found at {workflow_path}"
+    in_write_token_step = False
+    with open(workflow_path, "r") as f:
+        for line in f:
+            stripped = line.strip()
+            if stripped == "- name: Generate repository write token":
+                in_write_token_step = True
+            elif in_write_token_step and stripped.startswith("- name:"):
+                in_write_token_step = False
+            elif in_write_token_step and stripped == "permission-members: read":
+                return
+    pytest.fail("permission-members: read is not requested in write-token step")
