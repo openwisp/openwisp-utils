@@ -1108,6 +1108,8 @@ class TestPRValidation:
         mock_pr.author_association = "NONE"
         mock_pr.body = "Backport of #504 to `1.2`."
         assert bot.validate_pr_issues(mock_pr)
+        bot_env["github_validation"].get_repo.assert_not_called()
+        bot.github_validation.requester.graphql_query.assert_not_called()
         bot_env["repo_validation"].get_issue.assert_not_called()
 
     def test_validate_pr_issues_no_issues(self, bot_env):

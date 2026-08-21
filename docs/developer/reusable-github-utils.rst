@@ -70,7 +70,7 @@ OpenWISP repositories. The bot provides the following features:
   no assignment is needed — just open a PR.
 - **Stale PR management**: Warns PR authors after 7 days of inactivity,
   marks stale and unassigns after 14 days, and posts a final follow-up
-  encouragement after 60 days. The bot does not auto-close PRs.
+  encouragement after 60 days. The bot does not auto-close stale PRs.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
 - **PR validation**: Enforces the `OpenWISP Contributing Guidelines
