@@ -76,8 +76,9 @@ OpenWISP repositories. The bot provides the following features:
 - **PR validation**: Enforces the `OpenWISP Contributing Guidelines
   <https://openwisp.io/docs/dev/developer/contributing.html>`_ for
   external contributors by flagging PRs that do not link a validated
-  issue. The bot removes the ``invalid`` label once the PR is valid and
-  closes unresolved invalid PRs after 24 hours.
+  issue. PRs created by the configured GitHub App are exempt. The bot
+  removes the ``invalid`` label once the PR is valid and closes unresolved
+  invalid PRs after 24 hours.
 
 **How Stale PR Detection Works**
 
