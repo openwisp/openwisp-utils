@@ -142,6 +142,9 @@ class GitHubBot:
             if pr.user and isinstance(getattr(pr.user, "login", None), str)
             else ""
         )
+        if pr_author == self.bot_login:
+            print(f"Author {pr_author} is the configured bot. Proceeding.")
+            return True
         exclude_authors_env = os.environ.get(
             "EXCLUDE_PR_AUTHORS", DEFAULT_EXCLUDE_PR_AUTHORS
         )
