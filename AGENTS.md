@@ -60,6 +60,16 @@ If instructions conflict, repository config and CI workflows win first, official
 - Code reached only through subprocesses is invisible to the parent coverage process. Add direct unit tests when changing that code, following `openwisp_utils/releaser/tests/test_commitizen_unit.py` where applicable.
 - When checking coverage for a changed module, use `python -m pytest <test_path> --cov=<dotted.module.path> --cov-report=term-missing`.
 
+## Django Rules
+
+- Build internal URLs with named URL patterns and `reverse()` or `reverse_lazy()`, including in tests. Use the appropriate namespace and URL arguments.
+- In the main behavior test for non-trivial, frequently called views, include `assertNumQueries()` with representative data to enforce an intentional query budget and catch N+1 queries. Use `AssertNumQueriesSubTestMixin` from `openwisp_utils.tests` where available: it records the query-count check as a subtest, so subsequent assertions in the method still run. Change the expected count only when the extra queries are necessary and understood.
+- Before defining a new class, view, URL, REST endpoint, or test layout, inspect analogous implementations in related OpenWISP modules. Match their established names, URL names, API shape, and test organization unless the behavior requires a difference.
+- Changes to reusable Django REST Framework serializers, pagination, or API utilities must preserve their public contracts and include focused tests for validation, filtering or pagination where supported, and model validation when serializing model data.
+- Preserve the permission, deletion-protection, URL-generation, and template/media behavior of reusable Django admin classes. Add focused admin tests for changes to those behaviors.
+- Preserve anonymous metric collection and the explicit user consent or opt-out behavior. Do not add personally identifiable data to metric payloads.
+- Mark user-facing strings as translatable with Django i18n helpers, typically `gettext_lazy` imported as `_`.
+
 ## Security and Review Rules
 
 - Watch for unsafe file paths, unsafe subprocess usage, token or secret exposure, and changes that could weaken QA or release safeguards.
