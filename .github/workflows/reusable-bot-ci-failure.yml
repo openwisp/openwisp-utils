@@ -95,7 +95,7 @@ jobs:
           > failed_logs.txt
           for JOB_ID in $JOB_IDS; do
             echo "Processing job $JOB_ID"
-            if ! gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
+            if ! gh api --allow-escape-sequences repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
               echo "Could not fetch logs for job $JOB_ID; skipping." >> failed_logs.txt
               continue
             fi
