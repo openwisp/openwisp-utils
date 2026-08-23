@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,6 +20,19 @@ from analyze_failure import (  # noqa: E402
     main,
     process_error_logs,
 )
+
+
+class TestReusableWorkflow(unittest.TestCase):
+    def test_allows_escape_sequences_when_fetching_job_logs(self):
+        workflow = (
+            Path(__file__).resolve().parents[3]
+            / ".github/workflows/reusable-bot-ci-failure.yml"
+        )
+        fetch_command = (
+            "gh api --allow-escape-sequences "
+            "repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt"
+        )
+        self.assertIn(fetch_command, workflow.read_text())
 
 
 class TestGetErrorLogs(unittest.TestCase):
