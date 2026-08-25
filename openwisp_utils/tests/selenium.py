@@ -411,6 +411,17 @@ class SeleniumTestMixin:
         driver = driver or self.web_driver
         return self.wait_for("presence_of_element_located", by, value, timeout, driver)
 
+    def wait_until(self, condition, timeout=2, driver=None):
+        driver = driver or self.web_driver
+        return WebDriverWait(driver, timeout).until(condition)
+
+    def wait_for_script(self, script, *args, timeout=2, driver=None):
+        return self.wait_until(
+            lambda current_driver: current_driver.execute_script(script, *args),
+            timeout=timeout,
+            driver=driver,
+        )
+
     def wait_for(self, method, by, value, timeout=2, driver=None):
         driver = driver or self.web_driver
         try:
@@ -420,6 +431,14 @@ class SeleniumTestMixin:
         except TimeoutException as e:
             print(self.get_browser_logs(driver))
             self.fail(f'{method} of "{value}" failed: {e}')
+
+    def assert_no_browser_errors(self, driver=None):
+        self.assertEqual(self.get_browser_errors(driver=driver), [])
+
+    def wait_for_admin_success_message(self, timeout=2, driver=None):
+        return self.wait_for_presence(
+            By.CSS_SELECTOR, ".messagelist .success", timeout, driver
+        )
 
     def hide_loading_overlay(self, html_id="loading-overlay", timeout=2, driver=None):
         """The geckodriver can't figure out the loading overlay is still fading out, so let's just hide it."""
