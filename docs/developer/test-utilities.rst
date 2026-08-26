@@ -347,3 +347,37 @@ Selenium's ``WebDriverWait`` and Expected Conditions (``EC``).
 
 If the timeout is reached, the test fails with a descriptive error
 message.
+
+``wait_until(condition, timeout=2, driver=None)``
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until a custom Selenium expected condition or callable returns a
+truthy value. Returns that value and preserves Selenium's
+``TimeoutException``, allowing tests to provide a domain-specific failure
+message when needed.
+
+All standard Selenium waits default to two seconds, so tests must omit the
+``timeout`` argument in the normal case. Use ``timeout=5`` only for a
+concrete external asynchronous boundary, such as WebSocket delivery,
+geocoding, chart rendering, or a page navigation.
+
+``wait_for_script(script, *args, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Executes ``script`` until it returns a truthy value. Positional arguments
+are passed to Selenium as JavaScript arguments and the final script result
+is returned. This method uses ``wait_until()`` internally and is useful
+for waiting for JavaScript-managed UI state.
+
+``assert_no_browser_errors(driver=None)``
++++++++++++++++++++++++++++++++++++++++++
+
+Asserts that the current page has no relevant ``SEVERE`` browser console
+entries. It uses ``get_browser_errors()`` and therefore applies the
+mixin's configured ignored-message filtering.
+
+``wait_for_admin_success_message(timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits for Django admin's ``.messagelist .success`` confirmation message
+and returns the matching element.
