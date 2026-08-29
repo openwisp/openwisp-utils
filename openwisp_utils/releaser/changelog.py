@@ -7,6 +7,7 @@ import tempfile
 
 import questionary
 
+from .constants import ISSUE_REFERENCE_KEYWORDS
 from .utils import _call_docstrfmt
 
 CHANGELOG_BODY_MARKER = "OW_CHANGELOG_BODY:"
@@ -93,6 +94,12 @@ def _clean_commit_metadata(lines):
     cleaned_lines = []
     skip_dependabot_metadata = False
     dependabot_metadata_start = re.compile(r"^\s*---\s*$")
+    issue_reference = r"(?:#\d+|`#\d+\s+<[^>]+>`_)"
+    issue_reference_pattern = re.compile(
+        rf"^\s*(?:{'|'.join(ISSUE_REFERENCE_KEYWORDS)})\s+{issue_reference}"
+        rf"(?:\s+{issue_reference})*\s*$",
+        re.IGNORECASE,
+    )
     trailer_pattern = re.compile(
         r"^\s*(?:Signed-off-by|Co-authored-by):|cherry picked from commit",
         re.IGNORECASE,
@@ -105,21 +112,28 @@ def _clean_commit_metadata(lines):
             if stripped_line == "...":
                 skip_dependabot_metadata = False
             continue
-        if stripped_line == "updated-dependencies:":
+        if is_body_line and stripped_line == "updated-dependencies:":
             skip_dependabot_metadata = True
             continue
-        if dependabot_metadata_start.match(stripped_line):
-            has_dependabot_metadata = any(
-                _get_changelog_line_content(remaining_line) == "updated-dependencies:"
-                for remaining_index, remaining_line in enumerate(lines)
-                if remaining_index > index
-            )
+        if is_body_line and dependabot_metadata_start.match(stripped_line):
+            has_dependabot_metadata = False
+            for remaining_line in lines[index + 1 :]:  # noqa: E203
+                if not remaining_line.strip().startswith(CHANGELOG_BODY_MARKER):
+                    break
+                remaining_content = _get_changelog_line_content(remaining_line)
+                if remaining_content == "updated-dependencies:":
+                    has_dependabot_metadata = True
+                    break
+                if remaining_content:
+                    break
             if has_dependabot_metadata:
                 skip_dependabot_metadata = True
                 continue
         if is_body_line and len(stripped_line) > 3 and set(stripped_line) == {"-"}:
             continue
         if trailer_pattern.search(stripped_line):
+            continue
+        if is_body_line and issue_reference_pattern.fullmatch(stripped_line):
             continue
         cleaned_lines.append(line)
     return cleaned_lines

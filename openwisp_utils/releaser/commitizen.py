@@ -2,9 +2,11 @@ import re
 
 from commitizen.cz.base import BaseCommitizen, ValidationResult
 
+from .constants import ISSUE_REFERENCE_KEYWORDS
+
 _TITLE_ISSUE_EXTRACT_RE = re.compile(r" #(\d+)")
 _BODY_ISSUE_RE = re.compile(
-    r"(?:Close|Closes|Closed|Fix|Fixes|Fixed|Resolve|Resolves|Resolved|Related to)((?:\s+#\d+)+)",
+    rf"(?:{'|'.join(ISSUE_REFERENCE_KEYWORDS)})((?:\s+#\d+)+)",
     re.IGNORECASE,
 )
 

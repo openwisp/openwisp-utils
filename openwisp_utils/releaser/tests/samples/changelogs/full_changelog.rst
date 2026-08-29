@@ -18,12 +18,8 @@ Features
   Retry selenium tests if the tests fails on the first attempt. This
   prevents failng the CI build from flaky tests.
 
-  Closes `#464 <https://github.com/#REPO#/issues/464>`_
-
 - Generate CHANGES.rst automatically `#496
   <https://github.com/#REPO#/issues/496>`_
-
-  Closes `#496 <https://github.com/#REPO#/issues/496>`_
 
 Changes
 ~~~~~~~
@@ -36,8 +32,6 @@ Backward-incompatible changes
 
   Updated docs to suggest overriding the template.
 
-  Closes `#482 <https://github.com/#REPO#/issues/482>`_
-
 Other changes
 +++++++++++++
 
@@ -45,8 +39,6 @@ Other changes
 - Rollback DRF to 3.15 (security)
 - Switched to prettier for CSS/JS linting `#367
   <https://github.com/#REPO#/issues/367>`_
-
-  Closes `#367 <https://github.com/#REPO#/issues/367>`_
 
 Dependencies
 ++++++++++++

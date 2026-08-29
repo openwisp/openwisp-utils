@@ -240,6 +240,57 @@ Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.c
     assert "Co-authored-by:" not in actual_output
 
 
+def test_changelog_generation_preserves_body_before_dependabot_metadata(git_repo):
+    normal_commit_message = """[change] Changed changelog formatting
+
+This body contains a horizontal rule.
+---
+This body content must be preserved.
+"""
+    dependabot_commit_message = """[deps] Update django-reversion requirement from <5.2 to >=5.1,<6.1
+
+---
+updated-dependencies:
+- dependency-name: django-reversion
+...
+"""
+
+    actual_output = _generate_changelog_for_messages(
+        git_repo, [normal_commit_message, dependabot_commit_message]
+    )
+
+    assert "This body contains a horizontal rule." in actual_output
+    assert "This body content must be" in actual_output
+
+
+@pytest.mark.parametrize(
+    "keyword",
+    (
+        "Close",
+        "Closes",
+        "Closed",
+        "Fix",
+        "Fixes",
+        "Fixed",
+        "Resolve",
+        "Resolves",
+        "Resolved",
+        "Related to",
+    ),
+)
+def test_process_changelog_excludes_issue_reference_trailers(keyword):
+    changelog_text = f"""Changes
+~~~~~~~
+- Changed changelog formatting `#123 <https://github.com/#REPO#/issues/123>`_
+
+OW_CHANGELOG_BODY:{keyword} `#123 <https://github.com/#REPO#/issues/123>`_
+"""
+
+    processed_text = process_changelog(changelog_text)
+
+    assert f"{keyword} `#123" not in processed_text
+
+
 def test_process_changelog_preserves_markdown_links_for_markdown_output():
     changelog_text = """Dependencies
 ++++++++++++
