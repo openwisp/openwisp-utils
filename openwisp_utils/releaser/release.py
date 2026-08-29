@@ -219,7 +219,9 @@ def main():
         print("No changes found for the new release. Exiting.")
         sys.exit(0)
 
-    processed_block = process_changelog(raw_changelog_block)
+    processed_block = process_changelog(
+        raw_changelog_block, changelog_format=config["changelog_format"]
+    )
     formatted_block_rst = format_rst_block(processed_block)
 
     changelog_content = formatted_block_rst
