@@ -104,7 +104,6 @@ def _clean_commit_metadata(lines):
         r"^\s*(?:Signed-off-by|Co-authored-by):|cherry picked from commit",
         re.IGNORECASE,
     )
-
     for index, line in enumerate(lines):
         is_body_line = line.strip().startswith(CHANGELOG_BODY_MARKER)
         stripped_line = _get_changelog_line_content(line)

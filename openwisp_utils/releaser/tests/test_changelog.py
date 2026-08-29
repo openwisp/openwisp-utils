@@ -131,7 +131,6 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
 
 def _generate_changelog_for_messages(git_repo, messages):
     commit_count = 0
-
     for message in messages:
         with open(f"file_{commit_count}.txt", "w") as f:
             f.write(f"This is file number {commit_count}")
@@ -143,7 +142,6 @@ def _generate_changelog_for_messages(git_repo, messages):
             capture_output=True,
         )
         commit_count += 1
-
     raw_changelog = run_git_cliff()
     processed_changelog = process_changelog(raw_changelog)
     processed_changelog = "Changelog\n=========\n\n" + processed_changelog
@@ -160,11 +158,10 @@ regardless of whether they managed the organization
 of the subnet or not. This patch fixes it.
 
 (cherry picked from commit a4b272461bfa7a1762baf0b1fd76b4f5b681586b)
-Signed-off-by: Federico Capoano <f.capoano@openwisp.io>
+Signed-off-by: Test User <test@example.com>
 Co-authored-by: Test User <test@example.com>
 """
     actual_output = _generate_changelog_for_messages(git_repo, [commit_message])
-
     assert "- Fixed admin subnet export multitenancy security issue" in actual_output
     assert "Before this patch" in actual_output
     assert "specific subnet ID was known" in actual_output
@@ -197,7 +194,6 @@ Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 """
     actual_output = _generate_changelog_for_messages(git_repo, [commit_message])
-
     assert "- Bumped ``django-reversion<6.1``" in actual_output
     assert "Updates the requirements on" in actual_output
     assert "`django-reversion" in actual_output
@@ -254,11 +250,9 @@ updated-dependencies:
 - dependency-name: django-reversion
 ...
 """
-
     actual_output = _generate_changelog_for_messages(
         git_repo, [normal_commit_message, dependabot_commit_message]
     )
-
     assert "This body contains a horizontal rule." in actual_output
     assert "This body content must be" in actual_output
 
@@ -285,9 +279,7 @@ def test_process_changelog_excludes_issue_reference_trailers(keyword):
 
 OW_CHANGELOG_BODY:{keyword} `#123 <https://github.com/#REPO#/issues/123>`_
 """
-
     processed_text = process_changelog(changelog_text)
-
     assert f"{keyword} `#123" not in processed_text
 
 
@@ -302,9 +294,7 @@ OW_CHANGELOG_BODY:- [Release notes](https://github.com/etianen/django-reversion/
 OW_CHANGELOG_BODY:- [Changelog](https://github.com/etianen/django-reversion/blob/master/CHANGELOG.rst)
 OW_CHANGELOG_BODY:- [Commits](https://github.com/etianen/django-reversion/compare/v5.1.0...v6.0.0)
 """
-
     processed_text = process_changelog(changelog_text, changelog_format="md")
-
     assert (
         "[django-reversion](https://github.com/etianen/django-reversion)"
         in processed_text
