@@ -50,14 +50,14 @@ setup(
             "black>=25.1,<26.6",
             "flake8~=7.3.0",
             "isort>=6.0.1,<8.1.0",
-            "coverage>=7.10.0,<7.15.0",
+            "coverage>=7.10.0,<7.16.0",
             "tblib~=3.2.2",
-            "docstrfmt>=2.0.0,<2.1.0",
+            "docstrfmt>=2.0.0,<2.3.0",
             "commitizen>=4.13.0,<5.0.0",
         ],
         "rest": [
             "djangorestframework~=3.17.1",
-            "django-filter>=25.1,<26.0",  # django-filter uses CalVer
+            "django-filter>=25.1,<27.0",  # django-filter uses CalVer
             "drf-yasg>=1.21.14,<1.22.0",
         ],
         "channels": [
@@ -69,7 +69,7 @@ setup(
             "pytest-django>=4.10,<4.13",
         ],
         "celery": ["celery~=5.6.1"],
-        "selenium": ["selenium>=4.32,<4.45"],
+        "selenium": ["selenium>=4.32,<4.47"],
         "releaser": [
             "git-cliff~=2.13.1",
             "questionary~=2.1.0",
@@ -79,7 +79,7 @@ setup(
         ],
         "github_actions": [
             "google-genai>=1.62.0,<3.0.0",
-            "PyGithub>=2.0.0,<3.0.0",
+            "PyGithub>=2.5.0,<3.0.0",
         ],
     },
     classifiers=[

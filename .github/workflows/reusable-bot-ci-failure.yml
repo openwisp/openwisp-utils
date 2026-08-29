@@ -49,14 +49,14 @@ jobs:
           private-key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Checkout Reusable Workflow
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: openwisp/openwisp-utils
           ref: master
           path: trusted_scripts
 
       - name: Checkout PR Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.head_repo }}
           ref: ${{ inputs.head_sha }}
@@ -65,7 +65,7 @@ jobs:
           submodules: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -95,7 +95,7 @@ jobs:
           > failed_logs.txt
           for JOB_ID in $JOB_IDS; do
             echo "Processing job $JOB_ID"
-            if ! gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
+            if ! gh api --allow-escape-sequences repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
               echo "Could not fetch logs for job $JOB_ID; skipping." >> failed_logs.txt
               continue
             fi
@@ -181,6 +181,10 @@ jobs:
         run: |
           if [ ! -s solution.md ]; then
             echo "AI analysis produced no output; skipping comment."
+            exit 0
+          fi
+          if ! grep -q "##\[error\]" failed_logs.txt 2>/dev/null; then
+            echo "No CI failures detected; skipping comment."
             exit 0
           fi
           gh pr comment "$PR_NUM" --repo "$REPO" --body-file solution.md

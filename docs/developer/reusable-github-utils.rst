@@ -70,9 +70,15 @@ OpenWISP repositories. The bot provides the following features:
   no assignment is needed — just open a PR.
 - **Stale PR management**: Warns PR authors after 7 days of inactivity,
   marks stale and unassigns after 14 days, and posts a final follow-up
-  encouragement after 60 days. The bot does not auto-close PRs.
+  encouragement after 60 days. The bot does not auto-close stale PRs.
 - **PR reopen reassignment**: When a stale PR is reopened, linked issues
   are reassigned back to the author.
+- **PR validation**: Enforces the `OpenWISP Contributing Guidelines
+  <https://openwisp.io/docs/dev/developer/contributing.html>`_ for
+  external contributors by flagging PRs that do not link a validated
+  issue. PRs created by the configured GitHub App are exempt. The bot
+  removes the ``invalid`` label once the PR is valid and closes unresolved
+  invalid PRs after 24 hours.
 
 **How Stale PR Detection Works**
 
@@ -107,15 +113,21 @@ The Stale PR job runs daily. For each open PR:
 
 **Secrets**
 
-These secrets are used by the workflow to generate a ``GITHUB_TOKEN`` via
-the ``actions/create-github-app-token`` action. The bot itself consumes
-the following environment variables at runtime: ``GITHUB_TOKEN``,
-``REPOSITORY``, ``GITHUB_EVENT_NAME``, and ``BOT_USERNAME`` (optional;
-defaults to ``openwisp-companion``).
+These secrets let the reusable workflow mint two GitHub App tokens with
+``actions/create-github-app-token``. A repository-scoped write token is
+passed to the bot as ``GITHUB_TOKEN`` for issue assignment, labels,
+comments, and PR closure. A separate read-only validation token, scoped to
+the approved public repositories, is passed as ``VALIDATION_GITHUB_TOKEN``
+to validate linked issues and project assignments. The caller workflow's
+ambient token is not used for these mutations.
 
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
   key.
+
+The OpenWISP Bot needs **Projects: Read** permission at the org level to
+check issue project assignments via GraphQL. Without it, valid external
+PRs might be wrongly flagged as ``invalid``.
 
 **Setup for Other Repositories**
 
@@ -167,13 +179,13 @@ Create the following workflow files in your repository.
     name: PR Issue Auto-Assignment
     on:
       pull_request_target:
-        types: [opened, reopened, closed]
+        types: [opened, reopened, closed, edited, ready_for_review]
     permissions:
       contents: read
       issues: write
       pull-requests: read
     concurrency:
-      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}-${{ github.event.action }}
+      group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     jobs:
       auto-assign-issue:
@@ -444,12 +456,12 @@ The bot supports a configurable retry classifier mode via
 
 **Model configuration**
 
-By default the bot uses ``gemini-2.5-flash-lite``. To use a different
-model (for example a paid tier with a higher or unlimited daily request
-quota), set the ``GEMINI_MODEL`` repository or organization variable. An
-unset or empty value keeps the default. The same variable also controls
-the :ref:`Changelog bot <utils_changelog_bot>`, so setting it once at the
-organization level changes the model for both bots at the same time.
+By default the bot uses ``gemini-3.5-flash-lite`` with minimal thinking.
+To use a different Gemini 3.5 or later model, set the ``GEMINI_MODEL``
+repository or organization variable. An unset or empty value keeps the
+default. The same variable also controls the :ref:`Changelog bot
+<utils_changelog_bot>`, so setting it once at the organization level
+changes the model for both bots at the same time.
 
 This workflow is intended to be triggered via the ``workflow_run`` event
 after your primary test suite concludes. It features strict
@@ -586,9 +598,10 @@ to secrets, and is the one that generates and posts the changelog comment.
 
 **Model configuration**
 
-The changelog bot uses ``gemini-2.5-flash-lite`` by default and honors the
-same ``GEMINI_MODEL`` repository or organization variable as the :ref:`CI
-failure bot <utils_ci_failure_bot>`. Setting it once at the organization
+The changelog bot uses ``gemini-3.5-flash-lite`` with minimal thinking by
+default and honors the same ``GEMINI_MODEL`` repository or organization
+variable as the :ref:`CI failure bot <utils_ci_failure_bot>`. Both bots
+require a Gemini 3.5 or later model. Setting it once at the organization
 level changes the model for both bots at the same time.
 
 The bot normalizes generated commit-message body text locally before

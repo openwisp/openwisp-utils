@@ -2,12 +2,15 @@ import importlib
 import sys
 from types import ModuleType
 from unittest import TestResult, TestSuite, skip
+from unittest.mock import Mock
 
 from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.test import SimpleTestCase
 from django.test.runner import RemoteTestRunner
 from openwisp_utils.tests.selenium import SeleniumTestMixin
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
 
 
 class SeleniumRetryTestMixin(SeleniumTestMixin, SimpleTestCase):
@@ -140,6 +143,71 @@ class TestSeleniumMixinRetryHandling(SimpleTestCase):
         test._setup_and_call(result)
         self.assertFalse(result.wasSuccessful())
         self.assertEqual(test.calls, 6)
+
+
+class TestSeleniumMixinWaitHelpers(SimpleTestCase):
+    def test_wait_until_uses_default_and_explicit_driver(self):
+        default_driver = object()
+        explicit_driver = object()
+        helper = type("Helper", (), {"web_driver": default_driver})()
+        self.assertIs(
+            SeleniumTestMixin.wait_until(helper, lambda driver: driver, timeout=0),
+            default_driver,
+        )
+        self.assertIs(
+            SeleniumTestMixin.wait_until(
+                helper, lambda driver: driver, timeout=0, driver=explicit_driver
+            ),
+            explicit_driver,
+        )
+
+    def test_wait_until_propagates_timeout_exception(self):
+        helper = type("Helper", (), {"web_driver": object()})()
+        with self.assertRaises(TimeoutException):
+            SeleniumTestMixin.wait_until(helper, lambda driver: False, timeout=0)
+
+    def test_wait_for_script_uses_wait_until_and_passes_script_arguments(self):
+        driver = Mock()
+        helper = Mock()
+        helper.wait_until.side_effect = lambda condition, **kwargs: condition(
+            kwargs["driver"]
+        )
+        driver.execute_script.return_value = {"result": "ready"}
+        result = SeleniumTestMixin.wait_for_script(
+            helper,
+            "return arguments[0];",
+            "ready",
+            timeout=1,
+            driver=driver,
+        )
+        self.assertEqual(result, {"result": "ready"})
+        helper.wait_until.assert_called_once()
+        self.assertEqual(
+            helper.wait_until.call_args.kwargs, {"timeout": 1, "driver": driver}
+        )
+        driver.execute_script.assert_called_once_with("return arguments[0];", "ready")
+
+    def test_assert_no_browser_errors(self):
+        helper = type("Helper", (), {})()
+        driver = object()
+        helper.get_browser_errors = Mock(return_value=[])
+        helper.assertEqual = Mock()
+        SeleniumTestMixin.assert_no_browser_errors(helper, driver=driver)
+        helper.get_browser_errors.assert_called_once_with(driver=driver)
+        helper.assertEqual.assert_called_once_with([], [])
+
+    def test_wait_for_admin_success_message(self):
+        helper = Mock()
+        driver = object()
+        success_message = object()
+        helper.wait_for_presence.return_value = success_message
+        result = SeleniumTestMixin.wait_for_admin_success_message(
+            helper, timeout=1, driver=driver
+        )
+        self.assertIs(result, success_message)
+        helper.wait_for_presence.assert_called_once_with(
+            By.CSS_SELECTOR, ".messagelist .success", 1, driver
+        )
 
 
 class TestSerializeDbConnectionLifecycle(SimpleTestCase):

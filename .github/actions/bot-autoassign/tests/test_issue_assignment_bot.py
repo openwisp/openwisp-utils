@@ -1,6 +1,6 @@
 import os
 import sys
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 # Add the parent directory to path for importing bot modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -10,6 +10,7 @@ from github import GithubException  # noqa: E402
 
 try:
     from issue_assignment_bot import IssueAssignmentBot  # noqa: E402
+    from utils import extract_all_linked_issues  # noqa: E402
 except ImportError:
     IssueAssignmentBot = None
 
@@ -23,17 +24,33 @@ pytestmark = pytest.mark.skipif(
 def bot_env(monkeypatch):
     """Set up environment and mock GitHub client for all tests."""
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
+    monkeypatch.setenv("VALIDATION_GITHUB_TOKEN", "test_validation_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
     monkeypatch.setenv("GITHUB_EVENT_NAME", "issue_comment")
     monkeypatch.setattr("utils.time.sleep", lambda _seconds: None)
+    mock_github = Mock()
+    mock_repo = Mock()
+    mock_github.get_repo.return_value = mock_repo
+
+    mock_github_validation = Mock()
+    mock_repo_validation = Mock()
+    mock_github_validation.get_repo.return_value = mock_repo_validation
+
+    def github_side_effect(token):
+        if token == "test_token":
+            return mock_github
+        if token == "test_validation_token":
+            return mock_github_validation
+        return Mock()
+
     with patch("base.Github") as mock_github_cls:
-        mock_repo = Mock()
-        mock_github = mock_github_cls.return_value
-        mock_github.get_repo.return_value = mock_repo
+        mock_github_cls.side_effect = github_side_effect
         yield {
             "github_cls": mock_github_cls,
             "github": mock_github,
             "repo": mock_repo,
+            "github_validation": mock_github_validation,
+            "repo_validation": mock_repo_validation,
         }
 
 
@@ -41,9 +58,11 @@ class TestInit:
     def test_init_success(self, bot_env):
         bot = IssueAssignmentBot()
         assert bot.github_token == "test_token"
+        assert bot.github_validation_token == "test_validation_token"
         assert bot.repository_name == "openwisp/openwisp-utils"
         assert bot.event_name == "issue_comment"
-        bot_env["github_cls"].assert_called_once_with("test_token")
+        bot_env["github_cls"].assert_any_call("test_token")
+        bot_env["github_cls"].assert_any_call("test_validation_token")
 
     def test_init_missing_env_vars(self):
         with patch.dict(os.environ, {}, clear=True):
@@ -516,6 +535,7 @@ class TestHandlePullRequest:
         )
         mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
+        bot.validate_pr_issues = MagicMock(return_value=True)
         assert bot.handle_pull_request()
         mock_issue.add_to_assignees.assert_called_once_with("testuser")
 
@@ -533,7 +553,26 @@ class TestHandlePullRequest:
         )
         mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
+        bot.validate_pr_issues = MagicMock(return_value=True)
         assert bot.handle_pull_request()
+
+    def test_skips_auto_assign_if_invalid(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_issue = _make_issue_with_assignment("testuser")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot.validate_pr_issues = MagicMock(return_value=False)
+        assert bot.handle_pull_request()
+        mock_issue.add_to_assignees.assert_not_called()
 
     def test_closed(self, bot_env):
         bot = IssueAssignmentBot()
@@ -885,3 +924,452 @@ class TestHandleIssueCommentBotCommand:
         )
         assert bot.handle_issue_comment()
         bot_env["repo"].get_issue.assert_not_called()
+
+
+class TestExtractAllLinkedIssues:
+    @pytest.mark.parametrize(
+        "pr_body,expected",
+        [
+            ("Fixes #123", [("openwisp", "openwisp-utils", 123)]),
+            (
+                "Fixes openwisp/openwisp-utils#709",
+                [("openwisp", "openwisp-utils", 709)],
+            ),
+            (
+                "Fixes https://github.com/openwisp/openwisp-utils/issues/709",
+                [("openwisp", "openwisp-utils", 709)],
+            ),
+            ("Related to #99", [("openwisp", "openwisp-utils", 99)]),
+            (
+                "Closes #456 and resolves #789",
+                [
+                    ("openwisp", "openwisp-utils", 456),
+                    ("openwisp", "openwisp-utils", 789),
+                ],
+            ),
+            ("Closes openwisp-utils#42", []),
+            ("", []),
+            (None, []),
+        ],
+    )
+    def test_extract_all_linked_issues(self, pr_body, expected, bot_env):
+        assert extract_all_linked_issues(pr_body, "openwisp/openwisp-utils") == expected
+
+
+class TestPRValidation:
+    def test_get_issue_projects_success(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": {
+                                "nodes": [
+                                    {"project": {"id": "PVT_kwDOABGNI84Amkl7"}},
+                                    {"project": {"id": "SOME_OTHER_ID"}},
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+        assert projects == ["PVT_kwDOABGNI84Amkl7", "SOME_OTHER_ID"]
+        bot.github_validation.requester.graphql_query.assert_called_once()
+
+    def test_get_issue_projects_single_project(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": {
+                                "nodes": [
+                                    {"project": {"id": "CLASSIC_PROJECT_ID"}},
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+        assert projects == ["CLASSIC_PROJECT_ID"]
+
+    def test_get_issue_projects_graphql_error(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.side_effect = GithubException(
+            400, {"errors": [{"message": "Some error"}]}, {}
+        )
+        with pytest.raises(GithubException):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_get_issue_projects_graphql_payload_error(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {"errors": [{"message": "Insufficient scopes"}]},
+        )
+        with pytest.raises(ValueError, match="GraphQL API Permission Error"):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_get_issue_projects_pagination(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.side_effect = [
+            (
+                {},
+                {
+                    "data": {
+                        "repository": {
+                            "issue": {
+                                "projectItems": {
+                                    "nodes": [{"project": {"id": "PAGE1_ID"}}],
+                                    "pageInfo": {
+                                        "hasNextPage": True,
+                                        "endCursor": "cursor123",
+                                    },
+                                }
+                            }
+                        }
+                    }
+                },
+            ),
+            (
+                {},
+                {
+                    "data": {
+                        "repository": {
+                            "issue": {
+                                "projectItems": {
+                                    "nodes": [{"project": {"id": "PAGE2_ID"}}],
+                                    "pageInfo": {
+                                        "hasNextPage": False,
+                                        "endCursor": None,
+                                    },
+                                }
+                            }
+                        }
+                    }
+                },
+            ),
+        ]
+        projects = bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+        assert projects == ["PAGE1_ID", "PAGE2_ID"]
+        assert bot.github_validation.requester.graphql_query.call_count == 2
+
+    def test_get_issue_projects_null_project_items(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": None,
+                        }
+                    }
+                }
+            },
+        )
+        with pytest.raises(ValueError, match="could not read project assignments"):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_get_issue_projects_null_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {"data": {"repository": {"issue": None}}},
+        )
+        with pytest.raises(ValueError, match="could not access issue"):
+            bot.get_issue_projects("openwisp", "openwisp-utils", 123)
+
+    def test_validate_pr_issues_excluded_author(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "dependabot[bot]"
+        assert bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_exempt_association(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "some-member"
+        mock_pr.author_association = "MEMBER"
+        assert bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_exempt_bot_author(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "openwisp-companion[bot]"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Backport of #504 to `1.2`."
+        assert bot.validate_pr_issues(mock_pr)
+        bot_env["github_validation"].get_repo.assert_not_called()
+        bot.github_validation.requester.graphql_query.assert_not_called()
+        bot_env["repo_validation"].get_issue.assert_not_called()
+
+    def test_validate_pr_issues_no_issues(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "No references here"
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_limits_linked_issues(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = " ".join(f"Fixes #{number}" for number in range(1, 12))
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = []
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        assert not bot.validate_pr_issues(mock_pr)
+        assert bot_env["repo_validation"].get_issue.call_count == 10
+
+    def test_validate_pr_issues_cross_org_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes otherorg/repo#12"
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_is_pr(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+        mock_issue = Mock()
+        mock_issue.pull_request = {"url": "..."}
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_closed(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "closed"
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_invalid_labels(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+        # Test case 1: No labels
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = []
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        assert not bot.validate_pr_issues(mock_pr)
+        # Test case 2: Has wontfix/invalid labels
+        label_wontfix = Mock()
+        label_wontfix.name = "wontfix"
+        mock_issue.labels = [label_wontfix]
+        assert not bot.validate_pr_issues(mock_pr)
+        # Test case 3: Has a mix of valid and invalid/wontfix labels
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue.labels = [label_bug, label_wontfix]
+        assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_not_in_project(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = [label_bug]
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        with patch.object(
+            bot, "get_issue_projects", return_value=["Some Other Project"]
+        ):
+            assert not bot.validate_pr_issues(mock_pr)
+
+    def test_validate_pr_issues_fully_valid(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #12"
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        mock_issue.labels = [label_bug]
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        with patch.object(
+            bot, "get_issue_projects", return_value=["PVT_kwDOABGNI84Amkl7"]
+        ):
+            assert bot.validate_pr_issues(mock_pr)
+
+    def test_client_segregation_mutations_vs_validation(self, bot_env):
+        """Proves cross-repository validation uses the read-only validation client,
+        while all mutations use the repository-scoped write client.
+        """
+        bot = IssueAssignmentBot()
+        bot.event_name = "pull_request_target"
+        # Mocks for validation (reads)
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue.labels = [label_bug]
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": {
+                                "nodes": [{"project": {"id": "PVT_kwDOABGNI84Amkl7"}}]
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        # Mocks for mutations (writes)
+        mock_pr = Mock()
+        mock_pr.number = 12
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #123"
+        invalid_label = Mock()
+        invalid_label.name = "invalid"
+        mock_pr.labels = [invalid_label]
+        bot_env["repo"].get_pull.return_value = mock_pr
+        # Execute handler
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 12,
+                    "merged": False,
+                    "user": {"login": "external-contributor"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        bot.handle_pull_request()
+        # Assert Reads used VALIDATION client
+        bot_env["github_validation"].get_repo.assert_any_call("openwisp/openwisp-utils")
+        bot_env["repo_validation"].get_issue.assert_called_once_with(123)
+        bot.github_validation.requester.graphql_query.assert_called_once()
+
+        # Assert Writes used WRITE client (bot_env["repo"] / bot_env["github"])
+        bot_env["repo"].get_pull.assert_called_once_with(12)
+        mock_pr.remove_from_labels.assert_called_once_with("invalid")
+        # Ensure validation client is strictly read-only in this flow (no label/edit calls)
+        assert (
+            not hasattr(bot_env["repo_validation"], "remove_from_labels")
+            or not bot_env["repo_validation"].remove_from_labels.called
+        )
+
+    def test_handle_pull_request_invalid_label_and_comment(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.event_name = "pull_request_target"
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_pr_obj = Mock()
+        mock_pr_obj.labels = []
+        bot_env["repo"].get_pull.return_value = mock_pr_obj
+        with patch.object(bot, "validate_pr_issues", return_value=False), patch.object(
+            bot, "has_bot_comment", return_value=False
+        ):
+            assert bot.handle_pull_request()
+            mock_pr_obj.add_to_labels.assert_called_once_with("invalid")
+            mock_pr_obj.create_issue_comment.assert_called_once()
+            assert (
+                "invalid_unvalidated_issue"
+                in mock_pr_obj.create_issue_comment.call_args[0][0].lower()
+            )
+
+    def test_handle_pull_request_valid_removes_label(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.event_name = "pull_request_target"
+        bot.load_event_payload(
+            {
+                "action": "edited",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr_obj = Mock()
+        mock_pr_obj.labels = [mock_label]
+        bot_env["repo"].get_pull.return_value = mock_pr_obj
+        with patch.object(bot, "validate_pr_issues", return_value=True):
+            assert bot.handle_pull_request()
+            mock_pr_obj.remove_from_labels.assert_called_once_with("invalid")
+
+    def test_workflow_has_members_read_permission(self):
+        """Verify that the reusable workflow requests permission-members: read."""
+        workflow_path = os.path.join(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+            ),
+            "workflows",
+            "reusable-bot-autoassign.yml",
+        )
+        assert os.path.exists(
+            workflow_path
+        ), f"Workflow file not found at {workflow_path}"
+        in_write_token_step = False
+        with_indent = None
+        with open(workflow_path, "r") as f:
+            for raw_line in f:
+                stripped = raw_line.strip()
+                if stripped == "- name: Generate repository write token":
+                    in_write_token_step = True
+                    with_indent = None
+                elif in_write_token_step and stripped.startswith("- name:"):
+                    in_write_token_step = False
+                    with_indent = None
+                elif in_write_token_step and stripped == "with:":
+                    with_indent = len(raw_line) - len(raw_line.lstrip())
+                elif with_indent is not None:
+                    current_indent = len(raw_line) - len(raw_line.lstrip())
+                    if current_indent <= with_indent:
+                        with_indent = None
+                    elif stripped == "permission-members: read":
+                        return
+        pytest.fail("permission-members: read is not requested in write-token step")

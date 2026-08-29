@@ -350,6 +350,7 @@ def _should_retry_ci(client, error_log, model, tag_id):
                 system_instruction=system_instruction,
                 temperature=0.2,
                 max_output_tokens=5,
+                thinking_config=types.ThinkingConfig(thinking_level="minimal"),
             ),
         )
     except Exception as e:
@@ -391,6 +392,21 @@ def main():
     ):
         print("::warning::Skipping: No failure logs to analyse.", file=sys.stderr)
         return
+    if not error_log.strip():
+        print("::warning::Skipping: Empty failure logs.", file=sys.stderr)
+        return
+    if not tests_failed and not transient_only:
+        no_failure_patterns = [
+            "No failed jobs found",
+            "Failed jobs found but logs unavailable",
+            "Could not fetch failed jobs",
+        ]
+        if any(pattern in error_log for pattern in no_failure_patterns):
+            print(
+                "::notice::No CI failures detected; skipping analysis.",
+                file=sys.stderr,
+            )
+            return
     # Only fetch the full repository code context when automated tests
     # actually failed.  For QA-only or commit-message failures the code
     # is not needed and would waste prompt tokens.
@@ -410,7 +426,7 @@ def main():
     is_dependabot = pr_author == "dependabot[bot]"
     retry_mode = (os.environ.get("CI_RETRY_MODE") or "llm").strip().lower()
     raw_model = os.environ.get("GEMINI_MODEL", "").strip()
-    gemini_model = raw_model if raw_model else "gemini-2.5-flash-lite"
+    gemini_model = raw_model if raw_model else "gemini-3.5-flash-lite"
     should_retry = False
     if retry_mode == "llm":
         decision = _should_retry_ci(client, error_log, gemini_model, tag_id)
@@ -525,6 +541,7 @@ def main():
                 system_instruction=system_instruction,
                 temperature=0.4,
                 max_output_tokens=1000,
+                thinking_config=types.ThinkingConfig(thinking_level="minimal"),
             ),
         )
         if response.text and response.text.strip():

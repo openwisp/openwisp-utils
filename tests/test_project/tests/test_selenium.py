@@ -622,7 +622,6 @@ class TestDashboardCharts(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTest
         annotation_text = self.wait_for_visibility(
             By.CSS_SELECTOR,
             ".operator-project-distribution .annotation-text tspan",
-            timeout=10,
         )
         self.assertEqual(annotation_text.text, "0")
 

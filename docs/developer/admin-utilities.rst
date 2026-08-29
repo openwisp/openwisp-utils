@@ -15,10 +15,30 @@ Admin mixin which adds two read only fields ``created`` and ``modified``.
 This is an admin mixin for models inheriting ``TimeStampedEditableModel``
 which adds the fields ``created`` and ``modified`` to the database.
 
+``openwisp_utils.admin.BlockDeleteAllowCascadeMixin``
+-----------------------------------------------------
+
+An admin mixin that blocks direct deletion while allowing Django to check
+the standard delete permission for cascades initiated by another admin
+model or a ``delete_selected`` action. Use it before the Django admin
+class:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin import BlockDeleteAllowCascadeMixin
+
+
+    class MyInline(BlockDeleteAllowCascadeMixin, admin.StackedInline):
+        model = MyModel
+
 ``openwisp_utils.admin.ReadOnlyAdmin``
 --------------------------------------
 
 A read-only ``ModelAdmin`` base class.
+
+Direct deletions remain blocked, but Django can perform permitted cascade
+deletions initiated by another admin model.
 
 Will include the ``id`` field by default, which can be excluded by
 supplying the ``exclude`` attribute, e.g.:
@@ -157,7 +177,7 @@ by modifying ``InputFilter`` as following:
 
 To know about other lookups that can be used please check `Django Lookup
 API Reference
-<https://docs.djangoproject.com/en/4.2/ref/models/lookups/#django.db.models.Lookup>`__
+<https://docs.djangoproject.com/en/5.2/ref/models/lookups/#django.db.models.Lookup>`__
 
 ``openwisp_utils.admin_theme.filters.SimpleInputFilter``
 --------------------------------------------------------

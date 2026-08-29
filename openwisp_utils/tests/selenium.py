@@ -367,26 +367,32 @@ class SeleniumTestMixin:
         driver.get(f"{self.live_server_url}/admin/login/")
         self._wait_until_page_ready(driver=driver)
         if "admin/login" in driver.current_url:
-            driver.find_element(by=By.NAME, value="username").send_keys(username)
-            driver.find_element(by=By.NAME, value="password").send_keys(password)
-            driver.find_element(by=By.XPATH, value='//input[@type="submit"]').click()
+            self.find_element(by=By.NAME, value="username", driver=driver).send_keys(
+                username
+            )
+            self.find_element(by=By.NAME, value="password", driver=driver).send_keys(
+                password
+            )
+            self.find_element(
+                by=By.XPATH, value='//input[@type="submit"]', driver=driver
+            ).click()
         self._wait_until_page_ready(driver=driver)
 
     def logout(self, driver=None):
         driver = driver or self.web_driver
-        self.web_driver.find_element(By.CSS_SELECTOR, ".account-button").click()
-        self.web_driver.find_element(By.CSS_SELECTOR, "#logout-form button").click()
+        self.find_element(By.CSS_SELECTOR, ".account-button", driver=driver).click()
+        self.find_element(By.CSS_SELECTOR, "#logout-form button", driver=driver).click()
 
     def find_element(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_element(by=by, value=value)
 
     def find_elements(self, by, value, timeout=2, driver=None, wait_for="visibility"):
         driver = driver or self.web_driver
         method = f"wait_for_{wait_for}"
-        getattr(self, method)(by, value, timeout)
+        getattr(self, method)(by, value, timeout, driver=driver)
         return driver.find_elements(by=by, value=value)
 
     def wait_for_visibility(self, by, value, timeout=2, driver=None):
@@ -405,6 +411,17 @@ class SeleniumTestMixin:
         driver = driver or self.web_driver
         return self.wait_for("presence_of_element_located", by, value, timeout, driver)
 
+    def wait_until(self, condition, timeout=2, driver=None):
+        driver = driver or self.web_driver
+        return WebDriverWait(driver, timeout).until(condition)
+
+    def wait_for_script(self, script, *args, timeout=2, driver=None):
+        return self.wait_until(
+            lambda current_driver: current_driver.execute_script(script, *args),
+            timeout=timeout,
+            driver=driver,
+        )
+
     def wait_for(self, method, by, value, timeout=2, driver=None):
         driver = driver or self.web_driver
         try:
@@ -414,6 +431,14 @@ class SeleniumTestMixin:
         except TimeoutException as e:
             print(self.get_browser_logs(driver))
             self.fail(f'{method} of "{value}" failed: {e}')
+
+    def assert_no_browser_errors(self, driver=None):
+        self.assertEqual(self.get_browser_errors(driver=driver), [])
+
+    def wait_for_admin_success_message(self, timeout=2, driver=None):
+        return self.wait_for_presence(
+            By.CSS_SELECTOR, ".messagelist .success", timeout, driver
+        )
 
     def hide_loading_overlay(self, html_id="loading-overlay", timeout=2, driver=None):
         """The geckodriver can't figure out the loading overlay is still fading out, so let's just hide it."""

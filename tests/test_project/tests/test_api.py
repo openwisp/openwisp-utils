@@ -1,5 +1,10 @@
+import os
+import subprocess
+import sys
 from importlib import reload
+from pathlib import Path
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -12,7 +17,9 @@ from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
+from rest_framework.settings import api_settings
 from rest_framework.test import APIRequestFactory
+from test_project.api.throttling import CustomScopedRateThrottle
 from test_project.serializers import ShelfSerializer
 
 from ..models import Shelf
@@ -74,7 +81,17 @@ class TestApi(CreateMixin, TestCase):
         serializer = NestedShelfSerializer(instance=s1)
         self.assertEqual(serializer.validate(data), data)
 
+    @override_settings(
+        REST_FRAMEWORK={
+            "DEFAULT_THROTTLE_CLASSES": [
+                "test_project.api.throttling.CustomScopedRateThrottle"
+            ],
+            "DEFAULT_THROTTLE_RATES": {"anon": "20/hour"},
+        }
+    )
     def test_rest_framework_settings_override(self):
+        self.assertEqual(api_settings.DEFAULT_THROTTLE_RATES, {"anon": "20/hour"})
+        apps.get_app_config("test_project").configure_rest_framework_defaults()
         drf_conf = getattr(settings, "REST_FRAMEWORK", {})
         self.assertEqual(
             drf_conf,
@@ -85,6 +102,13 @@ class TestApi(CreateMixin, TestCase):
                 "DEFAULT_THROTTLE_RATES": {"anon": "20/hour", "test": "10/minute"},
                 "TEST": True,
             },
+        )
+        self.assertEqual(
+            api_settings.DEFAULT_THROTTLE_CLASSES, [CustomScopedRateThrottle]
+        )
+        self.assertEqual(
+            api_settings.DEFAULT_THROTTLE_RATES,
+            {"anon": "20/hour", "test": "10/minute"},
         )
 
     def test_crud_shelf(self):
@@ -207,6 +231,85 @@ class TestApi(CreateMixin, TestCase):
             self.assertEqual(shelf.name, "Valid PUT Shelf")
             self.assertEqual(shelf.books_count, 10)
             self.assertEqual(shelf.locked, True)
+
+
+class TestApiAppConfig(TestCase):
+    def _run_startup_test(self, settings_module, code):
+        env = os.environ | {
+            "DJANGO_SETTINGS_MODULE": settings_module,
+            "PYTHONPATH": os.pathsep.join(
+                [
+                    str(Path(__file__).parents[2]),
+                    os.environ.get("PYTHONPATH", ""),
+                ]
+            ),
+        }
+        return subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            env=env,
+            text=True,
+            timeout=30,
+        )
+
+    def test_defaults_are_available_before_models_are_imported(self):
+        """Run startup in a clean process before Django and DRF caches exist."""
+        code = """
+import django
+
+django.setup()
+
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import ScopedRateThrottle, SimpleRateThrottle
+from rest_framework.views import APIView
+
+expected_permission_classes = [IsAuthenticated]
+if APIView.permission_classes != expected_permission_classes:
+    raise AssertionError(
+        f"Expected {expected_permission_classes!r}, "
+        f"got {APIView.permission_classes!r}"
+    )
+
+expected_throttle_rates = {
+    "anon": None,
+    "first": "99/minute",
+    "second": "20/minute",
+}
+if SimpleRateThrottle.THROTTLE_RATES != expected_throttle_rates:
+    raise AssertionError(
+        f"Expected {expected_throttle_rates!r}, "
+        f"got {SimpleRateThrottle.THROTTLE_RATES!r}"
+    )
+
+class SecondScopedRateThrottle(ScopedRateThrottle):
+    scope = "second"
+
+actual_rate = SecondScopedRateThrottle().get_rate()
+if actual_rate != "20/minute":
+    raise AssertionError(f"Expected '20/minute', got {actual_rate!r}")
+"""
+        result = self._run_startup_test("api_app_config.settings", code)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_disabled_api_config_does_not_import_rest_framework(self):
+        code = """
+import builtins
+
+original_import = builtins.__import__
+
+def import_without_rest_framework(name, *args, **kwargs):
+    if name == "rest_framework" or name.startswith("rest_framework."):
+        raise ModuleNotFoundError("rest_framework is unavailable")
+    return original_import(name, *args, **kwargs)
+
+builtins.__import__ = import_without_rest_framework
+
+import django
+
+django.setup()
+"""
+        result = self._run_startup_test("api_app_config.no_rest_settings", code)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class TestOpenWispPagination(CreateMixin, TestCase):

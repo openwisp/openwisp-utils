@@ -81,7 +81,11 @@ Here's how to easily do it:
 
 Every openwisp module which has an API should use this class to configure
 its own default settings, which will be merged with the settings of the
-other modules.
+other modules. Defaults are applied while Django initializes app configs,
+before models and DRF policy classes are imported. Explicit values in
+``settings.REST_FRAMEWORK`` take precedence over module defaults. When
+multiple enabled modules define the same default, the first one in
+``INSTALLED_APPS`` takes precedence.
 
 .. _utils_openwisp_pagination:
 
