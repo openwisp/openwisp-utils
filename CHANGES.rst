@@ -1,10 +1,375 @@
 Changelog
 =========
 
-Version 1.3.0a [unreleased]
----------------------------
+Version 1.3.0 [2026-08-29]
+--------------------------
 
-Work in progress.
+Features
+~~~~~~~~
+
+- Implemented sub-filter functionality in Django admin `#700
+  <https://github.com/openwisp/openwisp-utils/issues/700>`_
+
+  Introduced ``SubFilterMixin`` to allow admin filters to be displayed and
+  applied only when a parent filter has specific values. This enhances the
+  admin interface by enabling hierarchical filtering.
+
+  The filter rendering system has been updated to group parent filters
+  with their sub-filters, displaying sub-filters vertically below their
+  parents. Client-side JavaScript logic dynamically shows or hides
+  sub-filters based on parent filter selections.
+
+  Invalid sub-filter usage, such as providing a sub-filter value when its
+  parent is inactive, will now raise ``IncorrectLookupParameters``.
+  Misconfigured orphaned sub-filters will be logged as errors and not
+  rendered.
+
+- Add OpenWispPagination class with default values `#586
+  <https://github.com/openwisp/openwisp-utils/issues/586>`_
+
+  Introduces the ``OpenWispPagination`` class, inheriting from DRF's
+  ``PageNumberPagination``. This class provides sensible default values
+  for pagination across OpenWISP modules, configurable via settings.
+
+  The default page size is set to 10 and the maximum page size to 100.
+  These can be overridden by ``OPENWISP_API_DEFAULT_PAGE_SIZE`` and
+  ``OPENWISP_API_MAX_PAGE_SIZE`` respectively. Views can also set a
+  ``pagination_page_size`` attribute to override the default for specific
+  endpoints.
+
+- Added changelog entry bot `#523
+  <https://github.com/openwisp/openwisp-utils/issues/523>`_
+- Automate assigning/unassigning issues `#571
+  <https://github.com/openwisp/openwisp-utils/issues/571>`_
+
+  Added auto-assignment bot with issue assignment, management of stale PR,
+  reassignment on PR reopen and shared helpers in utils.py.
+
+- Added CI build failure bot `#524
+  <https://github.com/openwisp/openwisp-utils/issues/524>`_
+
+  When a CI workflow fails, the bot examines the failure logs and
+  repository context with AI to offer specific guidance for fixing QA
+  check issues, test failures and other common bugs.
+
+- Added reusable backport workflow `#501
+  <https://github.com/openwisp/openwisp-utils/issues/501>`_
+
+  Automates cherry-picking fixes to stable branches via ``[backport X.Y]``
+  in commit messages or ``/backport X.Y`` comments, with conflict
+  notification.
+
+- Standardized commit messages using commitizen `#110
+  <https://github.com/openwisp/openwisp-utils/issues/110>`_
+
+  Commitizen has been integrated in openwisp-utils to standardize how
+  commit messages are written across the project. It introduces an
+  interactive commit workflow that guides contributors to use the correct
+  OpenWISP commit format, ensures commit titles are properly structured,
+  and enforces the presence of an issue reference. The commit message
+  footer is generated automatically using the provided issue number,
+  improving consistency and making commits easier to review and track.
+
+- Releaser: added support for non-python packages `#522
+  <https://github.com/openwisp/openwisp-utils/issues/522>`_
+
+Changes
+~~~~~~~
+
+Backward-incompatible changes
++++++++++++++++++++++++++++++
+
+- Removed deprecated ``UUIDAdmin`` class `#328
+  <https://github.com/openwisp/openwisp-utils/issues/328>`_
+
+  The deprecated ``UUIDAdmin`` class has been removed. For equivalent
+  functionality, use ``CopyableFieldsAdmin`` with ``copyable_fields =
+  ('uuid',)``.
+
+Other changes
++++++++++++++
+
+- Included commit bodies in releaser changelog
+- Allowed cascade deletions in ``ReadOnlyAdmin``
+
+  ``ReadOnlyAdmin.has_delete_permission`` previously returned ``False``
+  unconditionally, which blocked cascade deletions from parent models
+  (like ``Organization``).
+
+  Added ``openwisp_utils.admin.BlockDeleteAllowCascadeMixin`` to allow
+  reusability of this logic in other OpenWISP modules.
+
+- Excluded local python venv dirs from QA checks `#720
+  <https://github.com/openwisp/openwisp-utils/issues/720>`_
+- Made menu item registration idempotent `#641
+  <https://github.com/openwisp/openwisp-utils/issues/641>`_
+
+  Previously, calling ``register_menu_group`` or ``register_menu_subitem``
+  twice with the same configuration at the same position would always
+  raise an ``ImproperlyConfigured`` exception. This behavior prevented
+  re-registration, even when the same application was re-initializing its
+  menu items during testing.
+
+  This change modifies these functions to check if the configuration being
+  registered is identical to the one already present at that position. If
+  the configurations match, the function now logs an informational message
+  and skips the re-registration instead of raising an error. This makes
+  the menu item registration process idempotent, improving testability and
+  handling of repeated app initializations.
+
+- Releaser: defined a generic package type to use as fallback
+
+  The logic which detected OpenWrt packages has been generalized so that
+  any file which doesn't fall under well defined categories like "python
+  package", "npm package", "ansible role", etc., can fall under the
+  "generic package" type, as long as a VERSION file is defined in the top
+  level directory of the repository, the releaser tool will be able to
+  deal with it, regardless of the tech stack used.
+
+- Made changelog bot model configurable and quota-resilient
+
+  The changelog bot kept failing with Gemini free-tier quota errors
+  (``RequestsPerDayPerProjectPerModel``, 20/day) and marked the workflow
+  as failed, while the CI failure bot stayed green because it swallows the
+  same error. The changelog bot also had no way to switch models and could
+  spend up to three requests per pull request.
+
+  Forward ``GEMINI_MODEL`` through the action and reusable workflow so a
+  single variable controls both bots, harden model resolution so an empty
+  value falls back to the default, lower the generation retries from three
+  to two, and exit cleanly on quota errors so the workflow no longer turns
+  red on exhaustion.
+
+  Also document the ``GEMINI_MODEL`` variable for both bots.
+
+- SeleniumTestMixin now requires two successful retries after an initial
+  failure
+- Added default ``uuid`` method to ``CopyableFieldsAdmin`` `#328
+  <https://github.com/openwisp/openwisp-utils/issues/328>`_
+
+  ``CopyableFieldsAdmin`` now ships with a default ``uuid()`` method that
+  returns ``obj.pk`` and has ``short_description`` set to ``'UUID'``. This
+  allows subclasses to use ``copyable_fields = ('uuid',)`` without
+  defining their own ``uuid`` method when their model uses a UUID primary
+  key.
+
+  The ``uuid`` field is not automatically added to ``copyable_fields``,
+  that's still the developer's explicit decision.
+
+- Releaser: removed chatGPT integration `#645
+  <https://github.com/openwisp/openwisp-utils/issues/645>`_
+- Releaser: automated branch selection in changelog porting step `#646
+  <https://github.com/openwisp/openwisp-utils/issues/646>`_
+
+Dependencies
+++++++++++++
+
+- Bumped ``black`` to 26.5.1 (``>=25.1,<26.6``)
+
+  Updates the requirements on `black <https://github.com/psf/black>`__ to
+  permit the latest version. - `Release notes
+  <https://github.com/psf/black/releases>`__ - `Changelog
+  <https://github.com/psf/black/blob/main/CHANGES.md>`__ - `Commits
+  <https://github.com/psf/black/compare/25.1.0...26.5.1>`__
+
+- Bumped ``celery`` to 5.6.1 (``~=5.6.1``)
+
+  Updates the requirements on `celery
+  <https://github.com/celery/celery>`__ to permit the latest version. -
+  `Release notes <https://github.com/celery/celery/releases>`__ -
+  `Changelog <https://github.com/celery/celery/blob/main/Changelog.rst>`__
+  - `Commits <https://github.com/celery/celery/compare/v5.5.3...v5.6.1>`__
+
+- Bumped ``djangorestframework`` to 3.17.1 (``~=3.17.1``)
+
+  Updates the requirements on `djangorestframework
+  <https://github.com/encode/django-rest-framework>`__ to permit the
+  latest version. - `Release notes
+  <https://github.com/encode/django-rest-framework/releases>`__ - `Commits
+  <https://github.com/encode/django-rest-framework/compare/3.16.0...3.17.1>`__
+
+- Bumped ``git-cliff`` to 2.13.1 (``~=2.13.1``)
+
+  Updates the requirements on `git-cliff
+  <https://github.com/orhun/git-cliff>`__ to permit the latest version. -
+  `Release notes <https://github.com/orhun/git-cliff/releases>`__ -
+  `Changelog
+  <https://github.com/orhun/git-cliff/blob/main/CHANGELOG.md>`__ -
+  `Commits
+  <https://github.com/orhun/git-cliff/compare/v2.10.0...v2.13.1>`__
+
+- Bumped ``isort`` to 8.0.1 (``>=6.0.1,<8.1.0``)
+
+  Updates the requirements on `isort <https://github.com/PyCQA/isort>`__
+  to permit the latest version. - `Release notes
+  <https://github.com/PyCQA/isort/releases>`__ - `Changelog
+  <https://github.com/PyCQA/isort/blob/main/CHANGELOG.md>`__ - `Commits
+  <https://github.com/PyCQA/isort/compare/6.0.1...8.0.1>`__
+
+- Bumped ``pytest-asyncio`` to 1.4.0 (``>=1.3.0,<1.5.0``)
+
+  Updates the requirements on `pytest-asyncio
+  <https://github.com/pytest-dev/pytest-asyncio>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/pytest-dev/pytest-asyncio/releases>`__ - `Commits
+  <https://github.com/pytest-dev/pytest-asyncio/compare/v0.24.0...v1.4.0>`__
+
+- Bumped ``selenium`` to 4.46.0 (``>=4.32,<4.47``)
+
+  Updates the requirements on `selenium
+  <https://github.com/SeleniumHQ/Selenium>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/SeleniumHQ/Selenium/releases>`__ - `Commits
+  <https://github.com/SeleniumHQ/Selenium/compare/selenium-4.10.0...selenium-4.46.0>`__
+
+- Bumped ``tblib`` to 3.2.2 (``~=3.2.2``)
+
+  Updates the requirements on `tblib
+  <https://github.com/ionelmc/python-tblib>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/ionelmc/python-tblib/releases>`__ - `Changelog
+  <https://github.com/ionelmc/python-tblib/blob/master/CHANGELOG.rst>`__ -
+  `Commits
+  <https://github.com/ionelmc/python-tblib/compare/v3.1.0...v3.2.2>`__
+
+- Bumped ``django-filter`` to 26.1 (``>=25.1,<27.0``)
+
+  Updates the requirements on `django-filter
+  <https://github.com/carltongibson/django-filter>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/carltongibson/django-filter/releases>`__ -
+  `Changelog
+  <https://github.com/carltongibson/django-filter/blob/main/CHANGES.rst>`__
+  - `Commits
+  <https://github.com/carltongibson/django-filter/compare/25.1...26.1>`__
+
+- Bumped ``coverage`` to 7.15.2 (``>=7.10.0,<7.16.0``)
+
+  Updates the requirements on `coverage
+  <https://github.com/coveragepy/coveragepy>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/coveragepy/coveragepy/releases>`__ - `Changelog
+  <https://github.com/coveragepy/coveragepy/blob/main/CHANGES.rst>`__ -
+  `Commits
+  <https://github.com/coveragepy/coveragepy/compare/7.10.0...7.15.2>`__
+
+- Bumped ``docstrfmt`` to 2.2.0 (``>=2.0.0,<2.3.0``)
+
+  Updates the requirements on `docstrfmt
+  <https://github.com/LilSpazJoekp/docstrfmt>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/LilSpazJoekp/docstrfmt/releases>`__ - `Changelog
+  <https://github.com/LilSpazJoekp/docstrfmt/blob/master/CHANGES.rst>`__ -
+  `Commits
+  <https://github.com/LilSpazJoekp/docstrfmt/compare/v2.0.0...v2.2.0>`__
+
+- Bumped ``google-genai`` to 2.7.0 (``>=1.62.0,<3.0.0``)
+
+  Updates the requirements on `google-genai
+  <https://github.com/googleapis/python-genai>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/googleapis/python-genai/releases>`__ - `Changelog
+  <https://github.com/googleapis/python-genai/blob/main/CHANGELOG.md>`__ -
+  `Commits
+  <https://github.com/googleapis/python-genai/compare/v1.62.0...v2.7.0>`__
+
+- Bumped ``django-minify-compress-staticfiles`` to 1.1.1
+
+  See Release Notes:
+  https://github.com/openwisp/django-minify-compress-staticfiles/releases/tag/1.1.1
+
+- Bumped ``pytest-django`` to 4.12.0 (``>=4.10,<4.13``)
+
+  Updates the requirements on `pytest-django
+  <https://github.com/pytest-dev/pytest-django>`__ to permit the latest
+  version. - `Release notes
+  <https://github.com/pytest-dev/pytest-django/releases>`__ - `Changelog
+  <https://github.com/pytest-dev/pytest-django/blob/main/docs/changelog.rst>`__
+  - `Commits
+  <https://github.com/pytest-dev/pytest-django/compare/v4.10.0...v4.12.0>`__
+
+Bugfixes
+~~~~~~~~
+
+- Reload DRF settings after configuring defaults
+
+  Bug: ``ApiAppConfig.configure_rest_framework_defaults`` updated Django's
+  ``settings.REST_FRAMEWORK``, but DRF's ``api_settings`` had already
+  loaded its own copy of the configuration. As a result, changes made by
+  apps initialized after ``rest_framework`` were not reflected in the
+  settings actually used by DRF.
+
+  Fix: Reload ``rest_framework.settings.api_settings`` after updating
+  ``settings.REST_FRAMEWORK`` so DRF uses the latest configuration.
+
+- Prevented capture decorators from polluting exceptions
+
+  CaptureOutput previously tried injecting streams and retried any
+  TypeError. A real failure in a no-argument decorated test retained the
+  expected signature mismatch as exception context, obscuring the
+  regression traceback.
+
+  The decorator now selects the valid call signature before executing the
+  test, while preserving support for explicit captured streams, variadic
+  arguments, and stacked ``mock.patch`` decorators.
+
+- Prevented FallbackMixin from generating spurious migrations `#1231
+  <https://github.com/openwisp/openwisp-utils/issues/1231>`_
+- Collect Firefox console logs via WebDriver BiDi `#696
+  <https://github.com/openwisp/openwisp-utils/issues/696>`_
+
+  Firefox >= 135 no longer loads the Manifest v2 console-capture
+  extension, and Manifest v3 content scripts are not granted host
+  permissions for temporarily installed add-ons, so the content script
+  never runs. As a result ``get_browser_logs()`` returned ``undefined``
+  (which translated to ``None`` in Python) instead of the captured logs on
+  modern Firefox versions, which in turn broke CI builds.
+
+  The extension was replaced with WebDriver BiDi: a console message
+  handler records every console entry, including those emitted during page
+  load, and the log buffer is reset on each navigation to preserve the
+  previous per-page semantics.
+
+  This fixes console capture for every OpenWISP module that relies on
+  ``SeleniumTestMixin`` without changing its public API.
+
+- Excluded ``node_modules`` dir and other hidden directories from the
+  ReStructuredText QA check
+- Fixed ``ValidatedModelSerializer`` validation of PUT/PATCH and
+  relationships `#633
+  <https://github.com/openwisp/openwisp-utils/issues/633>`_
+
+  Updated ``ValidatedModelSerializer.validate()`` to:
+
+  - Use ``copy()`` for existing instances to avoid mutating the original.
+  - Skip reverse relations (``ForeignObjectRel``) during ``setattr``.
+  - Skip nested relationships.
+  - Convert Django ``ValidationError`` to DRF ``ValidationError`` so
+    errors are properly serialized in API responses and picklable in the
+    parallel test runner.
+
+- Triggered changelog bot for backward incompatible changes
+
+  Accept ``[change!]`` entries in the changelog bot trigger and validation
+  so backward incompatible PRs receive generated changelog suggestions.
+
+- Fixed double encoding of device model labels in dashboard `#651
+  <https://github.com/openwisp/openwisp-utils/issues/651>`_
+
+  Fixed the double-encoding issue in admin dashboard charts where device
+  models with special characters (like &) generated malformed URLs.
+
+- Fixed broken skipped Selenium tests in Django parallel runner `#619
+  <https://github.com/openwisp/openwisp-utils/issues/619>`_
+- Fixed gemini call
+- Switched to django-minify-compress-staticfiles `#565
+  <https://github.com/openwisp/openwisp-utils/issues/565>`_
+
+  Replaced the unmaintained django-compress-staticfiles with the new
+  django-minify-compress-staticfiles package for static file minification
+  and compression.
+
+- Releaser: perform ``git pull --tags`` before changelog generation
 
 Version 1.2.2 [2026-01-28]
 --------------------------
