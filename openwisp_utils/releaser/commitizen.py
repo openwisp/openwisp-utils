@@ -5,8 +5,11 @@ from commitizen.cz.base import BaseCommitizen, ValidationResult
 from .constants import ISSUE_REFERENCE_KEYWORDS
 
 _TITLE_ISSUE_EXTRACT_RE = re.compile(r" #(\d+)")
+_ISSUE_REFERENCE_KEYWORDS_PATTERN = "|".join(
+    re.escape(keyword) for keyword in ISSUE_REFERENCE_KEYWORDS
+)
 _BODY_ISSUE_RE = re.compile(
-    rf"(?:{'|'.join(ISSUE_REFERENCE_KEYWORDS)})((?:\s+#\d+)+)",
+    rf"(?:{_ISSUE_REFERENCE_KEYWORDS_PATTERN})((?:\s+#\d+)+)",
     re.IGNORECASE,
 )
 
@@ -251,15 +254,13 @@ class OpenWispCommitizen(BaseCommitizen):
         # Pattern for commits without issues
         no_issue_pattern = (
             r"\[[a-z0-9!/:-]+\] [A-Z][^\n]*"
-            r"$(?!\n\n.*(?:Close|Closes|Closed|Fix|Fixes|Fixed"
-            r"|Resolve|Resolves|Resolved|Related to) #\d+)"
+            rf"$(?!\n\n.*(?:{_ISSUE_REFERENCE_KEYWORDS_PATTERN}) #\d+)"
         )
         # Pattern for commits with issues
         with_issue_pattern = (
             r"\[[a-z0-9!/:-]+\] [A-Z][^\n]*(?P<title_issues>(?: #\d+)+)$"
             r"\n\n.*"
-            r"(?:Close|Closes|Closed|Fix|Fixes|Fixed"
-            r"|Resolve|Resolves|Resolved|Related to)"
+            rf"(?:{_ISSUE_REFERENCE_KEYWORDS_PATTERN})"
             r"(?P<body_issues>(?: #\d+)+)\n?"
         )
         return rf"(?sm)^(?:{merge_pattern}|{no_issue_pattern}|{with_issue_pattern})\Z"
