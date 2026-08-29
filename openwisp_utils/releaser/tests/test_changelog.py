@@ -15,6 +15,7 @@ from openwisp_utils.releaser.changelog import (
 )
 from openwisp_utils.releaser.release import main as run_release
 from openwisp_utils.releaser.release import update_changelog_file
+from openwisp_utils.tests import capture_stderr
 
 
 def find_changelog_test_cases():
@@ -79,10 +80,23 @@ def git_repo():
     shutil.rmtree(test_dir)
 
 
+def _run_git_cliff_with_expected_warning():
+    raw_changelog = None
+
+    @capture_stderr()
+    def _run(captured_error):
+        nonlocal raw_changelog
+        raw_changelog = run_git_cliff()
+        assert captured_error.getvalue().startswith("Warning: Failed to pull tags:")
+
+    _run()
+    return raw_changelog
+
+
 @pytest.mark.parametrize(
     "commit_file, expected_changelog_file", find_changelog_test_cases()
 )
-def test_changelog_generation(git_repo, commit_file, expected_changelog_file, capsys):
+def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
     """Tests changelog generation for all discovered sample files"""
     original_dir = git_repo
     commit_count = 0
@@ -121,9 +135,7 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file, ca
         expected_output = f.read().strip()
 
     # Generate the changelog and get the actual output
-    raw_changelog = run_git_cliff()
-    captured = capsys.readouterr()
-    assert captured.err.startswith("Warning: Failed to pull tags:")
+    raw_changelog = _run_git_cliff_with_expected_warning()
     processed_changelog = process_changelog(raw_changelog)
     processed_changelog = "Changelog\n=========\n\n" + processed_changelog
     actual_output = format_rst_block(processed_changelog)
@@ -131,7 +143,7 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file, ca
     assert actual_output == expected_output
 
 
-def _generate_changelog_for_messages(git_repo, messages, capsys):
+def _generate_changelog_for_messages(git_repo, messages):
     commit_count = 0
     for message in messages:
         with open(f"file_{commit_count}.txt", "w") as f:
@@ -144,17 +156,13 @@ def _generate_changelog_for_messages(git_repo, messages, capsys):
             capture_output=True,
         )
         commit_count += 1
-    raw_changelog = run_git_cliff()
-    captured = capsys.readouterr()
-    assert captured.err.startswith("Warning: Failed to pull tags:")
+    raw_changelog = _run_git_cliff_with_expected_warning()
     processed_changelog = process_changelog(raw_changelog)
     processed_changelog = "Changelog\n=========\n\n" + processed_changelog
     return format_rst_block(processed_changelog)
 
 
-def test_changelog_generation_includes_commit_body_without_git_trailers(
-    git_repo, capsys
-):
+def test_changelog_generation_includes_commit_body_without_git_trailers(git_repo):
     commit_message = """[fix] Fixed admin subnet export multitenancy security issue
 
 Before this patch, if a specific subnet ID was known,
@@ -167,7 +175,7 @@ of the subnet or not. This patch fixes it.
 Signed-off-by: Test User <test@example.com>
 Co-authored-by: Test User <test@example.com>
 """
-    actual_output = _generate_changelog_for_messages(git_repo, [commit_message], capsys)
+    actual_output = _generate_changelog_for_messages(git_repo, [commit_message])
     assert "- Fixed admin subnet export multitenancy security issue" in actual_output
     assert "Before this patch" in actual_output
     assert "specific subnet ID was known" in actual_output
@@ -181,7 +189,7 @@ Co-authored-by: Test User <test@example.com>
     assert "Co-authored-by:" not in actual_output
 
 
-def test_changelog_generation_excludes_dependabot_metadata_block(git_repo, capsys):
+def test_changelog_generation_excludes_dependabot_metadata_block(git_repo):
     commit_message = """[deps] Update django-reversion requirement from <5.2 to >=5.1,<6.1
 
 Updates the requirements on [django-reversion](https://github.com/etianen/django-reversion)
@@ -199,7 +207,7 @@ updated-dependencies:
 Signed-off-by: dependabot[bot] <support@github.com>
 Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 """
-    actual_output = _generate_changelog_for_messages(git_repo, [commit_message], capsys)
+    actual_output = _generate_changelog_for_messages(git_repo, [commit_message])
     assert "- Bumped ``django-reversion<6.1``" in actual_output
     assert "Updates the requirements on" in actual_output
     assert "`django-reversion" in actual_output
@@ -242,9 +250,7 @@ Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.c
     assert "Co-authored-by:" not in actual_output
 
 
-def test_changelog_generation_preserves_body_before_dependabot_metadata(
-    git_repo, capsys
-):
+def test_changelog_generation_preserves_body_before_dependabot_metadata(git_repo):
     normal_commit_message = """[change] Changed changelog formatting
 
 This body contains a horizontal rule.
@@ -259,7 +265,7 @@ updated-dependencies:
 ...
 """
     actual_output = _generate_changelog_for_messages(
-        git_repo, [normal_commit_message, dependabot_commit_message], capsys
+        git_repo, [normal_commit_message, dependabot_commit_message]
     )
     assert "This body contains a horizontal rule." in actual_output
     assert "This body content must be" in actual_output
