@@ -15,6 +15,7 @@ from openwisp_utils.releaser.changelog import (
 )
 from openwisp_utils.releaser.release import main as run_release
 from openwisp_utils.releaser.release import update_changelog_file
+from openwisp_utils.tests import capture_stderr
 
 
 def find_changelog_test_cases():
@@ -79,6 +80,19 @@ def git_repo():
     shutil.rmtree(test_dir)
 
 
+def _run_git_cliff_with_expected_warning():
+    raw_changelog = None
+
+    @capture_stderr()
+    def _run(captured_error):
+        nonlocal raw_changelog
+        raw_changelog = run_git_cliff()
+        assert captured_error.getvalue().startswith("Warning: Failed to pull tags:")
+
+    _run()
+    return raw_changelog
+
+
 @pytest.mark.parametrize(
     "commit_file, expected_changelog_file", find_changelog_test_cases()
 )
@@ -121,12 +135,200 @@ def test_changelog_generation(git_repo, commit_file, expected_changelog_file):
         expected_output = f.read().strip()
 
     # Generate the changelog and get the actual output
-    raw_changelog = run_git_cliff()
+    raw_changelog = _run_git_cliff_with_expected_warning()
     processed_changelog = process_changelog(raw_changelog)
     processed_changelog = "Changelog\n=========\n\n" + processed_changelog
     actual_output = format_rst_block(processed_changelog)
 
     assert actual_output == expected_output
+
+
+def _generate_changelog_for_messages(git_repo, messages):
+    commit_count = 0
+    for message in messages:
+        with open(f"file_{commit_count}.txt", "w") as f:
+            f.write(f"This is file number {commit_count}")
+        subprocess.run(["git", "add", "."], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "--file=-"],
+            input=message.encode("utf-8"),
+            check=True,
+            capture_output=True,
+        )
+        commit_count += 1
+    raw_changelog = _run_git_cliff_with_expected_warning()
+    processed_changelog = process_changelog(raw_changelog)
+    processed_changelog = "Changelog\n=========\n\n" + processed_changelog
+    return format_rst_block(processed_changelog)
+
+
+def test_changelog_generation_includes_commit_body_without_git_trailers(git_repo):
+    commit_message = """[fix] Fixed admin subnet export multitenancy security issue
+
+Before this patch, if a specific subnet ID was known,
+any staff user with permissions to operate on subnet
+objects was allowed to export the subnet contents,
+regardless of whether they managed the organization
+of the subnet or not. This patch fixes it.
+
+(cherry picked from commit a4b272461bfa7a1762baf0b1fd76b4f5b681586b)
+Signed-off-by: Test User <test@example.com>
+Co-authored-by: Test User <test@example.com>
+"""
+    actual_output = _generate_changelog_for_messages(git_repo, [commit_message])
+    assert "- Fixed admin subnet export multitenancy security issue" in actual_output
+    assert "Before this patch" in actual_output
+    assert "specific subnet ID was known" in actual_output
+    assert "staff user" in actual_output
+    assert "permissions" in actual_output
+    assert "operate on subnet" in actual_output
+    assert "regardless of whether they managed the organization" in actual_output
+    assert "This patch fixes it." in actual_output
+    assert "cherry picked from commit" not in actual_output
+    assert "Signed-off-by:" not in actual_output
+    assert "Co-authored-by:" not in actual_output
+
+
+def test_changelog_generation_excludes_dependabot_metadata_block(git_repo):
+    commit_message = """[deps] Update django-reversion requirement from <5.2 to >=5.1,<6.1
+
+Updates the requirements on [django-reversion](https://github.com/etianen/django-reversion)
+to permit the latest version.
+- [Release notes](https://github.com/etianen/django-reversion/releases)
+- [Changelog](https://github.com/etianen/django-reversion/blob/master/CHANGELOG.rst)
+- [Commits](https://github.com/etianen/django-reversion/compare/v5.1.0...v6.0.0)
+
+---
+updated-dependencies:
+- dependency-name: django-reversion
+  dependency-type: direct:production
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+Co-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
+"""
+    actual_output = _generate_changelog_for_messages(git_repo, [commit_message])
+    assert "- Bumped ``django-reversion<6.1``" in actual_output
+    assert "Updates the requirements on" in actual_output
+    assert "`django-reversion" in actual_output
+    assert "<https://github.com/etianen/django-reversion>`__" in actual_output
+    assert "`Release notes" in actual_output
+    assert "<https://github.com/etianen/django-reversion/releases>`__" in actual_output
+    assert "`Changelog" in actual_output
+    assert (
+        "<https://github.com/etianen/django-reversion/blob/master/CHANGELOG.rst>`__"
+        in actual_output
+    )
+    assert "`Commits" in actual_output
+    assert (
+        "<https://github.com/etianen/django-reversion/compare/v5.1.0...v6.0.0>`__"
+        in actual_output
+    )
+    assert (
+        "[django-reversion](https://github.com/etianen/django-reversion)"
+        not in actual_output
+    )
+    assert "[Release notes]" not in actual_output
+    assert "[Changelog]" not in actual_output
+    assert "[Commits]" not in actual_output
+    assert "django-reversion" in actual_output
+    assert "https://github.com/etianen/django-reversion/releases" in actual_output
+    assert (
+        "https://github.com/etianen/django-reversion/blob/master/CHANGELOG.rst"
+        in actual_output
+    )
+    assert (
+        "https://github.com/etianen/django-reversion/compare/v5.1.0...v6.0.0"
+        in actual_output
+    )
+    assert "\n---\n" not in actual_output
+    assert "updated-dependencies:" not in actual_output
+    assert "dependency-name:" not in actual_output
+    assert "dependency-type:" not in actual_output
+    assert "\n...\n" not in actual_output
+    assert "Signed-off-by:" not in actual_output
+    assert "Co-authored-by:" not in actual_output
+
+
+def test_changelog_generation_preserves_body_before_dependabot_metadata(git_repo):
+    normal_commit_message = """[change] Changed changelog formatting
+
+This body contains a horizontal rule.
+---
+This body content must be preserved.
+"""
+    dependabot_commit_message = """[deps] Update django-reversion requirement from <5.2 to >=5.1,<6.1
+
+---
+updated-dependencies:
+- dependency-name: django-reversion
+...
+"""
+    actual_output = _generate_changelog_for_messages(
+        git_repo, [normal_commit_message, dependabot_commit_message]
+    )
+    assert "This body contains a horizontal rule." in actual_output
+    assert "This body content must be" in actual_output
+
+
+@pytest.mark.parametrize(
+    "keyword",
+    (
+        "Close",
+        "Closes",
+        "Closed",
+        "Fix",
+        "Fixes",
+        "Fixed",
+        "Resolve",
+        "Resolves",
+        "Resolved",
+        "Related to",
+    ),
+)
+def test_process_changelog_excludes_issue_reference_trailers(keyword):
+    changelog_text = f"""Changes
+~~~~~~~
+- Changed changelog formatting `#123 <https://github.com/#REPO#/issues/123>`_
+
+OW_CHANGELOG_BODY:{keyword} `#123 <https://github.com/#REPO#/issues/123>`_
+"""
+    processed_text = process_changelog(changelog_text)
+    assert f"{keyword} `#123" not in processed_text
+
+
+def test_process_changelog_preserves_markdown_links_for_markdown_output():
+    changelog_text = """Dependencies
+++++++++++++
+- Update django-reversion requirement from <5.2 to >=5.1,<6.1
+
+OW_CHANGELOG_BODY:Updates the requirements on [django-reversion](https://github.com/etianen/django-reversion)
+OW_CHANGELOG_BODY:to permit the latest version.
+OW_CHANGELOG_BODY:- [Release notes](https://github.com/etianen/django-reversion/releases)
+OW_CHANGELOG_BODY:- [Changelog](https://github.com/etianen/django-reversion/blob/master/CHANGELOG.rst)
+OW_CHANGELOG_BODY:- [Commits](https://github.com/etianen/django-reversion/compare/v5.1.0...v6.0.0)
+"""
+    processed_text = process_changelog(changelog_text, changelog_format="md")
+    assert (
+        "[django-reversion](https://github.com/etianen/django-reversion)"
+        in processed_text
+    )
+    assert (
+        "[Release notes](https://github.com/etianen/django-reversion/releases)"
+        in processed_text
+    )
+    assert (
+        "[Changelog](https://github.com/etianen/django-reversion/blob/master/CHANGELOG.rst)"
+        in processed_text
+    )
+    assert (
+        "[Commits](https://github.com/etianen/django-reversion/compare/v5.1.0...v6.0.0)"
+        in processed_text
+    )
+    assert (
+        "`Release notes <https://github.com/etianen/django-reversion/releases>`__"
+        not in processed_text
+    )
 
 
 @patch("openwisp_utils.releaser.changelog.find_cliff_config", return_value=None)
