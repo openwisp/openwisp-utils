@@ -484,6 +484,9 @@ select {
 .select2-container {
   min-width: 320px !important;
 }
+#main .form-row .select2-container {
+  max-width: 320px;
+}
 #main .select2-selection__arrow {
   height: 28px;
   top: 3px;
