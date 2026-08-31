@@ -1,6 +1,6 @@
 import os
 import sys
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, Mock, patch
 
 # Add the parent directory to path for importing bot modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -957,12 +957,9 @@ class TestExtractAllLinkedIssues:
 
 
 class TestPRValidation:
-    def assert_review(self, pr):
+    def assert_label(self, pr):
         pr.add_to_labels.assert_called_once_with("ai-review")
-        pr.create_issue_comment.assert_called_once_with("@coderabbitai review")
-        assert pr.method_calls.index(
-            call.add_to_labels("ai-review")
-        ) < pr.method_calls.index(call.create_issue_comment("@coderabbitai review"))
+        pr.create_issue_comment.assert_not_called()
 
     def test_get_issue_projects_success(self, bot_env):
         bot = IssueAssignmentBot()
@@ -1323,10 +1320,6 @@ class TestPRValidation:
                 "invalid_unvalidated_issue"
                 in mock_pr_obj.create_issue_comment.call_args[0][0].lower()
             )
-            assert (
-                call("@coderabbitai review")
-                not in mock_pr_obj.create_issue_comment.call_args_list
-            )
 
     def test_handle_pull_request_valid_removes_label(self, bot_env):
         bot = IssueAssignmentBot()
@@ -1349,9 +1342,9 @@ class TestPRValidation:
         with patch.object(bot, "validate_pr_issues", return_value=True):
             assert bot.handle_pull_request()
             mock_pr_obj.remove_from_labels.assert_called_once_with("invalid")
-            self.assert_review(mock_pr_obj)
+            self.assert_label(mock_pr_obj)
 
-    def test_requests_review(self, bot_env):
+    def test_adds_label(self, bot_env):
         bot = IssueAssignmentBot()
         bot.event_name = "pull_request_target"
         bot.load_event_payload(
@@ -1369,9 +1362,9 @@ class TestPRValidation:
         bot_env["repo"].get_pull.return_value = mock_pr_obj
         with patch.object(bot, "validate_pr_issues", return_value=True):
             assert bot.handle_pull_request()
-            self.assert_review(mock_pr_obj)
+            self.assert_label(mock_pr_obj)
 
-    def test_skips_review_when_labeled(self, bot_env):
+    def test_skips_label_when_labeled(self, bot_env):
         bot = IssueAssignmentBot()
         bot.event_name = "pull_request_target"
         bot.load_event_payload(
@@ -1393,27 +1386,6 @@ class TestPRValidation:
             assert bot.handle_pull_request()
             mock_pr_obj.create_issue_comment.assert_not_called()
             mock_pr_obj.add_to_labels.assert_not_called()
-
-    def test_keeps_label_on_review_error(self, bot_env):
-        bot = IssueAssignmentBot()
-        bot.event_name = "pull_request_target"
-        bot.load_event_payload(
-            {
-                "action": "opened",
-                "pull_request": {
-                    "number": 100,
-                    "user": {"login": "testuser"},
-                    "body": "Fixes #123",
-                },
-            }
-        )
-        mock_pr_obj = Mock()
-        mock_pr_obj.labels = []
-        mock_pr_obj.create_issue_comment.side_effect = Exception("API error")
-        bot_env["repo"].get_pull.return_value = mock_pr_obj
-        with patch.object(bot, "validate_pr_issues", return_value=True):
-            assert not bot.handle_pull_request()
-            mock_pr_obj.add_to_labels.assert_called_once_with("ai-review")
 
     def test_workflow_has_members_read_permission(self):
         """Verify that the reusable workflow requests permission-members: read."""
