@@ -78,7 +78,9 @@ OpenWISP repositories. The bot provides the following features:
   external contributors by flagging PRs that do not link a validated
   issue. PRs created by the configured GitHub App are exempt. The bot
   removes the ``invalid`` label once the PR is valid and closes unresolved
-  invalid PRs after 24 hours.
+  invalid PRs after 24 hours. For valid PRs, it applies the ``ai-review``
+  label and then requests a CodeRabbit review. The label prevents repeated
+  review requests.
 
 **How Stale PR Detection Works**
 
