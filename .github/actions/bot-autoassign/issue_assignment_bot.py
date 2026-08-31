@@ -458,8 +458,7 @@ class IssueAssignmentBot(GitHubBot):
                         print(f"Removed 'invalid' label from PR #{pr_number}")
                     if "ai-review" not in labels_lower:
                         pr_obj.add_to_labels("ai-review")
-                        pr_obj.create_issue_comment("@coderabbitai review")
-                        print(f"Requested CodeRabbit review for PR #{pr_number}")
+                        print(f"Added 'ai-review' label to PR #{pr_number}")
                 else:
                     if "invalid" not in labels_lower:
                         pr_obj.add_to_labels("invalid")
