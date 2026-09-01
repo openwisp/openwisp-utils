@@ -1364,6 +1364,35 @@ class TestPRValidation:
             assert bot.handle_pull_request()
             self.assert_label(mock_pr_obj)
 
+    @pytest.mark.parametrize(
+        "author,title",
+        [
+            ("dependabot[bot]", "Bump a dependency"),
+            ("testuser", "[release] Version 1.3.1"),
+            ("testuser", "[backport] Fixed regression"),
+        ],
+    )
+    def test_skips_excluded_prs(self, author, title, bot_env):
+        bot = IssueAssignmentBot()
+        bot.event_name = "pull_request_target"
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "title": title,
+                    "user": {"login": author},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_pr_obj = Mock()
+        mock_pr_obj.labels = []
+        bot_env["repo"].get_pull.return_value = mock_pr_obj
+        with patch.object(bot, "validate_pr_issues", return_value=True):
+            assert bot.handle_pull_request()
+            mock_pr_obj.add_to_labels.assert_not_called()
+
     def test_skips_label_when_labeled(self, bot_env):
         bot = IssueAssignmentBot()
         bot.event_name = "pull_request_target"
