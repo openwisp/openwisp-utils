@@ -429,6 +429,7 @@ class IssueAssignmentBot(GitHubBot):
             action = self.event_payload.get("action", "")
             pr_number = pr.get("number")
             pr_author = pr.get("user", {}).get("login", "")
+            pr_title = pr.get("title", "")
             pr_body = pr.get("body", "")
             if not all([pr_number, pr_author]):
                 print("Missing required PR data")
@@ -456,7 +457,11 @@ class IssueAssignmentBot(GitHubBot):
                     if "invalid" in labels_lower:
                         pr_obj.remove_from_labels("invalid")
                         print(f"Removed 'invalid' label from PR #{pr_number}")
-                    if "ai-review" not in labels_lower:
+                    skip_label = (
+                        pr_author.lower() == "dependabot[bot]"
+                        or pr_title.lower().startswith(("[release]", "[backport]"))
+                    )
+                    if "ai-review" not in labels_lower and not skip_label:
                         pr_obj.add_to_labels("ai-review")
                         print(f"Added 'ai-review' label to PR #{pr_number}")
                 else:

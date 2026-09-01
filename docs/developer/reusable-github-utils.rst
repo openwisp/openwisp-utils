@@ -80,7 +80,8 @@ OpenWISP repositories. The bot provides the following features:
   removes the ``invalid`` label once the PR is valid and closes unresolved
   invalid PRs after 24 hours. For valid PRs, it applies the ``ai-review``
   label, which triggers a CodeRabbit review. The label prevents repeated
-  reviews.
+  reviews. Dependabot PRs and PRs whose titles begin with ``[release]`` or
+  ``[backport]`` do not receive the label.
 
 **How Stale PR Detection Works**
 
