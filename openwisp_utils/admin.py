@@ -12,6 +12,39 @@ class TimeReadonlyAdminMixin(object):
         super().__init__(*args, **kwargs)
 
 
+class BlockDeleteAllowCascadeMixin:
+    """A mixin that allows cascade/bulk deletions while blocking single-row deletion in the change view."""
+
+    def is_admin_cascade_delete_request(self, request):
+        """Return True when another admin model is checking cascade deletion."""
+        model = self.model
+        opts = model._meta
+        resolver_match = getattr(request, "resolver_match", None)
+        url_name = getattr(resolver_match, "url_name", None)
+        if not url_name:
+            return False
+        own_admin_urls = (
+            f"{opts.app_label}_{opts.model_name}_delete",
+            f"{opts.app_label}_{opts.model_name}_change",
+            f"{opts.app_label}_{opts.model_name}_changelist",
+        )
+        if url_name in own_admin_urls:
+            return False
+        is_parent_delete = url_name.endswith("_delete")
+        is_parent_bulk_delete = (
+            url_name.endswith("_changelist")
+            and getattr(request, "POST", {}).get("action") == "delete_selected"
+        )
+        return is_parent_delete or is_parent_bulk_delete
+
+    def has_delete_permission(self, request, obj=None):
+        # Django calls child admins during parent delete confirmations;
+        # allow only those cascade checks to use normal delete permissions.
+        if self.is_admin_cascade_delete_request(request):
+            return super().has_delete_permission(request, obj)
+        return False
+
+
 class ReadOnlyAdmin(ModelAdmin):
     """Disables all editing capabilities."""
 
@@ -34,6 +67,8 @@ class ReadOnlyAdmin(ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        if BlockDeleteAllowCascadeMixin.is_admin_cascade_delete_request(self, request):
+            return super().has_delete_permission(request, obj)
         return False
 
     def save_model(self, request, obj, form, change):  # pragma: nocover
@@ -130,24 +165,19 @@ class CopyableFieldsAdmin(ModelAdmin):
             extra_context=extra_context,
         )
 
-    class Media:
-        js = ("admin/js/jquery.init.js", "openwisp-utils/js/copyable.js")
-
-
-class UUIDAdmin(CopyableFieldsAdmin):
-    """Sets `uuid` as copyable field.
-
-    Subclass of `CopyableFieldsAdmin`. This class is kept for backward
-    compatibility and convenience, since different models of various
-    OpenWISP modules show `uuid` as the only copyable field.
-    """
-
-    copyable_fields = ("uuid",)
-
     def uuid(self, obj):
+        """Return the object's primary key (UUID).
+
+        This default implementation allows subclasses to use
+        copyable_fields = ("uuid",) without defining their own uuid()
+        method when their model uses a UUID primary key.
+        """
         return obj.pk
 
     uuid.short_description = _("UUID")
+
+    class Media:
+        js = ("admin/js/jquery.init.js", "openwisp-utils/js/copyable.js")
 
 
 class ReceiveUrlAdmin(ModelAdmin):

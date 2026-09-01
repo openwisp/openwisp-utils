@@ -10,6 +10,7 @@ from openwisp_utils.releaser.release import (
 )
 from openwisp_utils.releaser.utils import (
     SkipSignal,
+    branch_exists,
     format_file_with_docstrfmt,
     retryable_request,
 )
@@ -306,3 +307,20 @@ def test_retryable_request_retries_then_aborts(
     assert mock_request.call_count == 2
     assert mock_print.call_count == 3
     mock_sleep.assert_called_once_with(1)
+
+
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_branch_exists_success(mock_run):
+    """branch_exists returns True when git exit code is 0."""
+    mock_run.return_value = MagicMock(returncode=0)
+    assert branch_exists("master") is True
+    # Ensure it's looking for refs/heads/master
+    mock_run.assert_called_once()
+    assert "refs/heads/master" in mock_run.call_args[0][0]
+
+
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_branch_exists_failure(mock_run):
+    """branch_exists returns False when git exit code is non-zero."""
+    mock_run.return_value = MagicMock(returncode=1)
+    assert branch_exists("non-existent") is False

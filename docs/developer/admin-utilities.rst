@@ -15,10 +15,30 @@ Admin mixin which adds two read only fields ``created`` and ``modified``.
 This is an admin mixin for models inheriting ``TimeStampedEditableModel``
 which adds the fields ``created`` and ``modified`` to the database.
 
+``openwisp_utils.admin.BlockDeleteAllowCascadeMixin``
+-----------------------------------------------------
+
+An admin mixin that blocks direct deletion while allowing Django to check
+the standard delete permission for cascades initiated by another admin
+model or a ``delete_selected`` action. Use it before the Django admin
+class:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin import BlockDeleteAllowCascadeMixin
+
+
+    class MyInline(BlockDeleteAllowCascadeMixin, admin.StackedInline):
+        model = MyModel
+
 ``openwisp_utils.admin.ReadOnlyAdmin``
 --------------------------------------
 
 A read-only ``ModelAdmin`` base class.
+
+Direct deletions remain blocked, but Django can perform permitted cascade
+deletions initiated by another admin model.
 
 Will include the ``id`` field by default, which can be excluded by
 supplying the ``exclude`` attribute, e.g.:
@@ -48,13 +68,21 @@ it easy to copy the fields contents.
 
 Useful for auto-generated fields such as UUIDs, secret keys, tokens, etc.
 
-``openwisp_utils.admin.UUIDAdmin``
-----------------------------------
+To replicate the "copy UUID" behavior previously provided by the removed
+``UUIDAdmin`` class, just set ``copyable_fields = ("uuid",)`` on a
+``CopyableFieldsAdmin`` subclass:
 
-This class is a subclass of ``CopyableFieldsAdmin`` which sets ``uuid`` as
-the only copyable field. This class is kept for backward compatibility and
-convenience, since different models of various OpenWISP modules show
-``uuid`` as the only copyable field.
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin import CopyableFieldsAdmin
+
+    from .models import MyModel
+
+
+    @admin.register(MyModel)
+    class MyModelAdmin(CopyableFieldsAdmin):
+        copyable_fields = ("uuid",)
 
 ``openwisp_utils.admin.ReceiveUrlAdmin``
 ----------------------------------------
@@ -95,8 +123,13 @@ object. Following is an example:
             "image_url": "/static/admin/img/icon-alert.svg",
         }
 
+.. _utils_admin_filters:
+
 ``openwisp_utils.admin_theme.filters.InputFilter``
 --------------------------------------------------
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/filter.gif
+    :align: center
 
 The ``admin_theme`` sub app of this package provides an input filter that
 can be used in the *changelist* page to filter ``UUIDField`` or
@@ -144,7 +177,7 @@ by modifying ``InputFilter`` as following:
 
 To know about other lookups that can be used please check `Django Lookup
 API Reference
-<https://docs.djangoproject.com/en/4.2/ref/models/lookups/#django.db.models.Lookup>`__
+<https://docs.djangoproject.com/en/5.2/ref/models/lookups/#django.db.models.Lookup>`__
 
 ``openwisp_utils.admin_theme.filters.SimpleInputFilter``
 --------------------------------------------------------
@@ -216,6 +249,65 @@ all at once which may cause the slow loading of the page.
 To customize or know more about it, please refer to the
 `django-admin-autocomplete-filter documentation
 <https://github.com/farhan0581/django-admin-autocomplete-filter#usage>`_.
+
+.. _utils_sub_filter_mixin:
+
+``openwisp_utils.admin_theme.filters.SubFilterMixin``
+-----------------------------------------------------
+
+.. figure:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/sub-filter.gif
+    :align: center
+
+A mixin that allows admin list filters to be displayed and applied only
+when a parent filter has specific values. This is useful for creating
+hierarchical filter relationships where sub-filters provide more specific
+filtering options based on the parent filter's selection.
+
+Code example:
+
+.. code-block:: python
+
+    from django.contrib import admin
+    from openwisp_utils.admin_theme.filters import SubFilterMixin
+
+
+    class StatusSubFilter(SubFilterMixin, admin.SimpleListFilter):
+        title = "Detailed Status"
+        parameter_name = "detailed_status"
+        parent_parameter_name = "status"
+        parent_active_values = ("active",)
+
+        def lookups(self, request, model_admin):
+            return [
+                ("online", "Online"),
+                ("offline", "Offline"),
+            ]
+
+        def filter_queryset(self, request, queryset):
+            if self.value() == "online":
+                return queryset.filter(is_online=True)
+            elif self.value() == "offline":
+                return queryset.filter(is_online=False)
+            return queryset
+
+
+    @admin.register(MyModel)
+    class MyModelAdmin(admin.ModelAdmin):
+        list_filter = ["status", StatusSubFilter]
+
+The ``parent_parameter_name`` attribute specifies the query parameter of
+the parent filter. This can refer either to a field filter (for example
+``"status"`` or ``"organization__name"``) or to the ``parameter_name`` of
+a custom list filter.
+
+When the parent filter is inactive, the sub-filter is hidden and its value
+is ignored. When a sub-filter is present on the page, the "apply filter"
+button is always displayed. In this case, filter selections are applied
+only when the button is clicked. If a sub-filter value is supplied while
+the parent is inactive, ``IncorrectLookupParameters`` is raised.
+
+Orphaned sub-filters (those whose ``parent_parameter_name`` doesn't match
+any parent filter) are not rendered and are logged as errors.
 
 Customizing the Submit Row in OpenWISP Admin
 --------------------------------------------

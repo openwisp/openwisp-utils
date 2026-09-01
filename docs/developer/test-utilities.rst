@@ -37,7 +37,7 @@ Usage example as a context-manager:
     :align: center
 
 This class extends the `default test runner provided by Django
-<https://docs.djangoproject.com/en/4.2/ref/settings/#std:setting-TEST_RUNNER>`_
+<https://docs.djangoproject.com/en/5.2/ref/settings/#std:setting-TEST_RUNNER>`_
 and logs the time spent by each test, making it easier to spot slow tests
 by highlighting time taken by it in yellow (time shall be highlighted in
 red if it crosses the second threshold).
@@ -152,7 +152,7 @@ Example usage:
 -----------------------------------------------------
 
 This mixin overrides the `assertNumQueries
-<https://docs.djangoproject.com/en/4.2/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries>`_
+<https://docs.djangoproject.com/en/5.2/topics/testing/tools/#django.test.TransactionTestCase.assertNumQueries>`_
 assertion from the django test case to run in a ``subTest`` so that the
 query check does not block the whole test if it fails.
 
@@ -180,16 +180,20 @@ methods that must be used across all OpenWISP modules based on Django to
 enforce best practices and avoid flaky tests.
 
 It includes a built-in retry mechanism that can automatically repeat
-failing tests to identify transient (flaky) failures. You can customize
-this behavior using the following class attributes:
+failing tests to mitigate transient (flaky) failures. When a Selenium test
+fails, it must pass 2 successful retry runs by default before it is
+considered successful. You can customize this behavior using the following
+class attributes:
 
 - ``retry_max``: The maximum number of times to retry a failing test.
   Defaults to ``5``.
 - ``retry_delay``: The number of seconds to wait between retries. Defaults
   to ``0``.
-- ``retry_threshold``: The minimum ratio of successful retries required
-  for the test to be considered as passed. If the success ratio falls
-  below this threshold, the test is marked as failed. Defaults to ``0.8``.
+- ``retry_successes_required``: The number of successful retries required
+  after a failure for the test to be considered as passed. Defaults to
+  ``2``.
+- ``retry_threshold``: Deprecated. Existing test suites can still use it
+  to require a minimum ratio of successful retries.
 
 **Example usage:**
 
@@ -202,7 +206,7 @@ this behavior using the following class attributes:
     class MySeleniumTest(SeleniumTestMixin, StaticLiveServerTestCase):
         retry_max = 10
         retry_delay = 0
-        retry_threshold = 0.9
+        retry_successes_required = 3
 
         def test_something(self):
             self.open("/some-url/")
@@ -230,40 +234,150 @@ should be automatically installed when setting up the development
 environment. All the OpenWISP modules using ``SeleniumTestMixin`` are
 already depending on ``openwisp-utils[selenium]``.
 
-Methods
-~~~~~~~
+Key Methods of ``SeleniumTestMixin``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``setUpClass()`` (``@classmethod``): Initializes the Selenium WebDriver
-  with Firefox and applies custom settings to improve test reliability.
+``setUpClass()`` (``@classmethod``)
++++++++++++++++++++++++++++++++++++
 
-  - Uses the ``SELENIUM_HEADLESS`` environment variable to determine
-    whether to run in headless mode.
+Initializes the Selenium WebDriver with either Firefox (default) or
+Chrome.
+
+Applies a number of settings by default to improve test reliability.
+
+- Uses the ``SELENIUM_HEADLESS`` environment variable to determine whether
+  to run in headless mode.
+- Firefox-specific options:
+
   - Uses the ``GECKO_BIN`` environment variable to specify a custom
     Firefox binary location.
   - Uses the ``GECKO_LOG`` environment variable to enable GeckoDriver
-    logging to ``geckodriver.log``. - Configures preferences to disable
-    hardware acceleration and increase timeouts.
+    logging to ``geckodriver.log``.
+  - Uses ``page_load_strategy = "eager"`` to start interacting with the
+    page before it's fully loaded.
+  - Disables hardware acceleration for improved stability
+    (``gfx.webrender.force-disabled``, ``layers.acceleration.disabled``).
+  - Increases script timeout (``dom.max_script_run_time = 30``).
+  - Uses a free port for Marionette to support parallel test execution.
+  - Captures browser console logs over WebDriver BiDi, since Firefox does
+    not support the WebDriver ``get_log`` API. Logs emitted during page
+    load are captured as well, and are retrieved via
+    ``get_browser_logs()``.
 
-- ``tearDownClass()`` (``@classmethod``): Quits the Selenium WebDriver to
-  clean up resources after the test class has finished executing.
-- ``open(url, driver=None, timeout=5)``: Opens a URL in the browser. -
-  Waits for the page to fully load before returning. - Ensures the
-  ``#main-content`` element is present before proceeding.
-- ``login(username=None, password=None, driver=None)``: Logs into the
-  Django admin dashboard. - Defaults to using ``admin`` / ``password``
-  credentials. - Navigates to ``/admin/login/`` and fills in the login
-  form.
-- ``find_element(by, value, timeout=2, wait_for='visibility')``: Finds an
-  element using Selenium's ``find_element`` method. - Waits for the
-  element based on the specified ``wait_for`` condition (``visibility``,
-  ``presence``).
-- ``wait_for_visibility(by, value, timeout=2)``: Waits until an element is
-  visible.
-- ``wait_for_invisibility(by, value, timeout=2)``: Waits until an element
-  is no longer visible.
-- ``wait_for_presence(by, value, timeout=2)``: Waits until an element is
-  present in the DOM.
-- ``wait_for(method, by, value, timeout=2)``: General method for waiting
-  for an element based on a given condition. - Uses Selenium's
-  ``WebDriverWait`` and Expected Conditions (``EC``). - If the timeout is
-  reached, the test fails with a descriptive error message.
+- Chrome-specific options:
+
+  - Uses the ``CHROME_BIN`` environment variable to specify a custom
+    Chrome binary location.
+  - Uses ``page_load_strategy = "eager"`` to start interacting with the
+    page before it's fully loaded.
+  - Adds flags: ``--ignore-certificate-errors``, ``--no-sandbox``,
+    ``--disable-gpu``, ``--disable-dev-shm-usage``,
+    ``--disable-features=VizDisplayCompositor``.
+  - Uses a free remote debugging port to support parallel test execution.
+  - Enables browser logging with ``goog:loggingPrefs`` to retrieve console
+    logs via ``get_browser_logs()``.
+
+``tearDownClass()`` (``@classmethod``)
+++++++++++++++++++++++++++++++++++++++
+
+Quits the Selenium WebDriver to clean up resources after the test class
+has finished executing.
+
+``open(url, html_container="#main-content", driver=None, timeout=5)``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+- Opens a URL in the browser.
+- Waits for the page to fully load before returning.
+- Waits for the ``html_container`` element to be visible before
+  proceeding.
+
+``login(username=None, password=None, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Logs into the Django admin dashboard.
+
+- Defaults to using ``admin`` / ``password`` credentials.
+- Navigates to ``/admin/login/`` and fills in the login form.
+
+``get_browser_logs(driver=None)``
++++++++++++++++++++++++++++++++++
+
+Returns all browser console logs captured for the current page.
+
+This includes ``INFO``, ``WARNING`` and ``SEVERE`` entries, so tests which
+only need to assert the absence of JavaScript errors should prefer
+``get_browser_errors()``.
+
+``get_browser_errors(driver=None)``
++++++++++++++++++++++++++++++++++++
+
+Returns relevant ``SEVERE`` browser console entries only.
+
+This helper filters known Firefox internal messages emitted in headless
+environments, for example ``BackupService.sys.mjs``. Use this method when
+a test needs to assert that a page did not emit JavaScript errors.
+
+``find_element(by, value, timeout=2, driver=None, wait_for='visibility')``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Finds an element using Selenium's ``find_element`` method. Waits for the
+element based on the specified ``wait_for`` condition (``visibility``,
+``presence``).
+
+``wait_for_visibility(by, value, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until an element is visible.
+
+``wait_for_invisibility(by, value, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until an element is no longer visible.
+
+``wait_for_presence(by, value, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until an element is present in the DOM.
+
+``wait_for(method, by, value, timeout=2, driver=None)``
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+General method for waiting for an element based on a given condition. Uses
+Selenium's ``WebDriverWait`` and Expected Conditions (``EC``).
+
+If the timeout is reached, the test fails with a descriptive error
+message.
+
+``wait_until(condition, timeout=2, driver=None)``
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits until a custom Selenium expected condition or callable returns a
+truthy value. Returns that value and preserves Selenium's
+``TimeoutException``, allowing tests to provide a domain-specific failure
+message when needed.
+
+All standard Selenium waits default to two seconds, so tests must omit the
+``timeout`` argument in the normal case. Use ``timeout=5`` only for a
+concrete external asynchronous boundary, such as WebSocket delivery,
+geocoding, chart rendering, or a page navigation.
+
+``wait_for_script(script, *args, timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Executes ``script`` until it returns a truthy value. Positional arguments
+are passed to Selenium as JavaScript arguments and the final script result
+is returned. This method uses ``wait_until()`` internally and is useful
+for waiting for JavaScript-managed UI state.
+
+``assert_no_browser_errors(driver=None)``
++++++++++++++++++++++++++++++++++++++++++
+
+Asserts that the current page has no relevant ``SEVERE`` browser console
+entries. It uses ``get_browser_errors()`` and therefore applies the
+mixin's configured ignored-message filtering.
+
+``wait_for_admin_success_message(timeout=2, driver=None)``
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Waits for Django admin's ``.messagelist .success`` confirmation message
+and returns the matching element.

@@ -1,6 +1,41 @@
 import re
+import time
 
 from github import GithubException
+
+VERIFICATION_RETRY_DELAY_SECONDS = 1.0
+FIND_OPEN_PR_MAX_RESULTS = 20
+
+
+def user_in_logins(user, logins):
+    user_lower = (user or "").lower()
+    return any(user_lower == (login or "").lower() for login in logins)
+
+
+def get_assignee_logins(issue):
+    return [a.login for a in issue.assignees if hasattr(a, "login")]
+
+
+def verify_assignment(repo, issue_number, user):
+    """Re-fetch to confirm `user` was assigned. Returns True/False
+    on verified state, None when every fetch errored — caller
+    stays silent on None since the true state is unknown.
+    """
+    had_successful_fetch = False
+    for attempt in range(2):
+        try:
+            updated_issue = repo.get_issue(issue_number)
+            had_successful_fetch = True
+            if user_in_logins(user, get_assignee_logins(updated_issue)):
+                return True
+        except Exception as e:
+            print(
+                f"Error verifying assignment for #{issue_number}"
+                f" (attempt {attempt + 1}/2): {e}"
+            )
+        if attempt == 0:
+            time.sleep(VERIFICATION_RETRY_DELAY_SECONDS)
+    return False if had_successful_fetch else None
 
 
 def extract_linked_issues(pr_body):
@@ -20,13 +55,9 @@ def extract_linked_issues(pr_body):
     return list(dict.fromkeys(int(match) for match in matches))
 
 
-def get_valid_linked_issues(repo, repository_name, pr_body):
+def get_valid_linked_issues(repo, repository_name, issue_numbers):
     """Generator yielding valid linked issues (skipping cross-repo and PRs)."""
-    linked_issues = extract_linked_issues(pr_body)
-    if not linked_issues:
-        return
-
-    for issue_number in linked_issues:
+    for issue_number in issue_numbers:
         try:
             issue = repo.get_issue(issue_number)
             if (
@@ -46,20 +77,73 @@ def get_valid_linked_issues(repo, repository_name, pr_body):
                 print(f"Error fetching issue #{issue_number}: {e}")
 
 
+def find_open_pr_for_issue(github, repo_full_name, author, issue_number):
+    """Return the most recently updated open PR by ``author`` that
+    references ``issue_number``, or ``None`` if none is found.
+    Search-API errors propagate so the caller can tell a verified
+    miss from an unknown state.
+    """
+    if not author:
+        return None
+    query = f"repo:{repo_full_name} is:pr is:open author:{author}"
+    results = github.search_issues(query, sort="updated", order="desc")
+    for index, item in enumerate(results):
+        if index >= FIND_OPEN_PR_MAX_RESULTS:
+            break
+        if issue_number in extract_linked_issues(item.body or ""):
+            return item.as_pull_request()
+    return None
+
+
 def unassign_linked_issues_helper(repo, repository_name, pr_body, pr_author):
     """Shared helper to unassign linked issues from PR author."""
     unassigned_issues = []
-    for issue_number, issue in get_valid_linked_issues(repo, repository_name, pr_body):
+    linked_issues = extract_linked_issues(pr_body)
+    for issue_number, issue in get_valid_linked_issues(
+        repo, repository_name, linked_issues
+    ):
         try:
-            current_assignees = [
-                assignee.login
-                for assignee in issue.assignees
-                if hasattr(assignee, "login")
-            ]
-            if pr_author in current_assignees:
+            if user_in_logins(pr_author, get_assignee_logins(issue)):
                 issue.remove_from_assignees(pr_author)
                 unassigned_issues.append(issue_number)
                 print(f"Unassigned {pr_author} from issue #{issue_number}")
         except Exception as e:
             print(f"Error unassigning issue #{issue_number}: {e}")
     return unassigned_issues
+
+
+def extract_all_linked_issues(pr_body, default_repo_full_name):
+    """Extract all linked issues (including cross-repository and URLs).
+
+    Returns a list of tuples: (owner, repo_name, issue_number)
+    """
+    if not pr_body:
+        return []
+    # Pattern to match:
+    # 1. URL: https://github.com/owner/repo/issues/num
+    # 2. owner/repo#num
+    # 3. #num
+    pattern = (
+        r"\b(?:fix(?:e[sd])?|close[sd]?|resolve[sd]?|relat(?:e[sd]?|ed)\s+to)\s*:?\s*"
+        r"(?:"
+        r"https://github\.com/([\w-]+)/([\w.-]+)/issues/(\d+)"
+        r"|([\w-]+)/([\w.-]+)#(\d+)"
+        r"|#(\d+)"
+        r")"
+    )
+    matches = re.findall(pattern, pr_body, re.IGNORECASE)
+    results = []
+    default_owner, default_repo = default_repo_full_name.split("/")
+    for m in matches:
+        if m[0] and m[1] and m[2]:  # URL
+            results.append((m[0], m[1], int(m[2])))
+        elif m[3] and m[4] and m[5]:  # owner/repo#num
+            results.append((m[3], m[4], int(m[5])))
+        elif m[6]:  # #num
+            results.append((default_owner, default_repo, int(m[6])))
+    # Remove duplicates while preserving order
+    unique_results = []
+    for r in results:
+        if r not in unique_results:
+            unique_results.append(r)
+    return unique_results

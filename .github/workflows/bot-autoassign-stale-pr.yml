@@ -16,31 +16,10 @@ concurrency:
 
 jobs:
   manage-stale-prs-python:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate GitHub App token
-        id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
-
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-
-      - name: Install dependencies
-        run: pip install -e .[github_actions]
-
-      - name: Run stale PR bot
-        env:
-          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
-          REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-        run: >
-          python .github/actions/bot-autoassign/__main__.py
-          stale_pr
+    if: github.repository == 'openwisp/openwisp-utils'
+    uses: ./.github/workflows/reusable-bot-autoassign.yml
+    with:
+      bot_command: stale_pr
+    secrets:
+      OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+      OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}

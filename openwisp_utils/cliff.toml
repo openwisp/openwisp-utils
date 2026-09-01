@@ -17,6 +17,11 @@ body = """
         ~~~~~~~~
         {% for commit in commits %}
             - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+            {% for line in commit.message | split(pat="\n") %}
+                {%- if not loop.first -%}
+                    OW_CHANGELOG_BODY:{{ line }}
+                {% endif -%}
+            {% endfor %}
         {%- endfor -%}
     {%- endif -%}
 {%- endfor -%}
@@ -36,6 +41,11 @@ body = """
         +++++++++++++++++++++++++++++++++
         {% for commit in commits %}
             - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+            {% for line in commit.message | split(pat="\n") %}
+                {%- if not loop.first -%}
+                    OW_CHANGELOG_BODY:{{ line }}
+                {% endif -%}
+            {% endfor %}
         {%- endfor -%}
     {%- endif -%}
 {%- endfor -%}
@@ -46,6 +56,11 @@ body = """
         +++++++++++++
         {% for commit in commits %}
             - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+            {% for line in commit.message | split(pat="\n") %}
+                {%- if not loop.first -%}
+                    OW_CHANGELOG_BODY:{{ line }}
+                {% endif -%}
+            {% endfor %}
         {%- endfor -%}
     {% endif %}
 {%- endfor -%}
@@ -56,6 +71,11 @@ body = """
         ++++++++++++
         {% for commit in commits %}
             - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+            {% for line in commit.message | split(pat="\n") %}
+                {%- if not loop.first -%}
+                    OW_CHANGELOG_BODY:{{ line }}
+                {% endif -%}
+            {% endfor %}
         {%- endfor -%}
     {%- endif -%}
 {%- endfor -%}
@@ -67,6 +87,11 @@ body = """
         ~~~~~~~~
         {% for commit in commits %}
             - {{ commit.message | split(pat="\n") | first | split(pat="]") | nth(n=1) | trim | upper_first }}
+            {% for line in commit.message | split(pat="\n") %}
+                {%- if not loop.first -%}
+                    OW_CHANGELOG_BODY:{{ line }}
+                {% endif -%}
+            {% endfor %}
         {%- endfor -%}
     {% endif %}
 {% endfor %}

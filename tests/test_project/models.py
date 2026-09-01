@@ -15,9 +15,9 @@ from openwisp_utils.fields import (
 
 class Shelf(TimeStampedEditableModel):
     TYPES = (
-        ("HORROR", "HORROR"),
-        ("FANTASY", "FANTASY"),
-        ("FACTUAL", "FACTUAL"),
+        ("HORROR", "Horror"),
+        ("FANTASY", "Fantasy"),
+        ("FACTUAL", "Factual"),
         ("Mystery", "Mystery"),
         ("Historical Fiction", "Historical Fiction"),
         ("Literary Fiction", "Literary Fiction"),

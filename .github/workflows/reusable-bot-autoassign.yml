@@ -1,0 +1,140 @@
+name: Reusable Bot Autoassign
+
+on:
+  workflow_call:
+    inputs:
+      bot_command:
+        required: true
+        type: string
+        description: "The bot to execute (e.g., 'issue_assignment', 'pr_reopen', 'stale_pr')"
+      bot_username:
+        required: false
+        type: string
+        default: "openwisp-companion"
+        description: "The GitHub App username used to detect bot mentions and bot-authored comments"
+      openwisp_utils_repo:
+        required: false
+        type: string
+        default: "openwisp/openwisp-utils"
+        description: "The repository to check out"
+      openwisp_utils_ref:
+        required: false
+        type: string
+        default: "master"
+        description: "The ref to check out"
+      exclude_pr_authors:
+        required: false
+        type: string
+        default: "dependabot[bot]"
+        description: "Comma-separated GitHub usernames exempt from external PR validation"
+    secrets:
+      OPENWISP_BOT_APP_ID:
+        required: true
+      OPENWISP_BOT_PRIVATE_KEY:
+        required: true
+
+env:
+  PUBLIC_VALIDATION_REPOSITORIES: |
+    openwisp/OpenWISP-Website
+    openwisp/django-rest-framework-gis
+    openwisp/netengine
+    openwisp/django-swappable-models
+    openwisp/netdiff
+    openwisp/netjsonconfig
+    openwisp/netjsongraph.js
+    openwisp/django-owm-legacy
+    openwisp/openwisp-config
+    openwisp/ansible-openwisp2
+    openwisp/ansible-openwisp2-iptables
+    openwisp/django-x509
+    openwisp/ansible-openwisp2-imagegenerator
+    openwisp/openwisp-controller
+    openwisp/openwisp-users
+    openwisp/openwisp-docs
+    openwisp/openwisp-network-topology
+    openwisp/openwisp-utils
+    openwisp/django-loci
+    openwisp/openwisp-radius
+    openwisp/openwisp-ipam
+    openwisp/docker-openwisp
+    openwisp/openwisp-wifi-login-pages
+    openwisp/openwisp-firmware-upgrader
+    openwisp/openwisp-monitoring
+    openwisp/openwrt-openwisp-monitoring
+    openwisp/openwisp-notifications
+    openwisp/django-flat-json-widget
+    openwisp/ansible-ow-influxdb
+    openwisp/ansible-wireguard-openwisp
+    openwisp/ansible-openwisp-wifi-login-pages
+    openwisp/openwisp-vxlan-updater
+    openwisp/openwisp-sentry-utils
+    openwisp/Stouts.postfix
+    openwisp/django-minify-compress-staticfiles
+    openwisp/bot-testing-ground
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate repository write token
+        id: write-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-issues: write
+          permission-pull-requests: write
+          permission-members: read
+
+      - name: Check validation repository list
+        run: |
+          if [ -z "$PUBLIC_VALIDATION_REPOSITORIES" ]; then
+            echo "Error: PUBLIC_VALIDATION_REPOSITORIES environment variable is empty."
+            echo "Failing to prevent minting a token with org-wide access."
+            exit 1
+          fi
+
+      - name: Generate validation token
+        id: validation-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ env.PUBLIC_VALIDATION_REPOSITORIES }}
+          permission-issues: read
+          permission-organization-projects: read
+          permission-repository-projects: read
+
+      - name: Checkout openwisp-utils
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ inputs.openwisp_utils_repo }}
+          ref: ${{ inputs.openwisp_utils_ref }}
+          path: openwisp-utils
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: pip install -e 'openwisp-utils/.[github_actions]'
+
+      - name: Execute bot script
+        env:
+          GITHUB_TOKEN: ${{ steps.write-token.outputs.token }}
+          VALIDATION_GITHUB_TOKEN: ${{ steps.validation-token.outputs.token }}
+          REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          BOT_COMMAND: ${{ inputs.bot_command }}
+          BOT_USERNAME: ${{ inputs.bot_username }}
+          EXCLUDE_PR_AUTHORS: ${{ inputs.exclude_pr_authors }}
+        run: |
+          if [ -n "$GITHUB_EVENT_PATH" ]; then
+            python openwisp-utils/.github/actions/bot-autoassign/__main__.py "$BOT_COMMAND" "$GITHUB_EVENT_PATH"
+          else
+            python openwisp-utils/.github/actions/bot-autoassign/__main__.py "$BOT_COMMAND"
+          fi

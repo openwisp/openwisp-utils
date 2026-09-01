@@ -33,6 +33,7 @@ on:
         required: true
 
 permissions:
+  actions: read
   contents: read
   pull-requests: write
 
@@ -42,20 +43,20 @@ jobs:
     steps:
       - name: Generate Bot Token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Checkout Reusable Workflow
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: openwisp/openwisp-utils
           ref: master
           path: trusted_scripts
 
       - name: Checkout PR Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.head_repo }}
           ref: ${{ inputs.head_sha }}
@@ -64,7 +65,7 @@ jobs:
           submodules: false
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
@@ -94,7 +95,7 @@ jobs:
           > failed_logs.txt
           for JOB_ID in $JOB_IDS; do
             echo "Processing job $JOB_ID"
-            if ! gh api repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
+            if ! gh api --allow-escape-sequences repos/$REPO/actions/jobs/$JOB_ID/logs > job_logs.txt; then
               echo "Could not fetch logs for job $JOB_ID; skipping." >> failed_logs.txt
               continue
             fi
@@ -126,10 +127,53 @@ jobs:
           ACTOR: ${{ inputs.actor }}
           COMMIT_SHA: ${{ inputs.head_sha }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          CI_RETRY_MODE: ${{ vars.CI_RETRY_MODE }}
         run: |
           python trusted_scripts/.github/actions/bot-ci-failure/analyze_failure.py > solution.md
 
+      - name: Auto-retry transient failures
+        id: retry
+        if: hashFiles('transient_failure') != ''
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUM: ${{ inputs.pr_number }}
+          RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          MAX_RETRIES=3
+          HEAD_SHA="${{ inputs.head_sha }}"
+          MARKER="<!-- ci-transient-retry $HEAD_SHA -->"
+          # Count previous retry comments for this specific commit.
+          # gh --jq does not support jq's --arg flag, so pipe through
+          # grep to count marker occurrences.
+          RETRY_COUNT=$(gh pr view "$PR_NUM" --repo "$REPO" --json comments \
+            --jq '.comments[].body' 2>/dev/null \
+            | grep -cF "$MARKER" || echo "0")
+          if ! [[ "$RETRY_COUNT" =~ ^[0-9]+$ ]]; then
+            RETRY_COUNT=0
+          fi
+          echo "Previous retries: $RETRY_COUNT"
+          if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+            echo "Max retries ($MAX_RETRIES) reached; skipping."
+            echo "retried=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          NEXT=$((RETRY_COUNT + 1))
+          # Attempt to re-run failed jobs. This requires actions:write permission,
+          # which may not be granted in all caller workflows.
+          if gh api -X POST "repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs" 2>/dev/null; then
+            echo "retried=true" >> "$GITHUB_OUTPUT"
+            printf -v BODY '%s\n%s' \
+              "$MARKER" \
+              "The CI is failing due to transient infrastructure issues (not related to your code). I have restarted the failed jobs automatically ($NEXT/$MAX_RETRIES)."
+            gh pr comment "$PR_NUM" --repo "$REPO" --body "$BODY"
+          else
+            echo "::warning::Could not re-run failed jobs (missing actions:write permission?). Skipping auto-retry."
+            echo "retried=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Post Comment
+        if: steps.retry.outputs.retried != 'true'
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
           PR_NUM: ${{ inputs.pr_number }}
@@ -137,6 +181,10 @@ jobs:
         run: |
           if [ ! -s solution.md ]; then
             echo "AI analysis produced no output; skipping comment."
+            exit 0
+          fi
+          if ! grep -q "##\[error\]" failed_logs.txt 2>/dev/null; then
+            echo "No CI failures detected; skipping comment."
             exit 0
           fi
           gh pr comment "$PR_NUM" --repo "$REPO" --body-file solution.md

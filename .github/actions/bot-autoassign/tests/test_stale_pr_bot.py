@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 # Add the parent directory to path for importing bot modules
@@ -9,9 +9,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pytest  # noqa: E402
 
 try:
-    from stale_pr_bot import StalePRBot  # noqa: E402
+    from stale_pr_bot import StalePRBot, ValidationAPIError  # noqa: E402
 except ImportError:
     StalePRBot = None
+    ValidationAPIError = None
 
 pytestmark = pytest.mark.skipif(
     StalePRBot is None,
@@ -22,13 +23,32 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture(autouse=True)
 def bot_env(monkeypatch):
     monkeypatch.setenv("GITHUB_TOKEN", "test_token")
+    monkeypatch.setenv("VALIDATION_GITHUB_TOKEN", "test_validation_token")
     monkeypatch.setenv("REPOSITORY", "openwisp/openwisp-utils")
+
+    mock_github = Mock()
+    mock_repo = Mock()
+    mock_github.get_repo.return_value = mock_repo
+
+    mock_github_validation = Mock()
+    mock_repo_validation = Mock()
+    mock_github_validation.get_repo.return_value = mock_repo_validation
+
+    def github_side_effect(token):
+        if token == "test_token":
+            return mock_github
+        if token == "test_validation_token":
+            return mock_github_validation
+        return Mock()
+
     with patch("base.Github") as mock_github_cls:
-        mock_repo = Mock()
-        mock_github_cls.return_value.get_repo.return_value = mock_repo
+        mock_github_cls.side_effect = github_side_effect
         yield {
             "github_cls": mock_github_cls,
+            "github": mock_github,
             "repo": mock_repo,
+            "github_validation": mock_github_validation,
+            "repo_validation": mock_repo_validation,
         }
 
 
@@ -36,14 +56,16 @@ class TestInit:
     def test_success(self, bot_env):
         bot = StalePRBot()
         assert bot.github_token == "test_token"
+        assert bot.github_validation_token == "test_validation_token"
         assert bot.repository_name == "openwisp/openwisp-utils"
-        bot_env["github_cls"].assert_called_once_with("test_token")
+        bot_env["github_cls"].assert_any_call("test_token")
+        bot_env["github_cls"].assert_any_call("test_validation_token")
 
     def test_thresholds(self, bot_env):
         bot = StalePRBot()
         assert bot.DAYS_BEFORE_STALE_WARNING == 7
         assert bot.DAYS_BEFORE_UNASSIGN == 14
-        assert bot.DAYS_BEFORE_CLOSE == 60
+        assert bot.DAYS_BEFORE_FINAL_FOLLOWUP == 60
 
 
 class TestGetLastChangesRequested:
@@ -77,6 +99,151 @@ class TestGetLastChangesRequested:
         ]
         assert bot.get_last_changes_requested(mock_pr) is None
 
+    def _make_review(self, state, submitted_at, login="alice", user_type="User"):
+        review = Mock()
+        review.state = state
+        review.submitted_at = submitted_at
+        review.user.login = login
+        review.user.type = user_type
+        return review
+
+    def test_bot_changes_requested_ignored(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 2, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_bot_changes_requested_then_bot_approved(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+            self._make_review(
+                "APPROVED",
+                datetime(2024, 1, 2, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_human_changes_requested_then_same_human_approved(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+            ),
+            self._make_review(
+                "APPROVED",
+                datetime(2024, 1, 2, tzinfo=timezone.utc),
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_human_changes_requested_then_dismissed(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+            ),
+            self._make_review(
+                "DISMISSED",
+                datetime(2024, 1, 3, tzinfo=timezone.utc),
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_commented_does_not_supersede_changes_requested(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 1, 1, tzinfo=timezone.utc),
+            ),
+            self._make_review(
+                "COMMENTED",
+                datetime(2024, 1, 5, tzinfo=timezone.utc),
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) == datetime(
+            2024, 1, 1, tzinfo=timezone.utc
+        )
+
+    def test_bot_review_after_human_block_does_not_dominate(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        human_block = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        mock_pr.get_reviews.return_value = [
+            self._make_review("CHANGES_REQUESTED", human_block, login="alice"),
+            self._make_review(
+                "CHANGES_REQUESTED",
+                datetime(2024, 2, 1, tzinfo=timezone.utc),
+                login="coderabbitai[bot]",
+                user_type="Bot",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) == human_block
+
+    def test_one_human_blocks_other_approves(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        block_time = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_pr.get_reviews.return_value = [
+            self._make_review(
+                "APPROVED",
+                datetime(2024, 1, 4, tzinfo=timezone.utc),
+                login="alice",
+            ),
+            self._make_review(
+                "CHANGES_REQUESTED",
+                block_time,
+                login="bob",
+            ),
+        ]
+        assert bot.get_last_changes_requested(mock_pr) == block_time
+
+    def test_review_without_user_skipped(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        bad_review = Mock(
+            state="CHANGES_REQUESTED",
+            submitted_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        )
+        bad_review.user = None
+        mock_pr.get_reviews.return_value = [bad_review]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_review_without_submitted_at_skipped(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        pending = self._make_review("CHANGES_REQUESTED", None)
+        mock_pr.get_reviews.return_value = [pending]
+        assert bot.get_last_changes_requested(mock_pr) is None
+
+    def test_propagates_exception(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.get_reviews.side_effect = RuntimeError("transient API error")
+        with pytest.raises(RuntimeError, match="transient API error"):
+            bot.get_last_changes_requested(mock_pr)
+
 
 class TestGetDaysSinceActivity:
     @patch("stale_pr_bot.datetime")
@@ -92,7 +259,9 @@ class TestGetDaysSinceActivity:
         mock_pr.get_reviews.return_value = []
         mock_commit = Mock()
         mock_commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
         mock_commit.author.login = "testuser"
+        mock_commit.committer.login = "testuser"
         mock_pr.get_commits.return_value = [mock_commit]
         last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
         result = bot.get_days_since_activity(mock_pr, last_cr)
@@ -102,6 +271,230 @@ class TestGetDaysSinceActivity:
         bot = StalePRBot()
         mock_pr = Mock()
         assert bot.get_days_since_activity(mock_pr, None) == 0
+
+    @patch("stale_pr_bot.datetime")
+    def test_force_push_uses_committer_date(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2023, 12, 1, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 15, tzinfo=timezone.utc)
+        mock_commit.author.login = "testuser"
+        mock_commit.committer.login = "testuser"
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 5
+
+    @patch("stale_pr_bot.datetime")
+    def test_unlinked_author_falls_back_to_committer(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 1, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.author = None
+        mock_commit.committer.login = "testuser"
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 5
+
+    @patch("stale_pr_bot.datetime")
+    def test_both_unlinked_commit_skipped(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 1, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        mock_commit.author = None
+        mock_commit.committer = None
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 9
+
+    @patch("stale_pr_bot.datetime")
+    def test_maintainer_rebase_does_not_count_as_author_activity(
+        self, mock_datetime, bot_env
+    ):
+        mock_datetime.now.return_value = datetime(2024, 3, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "contributor"
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        mock_commit = Mock()
+        mock_commit.commit.author.date = datetime(2023, 12, 1, tzinfo=timezone.utc)
+        mock_commit.commit.committer.date = datetime(2024, 2, 25, tzinfo=timezone.utc)
+        mock_commit.author.login = "contributor"
+        mock_commit.committer.login = "maintainer"
+        mock_pr.get_commits.return_value = [mock_commit]
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.get_days_since_activity(mock_pr, last_cr) == 60
+
+
+class TestIsWaitingForMaintainer:
+    def _make_pr(self, author="contributor"):
+        mock_pr = Mock()
+        mock_pr.number = 1
+        mock_pr.user.login = author
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.get_reviews.return_value = []
+        return mock_pr
+
+    def test_contributor_responded_no_maintainer_since(self, bot_env):
+        """Contributor pushed after changes requested, no maintainer response."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        # Contributor pushed a commit after changes were requested
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_contributor_responded_maintainer_reviewed(self, bot_env):
+        """Contributor pushed, then maintainer submitted a review."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        # Maintainer reviewed after contributor's commit
+        review = Mock()
+        review.user.login = "maintainer"
+        review.user.type = "User"
+        review.author_association = "MEMBER"
+        review.submitted_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        pr.get_reviews.return_value = [review]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is False
+
+    def test_maintainer_comment_does_not_count_as_review(self, bot_env):
+        """A maintainer comment is not a review; the PR is still waiting."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        comment = Mock()
+        comment.user.login = "maintainer"
+        comment.user.type = "User"
+        comment.author_association = "COLLABORATOR"
+        comment.created_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        pr.get_issue_comments.return_value = [comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_contributor_never_responded(self, bot_env):
+        """No contributor activity after changes requested → not waiting."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is False
+
+    def test_bot_comments_are_ignored(self, bot_env):
+        """Bot comments should not count as maintainer activity."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        # Only a bot comment exists after contributor's activity
+        bot_comment = Mock()
+        bot_comment.user.login = "github-actions[bot]"
+        bot_comment.user.type = "Bot"
+        bot_comment.author_association = "NONE"
+        bot_comment.created_at = datetime(2024, 1, 6, tzinfo=timezone.utc)
+        pr.get_issue_comments.return_value = [bot_comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_non_maintainer_comment_ignored(self, bot_env):
+        """A random community member commenting should not count as maintainer."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        pr.get_commits.return_value = [commit]
+        comment = Mock()
+        comment.user.login = "random_user"
+        comment.user.type = "User"
+        comment.author_association = "NONE"
+        comment.created_at = datetime(2024, 1, 7, tzinfo=timezone.utc)
+        pr.get_issue_comments.return_value = [comment]
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_many_events_does_not_miss_contributor_activity(self, bot_env):
+        """Contributor activity must be found even with many subsequent events."""
+        bot = StalePRBot()
+        pr = self._make_pr()
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        # Contributor pushed a commit early on
+        contributor_commit = Mock()
+        contributor_commit.commit.author.date = datetime(
+            2024, 1, 2, tzinfo=timezone.utc
+        )
+        contributor_commit.commit.committer.date = datetime(
+            2024, 1, 2, tzinfo=timezone.utc
+        )
+        contributor_commit.author.login = "contributor"
+        contributor_commit.committer.login = "contributor"
+        # 60 subsequent commits from CI/other (not from contributor)
+        base = datetime(2024, 1, 3, tzinfo=timezone.utc)
+        other_commits = []
+        for i in range(60):
+            c = Mock()
+            c.commit.author.date = base + timedelta(days=i)
+            c.commit.committer.date = base + timedelta(days=i)
+            c.author.login = "ci-bot"
+            c.committer.login = "ci-bot"
+            other_commits.append(c)
+        pr.get_commits.return_value = [contributor_commit] + other_commits
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
+
+    def test_fails_closed_on_exception(self, bot_env):
+        bot = StalePRBot()
+        pr = self._make_pr()
+        pr.get_commits.side_effect = RuntimeError("transient API error")
+        last_cr = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        assert bot.is_waiting_for_maintainer(pr, last_cr) is True
 
 
 class TestUnassignLinkedIssues:
@@ -140,23 +533,31 @@ class TestHasBotComment:
         bot = StalePRBot()
         mock_pr = Mock()
         mock_comment = Mock()
-        mock_comment.user.type = "Bot"
+        mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:stale --> This is a stale warning"
         mock_comment.created_at = datetime(2024, 1, 10, tzinfo=timezone.utc)
         mock_pr.get_issue_comments.return_value = [mock_comment]
         assert bot.has_bot_comment(mock_pr, "stale")
         assert not bot.has_bot_comment(mock_pr, "closed")
 
-    def test_ignores_old_marker_before_after_date(self, bot_env):
-        """Old markers from a previous cycle should be ignored."""
+    def test_ignores_marker_from_other_bot(self, bot_env):
         bot = StalePRBot()
         mock_pr = Mock()
         mock_comment = Mock()
-        mock_comment.user.type = "Bot"
+        mock_comment.user.login = "some-other-bot[bot]"
+        mock_comment.body = "<!-- bot:stale --> quoted from elsewhere"
+        mock_comment.created_at = datetime(2024, 1, 10, tzinfo=timezone.utc)
+        mock_pr.get_issue_comments.return_value = [mock_comment]
+        assert not bot.has_bot_comment(mock_pr, "stale")
+
+    def test_ignores_old_marker_before_after_date(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_comment = Mock()
+        mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:stale_warning --> old warning"
         mock_comment.created_at = datetime(2024, 1, 5, tzinfo=timezone.utc)
         mock_pr.get_issue_comments.return_value = [mock_comment]
-        # The marker is from Jan 5 but changes re-requested Jan 8
         after_date = datetime(2024, 1, 8, tzinfo=timezone.utc)
         assert not bot.has_bot_comment(mock_pr, "stale_warning", after_date=after_date)
 
@@ -164,7 +565,7 @@ class TestHasBotComment:
         bot = StalePRBot()
         mock_pr = Mock()
         mock_comment = Mock()
-        mock_comment.user.type = "Bot"
+        mock_comment.user.login = bot.bot_login
         mock_comment.body = "<!-- bot:stale_warning --> new warning"
         mock_comment.created_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
         mock_pr.get_issue_comments.return_value = [mock_comment]
@@ -205,35 +606,274 @@ class TestMarkPRStale:
         mock_pr.add_to_labels.assert_called_once_with("stale")
         mock_issue.remove_from_assignees.assert_called_once_with("testuser")
 
+    def test_no_comment_when_unassign_raises(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.number = 1
+        bot.unassign_linked_issues = Mock(side_effect=RuntimeError("transient"))
+        assert bot.mark_pr_stale(mock_pr, 14) is False
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.add_to_labels.assert_not_called()
 
-class TestCloseStalePR:
+
+class TestSendFinalFollowup:
     def test_success(self, bot_env):
         bot = StalePRBot()
         mock_pr = Mock()
-        mock_pr.body = "Fixes #123"
         mock_pr.user.login = "testuser"
-        mock_pr.state = "open"
-        mock_assignee = Mock()
-        mock_assignee.login = "testuser"
-        mock_issue = Mock()
-        mock_issue.pull_request = None
-        mock_issue.assignees = [mock_assignee]
-        mock_issue.repository.full_name = "openwisp/openwisp-utils"
-        bot_env["repo"].get_issue.return_value = mock_issue
-        assert bot.close_stale_pr(mock_pr, 60)
+        assert bot.send_final_followup(mock_pr, 60)
         mock_pr.create_issue_comment.assert_called_once()
         comment = mock_pr.create_issue_comment.call_args[0][0]
-        assert "<!-- bot:closed -->" in comment
-        mock_pr.edit.assert_called_once_with(state="closed")
-        mock_issue.remove_from_assignees.assert_called_once_with("testuser")
+        assert "<!-- bot:final_followup -->" in comment
+        mock_pr.edit.assert_not_called()
 
-    def test_already_closed(self, bot_env):
+
+class TestProcessStalePrs:
+    @patch("stale_pr_bot.datetime")
+    def test_skips_pr_waiting_for_maintainer(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
         bot = StalePRBot()
         mock_pr = Mock()
-        mock_pr.state = "closed"
-        assert not bot.close_stale_pr(mock_pr, 60)
+        mock_pr.number = 42
+        mock_pr.user.login = "contributor"
+        # Maintainer requested changes on Jan 1
+        review = Mock()
+        review.state = "CHANGES_REQUESTED"
+        review.submitted_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        review.user.login = "maintainer"
+        review.user.type = "User"
+        mock_pr.get_reviews.return_value = [review]
+        # Contributor pushed on Jan 5
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 5, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        mock_pr.get_commits.return_value = [commit]
+        # No maintainer activity
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        # PR should not be warned, staled, or closed
         mock_pr.create_issue_comment.assert_not_called()
         mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_skips_pr_with_only_bot_changes_requested(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.number = 1235
+        mock_pr.user.login = "contributor"
+        bot_review = Mock()
+        bot_review.state = "CHANGES_REQUESTED"
+        bot_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        bot_review.user.login = "coderabbitai[bot]"
+        bot_review.user.type = "Bot"
+        mock_pr.get_reviews.return_value = [bot_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_skips_pr_with_superseded_changes_requested(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.number = 99
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        approve_review = Mock()
+        approve_review.state = "APPROVED"
+        approve_review.submitted_at = datetime(2024, 2, 5, tzinfo=timezone.utc)
+        approve_review.user.login = "maintainer"
+        approve_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review, approve_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_pr_first_processed_past_60_days_marks_stale_only(
+        self, mock_datetime, bot_env
+    ):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = ""
+        mock_pr.number = 7
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.labels = []
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        bodies = [c[0][0] for c in mock_pr.create_issue_comment.call_args_list]
+        assert any("<!-- bot:stale -->" in b for b in bodies)
+        assert not any("<!-- bot:final_followup -->" in b for b in bodies)
+        assert not any("<!-- bot:stale_warning -->" in b for b in bodies)
+        mock_pr.add_to_labels.assert_called_once_with("stale")
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_first_run_past_60_days_failed_stale_skips_followup(
+        self, mock_datetime, bot_env
+    ):
+        # Sustained API outage: mark_pr_stale returns False. The
+        # final-followup must still be suppressed this run, otherwise the
+        # contributor sees an out-of-context follow-up with no prior stale
+        # notice.
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = ""
+        mock_pr.number = 8
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_pr.labels = []
+        bot.mark_pr_stale = Mock(return_value=False)
+        bot.send_final_followup = Mock(return_value=True)
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        bot.mark_pr_stale.assert_called_once()
+        bot.send_final_followup.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_final_followup_fires_after_prior_stale_run(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 5, 10, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = ""
+        mock_pr.number = 7
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        mock_pr.get_commits.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        stale_label = Mock()
+        stale_label.name = "stale"
+        mock_pr.labels = [stale_label]
+        prior_stale = Mock()
+        prior_stale.user.login = bot.bot_login
+        prior_stale.body = "<!-- bot:stale --> previous run"
+        prior_stale.created_at = datetime(2024, 5, 1, tzinfo=timezone.utc)
+        mock_pr.get_issue_comments.return_value = [prior_stale]
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        bodies = [c[0][0] for c in mock_pr.create_issue_comment.call_args_list]
+        assert any("<!-- bot:final_followup -->" in b for b in bodies)
+        assert not any(
+            "<!-- bot:stale -->" in b and "previous run" not in b for b in bodies
+        )
+        mock_pr.edit.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_clears_stale_label_when_contributor_responds(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = "Fixes #42"
+        mock_pr.number = 1
+        mock_pr.user.login = "contributor"
+        cr_review = Mock()
+        cr_review.state = "CHANGES_REQUESTED"
+        cr_review.submitted_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        cr_review.user.login = "maintainer"
+        cr_review.user.type = "User"
+        mock_pr.get_reviews.return_value = [cr_review]
+        commit = Mock()
+        commit.commit.author.date = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        commit.commit.committer.date = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        commit.author.login = "contributor"
+        commit.committer.login = "contributor"
+        mock_pr.get_commits.return_value = [commit]
+        stale_label = Mock()
+        stale_label.name = "stale"
+        mock_pr.labels = [stale_label]
+        mock_pr.get_issue_comments.return_value = []
+        mock_pr.get_review_comments.return_value = []
+        mock_issue = Mock()
+        mock_issue.number = 42
+        mock_issue.pull_request = None
+        mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        mock_pr.remove_from_labels.assert_called_once_with("stale")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+        mock_pr.create_issue_comment.assert_not_called()
+
+    @patch("stale_pr_bot.datetime")
+    def test_clears_stale_label_when_no_active_block(self, mock_datetime, bot_env):
+        mock_datetime.now.return_value = datetime(2024, 2, 1, tzinfo=timezone.utc)
+        mock_datetime.side_effect = lambda *a, **kw: datetime(*a, **kw)
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.body = "Fixes #42"
+        mock_pr.number = 1
+        mock_pr.user.login = "contributor"
+        # Reviewer approved after their CR → no active CHANGES_REQUESTED.
+        approve = Mock()
+        approve.state = "APPROVED"
+        approve.submitted_at = datetime(2024, 1, 20, tzinfo=timezone.utc)
+        approve.user.login = "maintainer"
+        approve.user.type = "User"
+        mock_pr.get_reviews.return_value = [approve]
+        stale_label = Mock()
+        stale_label.name = "stale"
+        mock_pr.labels = [stale_label]
+        mock_issue = Mock()
+        mock_issue.number = 42
+        mock_issue.pull_request = None
+        mock_issue.assignees = []
+        mock_issue.repository.full_name = "openwisp/openwisp-utils"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        bot.process_stale_prs()
+        mock_pr.remove_from_labels.assert_called_once_with("stale")
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
+        mock_pr.create_issue_comment.assert_not_called()
 
 
 class TestRun:
@@ -242,3 +882,155 @@ class TestRun:
         bot.github = None
         bot.repo = None
         assert not bot.run()
+
+
+class TestStalePRBotInvalidCheck:
+    def test_invalid_pr_becomes_valid(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        with patch.object(bot, "validate_pr_issues", return_value=True):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_called_once_with("invalid")
+            mock_pr.edit.assert_not_called()
+
+    def test_client_segregation_mutations_vs_validation(self, bot_env):
+        """Proves cross-repository validation uses the read-only validation client,
+        while all mutations use the repository-scoped write client.
+        """
+        bot = StalePRBot()
+        # Mocks for mutations (writes)
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        mock_pr.user.login = "external-contributor"
+        mock_pr.author_association = "NONE"
+        mock_pr.body = "Fixes #123"
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        # Mocks for validation (reads)
+        mock_issue = Mock()
+        mock_issue.pull_request = None
+        mock_issue.state = "open"
+        label_bug = Mock()
+        label_bug.name = "bug"
+        mock_issue.labels = [label_bug]
+        bot_env["repo_validation"].get_issue.return_value = mock_issue
+        bot.github_validation.requester.graphql_query.return_value = (
+            {},
+            {
+                "data": {
+                    "repository": {
+                        "issue": {
+                            "projectItems": {
+                                "nodes": [{"project": {"id": "PVT_kwDOABGNI84Amkl7"}}]
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        # Execute handler
+        assert bot.process_stale_prs()
+        # Assert Reads used VALIDATION client
+        bot_env["github_validation"].get_repo.assert_any_call("openwisp/openwisp-utils")
+        bot_env["repo_validation"].get_issue.assert_called_once_with(123)
+        bot.github_validation.requester.graphql_query.assert_called_once()
+
+        # Assert Writes used WRITE client (bot_env["repo"] / bot_env["github"])
+        bot_env["repo"].get_pulls.assert_called_once()
+        mock_pr.remove_from_labels.assert_called_once_with("invalid")
+        # Ensure validation client is strictly read-only in this flow (no label/edit calls)
+        assert (
+            not hasattr(bot_env["repo_validation"], "remove_from_labels")
+            or not bot_env["repo_validation"].remove_from_labels.called
+        )
+
+    def test_invalid_pr_still_invalid_under_24h(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        mock_comment = Mock()
+        mock_comment.user.login = bot.bot_login
+        mock_comment.body = "<!-- bot:invalid_unvalidated_issue --> Warning comment"
+        mock_comment.created_at = datetime.now(timezone.utc)
+        mock_pr.get_issue_comments.return_value = [mock_comment]
+        with patch.object(bot, "validate_pr_issues", return_value=False):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_not_called()
+            mock_pr.edit.assert_not_called()
+
+    def test_invalid_pr_still_invalid_over_24h_closes(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        mock_comment = Mock()
+        mock_comment.user.login = bot.bot_login
+        mock_comment.body = "<!-- bot:invalid_unvalidated_issue --> Warning comment"
+        mock_comment.created_at = datetime.now(timezone.utc) - timedelta(hours=25)
+        mock_pr.get_issue_comments.return_value = [mock_comment]
+        with patch.object(bot, "validate_pr_issues", return_value=False):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_not_called()
+            mock_pr.create_issue_comment.assert_called_once()
+            assert (
+                "automatically closed" in mock_pr.create_issue_comment.call_args[0][0]
+            )
+            mock_pr.edit.assert_called_once_with(state="closed")
+
+    def test_invalid_pr_missing_warning_comment_posts_warning(self, bot_env):
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 100
+        mock_pr.user.login = "contributor"
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        mock_pr.get_issue_comments.return_value = []
+        with patch.object(bot, "validate_pr_issues", return_value=False):
+            assert bot.process_stale_prs()
+            mock_pr.remove_from_labels.assert_not_called()
+            mock_pr.create_issue_comment.assert_called_once()
+            assert (
+                "<!-- bot:invalid_unvalidated_issue -->"
+                in mock_pr.create_issue_comment.call_args[0][0]
+            )
+            mock_pr.edit.assert_not_called()
+
+    def test_validation_api_error_reraises_and_no_write_actions(self, bot_env):
+        """ValidationAPIError must propagate so the workflow fails and retries.
+
+        When validate_pr_issues raises, no label, comment, or close action
+        should be performed on the PR.
+        """
+        bot = StalePRBot()
+        mock_label = Mock()
+        mock_label.name = "invalid"
+        mock_pr = Mock()
+        mock_pr.labels = [mock_label]
+        mock_pr.number = 101
+        bot_env["repo"].get_pulls.return_value = [mock_pr]
+        with patch.object(
+            bot,
+            "validate_pr_issues",
+            side_effect=Exception("GitHub API timeout"),
+        ):
+            with pytest.raises(ValidationAPIError):
+                bot.process_stale_prs()
+        mock_pr.remove_from_labels.assert_not_called()
+        mock_pr.create_issue_comment.assert_not_called()
+        mock_pr.edit.assert_not_called()

@@ -1,3 +1,4 @@
+import io
 import sys
 from unittest.mock import patch
 
@@ -88,6 +89,65 @@ class TestUtils(TestCase):
     def test_capture_stderr(self, captured_error):
         print("Testing capture_stderr", file=sys.stderr, end="")
         self.assertEqual(captured_error.getvalue(), "Testing capture_stderr")
+
+    def test_capture_output_does_not_pollute_exception_context(self):
+        @capture_any_output()
+        def raise_regression():
+            raise RuntimeError("real regression")
+
+        with self.assertRaisesRegex(RuntimeError, "real regression") as error:
+            raise_regression()
+        self.assertIsNone(
+            error.exception.__context__,
+            "The capture decorator must not pollute the real exception context.",
+        )
+
+    def test_capture_output_argument_injection(self):
+        with self.subTest("stacked patch without capture argument"):
+            received = []
+
+            @capture_stderr()
+            @patch("urllib3.util.retry.Retry.sleep")
+            def decorated(mocked_sleep):
+                received.append(mocked_sleep)
+
+            decorated()
+            received[0].assert_not_called()
+
+        with self.subTest("stacked patch with capture argument"):
+            received = []
+
+            @capture_stderr()
+            @patch("urllib3.util.retry.Retry.sleep")
+            def decorated(captured_error, mocked_sleep):
+                received.extend([captured_error, mocked_sleep])
+
+            decorated()
+            self.assertIsInstance(received[0], io.StringIO)
+            received[1].assert_not_called()
+
+        with self.subTest("variadic arguments"):
+            received = []
+
+            @capture_any_output()
+            def decorated(*streams):
+                received.extend(streams)
+
+            decorated()
+            self.assertEqual(len(received), 2)
+            self.assertTrue(all(isinstance(stream, io.StringIO) for stream in received))
+
+    def test_capture_output_does_not_retry_type_error(self):
+        calls = []
+
+        @capture_stdout()
+        def raise_type_error(captured_output):
+            calls.append(captured_output)
+            raise TypeError("real regression")
+
+        with self.assertRaisesRegex(TypeError, "real regression"):
+            raise_type_error()
+        self.assertEqual(len(calls), 1)
 
     @patch("urllib3.util.retry.Retry.sleep")
     def test_retryable_request(self, *args):

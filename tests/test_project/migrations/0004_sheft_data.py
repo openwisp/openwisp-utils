@@ -25,9 +25,9 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True,
                 choices=[
-                    ("HORROR", "HORROR"),
-                    ("FANTASY", "FANTASY"),
-                    ("FACTUAL", "FACTUAL"),
+                    ("HORROR", "Horror"),
+                    ("FANTASY", "Fantasy"),
+                    ("FACTUAL", "Factual"),
                     ("Mystery", "Mystery"),
                     ("Historical Fiction", "Historical Fiction"),
                     ("Literary Fiction", "Literary Fiction"),
