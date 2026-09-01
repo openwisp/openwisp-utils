@@ -56,7 +56,7 @@ setup(
             "commitizen>=4.13.0,<5.0.0",
         ],
         "rest": [
-            "djangorestframework~=3.17.1",
+            "djangorestframework~=3.18.0",
             "django-filter>=25.1,<27.0",  # django-filter uses CalVer
             "drf-yasg>=1.21.14,<1.22.0",
         ],
