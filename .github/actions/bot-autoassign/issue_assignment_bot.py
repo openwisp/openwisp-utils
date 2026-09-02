@@ -284,11 +284,11 @@ class IssueAssignmentBot(GitHubBot):
                     f" and then comment `@{self.bot_username} assign` again."
                 )
                 return True
-            if not self.validate_pr_issues(pr):
-                print(
-                    f"PR #{pr.number} for #{issue_number} is invalid, ignoring bot command"
-                )
-                return True
+            if not self.is_pr_author_exempt(pr):
+                owner, repo_name = self.repository_name.split("/")
+                if not self.validate_issue(owner, repo_name, issue_number):
+                    print(f"Issue #{issue_number} is invalid, ignoring bot command")
+                    return True
             issue.add_to_assignees(commenter)
             verified = verify_assignment(self.repo, issue_number, commenter)
             if verified is True:

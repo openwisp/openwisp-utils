@@ -752,7 +752,10 @@ class TestHandleBotAssignRequest:
     @pytest.fixture(autouse=True)
     def valid_pr(self, monkeypatch):
         monkeypatch.setattr(
-            IssueAssignmentBot, "validate_pr_issues", Mock(return_value=True)
+            IssueAssignmentBot, "is_pr_author_exempt", Mock(return_value=False)
+        )
+        monkeypatch.setattr(
+            IssueAssignmentBot, "validate_issue", Mock(return_value=True)
         )
 
     def test_assigns_when_open_pr_exists(self, bot_env):
@@ -771,7 +774,8 @@ class TestHandleBotAssignRequest:
 
     def test_ignores_invalid_pr(self, bot_env):
         bot = IssueAssignmentBot()
-        bot.validate_pr_issues = Mock(return_value=False)
+        bot.is_pr_author_exempt = Mock(return_value=False)
+        bot.validate_issue = Mock(return_value=False)
         mock_issue = _make_issue_with_assignment("contributor")
         bot_env["repo"].get_issue.return_value = mock_issue
         mock_pr = _make_search_result(200, "Fixes #123")
@@ -779,7 +783,7 @@ class TestHandleBotAssignRequest:
 
         assert bot.handle_bot_assign_request(123, "contributor")
 
-        bot.validate_pr_issues.assert_called_once_with(mock_pr.as_pull_request())
+        bot.validate_issue.assert_called_once_with("openwisp", "openwisp-utils", 123)
         mock_issue.add_to_assignees.assert_not_called()
         mock_issue.create_comment.assert_not_called()
 
@@ -883,7 +887,8 @@ class TestHandleBotAssignRequest:
 class TestHandleIssueCommentBotCommand:
     def test_bot_command_triggers_assign(self, bot_env):
         bot = IssueAssignmentBot()
-        bot.validate_pr_issues = Mock(return_value=True)
+        bot.is_pr_author_exempt = Mock(return_value=False)
+        bot.validate_issue = Mock(return_value=True)
         bot.load_event_payload(
             {
                 "issue": {"number": 123, "pull_request": None},

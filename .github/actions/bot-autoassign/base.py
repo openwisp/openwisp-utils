@@ -187,11 +187,7 @@ class GitHubBot:
         )
         return False
 
-    def validate_pr_issues(self, pr):
-        """Validate if a pull request is from an exempt user or references a validated issue."""
-        if not self.github_validation or not self.repository_name:
-            print("GitHub validation client or repository name not initialized")
-            return False
+    def is_pr_author_exempt(self, pr):
         pr_author = (
             pr.user.login
             if pr.user and isinstance(getattr(pr.user, "login", None), str)
@@ -215,6 +211,15 @@ class GitHubBot:
                 f"Author {pr_author} is exempt due to association: "
                 f"{author_association}. Proceeding."
             )
+            return True
+        return False
+
+    def validate_pr_issues(self, pr):
+        """Validate if a pull request is from an exempt user or references a validated issue."""
+        if not self.github_validation or not self.repository_name:
+            print("GitHub validation client or repository name not initialized")
+            return False
+        if self.is_pr_author_exempt(pr):
             return True
         pr_body = pr.body if isinstance(pr.body, str) else ""
         linked_issues = extract_all_linked_issues(pr_body, self.repository_name)
