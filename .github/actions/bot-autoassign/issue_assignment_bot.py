@@ -1,6 +1,6 @@
 import re
 
-from base import GitHubBot
+from base import CONTRIBUTING_GUIDELINES_URL, GitHubBot
 from utils import (
     extract_linked_issues,
     find_open_pr_for_issue,
@@ -34,9 +34,6 @@ class IssueAssignmentBot(GitHubBot):
             r"\bcan you assign this to me\b",
         ]
         return any(re.search(pattern, comment_lower) for pattern in assignment_patterns)
-
-    def get_contributing_guidelines_url(self):
-        return "https://openwisp.io/docs/stable/developer/contributing.html"
 
     def detect_issue_type(self, issue):
         """Analyzes labels, title and body.
@@ -110,7 +107,7 @@ class IssueAssignmentBot(GitHubBot):
             print("GitHub client not initialized")
             return False
         try:
-            contributing_url = self.get_contributing_guidelines_url()
+            contributing_url = CONTRIBUTING_GUIDELINES_URL
             issue = self.repo.get_issue(issue_number)
             owner, repo_name = self.repository_name.split("/")
             if not self.validate_issue(owner, repo_name, issue_number):
@@ -212,22 +209,11 @@ class IssueAssignmentBot(GitHubBot):
             return False
 
     def get_unvalidated_issue_assignment_request_comment(self, commenter):
-        return (
+        return self.get_unvalidated_issue_message(
             f"Hi @{commenter},\n\n"
             "Thank you for your interest in contributing to OpenWISP.\n\n"
             "This issue has not been validated as available for new or occasional "
-            "contributors and is reserved for experienced contributors.\n\n"
-            "An issue is considered validated when it is open, has an appropriate "
-            "label other than `invalid` or `wontfix`, and is assigned to either the "
-            "[OpenWISP Contributor's Board]"
-            "(https://github.com/orgs/openwisp/projects/42/views/1) or the "
-            "[OpenWISP Priorities for next releases]"
-            "(https://github.com/orgs/openwisp/projects/37/views/1).\n\n"
-            "Pull requests from external contributors that target an unvalidated "
-            "issue are flagged as invalid and closed automatically if not resolved "
-            "within 24 hours.\n\n"
-            "Please see the [OpenWISP Contributing Guidelines]"
-            "(https://openwisp.io/docs/dev/developer/contributing.html)."
+            "contributors and is reserved for experienced contributors."
         )
 
     def _cannot_auto_assign_message(self, pr_author, pr_number):

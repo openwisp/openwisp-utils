@@ -159,6 +159,20 @@ class TestRespondToAssignment:
         assert "not been validated" in comment_text
         assert "OpenWISP Contributor's Board" in comment_text
         assert "closed automatically" in comment_text
+        assert "Please refer to the [OpenWISP Contributing Guidelines]" in comment_text
+
+    def test_unvalidated_messages_share_requirements(self, bot_env):
+        bot = IssueAssignmentBot()
+        issue_comment = bot.get_unvalidated_issue_assignment_request_comment("testuser")
+        pr_comment = bot.get_invalid_unvalidated_issue_comment("testuser")
+        assert "This pull request has been flagged as invalid" in pr_comment
+        for comment in (issue_comment, pr_comment):
+            assert "An issue is considered validated" in comment
+            assert "OpenWISP Contributor's Board" in comment
+            assert "Please refer to the [OpenWISP Contributing Guidelines]" in comment
+            assert "OpenWISP Anti AI Spam Policy" in comment
+            assert "OpenWISP dev chatroom" in comment
+            assert "Pull requests from external contributors" in comment
 
     def test_stays_silent_when_issue_validation_fails(self, bot_env):
         bot = IssueAssignmentBot()

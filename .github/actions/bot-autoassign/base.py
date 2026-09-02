@@ -6,6 +6,7 @@ from utils import extract_all_linked_issues
 MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 DEFAULT_EXCLUDE_PR_AUTHORS = "dependabot[bot]"
 MAX_VALIDATION_ISSUES = 10
+CONTRIBUTING_GUIDELINES_URL = "https://openwisp.io/docs/dev/developer/contributing.html"
 # Stable ProjectV2 node IDs for the OpenWISP contributor boards.
 # These IDs never change even if a board is renamed.
 REQUIRED_CONTRIBUTOR_PROJECT_IDS = frozenset(
@@ -56,6 +57,27 @@ class GitHubBot:
 
     def load_event_payload(self, event_payload):
         self.event_payload = event_payload
+
+    def get_unvalidated_issue_message(self, context):
+        return (
+            f"{context}\n\n"
+            "An issue is considered validated when it is open, has at least one "
+            "label other than `invalid` or `wontfix`, and is assigned to either the "
+            "[OpenWISP Contributor's Board]"
+            "(https://github.com/orgs/openwisp/projects/42/views/1) or the "
+            "[OpenWISP Priorities for next releases]"
+            "(https://github.com/orgs/openwisp/projects/37/views/1).\n\n"
+            "Please refer to the [OpenWISP Contributing Guidelines]"
+            f"({CONTRIBUTING_GUIDELINES_URL}) for more information.\n\n"
+            "Please see the [OpenWISP Anti AI Spam Policy]"
+            "(https://openwisp.io/docs/dev/general/code-of-conduct.html).\n\n"
+            "Feel free to join the [OpenWISP dev chatroom]"
+            "(https://matrix.to/#/#openwisp_development:gitter.im) "
+            "to coordinate with the development team.\n\n"
+            "Pull requests from external contributors that target an unvalidated "
+            "issue are flagged as invalid and closed automatically if not resolved "
+            "within 24 hours."
+        )
 
     def get_issue_projects(self, owner, repo_name, issue_number):
         query = """
@@ -278,11 +300,10 @@ class GitHubBot:
     def get_invalid_unvalidated_issue_comment(self, pr_author):
         """Returns the comment body warning that the PR is invalid/unvalidated."""
         greeting = f"Hi @{pr_author},\n\n" if pr_author else "Hi,\n\n"
-        return (
-            "<!-- bot:invalid_unvalidated_issue -->\n\n"
+        message = self.get_unvalidated_issue_message(
             f"{greeting}"
             "Thank you for your interest in contributing to OpenWISP.\n\n"
-            "This pull request has been flagged because external contributors "
+            "This pull request has been flagged as invalid because external contributors "
             "must target an issue validated by maintainers before requesting "
             "review.\n\n"
             "Please link this pull request to a validated issue by adding "
@@ -292,18 +313,10 @@ class GitHubBot:
             "repository.\n\n"
             "If there is no validated issue yet, please open one first and wait "
             "for maintainer validation before continuing with this pull "
-            "request.\n\n"
-            "An issue is considered validated when it is open, has an appropriate "
-            "label other than `invalid` or `wontfix`, and is assigned to one of "
-            "the project boards mentioned in the "
-            "[OpenWISP Contributing Guidelines]"
-            "(https://openwisp.io/docs/dev/developer/contributing.html).\n\n"
-            "Please see the [OpenWISP Anti AI Spam Policy]"
-            "(https://openwisp.io/docs/dev/general/code-of-conduct.html).\n\n"
-            "Feel free to join the [OpenWISP dev chatroom]"
-            "(https://matrix.to/#/#openwisp_development:gitter.im) "
-            "to coordinate with the development team.\n\n"
-            "If this is not resolved within 24 hours, this pull request "
-            "will be closed automatically. "
+            "request."
+        )
+        return (
+            "<!-- bot:invalid_unvalidated_issue -->\n\n"
+            f"{message}\n\n"
             "Thank you for your understanding."
         )
