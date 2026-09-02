@@ -136,6 +136,21 @@ def test_bump_version_invalid_format():
         bump_version(mock_config, "1.2")
 
 
+@pytest.mark.parametrize(
+    ("package_type", "content"),
+    [
+        ("python", SAMPLE_INIT_FILE),
+        ("npm", '{"version": "1.2.3"}'),
+    ],
+)
+def test_bump_version_rejects_prerelease_version(package_type, content):
+    config = {"package_type": package_type, "version_path": "version-file"}
+    with patch("builtins.open", mock_open(read_data=content)) as mocked_open:
+        with pytest.raises(SystemExit):
+            bump_version(config, "1.3.0-alpha", version_type="alpha")
+    mocked_open.assert_not_called()
+
+
 @patch("openwisp_utils.releaser.version.questionary")
 def test_determine_new_version_not_final(mock_questionary):
     """Tests the version suggestion when the current version is not 'final'."""

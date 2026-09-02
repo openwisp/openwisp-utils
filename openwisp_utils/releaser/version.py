@@ -155,8 +155,9 @@ def bump_version(config, new_version, version_type="final"):
         # version bumping was not performed
         return False
     try:
-        new_version_parts = new_version.split(".")
-        if len(new_version_parts) != 3:
+        if not isinstance(new_version, str) or not re.fullmatch(
+            r"\d+\.\d+\.\d+", new_version
+        ):
             raise ValueError("Version must be in the format X.Y.Z")
     except ValueError as e:
         print(f"Error: Invalid version format. {e}", file=sys.stderr)

@@ -9,6 +9,7 @@ from openwisp_utils.releaser.release import (
     rst_to_markdown,
 )
 from openwisp_utils.releaser.utils import (
+    AbortSignal,
     SkipSignal,
     branch_exists,
     format_file_with_docstrfmt,
@@ -62,6 +63,38 @@ def test_get_remote_branch_commit(mock_subprocess):
 def test_get_remote_branch_commit_missing_branch(mock_subprocess):
     mock_subprocess.return_value = MagicMock(returncode=2)
     assert get_remote_branch_commit("bump") is None
+
+
+@patch("openwisp_utils.releaser.utils.questionary.select")
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_get_remote_branch_commit_retries_after_failure(
+    mock_subprocess, mock_questionary
+):
+    error = subprocess.CalledProcessError(128, "git", stderr="Authentication failed")
+    mock_subprocess.side_effect = [
+        error,
+        MagicMock(returncode=0, stdout="a" * 40 + "\trefs/heads/bump\n"),
+    ]
+    mock_questionary.return_value.ask.return_value = "Retry"
+    assert get_remote_branch_commit("bump") == "a" * 40
+    assert mock_subprocess.call_count == 2
+
+
+@pytest.mark.parametrize(
+    ("decision", "exception"),
+    [("Skip", SkipSignal), ("Abort", AbortSignal)],
+)
+@patch("openwisp_utils.releaser.utils.questionary.select")
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_get_remote_branch_commit_handles_failure_decisions(
+    mock_subprocess, mock_questionary, decision, exception
+):
+    mock_subprocess.side_effect = subprocess.CalledProcessError(
+        128, "git", stderr="Authentication failed"
+    )
+    mock_questionary.return_value.ask.return_value = decision
+    with pytest.raises(exception):
+        get_remote_branch_commit("bump")
 
 
 def test_rst_to_markdown_conversion():

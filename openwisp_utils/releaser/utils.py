@@ -20,7 +20,7 @@ class AbortSignal(Exception):
     pass
 
 
-def run_git(args, description):
+def run_git(args, description, allowed_returncodes=()):
     """Runs a git command, prompting Retry/Skip/Abort on failure."""
     while True:
         try:
@@ -32,6 +32,10 @@ def run_git(args, description):
                 encoding="utf-8",
             )
         except subprocess.CalledProcessError as e:
+            if e.returncode in allowed_returncodes:
+                return subprocess.CompletedProcess(
+                    e.cmd, e.returncode, e.output, e.stderr
+                )
             print(f"\n❌ ERROR: Failed to {description}.", file=sys.stderr)
             print("Git output:", file=sys.stderr)
             indented_stderr = "\n".join(
@@ -133,19 +137,15 @@ def branch_exists(branch_name):
 
 def get_remote_branch_commit(branch_name):
     """Return the origin branch commit, or None when the branch does not exist."""
-    result = subprocess.run(
-        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch_name],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
+    result = run_git(
+        ["ls-remote", "--exit-code", "--heads", "origin", branch_name],
+        f"look up remote branch '{branch_name}'",
+        allowed_returncodes=(2,),
     )
     if result.returncode == 0:
         return result.stdout.split()[0]
     if result.returncode == 2:
         return None
-    raise subprocess.CalledProcessError(
-        result.returncode, result.args, output=result.stdout, stderr=result.stderr
-    )
 
 
 def rst_to_markdown(text):

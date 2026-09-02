@@ -590,6 +590,28 @@ def test_bump_to_next_alpha_skip_pr_creation(bump_mocks):
     )
 
 
+def test_bump_to_next_alpha_preserves_uncommitted_changes(bump_mocks):
+    mock_gh = MagicMock()
+
+    def fail_commit(args, description):
+        if args[0] == "commit":
+            raise SkipSignal("User chose to skip: commit the version bump.")
+
+    bump_mocks["run_git"].side_effect = fail_commit
+    config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    bump_mocks["subprocess"].assert_not_called()
+    printed_output = "\n".join(
+        str(call.args[0]) for call in bump_mocks["print"].call_args_list if call.args
+    )
+    assert "Keeping branch 'chore/bump-version-1.3.0' checked out" in printed_output
+
+
 def test_bump_to_next_alpha_cancelled(bump_mocks):
     mock_gh = MagicMock()
     bump_mocks["determine_new_version"].return_value = None

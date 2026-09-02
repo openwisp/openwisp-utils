@@ -224,6 +224,8 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
     bump_branch = f"chore/bump-version-{next_version}"
     pr_title = f"[chores] Bumped version to {next_version} alpha"
     force_with_lease = None
+    bump_branch_created = False
+    changes_committed = False
 
     try:
         print(f"Checking out '{base_branch}' and pulling latest changes...")
@@ -252,6 +254,7 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
                 raise AbortSignal("User aborted the version bump.")
         print(f"Creating new branch '{bump_branch}'...")
         run_git(["checkout", "-B", bump_branch], f"create branch '{bump_branch}'")
+        bump_branch_created = True
         bump_version(config, next_version, version_type="alpha")
         print(f"✅ Version bumped to {next_version} and set to 'alpha'.")
         changelog_path = config["changelog_path"]
@@ -270,6 +273,7 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
         print("Committing changes...")
         run_git(["add", "-u"], "stage the version bump")
         run_git(["commit", "-m", pr_title], "commit the version bump")
+        changes_committed = True
 
         print(f"⤴️  Pushing branch '{bump_branch}' to origin...")
         push_args = ["push", "-u", "origin", bump_branch]
@@ -291,10 +295,16 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
             f"\n  Title: {pr_title}"
         )
     finally:
-        print(f"\nSwitching back to original branch '{original_branch}'...")
-        subprocess.run(
-            ["git", "checkout", original_branch], check=True, capture_output=True
-        )
+        if not bump_branch_created or changes_committed:
+            print(f"\nSwitching back to original branch '{original_branch}'...")
+            subprocess.run(
+                ["git", "checkout", original_branch], check=True, capture_output=True
+            )
+        else:
+            print(
+                f"\nKeeping branch '{bump_branch}' checked out because it has "
+                "uncommitted version-bump changes."
+            )
 
 
 def main():
