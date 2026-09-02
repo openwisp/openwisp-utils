@@ -305,7 +305,9 @@ class IssueAssignmentBot(GitHubBot):
             print(f"Error handling bot assign command: {e}")
             return False
 
-    def auto_assign_issues_from_pr(self, pr_number, pr_author, pr_body, max_issues=10):
+    def auto_assign_issues_from_pr(
+        self, pr_number, pr_author, pr_body, max_issues=10, validate_issues=False
+    ):
         if not self.repo:
             print("GitHub client not initialized")
             return []
@@ -321,12 +323,20 @@ class IssueAssignmentBot(GitHubBot):
                     " to avoid rate limits"
                 )
             assigned_issues = []
+            owner, repo_name = self.repository_name.split("/")
             for issue_number, issue in get_valid_linked_issues(
                 self.repo, self.repository_name, linked_issues
             ):
                 if len(assigned_issues) >= max_issues:
                     break
                 try:
+                    if validate_issues and not self.validate_issue(
+                        owner, repo_name, issue_number
+                    ):
+                        print(
+                            f"Issue #{issue_number} is invalid, skipping auto-assignment"
+                        )
+                        continue
                     if getattr(issue, "state", "open") == "closed":
                         print(
                             f"Issue #{issue_number} is closed, skipping"
@@ -459,12 +469,18 @@ class IssueAssignmentBot(GitHubBot):
                 return True
             if action in ["opened", "reopened", "edited", "ready_for_review"]:
                 pr_obj = self.repo.get_pull(pr_number)
-                is_valid = self.validate_pr_issues(pr_obj)
+                is_exempt = self.is_pr_author_exempt(pr_obj)
+                is_valid = is_exempt or self.validate_pr_issues(pr_obj)
                 # Cross-repo issues are intentionally excluded from auto-assignment
                 # because when multiple PRs in different repos are created for a
                 # single issue, it's likely that multiple people will work on it
                 if is_valid:
-                    self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
+                    self.auto_assign_issues_from_pr(
+                        pr_number,
+                        pr_author,
+                        pr_body,
+                        validate_issues=not is_exempt,
+                    )
                 labels_lower = set()
                 try:
                     labels_lower = {label.name.lower() for label in pr_obj.labels}

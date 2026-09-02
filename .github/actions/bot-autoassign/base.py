@@ -62,7 +62,7 @@ class GitHubBot:
         return (
             f"{context}\n\n"
             "An issue is considered validated when it is open, has at least one "
-            "label other than `invalid` or `wontfix`, and is assigned to either the "
+            "label, has no `invalid` or `wontfix` label, and is assigned to either the "
             "[OpenWISP Contributor's Board]"
             "(https://github.com/orgs/openwisp/projects/42/views/1) or the "
             "[OpenWISP Priorities for next releases]"

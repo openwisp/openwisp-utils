@@ -1,6 +1,6 @@
 import os
 import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 # Add the parent directory to path for importing bot modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -168,6 +168,9 @@ class TestRespondToAssignment:
         assert "This pull request has been flagged as invalid" in pr_comment
         for comment in (issue_comment, pr_comment):
             assert "An issue is considered validated" in comment
+            assert (
+                "has at least one label, has no `invalid` or `wontfix` label" in comment
+            )
             assert "OpenWISP Contributor's Board" in comment
             assert "Please refer to the [OpenWISP Contributing Guidelines]" in comment
             assert "OpenWISP Anti AI Spam Policy" in comment
@@ -268,6 +271,30 @@ def _make_search_result(number, body, user_login="contributor"):
 
 
 class TestAutoAssignIssuesFromPR:
+    def test_validates_each_issue_before_assigning(self, bot_env):
+        bot = IssueAssignmentBot()
+        issues_by_number = {
+            123: _make_issue_with_assignment("testuser"),
+            456: _make_issue_with_assignment("testuser"),
+        }
+        bot_env["repo"].get_issue.side_effect = lambda n: issues_by_number[n]
+        bot.validate_issue = Mock(side_effect=[False, True])
+        assigned = bot.auto_assign_issues_from_pr(
+            100,
+            "testuser",
+            "This PR fixes #123 and closes #456",
+            validate_issues=True,
+        )
+        assert assigned == [456]
+        bot.validate_issue.assert_has_calls(
+            [
+                call("openwisp", "openwisp-utils", 123),
+                call("openwisp", "openwisp-utils", 456),
+            ]
+        )
+        issues_by_number[123].add_to_assignees.assert_not_called()
+        issues_by_number[456].add_to_assignees.assert_called_once_with("testuser")
+
     def test_success(self, bot_env):
         bot = IssueAssignmentBot()
         issues_by_number = {
@@ -563,6 +590,53 @@ class TestHandleIssueComment:
 
 
 class TestHandlePullRequest:
+    def test_validates_each_issue_before_auto_assign(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_pr = Mock()
+        mock_pr.labels = []
+        bot_env["repo"].get_pull.return_value = mock_pr
+        bot.is_pr_author_exempt = Mock(return_value=False)
+        bot.validate_pr_issues = Mock(return_value=True)
+        bot.auto_assign_issues_from_pr = Mock()
+        assert bot.handle_pull_request()
+        bot.auto_assign_issues_from_pr.assert_called_once_with(
+            100, "testuser", "Fixes #123", validate_issues=True
+        )
+
+    def test_skips_per_issue_validation_for_exempt_author(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_pr = Mock()
+        mock_pr.labels = []
+        bot_env["repo"].get_pull.return_value = mock_pr
+        bot.is_pr_author_exempt = Mock(return_value=True)
+        bot.validate_pr_issues = Mock()
+        bot.auto_assign_issues_from_pr = Mock()
+        assert bot.handle_pull_request()
+        bot.validate_pr_issues.assert_not_called()
+        bot.auto_assign_issues_from_pr.assert_called_once_with(
+            100, "testuser", "Fixes #123", validate_issues=False
+        )
+
     def test_opened(self, bot_env):
         bot = IssueAssignmentBot()
         bot.load_event_payload(
@@ -577,7 +651,9 @@ class TestHandlePullRequest:
         )
         mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
+        bot.is_pr_author_exempt = MagicMock(return_value=False)
         bot.validate_pr_issues = MagicMock(return_value=True)
+        bot.validate_issue = MagicMock(return_value=True)
         assert bot.handle_pull_request()
         mock_issue.add_to_assignees.assert_called_once_with("testuser")
 
