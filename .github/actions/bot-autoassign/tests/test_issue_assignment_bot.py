@@ -1,6 +1,6 @@
 import os
 import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 # Add the parent directory to path for importing bot modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -130,6 +130,7 @@ class TestExtractLinkedIssues:
 class TestRespondToAssignment:
     def test_success_no_type_detected(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=True)
         mock_issue = Mock()
         mock_issue.labels = []
         mock_issue.title = "Test issue title"
@@ -145,8 +146,51 @@ class TestRespondToAssignment:
         assert f"`Closes #{123}`" in comment_text
         assert f"`Fixes #{123}`" in comment_text
 
+    def test_replies_to_unvalidated_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=False)
+        mock_issue = Mock()
+        mock_issue.labels = []
+        mock_issue.title = "Test issue"
+        mock_issue.body = "Test body"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.respond_to_assignment_request(123, "testuser")
+        comment_text = mock_issue.create_comment.call_args[0][0]
+        assert "not been validated" in comment_text
+        assert "OpenWISP Contributor's Board" in comment_text
+        assert "closed automatically" in comment_text
+        assert "Please refer to the [OpenWISP Contributing Guidelines]" in comment_text
+
+    def test_unvalidated_messages_share_requirements(self, bot_env):
+        bot = IssueAssignmentBot()
+        issue_comment = bot.get_unvalidated_issue_assignment_request_comment("testuser")
+        pr_comment = bot.get_invalid_unvalidated_issue_comment("testuser")
+        assert "This pull request has been flagged as invalid" in pr_comment
+        for comment in (issue_comment, pr_comment):
+            assert "An issue is considered validated" in comment
+            assert (
+                "has at least one label, has no `invalid` or `wontfix` label" in comment
+            )
+            assert "OpenWISP Contributor's Board" in comment
+            assert "Please refer to the [OpenWISP Contributing Guidelines]" in comment
+            assert "OpenWISP Anti AI Spam Policy" in comment
+            assert "OpenWISP dev chatroom" in comment
+            assert "Pull requests from external contributors" in comment
+
+    def test_stays_silent_when_issue_validation_fails(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(side_effect=GithubException(500, "error", None))
+        mock_issue = Mock()
+        mock_issue.labels = []
+        mock_issue.title = "Test issue"
+        mock_issue.body = "Test body"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert not bot.respond_to_assignment_request(123, "testuser")
+        mock_issue.create_comment.assert_not_called()
+
     def test_success_bug_detected(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=True)
         mock_label = Mock()
         mock_label.name = "bug"
         mock_issue = Mock()
@@ -160,6 +204,7 @@ class TestRespondToAssignment:
 
     def test_success_feature_detected(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=True)
         mock_label = Mock()
         mock_label.name = "enhancement"
         mock_issue = Mock()
@@ -226,6 +271,30 @@ def _make_search_result(number, body, user_login="contributor"):
 
 
 class TestAutoAssignIssuesFromPR:
+    def test_validates_each_issue_before_assigning(self, bot_env):
+        bot = IssueAssignmentBot()
+        issues_by_number = {
+            123: _make_issue_with_assignment("testuser"),
+            456: _make_issue_with_assignment("testuser"),
+        }
+        bot_env["repo"].get_issue.side_effect = lambda n: issues_by_number[n]
+        bot.validate_issue = Mock(side_effect=[False, True])
+        assigned = bot.auto_assign_issues_from_pr(
+            100,
+            "testuser",
+            "This PR fixes #123 and closes #456",
+            validate_issues=True,
+        )
+        assert assigned == [456]
+        bot.validate_issue.assert_has_calls(
+            [
+                call("openwisp", "openwisp-utils", 123),
+                call("openwisp", "openwisp-utils", 456),
+            ]
+        )
+        issues_by_number[123].add_to_assignees.assert_not_called()
+        issues_by_number[456].add_to_assignees.assert_called_once_with("testuser")
+
     def test_success(self, bot_env):
         bot = IssueAssignmentBot()
         issues_by_number = {
@@ -521,6 +590,53 @@ class TestHandleIssueComment:
 
 
 class TestHandlePullRequest:
+    def test_validates_each_issue_before_auto_assign(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_pr = Mock()
+        mock_pr.labels = []
+        bot_env["repo"].get_pull.return_value = mock_pr
+        bot.is_pr_author_exempt = Mock(return_value=False)
+        bot.validate_pr_issues = Mock(return_value=True)
+        bot.auto_assign_issues_from_pr = Mock()
+        assert bot.handle_pull_request()
+        bot.auto_assign_issues_from_pr.assert_called_once_with(
+            100, "testuser", "Fixes #123", validate_issues=True
+        )
+
+    def test_skips_per_issue_validation_for_exempt_author(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.load_event_payload(
+            {
+                "action": "opened",
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                },
+            }
+        )
+        mock_pr = Mock()
+        mock_pr.labels = []
+        bot_env["repo"].get_pull.return_value = mock_pr
+        bot.is_pr_author_exempt = Mock(return_value=True)
+        bot.validate_pr_issues = Mock()
+        bot.auto_assign_issues_from_pr = Mock()
+        assert bot.handle_pull_request()
+        bot.validate_pr_issues.assert_not_called()
+        bot.auto_assign_issues_from_pr.assert_called_once_with(
+            100, "testuser", "Fixes #123", validate_issues=False
+        )
+
     def test_opened(self, bot_env):
         bot = IssueAssignmentBot()
         bot.load_event_payload(
@@ -535,7 +651,9 @@ class TestHandlePullRequest:
         )
         mock_issue = _make_issue_with_assignment("testuser")
         bot_env["repo"].get_issue.return_value = mock_issue
+        bot.is_pr_author_exempt = MagicMock(return_value=False)
         bot.validate_pr_issues = MagicMock(return_value=True)
+        bot.validate_issue = MagicMock(return_value=True)
         assert bot.handle_pull_request()
         mock_issue.add_to_assignees.assert_called_once_with("testuser")
 
@@ -717,6 +835,15 @@ class TestIsBotAssignCommand:
 
 
 class TestHandleBotAssignRequest:
+    @pytest.fixture(autouse=True)
+    def valid_pr(self, monkeypatch):
+        monkeypatch.setattr(
+            IssueAssignmentBot, "is_pr_author_exempt", Mock(return_value=False)
+        )
+        monkeypatch.setattr(
+            IssueAssignmentBot, "validate_issue", Mock(return_value=True)
+        )
+
     def test_assigns_when_open_pr_exists(self, bot_env):
         bot = IssueAssignmentBot()
         mock_issue = _make_issue_with_assignment("contributor")
@@ -730,6 +857,19 @@ class TestHandleBotAssignRequest:
         comment = mock_issue.create_comment.call_args[0][0]
         assert "assigned to @contributor" in comment
         assert "PR #200" in comment
+
+    def test_ignores_invalid_pr(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.is_pr_author_exempt = Mock(return_value=False)
+        bot.validate_issue = Mock(return_value=False)
+        mock_issue = _make_issue_with_assignment("contributor")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        mock_pr = _make_search_result(200, "Fixes #123")
+        bot_env["github"].search_issues.return_value = [mock_pr]
+        assert bot.handle_bot_assign_request(123, "contributor")
+        bot.validate_issue.assert_called_once_with("openwisp", "openwisp-utils", 123)
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
 
     def test_replies_when_no_open_pr(self, bot_env):
         bot = IssueAssignmentBot()
@@ -831,6 +971,8 @@ class TestHandleBotAssignRequest:
 class TestHandleIssueCommentBotCommand:
     def test_bot_command_triggers_assign(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.is_pr_author_exempt = Mock(return_value=False)
+        bot.validate_issue = Mock(return_value=True)
         bot.load_event_payload(
             {
                 "issue": {"number": 123, "pull_request": None},

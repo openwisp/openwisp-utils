@@ -121,6 +121,7 @@ class TestPRReopenBot:
 
     def test_handle_pr_reopen(self, bot_env):
         bot = PRReopenBot()
+        bot.validate_pr_issues = Mock(return_value=True)
         bot.load_event_payload(
             {
                 "pull_request": {
@@ -142,6 +143,25 @@ class TestPRReopenBot:
         assert bot.handle_pr_reopen()
         mock_issue.add_to_assignees.assert_called_once_with("testuser")
 
+    def test_handle_pr_reopen_ignores_invalid_pr(self, bot_env):
+        bot = PRReopenBot()
+        bot.validate_pr_issues = Mock(return_value=False)
+        bot.load_event_payload(
+            {
+                "pull_request": {
+                    "number": 100,
+                    "user": {"login": "testuser"},
+                    "body": "Fixes #123",
+                }
+            }
+        )
+        mock_pr = Mock()
+        bot_env["repo"].get_pull.return_value = mock_pr
+        assert bot.handle_pr_reopen()
+        bot.validate_pr_issues.assert_called_once_with(mock_pr)
+        bot_env["repo"].get_issue.assert_not_called()
+        mock_pr.remove_from_labels.assert_not_called()
+
     def test_handle_pr_reopen_no_payload(self, bot_env):
         bot = PRReopenBot()
         assert not bot.handle_pr_reopen()
@@ -153,6 +173,12 @@ class TestPRReopenBot:
 
 
 class TestPRActivityBot:
+    @pytest.fixture(autouse=True)
+    def valid_pr(self, monkeypatch):
+        monkeypatch.setattr(
+            PRActivityBot, "validate_pr_issues", Mock(return_value=True)
+        )
+
     def test_handle_contributor_activity(self, bot_env):
         bot = PRActivityBot()
         bot.load_event_payload(
@@ -215,6 +241,27 @@ class TestPRActivityBot:
         mock_pr.remove_from_labels.assert_called_once_with("stale")
         mock_issue.add_to_assignees.assert_called_once_with("nonmember")
         mock_pr.create_issue_comment.assert_not_called()
+
+    def test_handle_contributor_activity_ignores_invalid_pr(self, bot_env):
+        bot = PRActivityBot()
+        bot.validate_pr_issues = Mock(return_value=False)
+        bot.load_event_payload(
+            {
+                "issue": {
+                    "number": 100,
+                    "pull_request": {"url": "https://api.github.com/..."},
+                },
+                "comment": {"user": {"login": "testuser"}},
+            }
+        )
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.get_labels.return_value = []
+        bot_env["repo"].get_pull.return_value = mock_pr
+        assert bot.handle_contributor_activity()
+        bot.validate_pr_issues.assert_called_once_with(mock_pr)
+        mock_pr.remove_from_labels.assert_not_called()
+        bot_env["repo"].get_issue.assert_not_called()
 
     def test_handle_contributor_activity_not_author(self, bot_env):
         bot = PRActivityBot()

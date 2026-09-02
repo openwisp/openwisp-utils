@@ -62,26 +62,29 @@ Auto-Assignment Bot
 A collection of Python scripts that automate issue and PR management for
 OpenWISP repositories. The bot provides the following features:
 
-- **Issue auto-assignment**: When a contributor opens a PR referencing an
-  issue (e.g., ``Fixes #123``), the issue is automatically assigned to the
-  PR author.
+- **Issue auto-assignment**: When a contributor opens a valid PR
+  referencing an issue (e.g., ``Fixes #123``), the issue is automatically
+  assigned to the PR author.
 - **Assignment request responses**: When someone comments asking to be
-  assigned, the bot responds with contributing guidelines explaining that
-  no assignment is needed — just open a PR.
+  assigned, the bot checks whether the issue is validated. For validated
+  issues, it explains that no assignment is needed before opening a PR.
+  For issues that have not been validated, it explains the validation
+  requirements for external contributors.
 - **Stale PR management**: Warns PR authors after 7 days of inactivity,
   marks stale and unassigns after 14 days, and posts a final follow-up
   encouragement after 60 days. The bot does not auto-close stale PRs.
-- **PR reopen reassignment**: When a stale PR is reopened, linked issues
-  are reassigned back to the author.
+- **PR reopen reassignment**: When a valid stale PR is reopened, linked
+  issues are reassigned back to the author.
 - **PR validation**: Enforces the `OpenWISP Contributing Guidelines
   <https://openwisp.io/docs/dev/developer/contributing.html>`_ for
-  external contributors by flagging PRs that do not link a validated
-  issue. PRs created by the configured GitHub App are exempt. The bot
-  removes the ``invalid`` label once the PR is valid and closes unresolved
-  invalid PRs after 24 hours. For valid PRs, it applies the ``ai-review``
-  label, which triggers a CodeRabbit review. The label prevents repeated
-  reviews. Dependabot PRs and PRs whose titles begin with ``[release]`` or
-  ``[backport]`` do not receive the label.
+  external contributors. A :ref:`validated issue
+  <openwisp_look_for_open_issues>` is required. The bot flags PRs that do
+  not link one. PRs created by the configured GitHub App are exempt. The
+  bot removes the ``invalid`` label once the PR is valid and closes
+  unresolved invalid PRs after 24 hours. For valid PRs, it applies the
+  ``ai-review`` label, which triggers a CodeRabbit review. The label
+  prevents repeated reviews. ``Dependabot`` PRs and PRs whose titles begin
+  with ``[release]`` or ``[backport]`` do not receive the label.
 
 **How Stale PR Detection Works**
 

@@ -1,6 +1,6 @@
 import re
 
-from base import GitHubBot
+from base import CONTRIBUTING_GUIDELINES_URL, GitHubBot
 from utils import (
     extract_linked_issues,
     find_open_pr_for_issue,
@@ -34,9 +34,6 @@ class IssueAssignmentBot(GitHubBot):
             r"\bcan you assign this to me\b",
         ]
         return any(re.search(pattern, comment_lower) for pattern in assignment_patterns)
-
-    def get_contributing_guidelines_url(self):
-        return "https://openwisp.io/docs/stable/developer/contributing.html"
 
     def detect_issue_type(self, issue):
         """Analyzes labels, title and body.
@@ -110,8 +107,15 @@ class IssueAssignmentBot(GitHubBot):
             print("GitHub client not initialized")
             return False
         try:
-            contributing_url = self.get_contributing_guidelines_url()
+            contributing_url = CONTRIBUTING_GUIDELINES_URL
             issue = self.repo.get_issue(issue_number)
+            owner, repo_name = self.repository_name.split("/")
+            if not self.validate_issue(owner, repo_name, issue_number):
+                issue.create_comment(
+                    self.get_unvalidated_issue_assignment_request_comment(commenter)
+                )
+                print(f"Posted unvalidated issue response to issue #{issue_number}")
+                return True
             issue_type = self.detect_issue_type(issue)
             suggested_keyword = None
             detection_reason = ""
@@ -204,6 +208,14 @@ class IssueAssignmentBot(GitHubBot):
             print(f"Error responding to assignment request: {e}")
             return False
 
+    def get_unvalidated_issue_assignment_request_comment(self, commenter):
+        return self.get_unvalidated_issue_message(
+            f"Hi @{commenter},\n\n"
+            "Thank you for your interest in contributing to OpenWISP.\n\n"
+            "This issue has not been validated as available for new or occasional "
+            "contributors and is reserved for experienced contributors."
+        )
+
     def _cannot_auto_assign_message(self, pr_author, pr_number):
         return (
             f"Hi @{pr_author} 👋,\n\n"
@@ -258,6 +270,11 @@ class IssueAssignmentBot(GitHubBot):
                     f" and then comment `@{self.bot_username} assign` again."
                 )
                 return True
+            if not self.is_pr_author_exempt(pr):
+                owner, repo_name = self.repository_name.split("/")
+                if not self.validate_issue(owner, repo_name, issue_number):
+                    print(f"Issue #{issue_number} is invalid, ignoring bot command")
+                    return True
             issue.add_to_assignees(commenter)
             verified = verify_assignment(self.repo, issue_number, commenter)
             if verified is True:
@@ -288,7 +305,9 @@ class IssueAssignmentBot(GitHubBot):
             print(f"Error handling bot assign command: {e}")
             return False
 
-    def auto_assign_issues_from_pr(self, pr_number, pr_author, pr_body, max_issues=10):
+    def auto_assign_issues_from_pr(
+        self, pr_number, pr_author, pr_body, max_issues=10, validate_issues=False
+    ):
         if not self.repo:
             print("GitHub client not initialized")
             return []
@@ -304,12 +323,20 @@ class IssueAssignmentBot(GitHubBot):
                     " to avoid rate limits"
                 )
             assigned_issues = []
+            owner, repo_name = self.repository_name.split("/")
             for issue_number, issue in get_valid_linked_issues(
                 self.repo, self.repository_name, linked_issues
             ):
                 if len(assigned_issues) >= max_issues:
                     break
                 try:
+                    if validate_issues and not self.validate_issue(
+                        owner, repo_name, issue_number
+                    ):
+                        print(
+                            f"Issue #{issue_number} is invalid, skipping auto-assignment"
+                        )
+                        continue
                     if getattr(issue, "state", "open") == "closed":
                         print(
                             f"Issue #{issue_number} is closed, skipping"
@@ -442,12 +469,18 @@ class IssueAssignmentBot(GitHubBot):
                 return True
             if action in ["opened", "reopened", "edited", "ready_for_review"]:
                 pr_obj = self.repo.get_pull(pr_number)
-                is_valid = self.validate_pr_issues(pr_obj)
+                is_exempt = self.is_pr_author_exempt(pr_obj)
+                is_valid = is_exempt or self.validate_pr_issues(pr_obj)
                 # Cross-repo issues are intentionally excluded from auto-assignment
                 # because when multiple PRs in different repos are created for a
                 # single issue, it's likely that multiple people will work on it
                 if is_valid:
-                    self.auto_assign_issues_from_pr(pr_number, pr_author, pr_body)
+                    self.auto_assign_issues_from_pr(
+                        pr_number,
+                        pr_author,
+                        pr_body,
+                        validate_issues=not is_exempt,
+                    )
                 labels_lower = set()
                 try:
                     labels_lower = {label.name.lower() for label in pr_obj.labels}

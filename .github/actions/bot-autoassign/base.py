@@ -6,6 +6,7 @@ from utils import extract_all_linked_issues
 MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 DEFAULT_EXCLUDE_PR_AUTHORS = "dependabot[bot]"
 MAX_VALIDATION_ISSUES = 10
+CONTRIBUTING_GUIDELINES_URL = "https://openwisp.io/docs/dev/developer/contributing.html"
 # Stable ProjectV2 node IDs for the OpenWISP contributor boards.
 # These IDs never change even if a board is renamed.
 REQUIRED_CONTRIBUTOR_PROJECT_IDS = frozenset(
@@ -56,6 +57,27 @@ class GitHubBot:
 
     def load_event_payload(self, event_payload):
         self.event_payload = event_payload
+
+    def get_unvalidated_issue_message(self, context):
+        return (
+            f"{context}\n\n"
+            "An issue is considered validated when it is open, has at least one "
+            "label, has no `invalid` or `wontfix` label, and is assigned to either the "
+            "[OpenWISP Contributor's Board]"
+            "(https://github.com/orgs/openwisp/projects/42/views/1) or the "
+            "[OpenWISP Priorities for next releases]"
+            "(https://github.com/orgs/openwisp/projects/37/views/1).\n\n"
+            "Please refer to the [OpenWISP Contributing Guidelines]"
+            f"({CONTRIBUTING_GUIDELINES_URL}) for more information.\n\n"
+            "Please see the [OpenWISP Anti AI Spam Policy]"
+            "(https://openwisp.io/docs/dev/general/code-of-conduct.html).\n\n"
+            "Feel free to join the [OpenWISP dev chatroom]"
+            "(https://matrix.to/#/#openwisp_development:gitter.im) "
+            "to coordinate with the development team.\n\n"
+            "Pull requests from external contributors that target an unvalidated "
+            "issue are flagged as invalid and closed automatically if not resolved "
+            "within 24 hours."
+        )
 
     def get_issue_projects(self, owner, repo_name, issue_number):
         query = """
@@ -132,11 +154,62 @@ class GitHubBot:
 
         return projects
 
-    def validate_pr_issues(self, pr):
-        """Validate if a pull request is from an exempt user or references a validated issue."""
-        if not self.github_validation or not self.repository_name:
-            print("GitHub validation client or repository name not initialized")
+    def validate_issue(self, owner, repo_name, issue_number):
+        if not self.github_validation:
+            print("GitHub validation client not initialized")
             return False
+        try:
+            target_repo = self.github_validation.get_repo(f"{owner}/{repo_name}")
+            issue = target_repo.get_issue(issue_number)
+        except Exception as e:
+            if isinstance(e, GithubException) and e.status == 404:
+                print(
+                    f"Issue {owner}/{repo_name}#{issue_number} not found, skipping validation."
+                )
+                return False
+            print(f"Error fetching issue {owner}/{repo_name}#{issue_number}: {e}")
+            raise
+        if issue.pull_request:
+            print(
+                f"Reference {owner}/{repo_name}#{issue_number} is a pull request, skipping validation."
+            )
+            return False
+        if issue.state != "open":
+            print(
+                f"Issue {owner}/{repo_name}#{issue_number} is not open, skipping validation."
+            )
+            return False
+        issue_labels = [label.name.lower() for label in issue.labels]
+        valid_labels = [lbl for lbl in issue_labels if lbl not in INVALID_ISSUE_LABELS]
+        if not valid_labels:
+            print(
+                f"Issue {owner}/{repo_name}#{issue_number} has no valid labels, skipping validation."
+            )
+            return False
+        if any(lbl in INVALID_ISSUE_LABELS for lbl in issue_labels):
+            print(
+                f"Issue {owner}/{repo_name}#{issue_number} contains "
+                "invalid/wontfix label, skipping validation."
+            )
+            return False
+        try:
+            projects = self.get_issue_projects(owner, repo_name, issue_number)
+        except Exception as e:
+            print(
+                f"Error fetching projects for issue {owner}/{repo_name}#{issue_number}: {e}"
+            )
+            raise
+        if REQUIRED_CONTRIBUTOR_PROJECT_IDS.intersection(projects):
+            print(f"Issue {owner}/{repo_name}#{issue_number} is validated.")
+            return True
+        print(
+            f"Issue {owner}/{repo_name}#{issue_number} is not assigned "
+            f"to any required project (found: {projects or 'none'}), "
+            "skipping validation."
+        )
+        return False
+
+    def is_pr_author_exempt(self, pr):
         pr_author = (
             pr.user.login
             if pr.user and isinstance(getattr(pr.user, "login", None), str)
@@ -161,6 +234,15 @@ class GitHubBot:
                 f"{author_association}. Proceeding."
             )
             return True
+        return False
+
+    def validate_pr_issues(self, pr):
+        """Validate if a pull request is from an exempt user or references a validated issue."""
+        if not self.github_validation or not self.repository_name:
+            print("GitHub validation client or repository name not initialized")
+            return False
+        if self.is_pr_author_exempt(pr):
+            return True
         pr_body = pr.body if isinstance(pr.body, str) else ""
         linked_issues = extract_all_linked_issues(pr_body, self.repository_name)
         if not linked_issues:
@@ -179,63 +261,11 @@ class GitHubBot:
                     f"to organization {current_org}, skipping validation."
                 )
                 continue
-            try:
-                target_repo = self.github_validation.get_repo(f"{owner}/{repo_name}")
-                issue = target_repo.get_issue(issue_number)
-            except Exception as e:
-                if isinstance(e, GithubException) and e.status == 404:
-                    print(
-                        f"Issue {owner}/{repo_name}#{issue_number} not found, skipping validation."
-                    )
-                    continue
-                print(f"Error fetching issue {owner}/{repo_name}#{issue_number}: {e}")
-                raise
-            if issue.pull_request:
-                print(
-                    f"Reference {owner}/{repo_name}#{issue_number} is a pull request, skipping validation."
-                )
-                continue
-            if issue.state != "open":
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} is not open, skipping validation."
-                )
-                continue
-            issue_labels = [label.name.lower() for label in issue.labels]
-            valid_labels = [
-                lbl for lbl in issue_labels if lbl not in INVALID_ISSUE_LABELS
-            ]
-            if not valid_labels:
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} has no valid labels, skipping validation."
-                )
-                continue
-            if any(lbl in INVALID_ISSUE_LABELS for lbl in issue_labels):
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} contains "
-                    "invalid/wontfix label, skipping validation."
-                )
-                continue
-            try:
-                projects = self.get_issue_projects(owner, repo_name, issue_number)
-            except Exception as e:
-                print(
-                    f"Error fetching projects for issue {owner}/{repo_name}#{issue_number}: {e}"
-                )
-                raise
-            has_valid_project = bool(
-                REQUIRED_CONTRIBUTOR_PROJECT_IDS.intersection(projects)
-            )
-            if has_valid_project:
+            if self.validate_issue(owner, repo_name, issue_number):
                 print(
                     f"Issue {owner}/{repo_name}#{issue_number} is validated. PR is valid."
                 )
                 return True
-            else:
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} is not assigned "
-                    f"to any required project (found: {projects or 'none'}), "
-                    "skipping validation."
-                )
         return False
 
     def get_bot_comment(self, pr, comment_type, after_date=None, issue_comments=None):
@@ -270,11 +300,10 @@ class GitHubBot:
     def get_invalid_unvalidated_issue_comment(self, pr_author):
         """Returns the comment body warning that the PR is invalid/unvalidated."""
         greeting = f"Hi @{pr_author},\n\n" if pr_author else "Hi,\n\n"
-        return (
-            "<!-- bot:invalid_unvalidated_issue -->\n\n"
+        message = self.get_unvalidated_issue_message(
             f"{greeting}"
             "Thank you for your interest in contributing to OpenWISP.\n\n"
-            "This pull request has been flagged because external contributors "
+            "This pull request has been flagged as invalid because external contributors "
             "must target an issue validated by maintainers before requesting "
             "review.\n\n"
             "Please link this pull request to a validated issue by adding "
@@ -284,18 +313,10 @@ class GitHubBot:
             "repository.\n\n"
             "If there is no validated issue yet, please open one first and wait "
             "for maintainer validation before continuing with this pull "
-            "request.\n\n"
-            "An issue is considered validated when it is open, has an appropriate "
-            "label other than `invalid` or `wontfix`, and is assigned to one of "
-            "the project boards mentioned in the "
-            "[OpenWISP Contributing Guidelines]"
-            "(https://openwisp.io/docs/dev/developer/contributing.html).\n\n"
-            "Please see the [OpenWISP Anti AI Spam Policy]"
-            "(https://openwisp.io/docs/dev/general/code-of-conduct.html).\n\n"
-            "Feel free to join the [OpenWISP dev chatroom]"
-            "(https://matrix.to/#/#openwisp_development:gitter.im) "
-            "to coordinate with the development team.\n\n"
-            "If this is not resolved within 24 hours, this pull request "
-            "will be closed automatically. "
+            "request."
+        )
+        return (
+            "<!-- bot:invalid_unvalidated_issue -->\n\n"
+            f"{message}\n\n"
             "Thank you for your understanding."
         )
