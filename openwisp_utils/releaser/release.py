@@ -222,7 +222,7 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
         print("Skipping the version bump.")
         return
     bump_branch = f"chore/bump-version-{next_version}"
-    pr_title = f"[chores] Bumped version to {next_version} alpha"
+    pr_title = f"[bump] Bumped version to {next_version} alpha"
     force_with_lease = None
     bump_branch_created = False
     changes_committed = False
