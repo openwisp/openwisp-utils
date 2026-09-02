@@ -86,7 +86,16 @@ class PRReopenBot(GitHubBot):
                 print("Missing required PR data")
                 return False
             print(f"Handling PR #{pr_number}" f" reopen by {pr_author}")
-            reassigned = self.reassign_issues_to_author(pr_number, pr_author, pr_body)
+            current_pr = self.repo.get_pull(pr_number)
+            if not self.validate_pr_issues(current_pr):
+                print(f"PR #{pr_number} is invalid, ignoring reassignment")
+                return True
+            current_pr_body = (
+                current_pr.body if isinstance(current_pr.body, str) else pr_body
+            )
+            reassigned = self.reassign_issues_to_author(
+                pr_number, pr_author, current_pr_body
+            )
             self.remove_stale_label(pr_number)
             print(f"Reassigned {len(reassigned)}" f" issues to {pr_author}")
             return True
@@ -132,6 +141,9 @@ class PRActivityBot(GitHubBot):
             pr = self.repo.get_pull(pr_number)
             if not pr.user or not user_in_logins(commenter, [pr.user.login]):
                 print("Comment not from PR author, skipping")
+                return True
+            if not self.validate_pr_issues(pr):
+                print(f"PR #{pr_number} is invalid, ignoring reassignment")
                 return True
             labels = [label.name for label in pr.get_labels()]
             if "stale" not in labels:

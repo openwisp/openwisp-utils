@@ -130,6 +130,7 @@ class TestExtractLinkedIssues:
 class TestRespondToAssignment:
     def test_success_no_type_detected(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=True)
         mock_issue = Mock()
         mock_issue.labels = []
         mock_issue.title = "Test issue title"
@@ -145,8 +146,38 @@ class TestRespondToAssignment:
         assert f"`Closes #{123}`" in comment_text
         assert f"`Fixes #{123}`" in comment_text
 
+    def test_replies_to_unvalidated_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=False)
+        mock_issue = Mock()
+        mock_issue.labels = []
+        mock_issue.title = "Test issue"
+        mock_issue.body = "Test body"
+        bot_env["repo"].get_issue.return_value = mock_issue
+
+        assert bot.respond_to_assignment_request(123, "testuser")
+
+        comment_text = mock_issue.create_comment.call_args[0][0]
+        assert "not been validated" in comment_text
+        assert "OpenWISP Contributor's Board" in comment_text
+        assert "closed automatically" in comment_text
+
+    def test_stays_silent_when_issue_validation_fails(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(side_effect=GithubException(500, "error", None))
+        mock_issue = Mock()
+        mock_issue.labels = []
+        mock_issue.title = "Test issue"
+        mock_issue.body = "Test body"
+        bot_env["repo"].get_issue.return_value = mock_issue
+
+        assert not bot.respond_to_assignment_request(123, "testuser")
+
+        mock_issue.create_comment.assert_not_called()
+
     def test_success_bug_detected(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=True)
         mock_label = Mock()
         mock_label.name = "bug"
         mock_issue = Mock()
@@ -160,6 +191,7 @@ class TestRespondToAssignment:
 
     def test_success_feature_detected(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=True)
         mock_label = Mock()
         mock_label.name = "enhancement"
         mock_issue = Mock()
@@ -717,6 +749,12 @@ class TestIsBotAssignCommand:
 
 
 class TestHandleBotAssignRequest:
+    @pytest.fixture(autouse=True)
+    def valid_pr(self, monkeypatch):
+        monkeypatch.setattr(
+            IssueAssignmentBot, "validate_pr_issues", Mock(return_value=True)
+        )
+
     def test_assigns_when_open_pr_exists(self, bot_env):
         bot = IssueAssignmentBot()
         mock_issue = _make_issue_with_assignment("contributor")
@@ -730,6 +768,20 @@ class TestHandleBotAssignRequest:
         comment = mock_issue.create_comment.call_args[0][0]
         assert "assigned to @contributor" in comment
         assert "PR #200" in comment
+
+    def test_ignores_invalid_pr(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_pr_issues = Mock(return_value=False)
+        mock_issue = _make_issue_with_assignment("contributor")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        mock_pr = _make_search_result(200, "Fixes #123")
+        bot_env["github"].search_issues.return_value = [mock_pr]
+
+        assert bot.handle_bot_assign_request(123, "contributor")
+
+        bot.validate_pr_issues.assert_called_once_with(mock_pr.as_pull_request())
+        mock_issue.add_to_assignees.assert_not_called()
+        mock_issue.create_comment.assert_not_called()
 
     def test_replies_when_no_open_pr(self, bot_env):
         bot = IssueAssignmentBot()
@@ -831,6 +883,7 @@ class TestHandleBotAssignRequest:
 class TestHandleIssueCommentBotCommand:
     def test_bot_command_triggers_assign(self, bot_env):
         bot = IssueAssignmentBot()
+        bot.validate_pr_issues = Mock(return_value=True)
         bot.load_event_payload(
             {
                 "issue": {"number": 123, "pull_request": None},

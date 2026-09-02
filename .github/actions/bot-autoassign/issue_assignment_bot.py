@@ -112,6 +112,13 @@ class IssueAssignmentBot(GitHubBot):
         try:
             contributing_url = self.get_contributing_guidelines_url()
             issue = self.repo.get_issue(issue_number)
+            owner, repo_name = self.repository_name.split("/")
+            if not self.validate_issue(owner, repo_name, issue_number):
+                issue.create_comment(
+                    self.get_unvalidated_issue_assignment_request_comment(commenter)
+                )
+                print(f"Posted unvalidated issue response to issue #{issue_number}")
+                return True
             issue_type = self.detect_issue_type(issue)
             suggested_keyword = None
             detection_reason = ""
@@ -204,6 +211,25 @@ class IssueAssignmentBot(GitHubBot):
             print(f"Error responding to assignment request: {e}")
             return False
 
+    def get_unvalidated_issue_assignment_request_comment(self, commenter):
+        return (
+            f"Hi @{commenter},\n\n"
+            "Thank you for your interest in contributing to OpenWISP.\n\n"
+            "This issue has not been validated as available for new or occasional "
+            "contributors and is reserved for experienced contributors.\n\n"
+            "An issue is considered validated when it is open, has an appropriate "
+            "label other than `invalid` or `wontfix`, and is assigned to either the "
+            "[OpenWISP Contributor's Board]"
+            "(https://github.com/orgs/openwisp/projects/42/views/1) or the "
+            "[OpenWISP Priorities for next releases]"
+            "(https://github.com/orgs/openwisp/projects/37/views/1).\n\n"
+            "Pull requests from external contributors that target an unvalidated "
+            "issue are flagged as invalid and closed automatically if not resolved "
+            "within 24 hours.\n\n"
+            "Please see the [OpenWISP Contributing Guidelines]"
+            "(https://openwisp.io/docs/dev/developer/contributing.html)."
+        )
+
     def _cannot_auto_assign_message(self, pr_author, pr_number):
         return (
             f"Hi @{pr_author} 👋,\n\n"
@@ -256,6 +282,11 @@ class IssueAssignmentBot(GitHubBot):
                     f" this issue (#{issue_number}). Please open a PR"
                     f" linking to this issue (e.g. `Fixes #{issue_number}`)"
                     f" and then comment `@{self.bot_username} assign` again."
+                )
+                return True
+            if not self.validate_pr_issues(pr):
+                print(
+                    f"PR #{pr.number} for #{issue_number} is invalid, ignoring bot command"
                 )
                 return True
             issue.add_to_assignees(commenter)

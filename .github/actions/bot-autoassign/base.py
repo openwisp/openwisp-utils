@@ -132,6 +132,61 @@ class GitHubBot:
 
         return projects
 
+    def validate_issue(self, owner, repo_name, issue_number):
+        if not self.github_validation:
+            print("GitHub validation client not initialized")
+            return False
+        try:
+            target_repo = self.github_validation.get_repo(f"{owner}/{repo_name}")
+            issue = target_repo.get_issue(issue_number)
+        except Exception as e:
+            if isinstance(e, GithubException) and e.status == 404:
+                print(
+                    f"Issue {owner}/{repo_name}#{issue_number} not found, skipping validation."
+                )
+                return False
+            print(f"Error fetching issue {owner}/{repo_name}#{issue_number}: {e}")
+            raise
+        if issue.pull_request:
+            print(
+                f"Reference {owner}/{repo_name}#{issue_number} is a pull request, skipping validation."
+            )
+            return False
+        if issue.state != "open":
+            print(
+                f"Issue {owner}/{repo_name}#{issue_number} is not open, skipping validation."
+            )
+            return False
+        issue_labels = [label.name.lower() for label in issue.labels]
+        valid_labels = [lbl for lbl in issue_labels if lbl not in INVALID_ISSUE_LABELS]
+        if not valid_labels:
+            print(
+                f"Issue {owner}/{repo_name}#{issue_number} has no valid labels, skipping validation."
+            )
+            return False
+        if any(lbl in INVALID_ISSUE_LABELS for lbl in issue_labels):
+            print(
+                f"Issue {owner}/{repo_name}#{issue_number} contains "
+                "invalid/wontfix label, skipping validation."
+            )
+            return False
+        try:
+            projects = self.get_issue_projects(owner, repo_name, issue_number)
+        except Exception as e:
+            print(
+                f"Error fetching projects for issue {owner}/{repo_name}#{issue_number}: {e}"
+            )
+            raise
+        if REQUIRED_CONTRIBUTOR_PROJECT_IDS.intersection(projects):
+            print(f"Issue {owner}/{repo_name}#{issue_number} is validated.")
+            return True
+        print(
+            f"Issue {owner}/{repo_name}#{issue_number} is not assigned "
+            f"to any required project (found: {projects or 'none'}), "
+            "skipping validation."
+        )
+        return False
+
     def validate_pr_issues(self, pr):
         """Validate if a pull request is from an exempt user or references a validated issue."""
         if not self.github_validation or not self.repository_name:
@@ -179,63 +234,11 @@ class GitHubBot:
                     f"to organization {current_org}, skipping validation."
                 )
                 continue
-            try:
-                target_repo = self.github_validation.get_repo(f"{owner}/{repo_name}")
-                issue = target_repo.get_issue(issue_number)
-            except Exception as e:
-                if isinstance(e, GithubException) and e.status == 404:
-                    print(
-                        f"Issue {owner}/{repo_name}#{issue_number} not found, skipping validation."
-                    )
-                    continue
-                print(f"Error fetching issue {owner}/{repo_name}#{issue_number}: {e}")
-                raise
-            if issue.pull_request:
-                print(
-                    f"Reference {owner}/{repo_name}#{issue_number} is a pull request, skipping validation."
-                )
-                continue
-            if issue.state != "open":
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} is not open, skipping validation."
-                )
-                continue
-            issue_labels = [label.name.lower() for label in issue.labels]
-            valid_labels = [
-                lbl for lbl in issue_labels if lbl not in INVALID_ISSUE_LABELS
-            ]
-            if not valid_labels:
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} has no valid labels, skipping validation."
-                )
-                continue
-            if any(lbl in INVALID_ISSUE_LABELS for lbl in issue_labels):
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} contains "
-                    "invalid/wontfix label, skipping validation."
-                )
-                continue
-            try:
-                projects = self.get_issue_projects(owner, repo_name, issue_number)
-            except Exception as e:
-                print(
-                    f"Error fetching projects for issue {owner}/{repo_name}#{issue_number}: {e}"
-                )
-                raise
-            has_valid_project = bool(
-                REQUIRED_CONTRIBUTOR_PROJECT_IDS.intersection(projects)
-            )
-            if has_valid_project:
+            if self.validate_issue(owner, repo_name, issue_number):
                 print(
                     f"Issue {owner}/{repo_name}#{issue_number} is validated. PR is valid."
                 )
                 return True
-            else:
-                print(
-                    f"Issue {owner}/{repo_name}#{issue_number} is not assigned "
-                    f"to any required project (found: {projects or 'none'}), "
-                    "skipping validation."
-                )
         return False
 
     def get_bot_comment(self, pr, comment_type, after_date=None, issue_comments=None):
