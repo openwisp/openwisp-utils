@@ -12,6 +12,7 @@ from openwisp_utils.releaser.utils import (
     SkipSignal,
     branch_exists,
     format_file_with_docstrfmt,
+    get_remote_branch_commit,
     retryable_request,
 )
 
@@ -41,6 +42,26 @@ MD_EXPECTED = """
 
 - A breaking change.
 """
+
+
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_get_remote_branch_commit(mock_subprocess):
+    mock_subprocess.return_value = MagicMock(
+        returncode=0, stdout="a" * 40 + "\trefs/heads/bump\n"
+    )
+    assert get_remote_branch_commit("bump") == "a" * 40
+    mock_subprocess.assert_called_once_with(
+        ["git", "ls-remote", "--exit-code", "--heads", "origin", "bump"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_get_remote_branch_commit_missing_branch(mock_subprocess):
+    mock_subprocess.return_value = MagicMock(returncode=2)
+    assert get_remote_branch_commit("bump") is None
 
 
 def test_rst_to_markdown_conversion():

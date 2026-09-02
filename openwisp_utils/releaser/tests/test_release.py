@@ -1,7 +1,7 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
-from openwisp_utils.releaser.release import check_prerequisites
+from openwisp_utils.releaser.release import bump_to_next_alpha, check_prerequisites
 from openwisp_utils.releaser.release import main as run_release
 from openwisp_utils.releaser.release import port_changelog_to_main
 from openwisp_utils.releaser.utils import SkipSignal
@@ -373,3 +373,258 @@ def test_port_changelog_skip_pr_creation(mock_subprocess, mock_branch_exists, mo
         mock_all["questionary_confirm"].assert_any_call(
             "Press Enter when you have created the PR manually."
         )
+
+
+@pytest.fixture
+def bump_mocks(mocker):
+    """Mocks the external dependencies of ``bump_to_next_alpha``."""
+    mocks = {
+        "run_git": mocker.patch("openwisp_utils.releaser.release.run_git"),
+        "subprocess": mocker.patch("openwisp_utils.releaser.release.subprocess.run"),
+        "branch_exists": mocker.patch(
+            "openwisp_utils.releaser.release.branch_exists",
+            side_effect=lambda name: name == "master",
+        ),
+        "get_remote_branch_commit": mocker.patch(
+            "openwisp_utils.releaser.release.get_remote_branch_commit",
+            return_value=None,
+        ),
+        "determine_new_version": mocker.patch(
+            "openwisp_utils.releaser.release.determine_new_version",
+            return_value="1.3.0",
+        ),
+        "bump_version": mocker.patch(
+            "openwisp_utils.releaser.release.bump_version", return_value=True
+        ),
+        "update_changelog": mocker.patch(
+            "openwisp_utils.releaser.release.update_changelog_file"
+        ),
+        "format_file": mocker.patch(
+            "openwisp_utils.releaser.release.format_file_with_docstrfmt"
+        ),
+        "questionary": mocker.patch("openwisp_utils.releaser.release.questionary"),
+        "print": mocker.patch("builtins.print"),
+    }
+    return mocks
+
+
+def _git_commands(mock_run_git):
+    return [call.args[0] for call in mock_run_git.call_args_list]
+
+
+def test_bump_to_next_alpha_flow(bump_mocks):
+    mock_gh = MagicMock()
+    mock_gh.create_pr.return_value = "http://pr.url/3"
+    config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    bump_mocks["bump_version"].assert_called_once_with(
+        config, "1.3.0", version_type="alpha"
+    )
+    bump_mocks["update_changelog"].assert_called_once_with(
+        "CHANGES.rst",
+        "Version 1.3.0 [unreleased]\n--------------------------\n\nWork in progress.",
+    )
+    bump_mocks["format_file"].assert_called_once_with("CHANGES.rst")
+    assert _git_commands(bump_mocks["run_git"]) == [
+        ["checkout", "master"],
+        ["pull", "origin", "master"],
+        ["checkout", "-B", "chore/bump-version-1.3.0"],
+        ["add", "-u"],
+        ["commit", "-m", "[chores] Bumped version to 1.3.0 alpha"],
+        ["push", "-u", "origin", "chore/bump-version-1.3.0"],
+    ]
+    mock_gh.create_pr.assert_called_once_with(
+        "chore/bump-version-1.3.0",
+        "master",
+        "[chores] Bumped version to 1.3.0 alpha",
+    )
+    mock_gh.is_pr_merged.assert_not_called()
+    bump_mocks["subprocess"].assert_called_once_with(
+        ["git", "checkout", "master"], check=True, capture_output=True
+    )
+
+
+def test_bump_to_next_alpha_changelog_block_variants(bump_mocks):
+    mock_gh = MagicMock()
+    variants = [
+        (
+            {"changelog_format": "md", "changelog_uses_version_prefix": True},
+            "## Version 1.3.0 [unreleased]\n\nWork in progress.",
+        ),
+        (
+            {"changelog_format": "md", "changelog_uses_version_prefix": False},
+            "## 1.3.0 [unreleased]\n\nWork in progress.",
+        ),
+        (
+            {"changelog_format": "rst", "changelog_uses_version_prefix": False},
+            "1.3.0 [unreleased]\n------------------\n\nWork in progress.",
+        ),
+    ]
+    for changelog_config, expected_block in variants:
+        bump_mocks["update_changelog"].reset_mock()
+        bump_mocks["format_file"].reset_mock()
+        config = {
+            "package_type": "python",
+            "changelog_path": "CHANGES." + changelog_config["changelog_format"],
+            **changelog_config,
+        }
+        bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+        bump_mocks["update_changelog"].assert_called_once_with(
+            config["changelog_path"], expected_block
+        )
+        if changelog_config["changelog_format"] == "md":
+            bump_mocks["format_file"].assert_not_called()
+
+
+def test_bump_to_next_alpha_existing_branch_reset(bump_mocks):
+    mock_gh = MagicMock()
+    bump_mocks["branch_exists"].side_effect = lambda name: name in [
+        "master",
+        "chore/bump-version-1.3.0",
+    ]
+    bump_mocks["questionary"].select.return_value.ask.return_value = (
+        "Reset it to 'master'"
+    )
+    remote_commit = "a" * 40
+    bump_mocks["get_remote_branch_commit"].return_value = remote_commit
+    config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    assert [
+        "push",
+        "--force-with-lease=refs/heads/chore/bump-version-1.3.0:" + remote_commit,
+        "-u",
+        "origin",
+        "chore/bump-version-1.3.0",
+    ] in _git_commands(bump_mocks["run_git"])
+    mock_gh.create_pr.assert_called_once()
+
+
+def test_bump_to_next_alpha_existing_remote_branch_reset(bump_mocks):
+    mock_gh = MagicMock()
+    remote_commit = "a" * 40
+    bump_mocks["get_remote_branch_commit"].return_value = remote_commit
+    bump_mocks["questionary"].select.return_value.ask.return_value = (
+        "Reset it to 'master'"
+    )
+    config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    assert [
+        "push",
+        "--force-with-lease=refs/heads/chore/bump-version-1.3.0:" + remote_commit,
+        "-u",
+        "origin",
+        "chore/bump-version-1.3.0",
+    ] in _git_commands(bump_mocks["run_git"])
+
+
+def test_bump_to_next_alpha_existing_branch_abort(bump_mocks):
+    mock_gh = MagicMock()
+    bump_mocks["branch_exists"].side_effect = lambda name: name in [
+        "master",
+        "chore/bump-version-1.3.0",
+    ]
+    bump_mocks["questionary"].select.return_value.ask.return_value = (
+        "Abort the version bump"
+    )
+    config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    bump_mocks["update_changelog"].assert_not_called()
+    mock_gh.create_pr.assert_not_called()
+    bump_mocks["subprocess"].assert_called_once_with(
+        ["git", "checkout", "master"], check=True, capture_output=True
+    )
+
+
+def test_bump_to_next_alpha_package_without_prerelease_support(bump_mocks):
+    mock_gh = MagicMock()
+    config = {
+        "package_type": "generic",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    bump_mocks["bump_version"].assert_not_called()
+    bump_mocks["run_git"].assert_not_called()
+    bump_mocks["update_changelog"].assert_not_called()
+    mock_gh.create_pr.assert_not_called()
+
+
+def test_bump_to_next_alpha_skip_pr_creation(bump_mocks):
+    mock_gh = MagicMock()
+    mock_gh.create_pr.side_effect = SkipSignal("User chose to skip this operation.")
+    config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    printed_output = "\n".join(
+        str(call.args[0]) for call in bump_mocks["print"].call_args_list if call.args
+    )
+    assert "Please complete the version bump manually." in printed_output
+    assert "chore/bump-version-1.3.0" in printed_output
+    bump_mocks["subprocess"].assert_called_once_with(
+        ["git", "checkout", "master"], check=True, capture_output=True
+    )
+
+
+def test_bump_to_next_alpha_cancelled(bump_mocks):
+    mock_gh = MagicMock()
+    bump_mocks["determine_new_version"].return_value = None
+    config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+        "changelog_uses_version_prefix": True,
+    }
+    bump_to_next_alpha(mock_gh, config, "1.2.0", "master")
+    bump_mocks["run_git"].assert_not_called()
+    mock_gh.create_pr.assert_not_called()
+
+
+def test_main_feature_flow_offers_alpha_bump(mock_all):
+    run_release()
+    mock_all["bump_to_next_alpha"].assert_called_once()
+    assert mock_all["bump_to_next_alpha"].call_args[0][2] == "1.3.0"
+
+
+def test_main_bugfix_flow_does_not_offer_alpha_bump(mock_all, mocker):
+    mock_all["_git_command_map"][("git", "rev-parse", "--abbrev-ref", "HEAD")] = (
+        MagicMock(stdout="1.2.x")
+    )
+    mocker.patch("openwisp_utils.releaser.release.branch_exists", return_value=True)
+    run_release()
+    mock_all["bump_to_next_alpha"].assert_not_called()
+
+
+def test_main_feature_flow_skips_alpha_bump_for_unsupported_package(mock_all):
+    mock_config, _ = mock_all["check_prerequisites"].return_value
+    mock_config["package_type"] = "generic"
+    run_release()
+    mock_all["bump_to_next_alpha"].assert_not_called()
+    assert (
+        call("Do you want to bump the version to the next alpha release now?")
+        not in mock_all["questionary_confirm"].call_args_list
+    )

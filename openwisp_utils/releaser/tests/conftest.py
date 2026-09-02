@@ -208,6 +208,9 @@ def mock_all(mocker):
         "bump_version": mocker.patch(
             "openwisp_utils.releaser.release.bump_version", return_value=True
         ),
+        "bump_to_next_alpha": mocker.patch(
+            "openwisp_utils.releaser.release.bump_to_next_alpha"
+        ),
         "update_changelog": mocker.patch(
             "openwisp_utils.releaser.release.update_changelog_file"
         ),
@@ -243,6 +246,7 @@ def mock_all(mocker):
 
     mock_config = {
         "repo": "test/repo",
+        "package_type": "python",
         "changelog_path": "CHANGES.rst",
         "changelog_format": "rst",
         "changelog_uses_version_prefix": True,

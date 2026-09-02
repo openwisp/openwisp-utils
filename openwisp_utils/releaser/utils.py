@@ -14,6 +14,42 @@ class SkipSignal(Exception):
     pass
 
 
+class AbortSignal(Exception):
+    """Signal that the user has chosen to abort an operation."""
+
+    pass
+
+
+def run_git(args, description):
+    """Runs a git command, prompting Retry/Skip/Abort on failure."""
+    while True:
+        try:
+            return subprocess.run(
+                ["git", *args],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"\n❌ ERROR: Failed to {description}.", file=sys.stderr)
+            print("Git output:", file=sys.stderr)
+            indented_stderr = "\n".join(
+                [f"    {line}" for line in (e.stderr or "").strip().split("\n")]
+            )
+            print(indented_stderr, file=sys.stderr)
+            decision = questionary.select(
+                "An error occurred. What would you like to do?",
+                choices=["Retry", "Skip", "Abort"],
+            ).ask()
+            if decision == "Retry":
+                continue
+            elif decision == "Skip":
+                raise SkipSignal(f"User chose to skip: {description}.")
+            else:  # Abort or None
+                raise AbortSignal(f"User aborted while trying to {description}.")
+
+
 def retryable_request(**kwargs):
     """Executes a requests call and provides a retry/skip/abort prompt on failure."""
     while True:
@@ -93,6 +129,23 @@ def branch_exists(branch_name):
         text=True,
     )
     return result.returncode == 0
+
+
+def get_remote_branch_commit(branch_name):
+    """Return the origin branch commit, or None when the branch does not exist."""
+    result = subprocess.run(
+        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch_name],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    if result.returncode == 0:
+        return result.stdout.split()[0]
+    if result.returncode == 2:
+        return None
+    raise subprocess.CalledProcessError(
+        result.returncode, result.args, output=result.stdout, stderr=result.stderr
+    )
 
 
 def rst_to_markdown(text):

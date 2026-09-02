@@ -41,10 +41,18 @@ def _bump_with_regex(content, pattern, replacement, version_path, error_msg):
     return new_content
 
 
-def _bump_python_version(content, new_version, version_path):
+def _reject_prerelease(version_type, version_path):
+    if version_type != "final":
+        raise RuntimeError(
+            f"{version_path} stores a plain X.Y.Z version and cannot express "
+            f"the '{version_type}' pre-release marker."
+        )
+
+
+def _bump_python_version(content, new_version, version_path, version_type):
     """Handles version bumping for Python packages."""
     major, minor, patch = new_version.split(".")
-    new_tuple_string = f'({major}, {minor}, {patch}, "final")'
+    new_tuple_string = f'({major}, {minor}, {patch}, "{version_type}")'
     return _bump_with_regex(
         content,
         r"^VERSION\s*=\s*\(.*\)",
@@ -54,17 +62,19 @@ def _bump_python_version(content, new_version, version_path):
     )
 
 
-def _bump_npm_version(content, new_version, version_path):
+def _bump_npm_version(content, new_version, version_path, version_type):
     """Handles version bumping for NPM packages."""
     try:
         data = json.loads(content)
     except json.JSONDecodeError as e:
         raise ValueError(f"Malformed JSON in {version_path}: {e}") from e
-    data["version"] = new_version
+    data["version"] = (
+        new_version if version_type == "final" else f"{new_version}-{version_type}"
+    )
     return json.dumps(data, indent=2) + "\n"
 
 
-def _bump_docker_version(content, new_version, version_path):
+def _bump_docker_version(content, new_version, version_path, version_type):
     """Handles version bumping for docker-openwisp.
 
     Delegates to docker-openwisp's canonical ``make bump`` target so the
@@ -72,6 +82,7 @@ def _bump_docker_version(content, new_version, version_path):
     Verifies the canonical VERSION file was updated, then returns ``None``
     so the caller skips the write-back (``make bump`` already wrote it).
     """
+    _reject_prerelease(version_type, version_path)
     try:
         subprocess.run(
             ["make", "bump", f"VERSION={new_version}"],
@@ -100,8 +111,9 @@ def _bump_docker_version(content, new_version, version_path):
     return None
 
 
-def _bump_ansible_version(content, new_version, version_path):
+def _bump_ansible_version(content, new_version, version_path, version_type):
     """Handles version bumping for Ansible packages."""
+    _reject_prerelease(version_type, version_path)
     return _bump_with_regex(
         content,
         r'^__openwisp_version__\s*=\s*["\']([^"\']+)["\']',
@@ -111,8 +123,9 @@ def _bump_ansible_version(content, new_version, version_path):
     )
 
 
-def _bump_generic_version(content, new_version, version_path):
+def _bump_generic_version(content, new_version, version_path, version_type):
     """Handles version bumping for packages using a root VERSION file."""
+    _reject_prerelease(version_type, version_path)
     return f"{new_version}\n"
 
 
@@ -125,8 +138,16 @@ VERSION_BUMP_HANDLERS = {
     "generic": _bump_generic_version,
 }
 
+# Package types whose version file can store a pre-release marker (e.g. alpha)
+PRERELEASE_CAPABLE_PACKAGE_TYPES = {"python", "npm"}
 
-def bump_version(config, new_version):
+
+def supports_prerelease(package_type):
+    """Whether the version file of this package type can store a pre-release marker."""
+    return package_type in PRERELEASE_CAPABLE_PACKAGE_TYPES
+
+
+def bump_version(config, new_version, version_type="final"):
     """Updates the VERSION tuple. Returns True on success, False if version_path is not configured."""
     version_path = config.get("version_path")
     package_type = config.get("package_type")
@@ -145,7 +166,7 @@ def bump_version(config, new_version):
     handler = VERSION_BUMP_HANDLERS.get(package_type)
     if not handler:
         raise RuntimeError(f"Unknown package type: {package_type}")
-    new_content = handler(content, new_version, version_path)
+    new_content = handler(content, new_version, version_path, version_type)
     # A handler may return None to signal it already wrote the file itself
     # (e.g. docker-openwisp delegates the write to ``make bump``).
     if new_content is not None:

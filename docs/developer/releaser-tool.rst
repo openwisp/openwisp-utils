@@ -100,3 +100,7 @@ process:
 7. Finally, it creates a draft release on GitHub with the changelog notes.
 8. If releasing a bugfix, it offers to port the changelog to the ``main``
    or ``master`` branch.
+9. If releasing a new feature from a Python or npm project, it offers to
+   bump the version to the next alpha release: it opens a pull request
+   which sets the version to the next minor release with the ``alpha``
+   marker and adds a new ``[unreleased]`` section to the change log.

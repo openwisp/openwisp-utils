@@ -17,18 +17,22 @@ from openwisp_utils.releaser.changelog import (
 from openwisp_utils.releaser.config import load_config
 from openwisp_utils.releaser.github import GitHub
 from openwisp_utils.releaser.utils import (
+    AbortSignal,
     SkipSignal,
     adjust_markdown_headings,
     branch_exists,
     demote_markdown_headings,
     format_file_with_docstrfmt,
     get_current_branch,
+    get_remote_branch_commit,
     rst_to_markdown,
+    run_git,
 )
 from openwisp_utils.releaser.version import (
     bump_version,
     determine_new_version,
     get_current_version,
+    supports_prerelease,
 )
 
 MAIN_BRANCHES = ["master", "main"]
@@ -90,6 +94,20 @@ def check_prerequisites():
     return config, gh
 
 
+def resolve_main_branch(question):
+    """Returns the local main branch, asking the user when both exist."""
+    master_exists = branch_exists("master")
+    main_exists = branch_exists("main")
+    if master_exists and main_exists:
+        return questionary.select(question, choices=MAIN_BRANCHES).ask()
+    if master_exists:
+        return "master"
+    if main_exists:
+        return "main"
+    print("Neither 'master' nor 'main' branches were found locally.")
+    return None
+
+
 def port_changelog_to_main(gh, config, version, changelog_body, original_branch):
     """Checks out the main branch, updates the changelog, and creates a new PR."""
     print("\n" + "=" * 50)
@@ -110,26 +128,11 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
         full_block_to_port = f"{version_header}\n{underline}\n\n{changelog_body}"
 
     try:
-        master_exists = branch_exists("master")
-        main_exists = branch_exists("main")
-        if master_exists and main_exists:
-            main_branch = questionary.select(
-                "Which branch should the changelog be ported to?",
-                choices=MAIN_BRANCHES,
-            ).ask()
-        elif master_exists:
-            main_branch = "master"
-        elif main_exists:
-            main_branch = "main"
-        else:
-            print(
-                "Neither 'master' nor 'main' branches were found locally. "
-                "Skipping changelog porting."
-            )
-            return
-
+        main_branch = resolve_main_branch(
+            "Which branch should the changelog be ported to?"
+        )
         if not main_branch:
-            print("Porting cancelled.")
+            print("Skipping changelog porting.")
             return
 
         port_branch = f"chore/port-changelog-{version}"
@@ -168,7 +171,9 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
 
         print(f"Pushing branch '{port_branch}' to origin...")
         subprocess.run(
-            ["git", "push", "origin", port_branch], check=True, capture_output=True
+            ["git", "push", "-u", "origin", port_branch],
+            check=True,
+            capture_output=True,
         )
 
         print("Creating pull request...")
@@ -188,6 +193,103 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
                 "Press Enter when you have created the PR manually."
             ).ask()
 
+    finally:
+        print(f"\nSwitching back to original branch '{original_branch}'...")
+        subprocess.run(
+            ["git", "checkout", original_branch], check=True, capture_output=True
+        )
+
+
+def bump_to_next_alpha(gh, config, released_version, original_branch):
+    """Bumps the version to the next alpha release and opens a PR for it."""
+    print("\n" + "=" * 50)
+    print("🤖 Starting Version Bump to the Next Alpha Release")
+    print("=" * 50)
+    package_type = config.get("package_type")
+    if not supports_prerelease(package_type):
+        print(
+            f"Skipping alpha version bump: '{package_type}' projects cannot store "
+            "an alpha marker."
+        )
+        return
+    next_version = determine_new_version(released_version, "final", is_bugfix=False)
+    if not next_version:
+        print("No version provided. Version bump cancelled.")
+        return
+
+    base_branch = resolve_main_branch("Which branch should the version be bumped on?")
+    if not base_branch:
+        print("Skipping the version bump.")
+        return
+    bump_branch = f"chore/bump-version-{next_version}"
+    pr_title = f"[chores] Bumped version to {next_version} alpha"
+    force_with_lease = None
+
+    try:
+        print(f"Checking out '{base_branch}' and pulling latest changes...")
+        run_git(["checkout", base_branch], f"checkout '{base_branch}'")
+        run_git(["pull", "origin", base_branch], f"pull '{base_branch}'")
+        while True:
+            remote_commit = get_remote_branch_commit(bump_branch)
+            if not branch_exists(bump_branch) and not remote_commit:
+                break
+            decision = questionary.select(
+                f"Branch '{bump_branch}' already exists. How would you like to proceed?",
+                choices=[
+                    f"Reset it to '{base_branch}'",
+                    "Use a different branch name",
+                    "Abort the version bump",
+                ],
+            ).ask()
+            if decision == f"Reset it to '{base_branch}'":
+                force_with_lease = remote_commit
+                break
+            elif decision == "Use a different branch name":
+                bump_branch = questionary.text("Enter the branch name:").ask()
+                if not bump_branch:
+                    raise AbortSignal("No branch name provided.")
+            else:  # Abort or None
+                raise AbortSignal("User aborted the version bump.")
+        print(f"Creating new branch '{bump_branch}'...")
+        run_git(["checkout", "-B", bump_branch], f"create branch '{bump_branch}'")
+        bump_version(config, next_version, version_type="alpha")
+        print(f"✅ Version bumped to {next_version} and set to 'alpha'.")
+        changelog_path = config["changelog_path"]
+        prefix = "Version " if config.get("changelog_uses_version_prefix", True) else ""
+        version_header = f"{prefix}{next_version} [unreleased]"
+        if config["changelog_format"] == "md":
+            unreleased_block = f"## {version_header}\n\nWork in progress."
+        else:  # rst
+            underline = "-" * len(version_header)
+            unreleased_block = f"{version_header}\n{underline}\n\nWork in progress."
+
+        update_changelog_file(changelog_path, unreleased_block)
+        if config["changelog_format"] == "rst":
+            format_file_with_docstrfmt(changelog_path)
+        print(f"✅ {changelog_path} has been updated.")
+        print("Committing changes...")
+        run_git(["add", "-u"], "stage the version bump")
+        run_git(["commit", "-m", pr_title], "commit the version bump")
+
+        print(f"⤴️  Pushing branch '{bump_branch}' to origin...")
+        push_args = ["push", "-u", "origin", bump_branch]
+        if force_with_lease:
+            push_args.insert(
+                1,
+                f"--force-with-lease=refs/heads/{bump_branch}:{force_with_lease}",
+            )
+        run_git(push_args, f"push branch '{bump_branch}'")
+        print("Creating pull request...")
+        pr_url = gh.create_pr(bump_branch, base_branch, pr_title)
+        print(f"\n✅ Successfully created Pull Request for the version bump: {pr_url}")
+    except (SkipSignal, AbortSignal) as e:
+        print(
+            f"\n⚠️  {e}"
+            "\nPlease complete the version bump manually."
+            f"\n  Branch: {bump_branch}"
+            f"\n  Base: {base_branch}"
+            f"\n  Title: {pr_title}"
+        )
     finally:
         print(f"\nSwitching back to original branch '{original_branch}'...")
         subprocess.run(
@@ -316,7 +418,9 @@ def main():
 
     print(f"⤴️  Pushing new branch '{release_branch}' to GitHub...")
     subprocess.run(
-        ["git", "push", "origin", release_branch], check=True, capture_output=True
+        ["git", "push", "-u", "origin", release_branch],
+        check=True,
+        capture_output=True,
     )
 
     try:
@@ -393,3 +497,17 @@ def main():
             )
         else:
             print("Skipping changelog port. Please remember to do it manually.")
+    elif (
+        supports_prerelease(config.get("package_type"))
+        and questionary.confirm(
+            "Do you want to bump the version to the next alpha release now?"
+        ).ask()
+    ):
+        bump_to_next_alpha(gh, config, new_version, original_branch)
+    elif supports_prerelease(config.get("package_type")):
+        print("Skipping the version bump. Please remember to do it manually.")
+    else:
+        print(
+            f"Skipping alpha version bump: '{config.get('package_type')}' projects "
+            "cannot store an alpha marker."
+        )
