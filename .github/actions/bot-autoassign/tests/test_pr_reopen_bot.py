@@ -157,9 +157,7 @@ class TestPRReopenBot:
         )
         mock_pr = Mock()
         bot_env["repo"].get_pull.return_value = mock_pr
-
         assert bot.handle_pr_reopen()
-
         bot.validate_pr_issues.assert_called_once_with(mock_pr)
         bot_env["repo"].get_issue.assert_not_called()
         mock_pr.remove_from_labels.assert_not_called()
@@ -260,9 +258,7 @@ class TestPRActivityBot:
         mock_pr.user.login = "testuser"
         mock_pr.get_labels.return_value = []
         bot_env["repo"].get_pull.return_value = mock_pr
-
         assert bot.handle_contributor_activity()
-
         bot.validate_pr_issues.assert_called_once_with(mock_pr)
         mock_pr.remove_from_labels.assert_not_called()
         bot_env["repo"].get_issue.assert_not_called()

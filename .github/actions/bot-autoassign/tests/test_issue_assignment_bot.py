@@ -154,9 +154,7 @@ class TestRespondToAssignment:
         mock_issue.title = "Test issue"
         mock_issue.body = "Test body"
         bot_env["repo"].get_issue.return_value = mock_issue
-
         assert bot.respond_to_assignment_request(123, "testuser")
-
         comment_text = mock_issue.create_comment.call_args[0][0]
         assert "not been validated" in comment_text
         assert "OpenWISP Contributor's Board" in comment_text
@@ -170,9 +168,7 @@ class TestRespondToAssignment:
         mock_issue.title = "Test issue"
         mock_issue.body = "Test body"
         bot_env["repo"].get_issue.return_value = mock_issue
-
         assert not bot.respond_to_assignment_request(123, "testuser")
-
         mock_issue.create_comment.assert_not_called()
 
     def test_success_bug_detected(self, bot_env):
@@ -780,9 +776,7 @@ class TestHandleBotAssignRequest:
         bot_env["repo"].get_issue.return_value = mock_issue
         mock_pr = _make_search_result(200, "Fixes #123")
         bot_env["github"].search_issues.return_value = [mock_pr]
-
         assert bot.handle_bot_assign_request(123, "contributor")
-
         bot.validate_issue.assert_called_once_with("openwisp", "openwisp-utils", 123)
         mock_issue.add_to_assignees.assert_not_called()
         mock_issue.create_comment.assert_not_called()
