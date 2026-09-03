@@ -97,10 +97,32 @@ def branch_exists(branch_name):
 
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
+    links = []
+
+    def protect_dependency_link(match):
+        """Replace a matched ReST dependency link with a marker.
+
+        Stores its GitHub Flavoured Markdown equivalent for restoration
+        after Pandoc conversion.
+        """
+        link = f"[{''.join(match['version'].split())}]({match['url']})"
+        marker = f"OPENWISPRELEASERLINK{len(links)}"
+        links.append((marker, link))
+        return marker
+
+    text = re.sub(
+        r"`(?P<version>[><=~!].*?)\s+<(?P<url>https?://[^>\s]+)>`_{1,2}",
+        protect_dependency_link,
+        text,
+        flags=re.DOTALL,
+    )
     escaped_text = re.sub(r"(?<!`)_", r"\\_", text)
-    return pypandoc.convert_text(
+    markdown = pypandoc.convert_text(
         escaped_text, "gfm", format="rst", extra_args=["--wrap=none"]
     ).strip()
+    for marker, link in links:
+        markdown = markdown.replace(marker, link)
+    return markdown
 
 
 def _call_docstrfmt(file_path):

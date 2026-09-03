@@ -52,6 +52,17 @@ def test_rst_to_markdown_conversion():
         mock_convert.assert_called_once()
 
 
+def test_rst_to_markdown_converts_dependency_version_links():
+    rst = """- Bumped ``django-organizations`` to `>=2.7.0,<2.8.0
+  <https://github.com/bennylope/django-organizations/blob/master/HISTORY.rst>`_.
+"""
+    expected = (
+        "- Bumped `django-organizations` to [>=2.7.0,<2.8.0]"
+        "(https://github.com/bennylope/django-organizations/blob/master/HISTORY.rst)."
+    )
+    assert rst_to_markdown(rst) == expected
+
+
 def test_adjust_markdown_headings():
     """Test that markdown headings are correctly adjusted for the CHANGES.md file."""
     raw_md = """
