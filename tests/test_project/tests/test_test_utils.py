@@ -1,5 +1,7 @@
 import io
+import re
 import sys
+from contextlib import nullcontext
 from unittest.mock import patch
 
 from django.dispatch import Signal
@@ -212,3 +214,15 @@ class TestAssertNumQueriesSubTest(AssertNumQueriesSubTestMixin, TestCase):
             with self.assertNumQueries(1):
                 Shelf.objects.count()
             patched_subtest.assert_called_once()
+
+    def test_assert_num_queries_failure_includes_call_site(self):
+        with patch.object(
+            self, "subTest", return_value=nullcontext()
+        ) as patched_subtest:
+            with self.assertRaises(AssertionError):
+                with self.assertNumQueries(1):
+                    pass
+        self.assertRegex(
+            patched_subtest.call_args.args[0],
+            rf"^Expecting 1 SQL queries at {re.escape(__file__)}:\d+$",
+        )

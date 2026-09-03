@@ -1,7 +1,7 @@
 import io
 import sys
 from contextlib import contextmanager
-from inspect import signature
+from inspect import currentframe, signature
 from time import time
 from unittest import TextTestResult, mock
 
@@ -143,9 +143,10 @@ class capture_any_output(CaptureOutput):
 class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
     """Needed to execute assertNumQueries in a subTest."""
 
-    def __init__(self, test_case, num, connection):
+    def __init__(self, test_case, num, connection, location):
         self.test_case = test_case
         self.num = num
+        self.location = location
         super().__init__(connection)
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -153,7 +154,9 @@ class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
         if exc_type is not None:
             return
         executed = len(self)
-        with self.test_case.subTest(f"Expecting {self.num} SQL queries"):
+        with self.test_case.subTest(
+            f"Expecting {self.num} SQL queries at {self.location}"
+        ):
             self.test_case.assertEqual(
                 executed,
                 self.num,
@@ -172,8 +175,9 @@ class _AssertNumQueriesContextSubTest(CaptureQueriesContext):
 class AssertNumQueriesSubTestMixin:
     def assertNumQueries(self, num, func=None, *args, using=DEFAULT_DB_ALIAS, **kwargs):
         conn = connections[using]
-
-        context = _AssertNumQueriesContextSubTest(self, num, conn)
+        caller = currentframe().f_back
+        location = f"{caller.f_code.co_filename}:{caller.f_lineno}"
+        context = _AssertNumQueriesContextSubTest(self, num, conn, location)
         if func is None:
             return context
 
