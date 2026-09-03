@@ -305,8 +305,11 @@ def main():
         ["git", "checkout", "-b", release_branch], check=True, capture_output=True
     )
 
-    print("Adding tracked changes to git...")
-    subprocess.run(["git", "add", "-u"], check=True, capture_output=True)
+    paths_to_add = [changelog_path]
+    if version_path := config.get("version_path"):
+        paths_to_add.append(version_path)
+    print("Adding release changes to git...")
+    subprocess.run(["git", "add", *paths_to_add], check=True, capture_output=True)
 
     commit_message = f"[release] Version {new_version}"
     subprocess.run(
