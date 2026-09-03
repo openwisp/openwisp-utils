@@ -12,6 +12,7 @@ def test_feature_release_flow_markdown(mock_all, mocker):
     mock_config, mock_gh = mock_all["check_prerequisites"].return_value
     mock_config["changelog_path"] = "CHANGES.md"
     mock_config["changelog_format"] = "md"
+    mock_config["version_path"] = "package/__init__.py"
 
     mock_all["get_release_block_from_file"].return_value = None
 
@@ -24,6 +25,10 @@ def test_feature_release_flow_markdown(mock_all, mocker):
 
     mock_all["update_changelog"].assert_called_once()
     mock_all["format_file"].assert_not_called()
+
+    assert ["git", "add", "CHANGES.md", "package/__init__.py"] in [
+        call.args[0] for call in mock_all["subprocess"].call_args_list
+    ]
 
     release_call_args = mock_gh.create_release.call_args.args
     assert "## Markdown Changelog" in release_call_args[2]

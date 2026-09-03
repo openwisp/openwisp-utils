@@ -92,8 +92,10 @@ process:
 
 1. Updates the version number in your project's ``__init__.py``.
 2. Writes the new release notes to your ``CHANGES.rst`` or ``CHANGES.md``
-   file.
-3. Creates a ``release/<version>`` branch and commits the changes.
+       file.
+3. Creates a ``release/<version>`` branch and commits only the updated
+   changelog and detected version file, leaving unrelated worktree changes
+   unstaged.
 4. Pushes the new branch to GitHub.
 5. Creates a pull request and waits for you to merge it.
 6. Once merged, it creates and pushes a signed git tag.
