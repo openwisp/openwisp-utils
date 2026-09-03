@@ -53,13 +53,16 @@ def test_rst_to_markdown_conversion():
 
 
 def test_rst_to_markdown_converts_dependency_version_links():
-    rst = """- Bumped ``django-organizations`` to `>=2.7.0,<2.8.0
-  <https://github.com/bennylope/django-organizations/blob/master/HISTORY.rst>`_.
+    rst = """- Bumped ``openwisp-users`` from ``~=1.2.0`` to `~=1.3.0
+  <https://github.com/openwisp/openwisp-users/blob/1.3.0/CHANGES.rst>`_.
+- Bumped ``openwisp-utils[rest]`` from ``~=1.2.0`` to `~=1.3.0
+  <https://github.com/openwisp/openwisp-utils/blob/1.3.0/CHANGES.rst>`__.
+- Bumped ``django-reversion`` from ``~=6.0.0`` to `~=6.3.0
+  <https://github.com/etianen/django-reversion/blob/v6.3.0/CHANGELOG.rst>`_.
 """
-    expected = (
-        "- Bumped `django-organizations` to [>=2.7.0,<2.8.0]"
-        "(https://github.com/bennylope/django-organizations/blob/master/HISTORY.rst)."
-    )
+    expected = """- Bumped `openwisp-users` from `~=1.2.0` to [~=1.3.0](https://github.com/openwisp/openwisp-users/blob/1.3.0/CHANGES.rst).
+- Bumped `openwisp-utils[rest]` from `~=1.2.0` to [~=1.3.0](https://github.com/openwisp/openwisp-utils/blob/1.3.0/CHANGES.rst).
+- Bumped `django-reversion` from `~=6.0.0` to [~=6.3.0](https://github.com/etianen/django-reversion/blob/v6.3.0/CHANGELOG.rst)."""
     assert rst_to_markdown(rst) == expected
 
 

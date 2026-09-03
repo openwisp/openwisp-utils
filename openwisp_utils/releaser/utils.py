@@ -111,7 +111,7 @@ def rst_to_markdown(text):
         return marker
 
     text = re.sub(
-        r"`(?P<version>[><=~!].*?)\s+<(?P<url>https?://[^>\s]+)>`_{1,2}",
+        r"`(?P<version>[><=~!][^`\s]*)\s+<(?P<url>https?://[^>\s]+)>`_{1,2}",
         protect_dependency_link,
         text,
         flags=re.DOTALL,
