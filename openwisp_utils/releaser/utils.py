@@ -54,11 +54,13 @@ def run_git(args, description, allowed_returncodes=()):
                 raise AbortSignal(f"User aborted while trying to {description}.")
 
 
-def retryable_request(**kwargs):
+def retryable_request(allowed_status_codes=(), **kwargs):
     """Executes a requests call and provides a retry/skip/abort prompt on failure."""
     while True:
         try:
             response = requests.request(**kwargs)
+            if response.status_code in allowed_status_codes:
+                return response
             response.raise_for_status()
             return response
         except requests.RequestException as e:

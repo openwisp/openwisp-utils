@@ -38,6 +38,142 @@ from openwisp_utils.releaser.version import (
 MAIN_BRANCHES = ["master", "main"]
 
 
+def wait_for_pr_merge(gh, pr_url):
+    """Waits for a release pull request and returns its merged metadata."""
+    print("⏳ Waiting for PR to be merged... (checking every 20s)")
+    while True:
+        pull_request = gh.get_pr(pr_url)
+        if pull_request.get("merged"):
+            print("✅ PR merged!")
+            return pull_request
+        if pull_request.get("state") == "closed":
+            raise RuntimeError(
+                "The release pull request was closed without being merged. "
+                "Reopen or replace it before resuming the release."
+            )
+        time.sleep(20)
+
+
+def get_release_version(pull_request):
+    """Returns the version encoded in a release pull request branch."""
+    branch = pull_request.get("head", {}).get("ref", "")
+    if not branch.startswith("release/") or not branch.removeprefix("release/"):
+        raise RuntimeError(
+            "The pull request must originate from a release/<version> branch."
+        )
+    return branch.removeprefix("release/")
+
+
+def tag_exists_on_branch(tag_name, branch):
+    """Checks whether a tag resolves to a commit contained by a branch."""
+    tag = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"{tag_name}^{{commit}}"],
+        capture_output=True,
+        text=True,
+    )
+    if tag.returncode:
+        return False
+    return (
+        subprocess.run(
+            ["git", "merge-base", "--is-ancestor", f"{tag_name}^{{commit}}", branch],
+            capture_output=True,
+            text=True,
+        ).returncode
+        == 0
+    )
+
+
+def complete_release_artifacts(
+    gh,
+    config,
+    version,
+    base_branch,
+    latest_changelog_block,
+    tag_date_str,
+    changelog_date_str,
+):
+    """Creates only the release artifacts that do not already exist."""
+    run_git(["checkout", base_branch], f"checkout '{base_branch}'")
+    run_git(["pull", "origin", base_branch], f"pull '{base_branch}'")
+    run_git(["fetch", "origin", "--tags"], "fetch remote tags")
+
+    tag_name = version
+    if tag_exists_on_branch(tag_name, base_branch):
+        print(f"🏷️  Git tag '{tag_name}' already exists on '{base_branch}'.")
+    else:
+        local_tag = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", f"{tag_name}^{{commit}}"],
+            capture_output=True,
+            text=True,
+        )
+        if local_tag.returncode == 0:
+            raise RuntimeError(
+                f"Git tag '{tag_name}' exists but is not contained by '{base_branch}'."
+            )
+        tag_message = f"Version {version} [{tag_date_str}]"
+        run_git(["tag", "-s", tag_name, "-m", tag_message], f"create tag '{tag_name}'")
+        run_git(["push", "origin", tag_name], f"push tag '{tag_name}'")
+        print(f"🏷️  Git tag '{tag_name}' created and pushed.")
+
+    release_title = f"{version} [{changelog_date_str}]"
+    if config["changelog_format"] == "md":
+        release_body_md = "\n".join(latest_changelog_block.splitlines()[1:]).strip()
+        release_body_md = demote_markdown_headings(release_body_md)
+    else:
+        release_body_rst = "\n".join(latest_changelog_block.splitlines()[2:]).strip()
+        release_body_md = rst_to_markdown(release_body_rst)
+
+    existing_release = gh.get_release(tag_name)
+    if existing_release:
+        print(f"📦 GitHub release already exists: {existing_release['html_url']}")
+    else:
+        try:
+            release_url = gh.create_release(tag_name, release_title, release_body_md)
+            print(f"📦 Draft release created on GitHub: {release_url}")
+        except SkipSignal:
+            print(
+                "\nOperation skipped. Please create the GitHub release manually."
+                f"\n  Tag: {tag_name}"
+                f"\n  Title: {release_title}"
+                "\n  Body: (You can find the content in the latest commit)."
+            )
+            questionary.confirm(
+                "Press Enter when you have created the release manually."
+            ).ask()
+
+
+def resume(pr_url):
+    """Completes a release after its already-created pull request is merged."""
+    config, gh = check_prerequisites()
+    pull_request = wait_for_pr_merge(gh, pr_url)
+    version = get_release_version(pull_request)
+    base_branch = pull_request["base"]["ref"]
+
+    run_git(["checkout", base_branch], f"checkout '{base_branch}'")
+    run_git(["pull", "origin", base_branch], f"pull '{base_branch}'")
+    latest_changelog_block = get_release_block_from_file(config, version)
+    if not latest_changelog_block:
+        raise RuntimeError(
+            f"Could not find the changelog entry for version {version} on '{base_branch}'."
+        )
+
+    changelog_date = datetime.now().strftime("%Y-%m-%d")
+    header = latest_changelog_block.splitlines()[0]
+    date_match = re.search(r"\[(\d{4}-\d{2}-\d{2})\]", header)
+    if date_match:
+        changelog_date = date_match.group(1)
+    complete_release_artifacts(
+        gh,
+        config,
+        version,
+        base_branch,
+        latest_changelog_block,
+        datetime.now().strftime("%d-%m-%Y"),
+        changelog_date,
+    )
+    _complete_follow_up(gh, config, version, latest_changelog_block, base_branch)
+
+
 def check_prerequisites():
     """Checks for all required prerequisite."""
     print("🔎 Checking prerequisites...")
@@ -131,6 +267,7 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
         main_branch = resolve_main_branch(
             "Which branch should the changelog be ported to?"
         )
+
         if not main_branch:
             print("Skipping changelog porting.")
             return
@@ -138,6 +275,12 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
         port_branch = f"chore/port-changelog-{version}"
         commit_message = f"[docs] Port changelog for {version}"
         pr_title = f"[docs] Port changelog for release {version}"
+        existing_pr = gh.find_pr(port_branch, main_branch, pr_title)
+        if isinstance(existing_pr, dict):
+            print(
+                f"Changelog port pull request already exists: {existing_pr['html_url']}"
+            )
+            return
 
         print(f"Checking out '{main_branch}' and pulling latest changes...")
         subprocess.run(
@@ -227,6 +370,11 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
     bump_branch_created = False
     changes_committed = False
 
+    existing_pr = gh.find_pr(bump_branch, base_branch, pr_title)
+    if isinstance(existing_pr, dict):
+        print(f"Version bump pull request already exists: {existing_pr['html_url']}")
+        return
+
     try:
         print(f"Checking out '{base_branch}' and pulling latest changes...")
         run_git(["checkout", base_branch], f"checkout '{base_branch}'")
@@ -307,7 +455,43 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
             )
 
 
-def main():
+def _complete_follow_up(gh, config, version, latest_changelog_block, base_branch):
+    """Offers the existing post-release follow-up appropriate for the base branch."""
+    is_bugfix = base_branch not in MAIN_BRANCHES
+    if is_bugfix:
+        print("\n🐛 Bugfix release complete.")
+        if questionary.confirm(
+            "Do you want to create a PR to port the changelog to the main branch now?"
+        ).ask():
+            lines_to_skip = 2 if config["changelog_format"] != "md" else 1
+            changelog_body_for_porting = "\n".join(
+                latest_changelog_block.splitlines()[lines_to_skip:]
+            ).strip()
+            port_changelog_to_main(
+                gh, config, version, changelog_body_for_porting, base_branch
+            )
+        else:
+            print("Skipping changelog port. Please remember to do it manually.")
+    elif (
+        supports_prerelease(config.get("package_type"))
+        and questionary.confirm(
+            "Do you want to bump the version to the next alpha release now?"
+        ).ask()
+    ):
+        bump_to_next_alpha(gh, config, version, base_branch)
+    elif supports_prerelease(config.get("package_type")):
+        print("Skipping the version bump. Please remember to do it manually.")
+    else:
+        print(
+            f"Skipping alpha version bump: '{config.get('package_type')}' projects "
+            "cannot store an alpha marker."
+        )
+
+
+def main(resume_pr_url=None):
+    if resume_pr_url:
+        resume(resume_pr_url)
+        return
     config, gh = check_prerequisites()
     original_branch = get_current_branch()
     is_bugfix = original_branch not in MAIN_BRANCHES
@@ -454,73 +638,18 @@ def main():
         )
         questionary.confirm("Press Enter when you have merged the PR manually.").ask()
 
-    subprocess.run(
-        ["git", "checkout", original_branch], check=True, capture_output=True
+    complete_release_artifacts(
+        gh,
+        config,
+        new_version,
+        original_branch,
+        latest_changelog_block,
+        tag_date_str,
+        changelog_date_str,
     )
-    subprocess.run(
-        ["git", "pull", "origin", original_branch], check=True, capture_output=True
-    )
-
-    tag_name = new_version
-    tag_message = f"Version {new_version} [{tag_date_str}]"
-    subprocess.run(["git", "tag", "-s", tag_name, "-m", tag_message], check=True)
-    subprocess.run(["git", "push", "origin", tag_name], check=True)
-    print(f"🏷️  Git tag '{tag_name}' created and pushed.")
-
-    release_title = f"{new_version} [{changelog_date_str}]"
-
-    if config["changelog_format"] == "md":
-        release_body_md = "\n".join(latest_changelog_block.splitlines()[1:]).strip()
-        release_body_md = demote_markdown_headings(release_body_md)
-    else:
-        release_body_rst = "\n".join(latest_changelog_block.splitlines()[2:]).strip()
-        release_body_md = rst_to_markdown(release_body_rst)
-
-    try:
-        release_url = gh.create_release(tag_name, release_title, release_body_md)
-        print(f"📦 Draft release created on GitHub: {release_url}")
-    except SkipSignal:
-        print(
-            "\nOperation skipped. Please create the GitHub release manually."
-            f"\n  Tag: {tag_name}"
-            f"\n  Title: {release_title}"
-            "\n  Body: (You can find the content in the latest commit)."
-        )
-        questionary.confirm(
-            "Press Enter when you have created the release manually."
-        ).ask()
 
     print("\n🎉 Release process completed successfully!")
 
-    if is_bugfix:
-        print("\n🐛 Bugfix release complete.")
-        if questionary.confirm(
-            "Do you want to create a PR to port the changelog to the main branch now?"
-        ).ask():
-            lines_to_skip = 2 if config["changelog_format"] != "md" else 1
-            changelog_body_for_porting = "\n".join(
-                latest_changelog_block.splitlines()[lines_to_skip:]
-            ).strip()
-            port_changelog_to_main(
-                gh,
-                config,
-                new_version,
-                changelog_body_for_porting,
-                original_branch,
-            )
-        else:
-            print("Skipping changelog port. Please remember to do it manually.")
-    elif (
-        supports_prerelease(config.get("package_type"))
-        and questionary.confirm(
-            "Do you want to bump the version to the next alpha release now?"
-        ).ask()
-    ):
-        bump_to_next_alpha(gh, config, new_version, original_branch)
-    elif supports_prerelease(config.get("package_type")):
-        print("Skipping the version bump. Please remember to do it manually.")
-    else:
-        print(
-            f"Skipping alpha version bump: '{config.get('package_type')}' projects "
-            "cannot store an alpha marker."
-        )
+    _complete_follow_up(
+        gh, config, new_version, latest_changelog_block, original_branch
+    )

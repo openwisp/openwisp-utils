@@ -197,6 +197,7 @@ def mock_all(mocker):
             "openwisp_utils.releaser.release.subprocess.run",
             side_effect=subprocess_side_effect,
         ),
+        "run_git": mocker.patch("openwisp_utils.releaser.release.run_git"),
         "GitHub": mocker.patch("openwisp_utils.releaser.release.GitHub"),
         "time": mocker.patch("openwisp_utils.releaser.release.time.sleep"),
         "print": mocker.patch("builtins.print"),
@@ -243,6 +244,7 @@ def mock_all(mocker):
     mock_gh_instance = mocks["GitHub"].return_value
     mock_gh_instance.create_pr.side_effect = ["http://pr.url/1", "http://pr.url/2"]
     mock_gh_instance.is_pr_merged.return_value = True
+    mock_gh_instance.get_release.return_value = None
 
     mock_config = {
         "repo": "test/repo",

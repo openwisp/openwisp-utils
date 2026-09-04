@@ -1,4 +1,5 @@
 import uuid
+from urllib.parse import urlparse
 
 import requests
 from openwisp_utils.utils import retryable_request as utils_retryable_request
@@ -38,10 +39,59 @@ class GitHub:
 
     def is_pr_merged(self, pr_url):
         """Checks if a pull request has been merged."""
-        pr_number = pr_url.split("/")[-1]
+        pr_number = pr_url.rstrip("/").split("/")[-1]
         url = f"{self.base_url}/pulls/{pr_number}"
         response = retryable_request(method="get", url=url, headers=self.headers)
         return response.json().get("merged", False)
+
+    def get_pr(self, pr_url):
+        """Returns metadata for a pull request in the configured repository."""
+        parsed_url = urlparse(pr_url)
+        path = parsed_url.path.strip("/").split("/")
+        if (
+            parsed_url.scheme not in {"http", "https"}
+            or parsed_url.netloc != "github.com"
+            or len(path) != 4
+            or "/".join(path[:2]) != self.repo
+            or path[2] != "pull"
+            or not path[3].isdigit()
+        ):
+            raise ValueError(
+                "The pull request URL must belong to the configured GitHub repository."
+            )
+        pr_number = path[3]
+        url = f"{self.base_url}/pulls/{pr_number}"
+        response = retryable_request(method="get", url=url, headers=self.headers)
+        return response.json()
+
+    def get_release(self, tag_name):
+        """Returns the release for a tag, or None when it has not been created."""
+        response = retryable_request(
+            method="get",
+            url=f"{self.base_url}/releases/tags/{tag_name}",
+            headers=self.headers,
+            allowed_status_codes=(404,),
+        )
+        if response.status_code == 404:
+            return None
+        return response.json()
+
+    def find_pr(self, head, base, title):
+        """Returns an existing matching pull request, regardless of its state."""
+        response = retryable_request(
+            method="get",
+            url=f"{self.base_url}/pulls",
+            headers=self.headers,
+            params={"state": "all", "base": base, "per_page": 100},
+        )
+        for pull_request in response.json():
+            if (
+                pull_request.get("title") == title
+                and pull_request.get("head", {}).get("ref") == head
+                and pull_request.get("base", {}).get("ref") == base
+            ):
+                return pull_request
+        return None
 
     def create_release(self, tag_name, title, body):
         """Creates a draft release on GitHub."""
@@ -54,8 +104,17 @@ class GitHub:
             "prerelease": False,
         }
         response = retryable_request(
-            method="post", url=url, headers=self.headers, json=payload
+            method="post",
+            url=url,
+            headers=self.headers,
+            json=payload,
+            allowed_status_codes=(422,),
         )
+        if response.status_code == 422:
+            existing_release = self.get_release(tag_name)
+            if existing_release:
+                return existing_release["html_url"]
+            response.raise_for_status()
         return response.json()["html_url"]
 
     def check_pr_creation_permission(self) -> tuple[bool, str]:

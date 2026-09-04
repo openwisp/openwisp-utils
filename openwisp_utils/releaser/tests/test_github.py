@@ -57,6 +57,27 @@ def test_is_pr_merged(mock_retryable_request, github_client):
 
 
 @patch("openwisp_utils.releaser.github.retryable_request")
+def test_get_pr_validates_repository(mock_retryable_request, github_client):
+    mock_retryable_request.return_value = mock_response(200, {"merged": True})
+
+    pull_request = github_client.get_pr("https://github.com/owner/repo/pull/123")
+
+    assert pull_request["merged"] is True
+    with pytest.raises(ValueError, match="configured GitHub repository"):
+        github_client.get_pr("https://github.com/other/repo/pull/123")
+
+
+@patch("openwisp_utils.releaser.github.retryable_request")
+def test_get_release_returns_none_for_missing_tag(
+    mock_retryable_request, github_client
+):
+    mock_retryable_request.return_value = mock_response(404)
+
+    assert github_client.get_release("1.0.0") is None
+    assert mock_retryable_request.call_args.kwargs["allowed_status_codes"] == (404,)
+
+
+@patch("openwisp_utils.releaser.github.retryable_request")
 def test_create_release(mock_retryable_request, github_client):
     mock_retryable_request.return_value = mock_response(
         200, {"html_url": "http://example.com"}
@@ -66,6 +87,23 @@ def test_create_release(mock_retryable_request, github_client):
     call_args = mock_retryable_request.call_args[1]
     assert call_args["url"].endswith("/releases")
     assert call_args["json"]["tag_name"] == "v1.0.0"
+
+
+@patch("openwisp_utils.releaser.github.retryable_request")
+def test_create_release_reuses_release_after_duplicate_response(
+    mock_retryable_request, github_client, mocker
+):
+    mock_retryable_request.return_value = mock_response(422)
+    mocker.patch.object(
+        github_client,
+        "get_release",
+        return_value={"html_url": "http://example.com/releases/1"},
+    )
+
+    release_url = github_client.create_release("1.0.0", "Version 1.0.0", "Notes")
+
+    assert release_url == "http://example.com/releases/1"
+    assert mock_retryable_request.call_args.kwargs["allowed_status_codes"] == (422,)
 
 
 @patch("openwisp_utils.releaser.github.utils_retryable_request")

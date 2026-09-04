@@ -59,6 +59,20 @@ the following command:
 
     python -m openwisp_utils.releaser
 
+If the process stops after it creates the release pull request, resume it
+without repeating the version bump or changelog preparation:
+
+.. code-block:: shell
+
+    python -m openwisp_utils.releaser resume https://github.com/owner/repository/pull/123
+
+The resume command watches that release pull request until it is merged
+and then creates any missing downstream artifacts. It reuses an existing
+version tag on the merged base branch, an existing GitHub release for that
+tag, and matching follow-up pull requests instead of creating duplicates.
+A pull request that was closed without merging must be reopened or
+replaced before the release can be resumed.
+
 The Interactive Workflow
 ------------------------
 
