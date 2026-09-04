@@ -14,11 +14,53 @@ class SkipSignal(Exception):
     pass
 
 
-def retryable_request(**kwargs):
+class AbortSignal(Exception):
+    """Signal that the user has chosen to abort an operation."""
+
+    pass
+
+
+def run_git(args, description, allowed_returncodes=()):
+    """Runs a git command, prompting Retry/Skip/Abort on failure."""
+    while True:
+        try:
+            return subprocess.run(
+                ["git", *args],
+                check=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+            )
+        except subprocess.CalledProcessError as e:
+            if e.returncode in allowed_returncodes:
+                return subprocess.CompletedProcess(
+                    e.cmd, e.returncode, e.output, e.stderr
+                )
+            print(f"\n❌ ERROR: Failed to {description}.", file=sys.stderr)
+            print("Git output:", file=sys.stderr)
+            indented_stderr = "\n".join(
+                [f"    {line}" for line in (e.stderr or "").strip().split("\n")]
+            )
+            print(indented_stderr, file=sys.stderr)
+            decision = questionary.select(
+                "An error occurred. What would you like to do?",
+                choices=["Retry", "Skip", "Abort"],
+            ).ask()
+            if decision == "Retry":
+                continue
+            elif decision == "Skip":
+                raise SkipSignal(f"User chose to skip: {description}.")
+            else:  # Abort or None
+                raise AbortSignal(f"User aborted while trying to {description}.")
+
+
+def retryable_request(allowed_status_codes=(), **kwargs):
     """Executes a requests call and provides a retry/skip/abort prompt on failure."""
     while True:
         try:
             response = requests.request(**kwargs)
+            if response.status_code in allowed_status_codes:
+                return response
             response.raise_for_status()
             return response
         except requests.RequestException as e:
@@ -95,12 +137,47 @@ def branch_exists(branch_name):
     return result.returncode == 0
 
 
+def get_remote_branch_commit(branch_name):
+    """Return the origin branch commit, or None when the branch does not exist."""
+    result = run_git(
+        ["ls-remote", "--exit-code", "--heads", "origin", branch_name],
+        f"look up remote branch '{branch_name}'",
+        allowed_returncodes=(2,),
+    )
+    if result.returncode == 0:
+        return result.stdout.split()[0]
+    if result.returncode == 2:
+        return None
+
+
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
+    links = []
+
+    def protect_dependency_link(match):
+        """Replace a matched ReST dependency link with a marker.
+
+        Stores its GitHub Flavoured Markdown equivalent for restoration
+        after Pandoc conversion.
+        """
+        link = f"[{''.join(match['version'].split())}]({match['url']})"
+        marker = f"OPENWISPRELEASERLINK{len(links)}"
+        links.append((marker, link))
+        return marker
+
+    text = re.sub(
+        r"`(?P<version>[><=~!][^`\s]*)\s+<(?P<url>https?://[^>\s]+)>`_{1,2}",
+        protect_dependency_link,
+        text,
+        flags=re.DOTALL,
+    )
     escaped_text = re.sub(r"(?<!`)_", r"\\_", text)
-    return pypandoc.convert_text(
+    markdown = pypandoc.convert_text(
         escaped_text, "gfm", format="rst", extra_args=["--wrap=none"]
     ).strip()
+    for marker, link in links:
+        markdown = markdown.replace(marker, link)
+    return markdown
 
 
 def _call_docstrfmt(file_path):

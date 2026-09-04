@@ -6,6 +6,7 @@ from openwisp_utils.releaser.version import (
     bump_version,
     determine_new_version,
     get_current_version,
+    supports_prerelease,
 )
 
 SAMPLE_INIT_FILE = """
@@ -65,6 +66,10 @@ def test_bump_version_success(mock_config):
     written_content = m_open().write.call_args[0][0]
     expected_content = 'VERSION = (1, 2, 0, "final")'
     assert expected_content in written_content
+
+    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+        bump_version(mock_config, "1.3.0", version_type="alpha")
+    assert 'VERSION = (1, 3, 0, "alpha")' in m_open().write.call_args[0][0]
 
 
 def test_bump_version_version_py():
@@ -129,6 +134,21 @@ def test_bump_version_invalid_format():
 
     with pytest.raises(SystemExit):
         bump_version(mock_config, "1.2")
+
+
+@pytest.mark.parametrize(
+    ("package_type", "content"),
+    [
+        ("python", SAMPLE_INIT_FILE),
+        ("npm", '{"version": "1.2.3"}'),
+    ],
+)
+def test_bump_version_rejects_prerelease_version(package_type, content):
+    config = {"package_type": package_type, "version_path": "version-file"}
+    with patch("builtins.open", mock_open(read_data=content)) as mocked_open:
+        with pytest.raises(SystemExit):
+            bump_version(config, "1.3.0-alpha", version_type="alpha")
+    mocked_open.assert_not_called()
 
 
 @patch("openwisp_utils.releaser.version.questionary")
@@ -230,6 +250,28 @@ def test_bump_version_npm():
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert '"version": "1.2.4"' in written_content
+
+    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+        bump_version(config, "1.3.0", version_type="alpha")
+    assert '"version": "1.3.0-alpha"' in m_open().write.call_args[0][0]
+
+
+def test_bump_version_prerelease_support():
+    """Only version files that can store a marker accept a pre-release type."""
+    assert supports_prerelease("python") is True
+    assert supports_prerelease("npm") is True
+    plain_version_packages = {
+        "generic": "VERSION",
+        "ansible": "templates/openwisp2/version.py",
+        "docker": "images/common/openwisp/VERSION",
+    }
+    for package_type, version_path in plain_version_packages.items():
+        assert supports_prerelease(package_type) is False
+        config = {"package_type": package_type, "version_path": version_path}
+        m_open = mock_open(read_data="1.2.3\n")
+        with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+            with pytest.raises(RuntimeError, match="cannot express"):
+                bump_version(config, "1.3.0", version_type="alpha")
 
 
 # Docker (docker-openwisp) Package Version Tests

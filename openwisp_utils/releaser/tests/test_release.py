@@ -1,9 +1,13 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
-from openwisp_utils.releaser.release import check_prerequisites
+from openwisp_utils.releaser.release import (
+    bump_to_next_alpha,
+    check_prerequisites,
+    complete_release_artifacts,
+)
 from openwisp_utils.releaser.release import main as run_release
-from openwisp_utils.releaser.release import port_changelog_to_main
+from openwisp_utils.releaser.release import port_changelog_to_main, resume
 from openwisp_utils.releaser.utils import SkipSignal
 
 
@@ -35,6 +39,58 @@ def test_release_flow_manual_bump(mock_all):
     run_release()
     all_print_calls = "".join(str(c) for c in mock_all["print"].call_args_list)
     assert "The version number could not be bumped automatically" in all_print_calls
+    mock_all["questionary_confirm"].assert_any_call(
+        "Press Enter when you have bumped the version number..."
+    )
+
+
+def test_alpha_bump_uses_bump_prefix(mock_all, mocker):
+    mock_config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+    }
+    mocker.patch(
+        "openwisp_utils.releaser.release.determine_new_version",
+        return_value="1.3.0",
+    )
+    mocker.patch(
+        "openwisp_utils.releaser.release.resolve_main_branch", return_value="main"
+    )
+    mocker.patch("openwisp_utils.releaser.release.branch_exists", return_value=False)
+    mocker.patch(
+        "openwisp_utils.releaser.release.get_remote_branch_commit", return_value=None
+    )
+
+    bump_to_next_alpha(mock_all["GitHub"].return_value, mock_config, "1.2.0", "main")
+
+    mock_all["run_git"].assert_any_call(
+        ["commit", "-m", "[bump] Bumped version to 1.3.0 alpha"],
+        "commit the version bump",
+    )
+
+
+def test_alpha_bump_prompts_for_manual_version_update(mock_all, mocker):
+    mock_config = {
+        "package_type": "python",
+        "changelog_path": "CHANGES.rst",
+        "changelog_format": "rst",
+    }
+    mocker.patch(
+        "openwisp_utils.releaser.release.determine_new_version",
+        return_value="1.3.0",
+    )
+    mocker.patch(
+        "openwisp_utils.releaser.release.resolve_main_branch", return_value="main"
+    )
+    mocker.patch("openwisp_utils.releaser.release.branch_exists", return_value=False)
+    mocker.patch(
+        "openwisp_utils.releaser.release.get_remote_branch_commit", return_value=None
+    )
+    mock_all["bump_version"].return_value = False
+
+    bump_to_next_alpha(mock_all["GitHub"].return_value, mock_config, "1.2.0", "main")
+
     mock_all["questionary_confirm"].assert_any_call(
         "Press Enter when you have bumped the version number..."
     )
@@ -148,6 +204,81 @@ def test_main_flow_pr_merge_wait(mock_all):
     run_release()
     mock_all["time"].assert_called_once_with(20)
     assert mock_gh_instance.is_pr_merged.call_count == 2
+
+
+def test_resume_waits_for_and_completes_merged_release_pr(mock_all):
+    mock_gh = mock_all["GitHub"].return_value
+    mock_gh.get_pr.side_effect = [
+        {"merged": False, "state": "open"},
+        {
+            "merged": True,
+            "state": "closed",
+            "head": {"ref": "release/1.3.0"},
+            "base": {"ref": "master"},
+        },
+    ]
+    mock_all["get_release_block_from_file"].return_value = (
+        "Version 1.3.0 [2025-08-11]\n--------------------------\n\n- A change"
+    )
+
+    resume("https://github.com/test/repo/pull/123")
+
+    mock_all["time"].assert_called_once_with(20)
+    mock_gh.create_release.assert_called_once()
+    mock_all["bump_to_next_alpha"].assert_called_once()
+
+
+def test_resume_rejects_closed_unmerged_release_pr(mock_all):
+    mock_gh = mock_all["GitHub"].return_value
+    mock_gh.get_pr.return_value = {"merged": False, "state": "closed"}
+
+    with pytest.raises(RuntimeError, match="closed without being merged"):
+        resume("https://github.com/test/repo/pull/123")
+
+
+def test_resume_reuses_existing_tag_and_github_release(mock_all, mocker):
+    mock_gh = mock_all["GitHub"].return_value
+    mock_gh.get_pr.return_value = {
+        "merged": True,
+        "state": "closed",
+        "head": {"ref": "release/1.3.0"},
+        "base": {"ref": "master"},
+    }
+    mock_gh.get_release.return_value = {"html_url": "https://example.com/releases/1"}
+    mock_all["get_release_block_from_file"].return_value = (
+        "Version 1.3.0 [2025-08-11]\n--------------------------\n\n- A change"
+    )
+    mocker.patch(
+        "openwisp_utils.releaser.release.tag_exists_on_branch", return_value=True
+    )
+
+    resume("https://github.com/test/repo/pull/123")
+
+    mock_gh.create_release.assert_not_called()
+    assert ["tag", "-s", "1.3.0", "-m", "Version 1.3.0 [02-09-2026]"] not in [
+        call.args[0] for call in mock_all["run_git"].call_args_list
+    ]
+
+
+def test_complete_release_artifacts_rejects_conflicting_tag(mock_all, mocker):
+    mocker.patch(
+        "openwisp_utils.releaser.release.tag_exists_on_branch", return_value=False
+    )
+    mocker.patch(
+        "openwisp_utils.releaser.release.subprocess.run",
+        return_value=MagicMock(returncode=0),
+    )
+
+    with pytest.raises(RuntimeError, match="exists but is not contained"):
+        complete_release_artifacts(
+            mock_all["GitHub"].return_value,
+            {"changelog_format": "rst"},
+            "1.3.0",
+            "master",
+            "Version 1.3.0 [2025-08-11]\n--------------------------\n\n- A change",
+            "11-08-2025",
+            "2025-08-11",
+        )
 
 
 @patch("openwisp_utils.releaser.release.update_changelog_file")

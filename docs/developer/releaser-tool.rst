@@ -59,6 +59,20 @@ the following command:
 
     python -m openwisp_utils.releaser
 
+If the process stops after it creates the release pull request, resume it
+without repeating the version bump or changelog preparation:
+
+.. code-block:: shell
+
+    python -m openwisp_utils.releaser resume https://github.com/owner/repository/pull/123
+
+The resume command watches that release pull request until it is merged
+and then creates any missing downstream artifacts. It reuses an existing
+version tag on the merged base branch, an existing GitHub release for that
+tag, and matching follow-up pull requests instead of creating duplicates.
+A pull request that was closed without merging must be reopened or
+replaced before the release can be resumed.
+
 The Interactive Workflow
 ------------------------
 
@@ -92,11 +106,17 @@ process:
 
 1. Updates the version number in your project's ``__init__.py``.
 2. Writes the new release notes to your ``CHANGES.rst`` or ``CHANGES.md``
-   file.
-3. Creates a ``release/<version>`` branch and commits the changes.
+       file.
+3. Creates a ``release/<version>`` branch and commits only the updated
+   changelog and detected version file, leaving unrelated worktree changes
+   unstaged.
 4. Pushes the new branch to GitHub.
 5. Creates a pull request and waits for you to merge it.
 6. Once merged, it creates and pushes a signed git tag.
 7. Finally, it creates a draft release on GitHub with the changelog notes.
 8. If releasing a bugfix, it offers to port the changelog to the ``main``
    or ``master`` branch.
+9. If releasing a new feature from a Python or npm project, it offers to
+   bump the version to the next alpha release: it opens a pull request
+   which sets the version to the next minor release with the ``alpha``
+   marker and adds a new ``[unreleased]`` section to the change log.
