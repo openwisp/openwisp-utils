@@ -403,8 +403,17 @@ def bump_to_next_alpha(gh, config, released_version, original_branch):
         print(f"Creating new branch '{bump_branch}'...")
         run_git(["checkout", "-B", bump_branch], f"create branch '{bump_branch}'")
         bump_branch_created = True
-        bump_version(config, next_version, version_type="alpha")
-        print(f"✅ Version bumped to {next_version} and set to 'alpha'.")
+        was_bumped = bump_version(config, next_version, version_type="alpha")
+        if was_bumped:
+            print(f"✅ Version bumped to {next_version} and set to 'alpha'.")
+        else:
+            print(
+                "\n⚠️  The version number could not be bumped automatically."
+                "\n   Please bump it manually before the changelog is committed."
+            )
+            questionary.confirm(
+                "Press Enter when you have bumped the version number..."
+            ).ask()
         changelog_path = config["changelog_path"]
         prefix = "Version " if config.get("changelog_uses_version_prefix", True) else ""
         version_header = f"{prefix}{next_version} [unreleased]"
