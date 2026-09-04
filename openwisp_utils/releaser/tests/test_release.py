@@ -440,13 +440,13 @@ def test_bump_to_next_alpha_flow(bump_mocks):
         ["pull", "origin", "master"],
         ["checkout", "-B", "chore/bump-version-1.3.0"],
         ["add", "-u"],
-        ["commit", "-m", "[chores] Bumped version to 1.3.0 alpha"],
+        ["commit", "-m", "[bump] Bumped version to 1.3.0 alpha"],
         ["push", "-u", "origin", "chore/bump-version-1.3.0"],
     ]
     mock_gh.create_pr.assert_called_once_with(
         "chore/bump-version-1.3.0",
         "master",
-        "[chores] Bumped version to 1.3.0 alpha",
+        "[bump] Bumped version to 1.3.0 alpha",
     )
     mock_gh.is_pr_merged.assert_not_called()
     bump_mocks["subprocess"].assert_called_once_with(

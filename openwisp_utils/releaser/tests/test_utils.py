@@ -53,6 +53,7 @@ def test_get_remote_branch_commit(mock_subprocess):
     assert get_remote_branch_commit("bump") == "a" * 40
     mock_subprocess.assert_called_once_with(
         ["git", "ls-remote", "--exit-code", "--heads", "origin", "bump"],
+        check=True,
         capture_output=True,
         text=True,
         encoding="utf-8",
