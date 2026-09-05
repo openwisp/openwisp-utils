@@ -103,6 +103,13 @@ def rst_to_markdown(text):
     ).strip()
 
 
+def normalize_markdown(text):
+    """Normalize GitHub-Flavored Markdown without wrapping paragraphs."""
+    return pypandoc.convert_text(
+        text, "gfm", format="gfm", extra_args=["--wrap=none"]
+    ).strip()
+
+
 def _call_docstrfmt(file_path):
     return subprocess.run(
         [
