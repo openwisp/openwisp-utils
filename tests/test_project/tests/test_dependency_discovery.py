@@ -1,6 +1,6 @@
 import unittest
 
-from django.template import engines
+from django.template import TemplateDoesNotExist, engines
 from openwisp_utils.loaders import DependencyLoader
 from openwisp_utils.staticfiles import DependencyFinder
 
@@ -15,6 +15,10 @@ class TestDependencyDiscovery(unittest.TestCase):
         )
         self.assertTrue(finder.find("dependency_app/dependency.css"))
 
+    def test_missing_dependency_static_file(self):
+        finder = DependencyFinder()
+        self.assertFalse(finder.find("dependency_app/missing.css"))
+
     def test_dependency_loader(self):
         loader = DependencyLoader(engine=None)
         self.assertIsInstance(loader.get_dirs(), list)
@@ -26,3 +30,7 @@ class TestDependencyDiscovery(unittest.TestCase):
     def test_dependency_template_loading(self):
         template = engines["django"].get_template("dependency_app/dependency.html")
         self.assertEqual(template.render(), "dependency template\n")
+
+    def test_missing_dependency_template(self):
+        with self.assertRaises(TemplateDoesNotExist):
+            engines["django"].get_template("dependency_app/missing.html")
