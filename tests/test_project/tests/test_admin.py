@@ -704,10 +704,14 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         "openwisp_utils.admin_theme.system_info.settings.INSTALLED_APPS",
         ["openwisp_users", "openwisp_utils.admin_theme"],
     )
+    @patch(
+        "openwisp_utils.admin_theme.system_info.get_installed_openwisp_packages",
+        return_value={"openwisp-utils": "1.4.0", "netjsonconfig": "1.3.0"},
+    )
     def test_system_information(self, *args):
         def _assert_system_information(response):
-            self.assertContains(response, "<li>openwisp-utils:")
-            self.assertContains(response, "<li>netjsonconfig:")
+            self.assertContains(response, "<li>openwisp-utils: 1.4.0</li>")
+            self.assertContains(response, "<li>netjsonconfig: 1.3.0</li>")
             self.assertContains(response, "<h2>OS Information</h2>")
             self.assertContains(response, "<strong>OS version:</strong>")
             self.assertContains(response, "<strong>Kernel version:</strong>")
