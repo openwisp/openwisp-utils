@@ -29,6 +29,53 @@ def test_feature_release_flow_markdown(mock_all, mocker):
     assert "## Markdown Changelog" in release_call_args[2]
 
 
+@pytest.mark.parametrize(
+    ("changelog_format", "latest_block", "converted_body"),
+    [
+        (
+            "md",
+            "## Version 1.2.1 [2025-08-11]\n\n### Features\n\n- A wrapped\n" "  item.",
+            None,
+        ),
+        (
+            "rst",
+            "Version 1.2.1 [2025-08-11]\n"
+            "--------------------------\n\n"
+            "Features\n~~~~~~~~\n\n"
+            "- A wrapped\n  item.",
+            "# Features\n\n- A wrapped item.",
+        ),
+    ],
+)
+def test_release_body_is_normalized(
+    mock_all, mocker, changelog_format, latest_block, converted_body
+):
+    """Tests that both changelog formats pass a normalized body to GitHub."""
+    mock_config, mock_gh = mock_all["check_prerequisites"].return_value
+    mock_config["changelog_format"] = changelog_format
+    mock_config["changelog_path"] = f"CHANGES.{changelog_format}"
+    mock_all["get_release_block_from_file"].return_value = latest_block
+    if converted_body:
+        mocker.patch(
+            "openwisp_utils.releaser.release.rst_to_markdown",
+            return_value=converted_body,
+        )
+    normalizer = mocker.patch(
+        "openwisp_utils.releaser.release.normalize_markdown",
+        side_effect=lambda value: f"normalized: {value}",
+    )
+    run_release()
+    expected_body = "# Features\n\n- A wrapped\n  item."
+    if converted_body:
+        expected_body = converted_body
+    normalizer.assert_called_once_with(expected_body)
+    assert mock_gh.create_release.call_args.args == (
+        "1.3.0",
+        "1.3.0 [2025-08-11]",
+        f"normalized: {expected_body}",
+    )
+
+
 def test_release_flow_manual_bump(mock_all):
     """Tests the flow where automatic version bumping fails and the user is prompted to do it manually."""
     mock_all["bump_version"].return_value = False

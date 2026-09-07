@@ -12,6 +12,7 @@ from openwisp_utils.releaser.utils import (
     SkipSignal,
     branch_exists,
     format_file_with_docstrfmt,
+    normalize_markdown,
     retryable_request,
 )
 
@@ -102,6 +103,30 @@ def test_demote_markdown_headings():
 """
     result = demote_markdown_headings(input_md)
     assert result.strip() == expected_md.strip()
+
+
+def test_normalize_markdown():
+    """Test that Markdown paragraphs are unwrapped without losing structure."""
+    markdown = """## Features
+
+- Configured nginx to
+  [serve precompressed files](https://example.com), improving delivery.
+  - Nested item.
+
+> A wrapped
+> quote.
+
+```python
+long_code_line = "must stay intact"
+```"""
+    normalized = normalize_markdown(markdown)
+    assert (
+        "- Configured nginx to [serve precompressed files](https://example.com), "
+        "improving delivery." in normalized
+    )
+    assert "  - Nested item." in normalized
+    assert "> A wrapped quote." in normalized
+    assert '``` python\nlong_code_line = "must stay intact"\n```' in normalized
 
 
 @patch("openwisp_utils.releaser.utils.subprocess.run")

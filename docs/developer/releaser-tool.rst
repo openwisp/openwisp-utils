@@ -100,3 +100,6 @@ process:
 7. Finally, it creates a draft release on GitHub with the changelog notes.
 8. If releasing a bugfix, it offers to port the changelog to the ``main``
    or ``master`` branch.
+
+GitHub release descriptions are normalized without paragraph wrapping
+before submission. This does not modify the changelog file.

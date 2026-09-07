@@ -23,6 +23,7 @@ from openwisp_utils.releaser.utils import (
     demote_markdown_headings,
     format_file_with_docstrfmt,
     get_current_branch,
+    normalize_markdown,
     rst_to_markdown,
 )
 from openwisp_utils.releaser.version import (
@@ -360,6 +361,7 @@ def main():
         release_body_md = rst_to_markdown(release_body_rst)
 
     try:
+        release_body_md = normalize_markdown(release_body_md)
         release_url = gh.create_release(tag_name, release_title, release_body_md)
         print(f"📦 Draft release created on GitHub: {release_url}")
     except SkipSignal:
