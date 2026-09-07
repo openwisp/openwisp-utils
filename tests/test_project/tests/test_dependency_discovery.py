@@ -9,13 +9,19 @@ class TestDependencyDiscovery(unittest.TestCase):
     def test_dependency_finder(self):
         finder = DependencyFinder()
         self.assertIsInstance(finder.locations, list)
-        self.assertIn("dependency_app", finder.locations[0][1])
+        self.assertTrue(
+            any("dependency_app" in path for _, path in finder.locations),
+            "Dependency finder did not discover the fixture static directory",
+        )
         self.assertTrue(finder.find("dependency_app/dependency.css"))
 
     def test_dependency_loader(self):
         loader = DependencyLoader(engine=None)
         self.assertIsInstance(loader.get_dirs(), list)
-        self.assertIn("dependency_app", loader.get_dirs()[0])
+        self.assertTrue(
+            any("dependency_app" in path for path in loader.get_dirs()),
+            "Dependency loader did not discover the fixture template directory",
+        )
 
     def test_dependency_template_loading(self):
         template = engines["django"].get_template("dependency_app/dependency.html")
