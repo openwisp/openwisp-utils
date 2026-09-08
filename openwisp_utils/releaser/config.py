@@ -4,6 +4,14 @@ import os
 import re
 import subprocess
 
+try:
+    import tomllib  # pragma: no cover
+except ImportError:  # pragma: no cover
+    try:
+        import tomli as tomllib  # pragma: no cover
+    except ImportError:  # pragma: no cover
+        tomllib = None  # pragma: no cover
+
 
 def get_package_name_from_setup():
     """Parses setup.py to find the package name without raising an error."""
@@ -22,6 +30,7 @@ def get_package_type_from_setup():
     """Detects package type based on config files present in the project."""
     package_type_files = {
         "setup.py": "python",
+        "pyproject.toml": "python",
         "package.json": "npm",
         "docker-compose.yml": "docker",
         ".ansible-lint": "ansible",
@@ -58,27 +67,54 @@ def _handle_python_version(config):
     netjsonconfig, netdiff).
     """
     project_name = get_package_name_from_setup()
-    if not project_name:
+    if project_name:
+        package_directory = project_name.replace("-", "_")
+        candidate_files = [
+            os.path.join(package_directory, "__init__.py"),
+            os.path.join(package_directory, "version.py"),
+        ]
+        for version_path in candidate_files:
+            if not os.path.exists(version_path):
+                continue
+            with open(version_path, "r") as f:
+                content = f.read()
+                version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
+                if version_match:
+                    config["version_path"] = version_path
+                    try:
+                        version_tuple = ast.literal_eval(f"({version_match.group(1)})")
+                        config["CURRENT_VERSION"] = list(version_tuple)
+                    except (ValueError, SyntaxError, TypeError):
+                        config["CURRENT_VERSION"] = None
+                    return
+    _handle_pyproject_toml_version(config)
+
+
+def _handle_pyproject_toml_version(config):
+    """Handles version detection from pyproject.toml."""
+    if not os.path.exists("pyproject.toml"):
         return
-    package_directory = project_name.replace("-", "_")
-    candidate_files = [
-        os.path.join(package_directory, "__init__.py"),
-        os.path.join(package_directory, "version.py"),
-    ]
-    for version_path in candidate_files:
-        if not os.path.exists(version_path):
-            continue
-        with open(version_path, "r") as f:
-            content = f.read()
-            version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
-            if version_match:
-                config["version_path"] = version_path
-                try:
-                    version_tuple = ast.literal_eval(f"({version_match.group(1)})")
-                    config["CURRENT_VERSION"] = list(version_tuple)
-                except (ValueError, SyntaxError, TypeError):
-                    config["CURRENT_VERSION"] = None
-                return
+    if tomllib is None:
+        return  # pragma: no cover
+    with open("pyproject.toml", "rb") as f:
+        try:
+            data = tomllib.load(f)
+        except Exception:
+            return
+    project = data.get("project", {})
+    version_str = project.get("version")
+    if not version_str:
+        return
+    try:
+        parts = version_str.split(".")
+        if len(parts) != 3:
+            return
+        current_version = [int(parts[0]), int(parts[1]), int(parts[2]), "final"]
+    except (ValueError, TypeError):
+        return
+    config["package_type"] = "pyproject"
+    config["version_path"] = "pyproject.toml"
+    config["CURRENT_VERSION"] = current_version
 
 
 def _handle_npm_version(config):
@@ -203,6 +239,7 @@ def _handle_generic_version(config):
 # Maps package types to their version detection handlers
 PACKAGE_VERSION_HANDLERS = {
     "python": _handle_python_version,
+    "pyproject": _handle_pyproject_toml_version,
     "npm": _handle_npm_version,
     "docker": _handle_docker_version,
     "ansible": _handle_ansible_version,

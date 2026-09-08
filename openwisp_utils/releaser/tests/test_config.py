@@ -587,3 +587,83 @@ def test_no_package_type_detected(project_dir, create_changelog, init_git_repo):
     assert config["package_type"] is None
     assert config["version_path"] is None
     assert config["CURRENT_VERSION"] is None
+
+
+def test_pyproject_toml_package_detection(project_dir, create_changelog, init_git_repo):
+    """Tests that python package type is detected when pyproject.toml exists."""
+    (project_dir / "pyproject.toml").write_text(
+        '[project]\nname = "my-package"\nversion = "1.2.3"\n'
+    )
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "pyproject"
+    assert config["version_path"] == "pyproject.toml"
+    assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
+
+
+def test_pyproject_toml_missing_version(project_dir, create_changelog, init_git_repo):
+    """Tests pyproject.toml without a version field."""
+    (project_dir / "pyproject.toml").write_text('[project]\nname = "my-package"\n')
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["version_path"] is None
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_pyproject_toml_invalid_version(project_dir, create_changelog, init_git_repo):
+    """Tests pyproject.toml with an invalid version format."""
+    (project_dir / "pyproject.toml").write_text(
+        '[project]\nname = "my-package"\nversion = "1.2"\n'
+    )
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["version_path"] is None
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_pyproject_toml_malformed(project_dir, create_changelog, init_git_repo):
+    """Tests pyproject.toml with malformed TOML content."""
+    (project_dir / "pyproject.toml").write_text("@invalid toml\n")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["version_path"] is None
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_pyproject_toml_non_numeric_version(
+    project_dir, create_changelog, init_git_repo
+):
+    """Tests pyproject.toml with a non-numeric version component."""
+    (project_dir / "pyproject.toml").write_text(
+        '[project]\nname = "my-package"\nversion = "1.2.a"\n'
+    )
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["version_path"] is None
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_setup_py_takes_priority_over_pyproject_toml(
+    project_dir,
+    create_setup_py,
+    create_package_dir_with_version,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests that setup.py takes priority over pyproject.toml."""
+    create_setup_py(project_dir)
+    create_package_dir_with_version(project_dir)
+    (project_dir / "pyproject.toml").write_text(
+        '[project]\nname = "my-package"\nversion = "9.9.9"\n'
+    )
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "python"
+    assert config["version_path"] == "my_test_package/__init__.py"
+    assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
