@@ -290,6 +290,13 @@ class TestQa(TestCase):
             os.makedirs(path.dirname(hidden_py))
             with open(hidden_py, "w") as f:
                 f.write("z = 3\n")
+            build_py = path.join(temp_dir, "build", "generated.py")
+            os.makedirs(path.dirname(build_py))
+            with open(build_py, "w") as f:
+                f.write("generated = True\n")
+            build_rst = path.join(temp_dir, "build", "generated.rst")
+            with open(build_rst, "w") as f:
+                f.write("Generated\n=========\n")
             env = os.environ.copy()
             env["DOCSTRFMT_ARGS"] = args_path
             env["PATH"] = f'{bin_dir}:{env["PATH"]}'
@@ -327,6 +334,8 @@ class TestQa(TestCase):
                 "./node_modules/other/doc.rst",
                 "./.venv/package/doc.rst",
                 "./.github/actions/script.py",
+                "./build/generated.py",
+                "./build/generated.rst",
             ):
                 with self.subTest(f"Check that docstrfmt ignores {filename}"):
                     self.assertNotIn(filename, args)
@@ -368,7 +377,7 @@ class TestQa(TestCase):
                 f.write("body {}\n")
             excluded_prettier_files = []
             excluded_docstrfmt_files = []
-            for directory in (".venv", "venv", "env", ".tox"):
+            for directory in (".venv", "venv", "env", ".tox", "build"):
                 prettier_file = path.join(temp_dir, directory, "package", "file.css")
                 os.makedirs(path.dirname(prettier_file))
                 with open(prettier_file, "w") as f:
@@ -414,13 +423,18 @@ class TestQa(TestCase):
                         "env",
                         "--extend-skip",
                         ".tox",
+                        "--extend-skip",
+                        "build",
                         ".",
                     ],
                 )
             with open(args_paths["black"]) as f:
                 black_args = f.read().splitlines()
             with self.subTest("Check that Black receives its environment exclusion"):
-                self.assertEqual(black_args, ["--extend-exclude", "/(env|ENV)/", "."])
+                self.assertEqual(
+                    black_args,
+                    ["--extend-exclude", "/(env|ENV)/|^/build/", "."],
+                )
             with open(args_paths["prettier"]) as f:
                 prettier_args = f.read().splitlines()
             with self.subTest("Check that Prettier excludes virtual-environment files"):
@@ -474,6 +488,7 @@ class TestQa(TestCase):
                 ".coverage",
                 "coverage.xml",
                 path.join("htmlcov", "index.html"),
+                path.join("build", "generated-file"),
             ):
                 file_path = path.join(temp_dir, filename)
                 os.makedirs(path.dirname(file_path), exist_ok=True)
@@ -495,6 +510,103 @@ class TestQa(TestCase):
                 text=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_check_excludes_build_directory(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-qa-check")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = path.join(temp_dir, "bin")
+            args_dir = path.join(temp_dir, "args")
+            os.mkdir(bin_dir)
+            os.mkdir(args_dir)
+            for command in ("flake8", "isort", "black", "prettier", "docstrfmt"):
+                command_path = path.join(bin_dir, command)
+                with open(command_path, "w") as f:
+                    f.write(
+                        "#!/bin/sh\n"
+                        'for arg in "$@"; do\n'
+                        '    printf "%s\\n" "$arg" >> "$ARGS_DIR/$(basename "$0")"\n'
+                        "done\n"
+                    )
+                os.chmod(command_path, 0o755)
+            for filename, content in (
+                ("work.py", "x = 1\n"),
+                ("work.rst", "Test\n====\n"),
+                ("work.css", "body {}\n"),
+                (path.join("build", "generated.py"), "x = 1\n"),
+                (path.join("build", "generated.rst"), "Test\n====\n"),
+                (path.join("build", "generated.css"), "body {}\n"),
+            ):
+                file_path = path.join(temp_dir, filename)
+                os.makedirs(path.dirname(file_path), exist_ok=True)
+                with open(file_path, "w") as f:
+                    f.write(content)
+            env = os.environ.copy()
+            env["ARGS_DIR"] = args_dir
+            env["PATH"] = f'{bin_dir}:{env["PATH"]}'
+            result = subprocess.run(
+                [
+                    script_path,
+                    "--skip-checkmigrations",
+                    "--skip-checkendline",
+                    "--skip-checkcommit",
+                    "--skip-checkmakemigrations",
+                    "--csslinter",
+                    "--jslinter",
+                ],
+                cwd=temp_dir,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            with open(path.join(args_dir, "flake8")) as f:
+                self.assertEqual(
+                    f.read().splitlines(),
+                    ["--extend-exclude=.venv,venv,env,.tox,build"],
+                )
+            with open(path.join(args_dir, "isort")) as f:
+                self.assertEqual(
+                    f.read().splitlines(),
+                    [
+                        "--check-only",
+                        "--diff",
+                        "--quiet",
+                        "--extend-skip",
+                        ".venv",
+                        "--extend-skip",
+                        "venv",
+                        "--extend-skip",
+                        "env",
+                        "--extend-skip",
+                        ".tox",
+                        "--extend-skip",
+                        "build",
+                        ".",
+                    ],
+                )
+            with open(path.join(args_dir, "black")) as f:
+                self.assertEqual(
+                    f.read().splitlines(),
+                    [
+                        "--check",
+                        "--diff",
+                        "--quiet",
+                        "--extend-exclude",
+                        "/(env|ENV)/|^/build/",
+                        ".",
+                    ],
+                )
+            for command, included, excluded in (
+                ("docstrfmt", "./work.rst", "./build/generated.rst"),
+                ("prettier", "./work.css", "./build/generated.css"),
+            ):
+                with open(path.join(args_dir, command)) as f:
+                    args = f.read().splitlines()
+                with self.subTest(f"Check that {command} receives non-build files"):
+                    self.assertIn(included, args)
+                with self.subTest(f"Check that {command} ignores root build files"):
+                    self.assertNotIn(excluded, args)
 
     def test_checkendline_handles_filenames_with_spaces(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
