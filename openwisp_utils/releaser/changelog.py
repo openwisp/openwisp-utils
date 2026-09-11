@@ -386,19 +386,24 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
         # For a bugfix port, insert the new block before the first lower release version.
         version_header_regex = re.compile(
             (
-                r"^##\s+(?:Version\s+)?(\d+)\.(\d+)\.(\d+)"
+                r"^##\s+(?:Version\s+)?(\d+)\.(\d+)\.(\d+)[^\n]*"
                 if is_md
-                else r"^(?:Version\s+)?(\d+)\.(\d+)\.(\d+)"
+                else r"^(?:Version\s+)?(\d+)\.(\d+)\.(\d+)[^\n]*"
             ),
             re.MULTILINE,
         )
         version_match = version_header_regex.search(new_block)
         if version_match:
             version = tuple(map(int, version_match.groups()))
+            release_matches = [
+                match
+                for match in version_header_regex.finditer(content)
+                if "[unreleased]" not in match.group().lower()
+            ]
             insertion_point = next(
                 (
                     match.start()
-                    for match in version_header_regex.finditer(content)
+                    for match in release_matches
                     if tuple(map(int, match.groups())) < version
                 ),
                 len(content),

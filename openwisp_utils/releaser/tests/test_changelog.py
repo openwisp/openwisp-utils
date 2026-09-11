@@ -543,14 +543,37 @@ def test_update_changelog_bugfix_port_flow(mock_file):
 
 
 @pytest.mark.parametrize(
-    ("changelog_path", "header", "suffix"),
+    ("changelog_path", "header", "suffix", "version", "preceding", "following"),
     (
-        ("CHANGES.rst", "Version ", "\n--------------------------"),
-        ("CHANGES.md", "## Version ", ""),
+        (
+            "CHANGES.rst",
+            "Version ",
+            "\n--------------------------",
+            "1.2.3",
+            "1.3.1",
+            "1.2.2",
+        ),
+        ("CHANGES.md", "## Version ", "", "1.2.3", "1.3.1", "1.2.2"),
+        (
+            "CHANGES.rst",
+            "Version ",
+            "\n--------------------------",
+            "1.4.1",
+            "1.4.0 [Unreleased]",
+            "1.3.1",
+        ),
+        (
+            "CHANGES.md",
+            "## Version ",
+            "",
+            "1.4.1",
+            "1.4.0 [Unreleased]",
+            "1.3.1",
+        ),
     ),
 )
 def test_update_changelog_bugfix_port_uses_release_version_order(
-    changelog_path, header, suffix
+    changelog_path, header, suffix, version, preceding, following
 ):
     """Tests that a ported bugfix is placed with its stable-version series."""
     changelog = f"""Changelog
@@ -568,7 +591,7 @@ Work in progress.
 
 - A 1.2 fix.
 """
-    new_block = f"""{header}1.2.3 [2026-09-11]{suffix}
+    new_block = f"""{header}{version} [2026-09-11]{suffix}
 
 Bugfixes
 ~~~~~~~~
@@ -580,9 +603,9 @@ Bugfixes
     written_content = mock_file().write.call_args[0][0]
     assert new_block in written_content
     assert (
-        written_content.index(f"{header}1.3.1")
-        < written_content.index(f"{header}1.2.3")
-        < written_content.index(f"{header}1.2.2")
+        written_content.index(f"{header}{preceding}")
+        < written_content.index(f"{header}{version}")
+        < written_content.index(f"{header}{following}")
     ), "A ported release must be inserted above its previous stable release."
 
 
