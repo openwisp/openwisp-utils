@@ -111,7 +111,7 @@ def _clean_commit_metadata(lines):
             line = line.rstrip()
         is_body_line = line.strip().startswith(CHANGELOG_BODY_MARKER)
         stripped_line = _get_changelog_line_content(line)
-        if backport_marker_count and not stripped_line:
+        if backport_marker_count and stripped_line in ("", "-"):
             continue
         if skip_dependabot_metadata:
             if stripped_line == "...":
