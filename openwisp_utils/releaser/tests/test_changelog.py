@@ -298,13 +298,13 @@ OW_CHANGELOG_BODY:{keyword} `#123 <https://github.com/#REPO#/issues/123>`_
 
 
 def test_process_changelog_strips_backport_markers():
+    # extra white-space is intentional
     changelog_text = """Changes
 ~~~~~~~
 - Changed changelog formatting [backport 1.2]
 
 OW_CHANGELOG_BODY:Applied the fix [backport 1.2.3.4]
-OW_CHANGELOG_BODY:[backport 1.2.3.4]
-"""
+OW_CHANGELOG_BODY:  [backport 1.2.3.4]""" + "  \n"
     processed_text = process_changelog(changelog_text)
     assert "[backport" not in processed_text
     assert "- Changed changelog formatting" in processed_text

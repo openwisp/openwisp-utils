@@ -107,7 +107,8 @@ def _clean_commit_metadata(lines):
     )
     for index, line in enumerate(lines):
         line, backport_marker_count = BACKPORT_MARKER_PATTERN.subn("", line)
-        line = line.rstrip()
+        if backport_marker_count:
+            line = line.rstrip()
         is_body_line = line.strip().startswith(CHANGELOG_BODY_MARKER)
         stripped_line = _get_changelog_line_content(line)
         if backport_marker_count and not stripped_line:
