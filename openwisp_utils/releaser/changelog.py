@@ -11,6 +11,7 @@ from .constants import ISSUE_REFERENCE_KEYWORDS
 from .utils import _call_docstrfmt
 
 CHANGELOG_BODY_MARKER = "OW_CHANGELOG_BODY:"
+BACKPORT_MARKER_PATTERN = re.compile(r"\s*\[backport\s+\d+(?:\.\d+)*\]")
 
 
 def _get_changelog_line_content(line):
@@ -105,8 +106,13 @@ def _clean_commit_metadata(lines):
         re.IGNORECASE,
     )
     for index, line in enumerate(lines):
+        line, backport_marker_count = BACKPORT_MARKER_PATTERN.subn("", line)
+        if backport_marker_count:
+            line = line.rstrip()
         is_body_line = line.strip().startswith(CHANGELOG_BODY_MARKER)
         stripped_line = _get_changelog_line_content(line)
+        if backport_marker_count and stripped_line in ("", "-"):
+            continue
         if skip_dependabot_metadata:
             if stripped_line == "...":
                 skip_dependabot_metadata = False
