@@ -52,7 +52,7 @@ def find_cliff_config():
 
 
 def run_git_cliff(version=None):
-    """Runs the 'git cliff --unreleased' command and returns its output."""
+    """Runs git-cliff for untagged commits on the current branch."""
     config_path = find_cliff_config()
     if not config_path:
         print(
@@ -72,7 +72,14 @@ def run_git_cliff(version=None):
         print(f"Warning: Failed to pull tags: {e.stderr}", file=sys.stderr)
     # Run git-cliff to calculate changelog
     try:
-        cmd = ["git", "cliff", "--unreleased", "--config", config_path]
+        cmd = [
+            "git",
+            "cliff",
+            "--unreleased",
+            "--use-branch-tags",
+            "--config",
+            config_path,
+        ]
         if version:
             cmd.extend(["--tag", version])
 
@@ -345,7 +352,7 @@ def get_release_block_from_file(config, version):
 def update_changelog_file(changelog_path, new_block, is_port=False):
     # Updates the changelog file for all release types.
     # - For a feature release, it replaces the entire [Unreleased] section with the new content.
-    # - For a ported bugfix, it inserts the new block after the [Unreleased] section.
+    # - For a ported bugfix, it inserts the new block in descending version order.
 
     is_md = changelog_path.endswith(".md")
     try:
@@ -376,14 +383,39 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
         lines.insert(header_end_index, new_block.strip() + "\n\n")
         new_content = "".join(lines)
     elif is_port:
-        # For a bugfix port, insert the new block AFTER the [Unreleased] block.
-        insertion_point = unreleased_match.end()
+        # For a bugfix port, insert the new block before the first lower release version.
+        version_header_regex = re.compile(
+            (
+                r"^##\s+(?:Version\s+)?(\d+)\.(\d+)\.(\d+)[^\n]*"
+                if is_md
+                else r"^(?:Version\s+)?(\d+)\.(\d+)\.(\d+)[^\n]*"
+            ),
+            re.MULTILINE,
+        )
+        version_match = version_header_regex.search(new_block)
+        if version_match:
+            version = tuple(map(int, version_match.groups()))
+            release_matches = [
+                match
+                for match in version_header_regex.finditer(content)
+                if "[unreleased]" not in match.group().lower()
+            ]
+            insertion_point = next(
+                (
+                    match.start()
+                    for match in release_matches
+                    if tuple(map(int, match.groups())) < version
+                ),
+                len(content),
+            )
+        else:
+            insertion_point = unreleased_match.end()
         new_content = (
             content[:insertion_point].rstrip()
             + "\n\n"
             + new_block.strip()
-            + "\n"
-            + content[insertion_point:]
+            + "\n\n"
+            + content[insertion_point:].lstrip()
         )
     else:
         # For a feature release, REPLACE the entire [Unreleased] block.

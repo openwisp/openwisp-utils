@@ -80,13 +80,13 @@ def git_repo():
     shutil.rmtree(test_dir)
 
 
-def _run_git_cliff_with_expected_warning():
+def _run_git_cliff_with_expected_warning(version=None):
     raw_changelog = None
 
     @capture_stderr()
     def _run(captured_error):
         nonlocal raw_changelog
-        raw_changelog = run_git_cliff()
+        raw_changelog = run_git_cliff(version=version)
         assert captured_error.getvalue().startswith("Warning: Failed to pull tags:")
 
     _run()
@@ -187,6 +187,39 @@ Co-authored-by: Test User <test@example.com>
     assert "cherry picked from commit" not in actual_output
     assert "Signed-off-by:" not in actual_output
     assert "Co-authored-by:" not in actual_output
+
+
+def test_changelog_generation_for_old_stable_branch_uses_latest_branch_tag(git_repo):
+    """Tests that releases on old stable branches exclude prior stable releases."""
+
+    def _git_commit(message):
+        filename = f"{message.replace(' ', '_')}.txt"
+        with open(filename, "w") as f:
+            f.write(message)
+        subprocess.run(["git", "add", filename], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", message], check=True, capture_output=True
+        )
+
+    _git_commit("[fix] Fixed initial 1.2 release")
+    subprocess.run(["git", "tag", "1.2.0"], check=True, capture_output=True)
+    subprocess.run(["git", "branch", "1.2"], check=True, capture_output=True)
+    _git_commit("[fix] Fixed 1.3 release")
+    subprocess.run(["git", "tag", "1.3.0"], check=True, capture_output=True)
+    subprocess.run(["git", "checkout", "1.2"], check=True, capture_output=True)
+    _git_commit("[fix] Fixed 1.2.1 release")
+    subprocess.run(["git", "tag", "1.2.1"], check=True, capture_output=True)
+    _git_commit("[fix] Fixed 1.2.2 release")
+    subprocess.run(["git", "tag", "1.2.2"], check=True, capture_output=True)
+    _git_commit("[fix] Fixed expected 1.2.3 release")
+    raw_changelog = _run_git_cliff_with_expected_warning(version="1.2.3")
+    assert "Fixed expected 1.2.3 release" in raw_changelog
+    assert (
+        "Fixed 1.2.2 release" not in raw_changelog
+    ), "The changelog must include only commits newer than the latest 1.2 tag."
+    assert (
+        "Fixed 1.2.1 release" not in raw_changelog
+    ), "The changelog must include only commits newer than the latest 1.2 tag."
 
 
 def test_changelog_generation_excludes_dependabot_metadata_block(git_repo):
@@ -509,6 +542,73 @@ def test_update_changelog_bugfix_port_flow(mock_file):
     )
 
 
+@pytest.mark.parametrize(
+    ("changelog_path", "header", "suffix", "version", "preceding", "following"),
+    (
+        (
+            "CHANGES.rst",
+            "Version ",
+            "\n--------------------------",
+            "1.2.3",
+            "1.3.1",
+            "1.2.2",
+        ),
+        ("CHANGES.md", "## Version ", "", "1.2.3", "1.3.1", "1.2.2"),
+        (
+            "CHANGES.rst",
+            "Version ",
+            "\n--------------------------",
+            "1.4.1",
+            "1.4.0 [Unreleased]",
+            "1.3.1",
+        ),
+        (
+            "CHANGES.md",
+            "## Version ",
+            "",
+            "1.4.1",
+            "1.4.0 [Unreleased]",
+            "1.3.1",
+        ),
+    ),
+)
+def test_update_changelog_bugfix_port_uses_release_version_order(
+    changelog_path, header, suffix, version, preceding, following
+):
+    """Tests that a ported bugfix is placed with its stable-version series."""
+    changelog = f"""Changelog
+=========
+
+{header}1.4.0 [Unreleased]{suffix}
+
+Work in progress.
+
+{header}1.3.1 [2026-09-10]{suffix}
+
+- A 1.3 fix.
+
+{header}1.2.2 [2026-09-09]{suffix}
+
+- A 1.2 fix.
+"""
+    new_block = f"""{header}{version} [2026-09-11]{suffix}
+
+Bugfixes
+~~~~~~~~
+
+- Prevented SMS verification bypasses
+"""
+    with patch("builtins.open", mock_open(read_data=changelog)) as mock_file:
+        update_changelog_file(changelog_path, new_block, is_port=True)
+    written_content = mock_file().write.call_args[0][0]
+    assert new_block in written_content
+    assert (
+        written_content.index(f"{header}{preceding}")
+        < written_content.index(f"{header}{version}")
+        < written_content.index(f"{header}{following}")
+    ), "A ported release must be inserted above its previous stable release."
+
+
 @patch("builtins.open", new_callable=mock_open, read_data=SAMPLE_CHANGELOG)
 def test_update_changelog_feature_flow(mock_file):
     """Test that a feature release REPLACES the unreleased block."""
@@ -568,6 +668,7 @@ def test_run_git_cliff_calls_git_pull_tags(mock_subprocess_run, mock_find_config
         "git" in second_call_args
         and "cliff" in second_call_args
         and "--unreleased" in second_call_args
+        and "--use-branch-tags" in second_call_args
     )
 
 
