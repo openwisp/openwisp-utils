@@ -1926,6 +1926,18 @@ body::-webkit-scrollbar {
   mask-image: url(../../ui/openwisp/images/certificate.svg);
   -webkit-mask-image: url(../../ui/openwisp/images/certificate.svg);
 }
+.ow-network-operations {
+  mask-image: url(../../ui/openwisp/images/network-operations.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/network-operations.svg);
+}
+.ow-mass-commands {
+  mask-image: url(../../ui/openwisp/images/mass-commands.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/mass-commands.svg);
+}
+.ow-run-mass-command {
+  mask-image: url(../../ui/openwisp/images/run-mass-command.svg);
+  -webkit-mask-image: url(../../ui/openwisp/images/run-mass-command.svg);
+}
 
 /* RADIUS ICONS */
 
