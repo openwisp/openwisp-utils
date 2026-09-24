@@ -5,8 +5,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light only">
   {% block styles %}
   <style>
+    :root {
+      color-scheme: light only;
+    }
+
     body {
       min-width: 250px;
       background: #fff;
@@ -74,6 +79,9 @@
 
     .logo-container {
       text-align: center;
+      background-color: #ffffff;
+      padding: 8px;
+      border-radius: 8px;
     }
 
     .logo {
@@ -185,6 +193,11 @@
       .footer {
         margin: 0.5rem auto 0.875rem auto;
       }
+    }
+    
+    [data-ogsc] .logo-container,
+    [data-ogsb] .logo-container {
+      background-color: #ffffff !important;
     }
   </style>
   {% endblock styles %}
