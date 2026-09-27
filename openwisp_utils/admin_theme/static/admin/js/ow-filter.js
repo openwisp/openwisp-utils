@@ -128,7 +128,14 @@ function initFilterDropdownHandler() {
   // Handle focus shift from filter
   document.addEventListener("focusin", function (e) {
     var activeFilter = document.querySelector(".ow-filter.ow-active");
-    if (activeFilter && !activeFilter.contains(e.target)) {
+    if (
+      activeFilter &&
+      !activeFilter.contains(e.target) &&
+      // Safari focuses the scrolling .ow-filter-slider when an option is
+      // pressed: that is not focus leaving the filter, and closing it here
+      // would hide the option before the click lands on it.
+      !e.target.contains(activeFilter)
+    ) {
       hideFilterOptions(activeFilter);
     }
   });

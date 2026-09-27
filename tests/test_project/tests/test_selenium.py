@@ -473,6 +473,33 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
             paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
             self.assertEqual(paginator.get_attribute("innerText"), "0 shelfs")
 
+    def test_filter_option_selectable_after_focus_moves_to_slider(self):
+        # Safari focuses the scrolling .ow-filter-slider when an option is
+        # pressed; the dropdown must stay open so the click can select it.
+        self.login()
+        self.open(reverse("admin:test_project_shelf_changelist"))
+        dropdown = self._get_filter_dropdown("type-of-book")
+        title = self._get_filter_title("type-of-book")
+        selected_option = self._get_filter_selected_option("type-of-book")
+        focus_moves_to = (
+            "document.querySelector(arguments[0]).dispatchEvent("
+            "new FocusEvent('focusin', {bubbles: true}))"
+        )
+        with self.subTest("Focus on the slider keeps the dropdown open"):
+            title.click()
+            self.wait_for_dropdown("type-of-book")
+            self.web_driver.execute_script(focus_moves_to, ".ow-filter-slider")
+            self.assertEqual(dropdown.is_displayed(), True)
+            self._get_filter_anchor("books_type__exact=FANTASY").click()
+            self.assertEqual(dropdown.is_displayed(), False)
+            self.assertEqual(selected_option.get_attribute("innerText"), "Fantasy")
+
+        with self.subTest("Focus elsewhere still closes the dropdown"):
+            title.click()
+            self.wait_for_dropdown("type-of-book")
+            self.web_driver.execute_script(focus_moves_to, "#searchbar")
+            self.assertEqual(dropdown.is_displayed(), False)
+
     def test_book_filter(self):
         # It has total number of filters less than 4
         self.login()
