@@ -71,7 +71,7 @@ setup(
         "celery": ["celery~=5.6.1"],
         "selenium": ["selenium>=4.32,<4.49"],
         "releaser": [
-            "git-cliff~=2.13.1",
+            "git-cliff~=2.14.2",
             "questionary~=2.1.0",
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",
