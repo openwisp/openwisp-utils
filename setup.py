@@ -40,7 +40,7 @@ setup(
         "django-model-utils>=4.5,<5.1",
         "django-minify-compress-staticfiles~=1.1.1",
         "django-admin-autocomplete-filter~=0.7.1",
-        "swapper~=1.4.0",
+        "swapper~=1.5.0",
         # allow wider range here to avoid interfering with other modules
         "urllib3>=2.0.0,<3.0.0",
         "distro~=1.9.0",
