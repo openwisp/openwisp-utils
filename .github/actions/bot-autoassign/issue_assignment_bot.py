@@ -1,6 +1,6 @@
 import re
 
-from base import CONTRIBUTING_GUIDELINES_URL, GitHubBot
+from base import GitHubBot
 from utils import (
     extract_linked_issues,
     find_open_pr_for_issue,
@@ -26,179 +26,45 @@ class IssueAssignmentBot(GitHubBot):
         comment_lower = comment_body.lower()
         assignment_patterns = [
             r"\bassign this issue to me\b",
+            r"\bassign to me\b",
             r"\bassign me\b",
-            r"\bcan i work on this\b",
-            r"\bi would like to work on this\b",
-            r"\bi want to work on this\b",
             r"\bplease assign this to me\b",
             r"\bcan you assign this to me\b",
+            r"\bcan i work on this\b",
+            r"\bi want to work on this\b",
+            r"\bi would like to work on this\b",
+            r"\bi'd like to work on this\b",
+            r"\btake up this issue\b",
         ]
         return any(re.search(pattern, comment_lower) for pattern in assignment_patterns)
 
-    def detect_issue_type(self, issue):
-        """Analyzes labels, title and body.
-        Returns 'bug', 'feature', or None.
-        """
-        bug_keywords = [
-            "bug",
-            "error",
-            "crash",
-            "fail",
-            "broken",
-            "problem",
-            "not working",
-            "doesn't work",
-            "does not work",
-            "fix",
-            "incorrect",
-            "wrong",
-            "exception",
-            "traceback",
-            "breaking",
-            "regression",
-        ]
-        feature_keywords = [
-            "feature",
-            "enhancement",
-            "add",
-            "implement",
-            "support",
-            "new",
-            "create",
-            "allow",
-            "enable",
-            "improve",
-            "improvement",
-            "upgrade",
-            "extend",
-            "functionality",
-            "capability",
-            "ability",
-            "option",
-        ]
-        issue_labels = [label.name.lower() for label in issue.labels]
-        if any(label in issue_labels for label in ["bug", "bugfix", "fix"]):
-            return "bug"
-        elif any(
-            label in issue_labels for label in ["feature", "enhancement", "improvement"]
-        ):
-            return "feature"
-        title = (issue.title or "").lower()
-        body = (issue.body or "").lower()
-        combined_text = f"{title} {body}"
-        bug_score = sum(
-            1
-            for keyword in bug_keywords
-            if re.search(rf"\b{re.escape(keyword)}\b", combined_text)
-        )
-        feature_score = sum(
-            1
-            for keyword in feature_keywords
-            if re.search(rf"\b{re.escape(keyword)}\b", combined_text)
-        )
-        if bug_score > feature_score and bug_score > 0:
-            return "bug"
-        elif feature_score > bug_score and feature_score > 0:
-            return "feature"
-        return None
-
-    def respond_to_assignment_request(self, issue_number, commenter):
+    def respond_to_assignment_request(self, issue_number, commenter, is_exempt=False):
         if not self.repo:
             print("GitHub client not initialized")
             return False
         try:
-            contributing_url = CONTRIBUTING_GUIDELINES_URL
             issue = self.repo.get_issue(issue_number)
             owner, repo_name = self.repository_name.split("/")
-            if not self.validate_issue(owner, repo_name, issue_number):
+            if not is_exempt and not self.validate_issue(
+                owner, repo_name, issue_number
+            ):
                 issue.create_comment(
                     self.get_unvalidated_issue_assignment_request_comment(commenter)
                 )
                 print(f"Posted unvalidated issue response to issue #{issue_number}")
                 return True
-            issue_type = self.detect_issue_type(issue)
-            suggested_keyword = None
-            detection_reason = ""
-            if issue_type == "bug":
-                suggested_keyword = "Fixes"
-                detection_reason = "this appears to be a bug"
-            elif issue_type == "feature":
-                suggested_keyword = "Closes"
-                detection_reason = "this appears to be a feature or enhancement"
-            if suggested_keyword:
-                linking_instruction = (
-                    "**Link your PR to this issue** by including "
-                    f"`{suggested_keyword} #{issue_number}`"
-                    " in the PR description"
-                )
-                keyword_explanation = (
-                    "\n\n**Note**: We suggest "
-                    f"`{suggested_keyword}` because"
-                    f" {detection_reason}. "
-                    "You can also use:\n"
-                    f"- `Closes #{issue_number}`"
-                    " for features/changes\n"
-                    f"- `Fixes #{issue_number}` for bugs\n"
-                    f"- `Related to #{issue_number}`"
-                    " for PRs that contribute "
-                    "but don't completely solve the issue"
-                )
-            else:
-                linking_instruction = (
-                    "**Link your PR to this issue** by"
-                    " including one of the following "
-                    "in the PR description:\n"
-                    f"   - `Closes #{issue_number}`"
-                    " for features/changes\n"
-                    f"   - `Fixes #{issue_number}` for bugs\n"
-                    f"   - `Related to #{issue_number}`"
-                    " for PRs that contribute "
-                    "but don't completely solve the issue"
-                )
-                keyword_explanation = ""
             message_lines = [
                 f"Hi @{commenter} 👋,",
                 "",
-                ("Thank you for your interest in" " contributing to OpenWISP! 🎉"),
+                "Thanks for your interest in contributing to OpenWISP!",
                 "",
-                (
-                    "According to our [contributing guidelines]"
-                    f"({contributing_url}), **you don't need to"
-                    " wait to be assigned** to start working"
-                    " on an issue."
-                ),
-                "We encourage you to:",
+                "If nobody is assigned to this issue, you can start working.",
                 "",
-                ("1. **Fork the repository** and start" " working on your solution"),
-                (
-                    "2. **Open a Pull Request (PR) as soon as"
-                    " possible** - even as a draft if it's"
-                    " still in progress"
-                ),
-                f"3. {linking_instruction}{keyword_explanation}",
+                "Open a draft pull request linked to this issue, for example "
+                f"`Fixes #{issue_number}`.",
                 "",
-                (
-                    "Once you open a PR that references this"
-                    " issue, you will be automatically"
-                    " assigned to it."
-                ),
-                "",
-                "This approach helps us:",
-                "- See your progress and provide early feedback",
-                (
-                    "- Avoid multiple contributors working"
-                    " on the same issue unknowingly"
-                ),
-                "- Keep the contribution process moving smoothly",
-                "",
-                (
-                    "We look forward to your contribution!"
-                    " If you have any questions, feel free"
-                    " to ask in the PR or check our"
-                    f" [documentation]({contributing_url})."
-                ),
-                "",
-                "Happy coding! 🚀",
+                "Join the [developer chat](https://matrix.to/#/#openwisp_development:gitter.im) "
+                "to coordinate or ask questions.",
             ]
             message = "\n".join(message_lines)
             issue.create_comment(message)
@@ -210,25 +76,22 @@ class IssueAssignmentBot(GitHubBot):
 
     def get_unvalidated_issue_assignment_request_comment(self, commenter):
         return self.get_unvalidated_issue_message(
-            f"Hi @{commenter},\n\n"
-            "Thank you for your interest in contributing to OpenWISP.\n\n"
-            "This issue has not been validated as available for new or occasional "
-            "contributors and is reserved for experienced contributors."
+            f"Hi @{commenter} 👋,\n\n"
+            "Thanks for your interest in contributing to OpenWISP!\n\n"
+            "This issue is not currently available to external contributors. "
+            "Please choose a validated issue."
         )
 
     def _cannot_auto_assign_message(self, pr_author, pr_number):
         return (
             f"Hi @{pr_author} 👋,\n\n"
             f"Thank you for opening PR #{pr_number} to address this issue!\n\n"
-            "GitHub did not allow the bot to assign this issue to you"
-            " automatically, because you are not yet an organization"
-            " member and have not previously commented on this issue.\n\n"
-            f"To get assigned, please comment `@{self.bot_username} assign`"
-            " on this issue. Your comment satisfies GitHub's requirement"
-            " and the bot will then assign the issue to you."
+            "GitHub requires external contributors to comment on the issue before "
+            "it allows the bot to assign them automatically.\n\n"
+            f"Comment `@{self.bot_username} assign` on this issue to try again."
         )
 
-    def handle_bot_assign_request(self, issue_number, commenter):
+    def handle_bot_assign_request(self, issue_number, commenter, is_exempt=False):
         if not self.repo:
             print("GitHub client not initialized")
             return False
@@ -252,6 +115,14 @@ class IssueAssignmentBot(GitHubBot):
             if user_in_logins(commenter, get_assignee_logins(issue)):
                 print(f"{commenter} is already assigned to #{issue_number}")
                 return True
+            if not is_exempt:
+                owner, repo_name = self.repository_name.split("/")
+                if not self.validate_issue(owner, repo_name, issue_number):
+                    issue.create_comment(
+                        self.get_unvalidated_issue_assignment_request_comment(commenter)
+                    )
+                    print(f"Issue #{issue_number} is unvalidated, declining assignment")
+                    return True
             try:
                 pr = find_open_pr_for_issue(
                     self.github, self.repository_name, commenter, issue_number
@@ -264,32 +135,27 @@ class IssueAssignmentBot(GitHubBot):
             if pr is None:
                 issue.create_comment(
                     f"Hi @{commenter} 👋,\n\n"
-                    "I could not find an open PR by you that references"
+                    "Thanks for your interest in contributing to OpenWISP! I could not find "
+                    "an open PR by you that references"
                     f" this issue (#{issue_number}). Please open a PR"
                     f" linking to this issue (e.g. `Fixes #{issue_number}`)"
                     f" and then comment `@{self.bot_username} assign` again."
                 )
                 return True
-            if not self.is_pr_author_exempt(pr):
-                owner, repo_name = self.repository_name.split("/")
-                if not self.validate_issue(owner, repo_name, issue_number):
-                    print(f"Issue #{issue_number} is invalid, ignoring bot command")
-                    return True
             issue.add_to_assignees(commenter)
             verified = verify_assignment(self.repo, issue_number, commenter)
             if verified is True:
                 issue.create_comment(
-                    f"This issue has been assigned to @{commenter}"
-                    f" who opened PR #{pr.number} to address it. 🎯"
+                    f"This issue has been assigned to @{commenter}, who opened PR "
+                    f"#{pr.number}. 🎯"
                 )
                 print(f"Assigned #{issue_number} to {commenter} via bot command")
             elif verified is False:
                 # Commenter has commented but the assignment still
                 # failed (perm block, outage, etc.).
                 issue.create_comment(
-                    f"Sorry @{commenter}, GitHub still did not allow"
-                    " this assignment. A maintainer will need to assign"
-                    " this issue manually."
+                    f"Sorry @{commenter}, GitHub still did not allow this assignment. "
+                    "A maintainer must assign this issue manually."
                 )
                 print(
                     f"Bot-command assignment of #{issue_number} to"
@@ -363,10 +229,8 @@ class IssueAssignmentBot(GitHubBot):
                         assigned_issues.append(issue_number)
                         print(f"Assigned issue #{issue_number} to {pr_author}")
                         comment_message = (
-                            "This issue has been automatically"
-                            f" assigned to @{pr_author}"
-                            f" who opened PR #{pr_number}"
-                            " to address it. 🎯"
+                            "This issue has been automatically assigned to "
+                            f"@{pr_author}, who opened PR #{pr_number}. 🎯"
                         )
                         issue.create_comment(comment_message)
                     elif verified is False:
@@ -438,9 +302,19 @@ class IssueAssignmentBot(GitHubBot):
                 print("Ignoring comment posted by a bot")
                 return True
             if self.is_bot_assign_command(comment_body):
-                return self.handle_bot_assign_request(issue_number, commenter)
+                is_exempt = self.is_contributor_exempt(
+                    commenter, comment.get("author_association")
+                )
+                return self.handle_bot_assign_request(
+                    issue_number, commenter, is_exempt
+                )
             if self.is_assignment_request(comment_body):
-                return self.respond_to_assignment_request(issue_number, commenter)
+                is_exempt = self.is_contributor_exempt(
+                    commenter, comment.get("author_association")
+                )
+                return self.respond_to_assignment_request(
+                    issue_number, commenter, is_exempt
+                )
             print("Comment does not contain an assignment request or bot command")
             return True
         except Exception as e:

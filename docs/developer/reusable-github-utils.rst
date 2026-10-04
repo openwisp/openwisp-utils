@@ -66,10 +66,12 @@ OpenWISP repositories. The bot provides the following features:
   referencing an issue (e.g., ``Fixes #123``), the issue is automatically
   assigned to the PR author.
 - **Assignment request responses**: When someone comments asking to be
-  assigned, the bot checks whether the issue is validated. For validated
-  issues, it explains that no assignment is needed before opening a PR.
-  For issues that have not been validated, it explains the validation
-  requirements for external contributors.
+  assigned, the bot checks whether the issue is validated. Contributors
+  can start validated issues without assignment when nobody is assigned to
+  them. For unvalidated issues, external contributors receive a link to
+  the relevant contributing-guidelines section and the developer chat.
+  Owners, organization members, and repository collaborators are exempt
+  from this validation requirement.
 - **Stale PR management**: Warns PR authors after 7 days of inactivity,
   marks stale and unassigns after 14 days, and posts a final follow-up
   encouragement after 60 days. The bot does not auto-close stale PRs.
@@ -81,10 +83,11 @@ OpenWISP repositories. The bot provides the following features:
   <openwisp_look_for_open_issues>` is required. The bot flags PRs that do
   not link one. PRs created by the configured GitHub App are exempt. The
   bot removes the ``invalid`` label once the PR is valid and closes
-  unresolved invalid PRs after 24 hours. For valid PRs, it applies the
-  ``ai-review`` label, which triggers a CodeRabbit review. The label
-  prevents repeated reviews. ``Dependabot`` PRs and PRs whose titles begin
-  with ``[release]`` or ``[backport]`` do not receive the label.
+  unresolved invalid PRs 24 hours after its warning comment. For valid
+  PRs, it applies the ``ai-review`` label, which triggers a CodeRabbit
+  review. The label prevents repeated reviews. ``Dependabot`` PRs and PRs
+  whose titles begin with ``[release]`` or ``[backport]`` do not receive
+  the label.
 
 **How Stale PR Detection Works**
 

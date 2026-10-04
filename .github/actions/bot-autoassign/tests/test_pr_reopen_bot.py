@@ -61,6 +61,8 @@ class TestPRReopenBot:
         comment = mock_issue.create_comment.call_args[0][0]
         assert "@testuser" in comment
         assert "PR #100" in comment
+        assert "has been reassigned" in comment
+        assert "Welcome back" in comment
 
     def test_reassign_silent_rejection_skips_welcome_comment(self, bot_env):
         bot = PRReopenBot()
@@ -211,6 +213,8 @@ class TestPRActivityBot:
         mock_pr.create_issue_comment.assert_called_once()
         comment = mock_pr.create_issue_comment.call_args[0][0]
         assert "@testuser" in comment
+        assert "The stale label was removed" in comment
+        assert "Thanks for following up" in comment
 
     def test_handle_contributor_activity_silent_rejection_skips_comment(self, bot_env):
         bot = PRActivityBot()
