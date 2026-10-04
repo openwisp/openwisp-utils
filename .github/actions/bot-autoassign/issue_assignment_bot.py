@@ -24,12 +24,6 @@ class IssueAssignmentBot(GitHubBot):
         if not comment_body:
             return False
         comment_lower = comment_body.lower()
-        negated_patterns = [
-            r"\b(?:do not|don't|dont|never)(?:\s+(?:want|wish|need|expect|mean|"
-            r"intend|plan))?(?:\s+(?:you|to))*\s+assign(?: this issue)?(?: to)? me\b"
-        ]
-        if any(re.search(pattern, comment_lower) for pattern in negated_patterns):
-            return False
         assignment_patterns = [
             r"\bassign this issue to me\b",
             r"\bassign to me\b",
