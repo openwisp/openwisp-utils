@@ -97,6 +97,8 @@ class TestAssignmentRequest:
             "This is a great idea!",
             "How do I solve this?",
             "The assignment looks wrong",
+            "Please do not assign to me",
+            "Don't assign me",
             "",
             None,
         ],
@@ -189,6 +191,14 @@ class TestRespondToAssignment:
         mock_issue.body = "Test body"
         bot_env["repo"].get_issue.return_value = mock_issue
         assert not bot.respond_to_assignment_request(123, "testuser")
+        mock_issue.create_comment.assert_not_called()
+
+    def test_skips_closed_issue_for_exempt_contributor(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = Mock()
+        mock_issue.state = "closed"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.respond_to_assignment_request(123, "maintainer", is_exempt=True)
         mock_issue.create_comment.assert_not_called()
 
     def test_success_with_bug_label(self, bot_env):

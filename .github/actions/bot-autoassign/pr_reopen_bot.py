@@ -177,7 +177,7 @@ class PRActivityBot(GitHubBot):
             if reassigned_count > 0:
                 encouragement_message = (
                     f"Thanks for following up, @{commenter}! 🙌 The stale label was removed "
-                    "and linked issues were reassigned to you."
+                    "and at least one linked issue was reassigned to you."
                 )
                 pr.create_issue_comment(encouragement_message)
             print(

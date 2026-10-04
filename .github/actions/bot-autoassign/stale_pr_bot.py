@@ -257,6 +257,13 @@ class StalePRBot(GitHubBot):
             pr_author = pr.user.login if pr.user else None
             if not pr_author:
                 return False
+            unassigned_count = self.unassign_linked_issues(pr)
+            unassignment_message = (
+                "One or more linked issues were unassigned so other contributors can "
+                "work on them."
+                if unassigned_count
+                else "No linked issues were unassigned."
+            )
             unassign_lines = [
                 "<!-- bot:stale -->",
                 f"Hi @{pr_author} 👋,",
@@ -264,12 +271,11 @@ class StalePRBot(GitHubBot):
                 f"This pull request is now **stale** after **{days_inactive} days** "
                 "without activity following requested changes.",
                 "",
-                "Linked issues have been unassigned so other contributors can work on them.",
+                unassignment_message,
                 "",
                 "Your contribution is still welcome. Push updates or reply to resume work "
                 "and be reassigned. We are happy to help if you have questions.",
             ]
-            unassigned_count = self.unassign_linked_issues(pr)
             pr.create_issue_comment("\n".join(unassign_lines))
             try:
                 pr.add_to_labels("stale")

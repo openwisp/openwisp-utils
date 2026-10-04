@@ -24,6 +24,11 @@ class IssueAssignmentBot(GitHubBot):
         if not comment_body:
             return False
         comment_lower = comment_body.lower()
+        negated_patterns = [
+            r"\b(?:do not|don't|dont|never)\s+assign(?: this issue)?(?: to)? me\b"
+        ]
+        if any(re.search(pattern, comment_lower) for pattern in negated_patterns):
+            return False
         assignment_patterns = [
             r"\bassign this issue to me\b",
             r"\bassign to me\b",
@@ -44,6 +49,9 @@ class IssueAssignmentBot(GitHubBot):
             return False
         try:
             issue = self.repo.get_issue(issue_number)
+            if getattr(issue, "state", "open") == "closed":
+                print(f"Issue #{issue_number} is closed, ignoring assignment request")
+                return True
             owner, repo_name = self.repository_name.split("/")
             if not is_exempt and not self.validate_issue(
                 owner, repo_name, issue_number

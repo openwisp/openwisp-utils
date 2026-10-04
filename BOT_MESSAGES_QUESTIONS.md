@@ -149,9 +149,15 @@ Hi @<user> 👋,
 
 This pull request is now **stale** after **<days> days** without activity following requested changes.
 
-Linked issues have been unassigned so other contributors can work on them.
+One or more linked issues were unassigned so other contributors can work on them.
 
 Your contribution is still welcome. Push updates or reply to resume work and be reassigned. We are happy to help if you have questions.
+```
+
+If no linked issues were unassigned, the bot posts this alternative sentence instead:
+
+```markdown
+No linked issues were unassigned.
 ```
 
 ### Final Stale Pull Request Follow-up
@@ -179,5 +185,5 @@ Welcome back, @<user>! 🎉 This issue has been reassigned to you after reopenin
 Trigger: the author comments on a stale valid PR and at least one linked issue is reassigned.
 
 ```markdown
-Thanks for following up, @<user>! 🙌 The stale label was removed and linked issues were reassigned to you.
+Thanks for following up, @<user>! 🙌 The stale label was removed and at least one linked issue was reassigned to you.
 ```
