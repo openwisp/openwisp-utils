@@ -7,6 +7,11 @@ MAINTAINER_ROLES = frozenset({"OWNER", "MEMBER", "COLLABORATOR"})
 DEFAULT_EXCLUDE_PR_AUTHORS = "dependabot[bot]"
 MAX_VALIDATION_ISSUES = 10
 CONTRIBUTING_GUIDELINES_URL = "https://openwisp.io/docs/dev/developer/contributing.html"
+VALIDATED_ISSUES_URL = f"{CONTRIBUTING_GUIDELINES_URL}#look-for-validated-issues"
+DEVELOPER_CHAT_URL = "https://matrix.to/#/#openwisp_development:gitter.im"
+ANTI_AI_SPAM_POLICY_URL = (
+    "https://openwisp.io/docs/dev/general/code-of-conduct.html#anti-ai-spam-policy"
+)
 # Stable ProjectV2 node IDs for the OpenWISP contributor boards.
 # These IDs never change even if a board is renamed.
 REQUIRED_CONTRIBUTOR_PROJECT_IDS = frozenset(
@@ -61,22 +66,10 @@ class GitHubBot:
     def get_unvalidated_issue_message(self, context):
         return (
             f"{context}\n\n"
-            "An issue is considered validated when it is open, has at least one "
-            "label, has no `invalid` or `wontfix` label, and is assigned to either the "
-            "[OpenWISP Contributor's Board]"
-            "(https://github.com/orgs/openwisp/projects/42/views/1) or the "
-            "[OpenWISP Priorities for next releases]"
-            "(https://github.com/orgs/openwisp/projects/37/views/1).\n\n"
-            "Please refer to the [OpenWISP Contributing Guidelines]"
-            f"({CONTRIBUTING_GUIDELINES_URL}) for more information.\n\n"
-            "Please see the [OpenWISP Anti AI Spam Policy]"
-            "(https://openwisp.io/docs/dev/general/code-of-conduct.html).\n\n"
-            "Feel free to join the [OpenWISP dev chatroom]"
-            "(https://matrix.to/#/#openwisp_development:gitter.im) "
-            "to coordinate with the development team.\n\n"
-            "Pull requests from external contributors that target an unvalidated "
-            "issue are flagged as invalid and closed automatically if not resolved "
-            "within 24 hours."
+            "Read [how to find a validated issue]"
+            f"({VALIDATED_ISSUES_URL}).\n\n"
+            "Join the [developer chat]"
+            f"({DEVELOPER_CHAT_URL}) to ask questions or coordinate."
         )
 
     def get_issue_projects(self, owner, repo_name, issue_number):
@@ -209,14 +202,10 @@ class GitHubBot:
         )
         return False
 
-    def is_pr_author_exempt(self, pr):
-        pr_author = (
-            pr.user.login
-            if pr.user and isinstance(getattr(pr.user, "login", None), str)
-            else ""
-        )
-        if pr_author == self.bot_login:
-            print(f"Author {pr_author} is the configured bot. Proceeding.")
+    def is_contributor_exempt(self, login, association):
+        login = login if isinstance(login, str) else ""
+        if login == self.bot_login:
+            print(f"Contributor {login} is the configured bot. Proceeding.")
             return True
         exclude_authors_env = os.environ.get(
             "EXCLUDE_PR_AUTHORS", DEFAULT_EXCLUDE_PR_AUTHORS
@@ -224,17 +213,27 @@ class GitHubBot:
         excluded_authors = [
             auth.strip() for auth in exclude_authors_env.split(",") if auth.strip()
         ]
-        if pr_author in excluded_authors:
-            print(f"Author {pr_author} is in the exclude list. Proceeding.")
+        if login in excluded_authors:
+            print(f"Contributor {login} is in the exclude list. Proceeding.")
             return True
-        author_association = str(getattr(pr, "author_association", "") or "")
-        if author_association in MAINTAINER_ROLES:
+        association = str(association or "")
+        if association in MAINTAINER_ROLES:
             print(
-                f"Author {pr_author} is exempt due to association: "
-                f"{author_association}. Proceeding."
+                f"Contributor {login} is exempt due to association: "
+                f"{association}. Proceeding."
             )
             return True
         return False
+
+    def is_pr_author_exempt(self, pr):
+        pr_author = (
+            pr.user.login
+            if pr.user and isinstance(getattr(pr.user, "login", None), str)
+            else ""
+        )
+        return self.is_contributor_exempt(
+            pr_author, getattr(pr, "author_association", "")
+        )
 
     def validate_pr_issues(self, pr):
         """Validate if a pull request is from an exempt user or references a validated issue."""
@@ -302,18 +301,17 @@ class GitHubBot:
         greeting = f"Hi @{pr_author},\n\n" if pr_author else "Hi,\n\n"
         message = self.get_unvalidated_issue_message(
             f"{greeting}"
-            "Thank you for your interest in contributing to OpenWISP.\n\n"
-            "This pull request has been flagged as invalid because external contributors "
-            "must target an issue validated by maintainers before requesting "
-            "review.\n\n"
-            "Please link this pull request to a validated issue by adding "
+            "Thanks for your contribution to OpenWISP.\n\n"
+            "This pull request has been flagged as invalid because it does not link "
+            "to a validated issue.\n\n"
+            "Link this pull request to a validated issue by adding "
             "`Fixes #ISSUE_NUMBER`, `Closes #ISSUE_NUMBER`, or "
-            "`Related to #ISSUE_NUMBER` to the pull request description. "
-            "The issue may be in this repository or another OpenWISP "
-            "repository.\n\n"
-            "If there is no validated issue yet, please open one first and wait "
-            "for maintainer validation before continuing with this pull "
-            "request."
+            "`Related to #ISSUE_NUMBER` to its description.\n\n"
+            "See the [contributing guidelines]"
+            f"({VALIDATED_ISSUES_URL}) and [Anti AI Spam Policy]"
+            f"({ANTI_AI_SPAM_POLICY_URL}).\n\n"
+            "This pull request will be closed 24 hours after this comment if it "
+            "remains invalid."
         )
         return (
             "<!-- bot:invalid_unvalidated_issue -->\n\n"

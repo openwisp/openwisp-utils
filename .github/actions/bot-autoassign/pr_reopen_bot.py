@@ -45,10 +45,8 @@ class PRReopenBot(GitHubBot):
                     reassigned_issues.append(issue_number)
                     print(f"Reassigned issue #{issue_number} to {pr_author}")
                     welcome_message = (
-                        f"Welcome back, @{pr_author}! 🎉"
-                        " This issue has been reassigned"
-                        " to you as you've reopened"
-                        f" PR #{pr_number}."
+                        f"Welcome back, @{pr_author}! 🎉 This issue has been reassigned to "
+                        f"you after reopening PR #{pr_number}."
                     )
                     issue.create_comment(welcome_message)
                 except Exception as e:
@@ -178,10 +176,8 @@ class PRActivityBot(GitHubBot):
                     print(f"Error reassigning issue #{issue_number}: {e}")
             if reassigned_count > 0:
                 encouragement_message = (
-                    f"Thanks for following up, @{commenter}! 🙌"
-                    " The stale status has been removed and"
-                    " the linked issue(s) have been reassigned"
-                    " to you. Looking forward to your updates!"
+                    f"Thanks for following up, @{commenter}! 🙌 The stale label was removed "
+                    "and at least one linked issue was reassigned to you."
                 )
                 pr.create_issue_comment(encouragement_message)
             print(

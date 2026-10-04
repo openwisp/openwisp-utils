@@ -76,12 +76,15 @@ class TestAssignmentRequest:
         "comment",
         [
             "assign this issue to me",
+            "assign to me",
             "Assign me please",
             "Can I work on this?",
             "I would like to work on this issue",
+            "I'd like to work on this",
             "I want to work on this",
             "Please assign this to me",
             "Can you assign this to me?",
+            "Take up this issue",
         ],
     )
     def test_positive_cases(self, comment, bot_env):
@@ -141,10 +144,12 @@ class TestRespondToAssignment:
         mock_issue.create_comment.assert_called_once()
         comment_text = mock_issue.create_comment.call_args[0][0]
         assert "@testuser" in comment_text
-        assert "contributing guidelines" in comment_text
-        # When type is None, generic instructions listing all keywords
-        assert f"`Closes #{123}`" in comment_text
+        assert "Thanks for your interest in contributing to OpenWISP" in comment_text
+        assert (
+            "If nobody is assigned to this issue, you can start working" in comment_text
+        )
         assert f"`Fixes #{123}`" in comment_text
+        assert "https://matrix.to/#/#openwisp_development:gitter.im" in comment_text
 
     def test_replies_to_unvalidated_issue(self, bot_env):
         bot = IssueAssignmentBot()
@@ -156,26 +161,24 @@ class TestRespondToAssignment:
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.respond_to_assignment_request(123, "testuser")
         comment_text = mock_issue.create_comment.call_args[0][0]
-        assert "not been validated" in comment_text
-        assert "OpenWISP Contributor's Board" in comment_text
-        assert "closed automatically" in comment_text
-        assert "Please refer to the [OpenWISP Contributing Guidelines]" in comment_text
+        assert "Thanks for your interest in contributing to OpenWISP" in comment_text
+        assert "not currently available to external contributors" in comment_text
+        assert "Please choose a validated issue" in comment_text
+        assert "#look-for-validated-issues" in comment_text
+        assert "https://matrix.to/#/#openwisp_development:gitter.im" in comment_text
 
-    def test_unvalidated_messages_share_requirements(self, bot_env):
+    def test_unvalidated_messages_link_to_guidance(self, bot_env):
         bot = IssueAssignmentBot()
         issue_comment = bot.get_unvalidated_issue_assignment_request_comment("testuser")
         pr_comment = bot.get_invalid_unvalidated_issue_comment("testuser")
         assert "This pull request has been flagged as invalid" in pr_comment
+        assert "closed 24 hours after this comment" in pr_comment
+        assert "wait for maintainer validation" not in pr_comment
         for comment in (issue_comment, pr_comment):
-            assert "An issue is considered validated" in comment
-            assert (
-                "has at least one label, has no `invalid` or `wontfix` label" in comment
-            )
-            assert "OpenWISP Contributor's Board" in comment
-            assert "Please refer to the [OpenWISP Contributing Guidelines]" in comment
-            assert "OpenWISP Anti AI Spam Policy" in comment
-            assert "OpenWISP dev chatroom" in comment
-            assert "Pull requests from external contributors" in comment
+            assert "#look-for-validated-issues" in comment
+            assert "https://matrix.to/#/#openwisp_development:gitter.im" in comment
+            assert "OpenWISP Contributor's Board" not in comment
+            assert "An issue is considered validated" not in comment
 
     def test_stays_silent_when_issue_validation_fails(self, bot_env):
         bot = IssueAssignmentBot()
@@ -188,7 +191,15 @@ class TestRespondToAssignment:
         assert not bot.respond_to_assignment_request(123, "testuser")
         mock_issue.create_comment.assert_not_called()
 
-    def test_success_bug_detected(self, bot_env):
+    def test_skips_closed_issue_for_exempt_contributor(self, bot_env):
+        bot = IssueAssignmentBot()
+        mock_issue = Mock()
+        mock_issue.state = "closed"
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.respond_to_assignment_request(123, "maintainer", is_exempt=True)
+        mock_issue.create_comment.assert_not_called()
+
+    def test_success_with_bug_label(self, bot_env):
         bot = IssueAssignmentBot()
         bot.validate_issue = Mock(return_value=True)
         mock_label = Mock()
@@ -202,7 +213,7 @@ class TestRespondToAssignment:
         comment_text = mock_issue.create_comment.call_args[0][0]
         assert "`Fixes #42`" in comment_text
 
-    def test_success_feature_detected(self, bot_env):
+    def test_success_with_feature_label(self, bot_env):
         bot = IssueAssignmentBot()
         bot.validate_issue = Mock(return_value=True)
         mock_label = Mock()
@@ -214,7 +225,7 @@ class TestRespondToAssignment:
         bot_env["repo"].get_issue.return_value = mock_issue
         assert bot.respond_to_assignment_request(99, "dev")
         comment_text = mock_issue.create_comment.call_args[0][0]
-        assert "`Closes #99`" in comment_text
+        assert "`Fixes #99`" in comment_text
 
     def test_github_error(self, bot_env):
         bot = IssueAssignmentBot()
@@ -309,7 +320,9 @@ class TestAutoAssignIssuesFromPR:
         for issue in issues_by_number.values():
             issue.add_to_assignees.assert_called_once_with("testuser")
             issue.create_comment.assert_called_once()
-            assert "automatically assigned" in issue.create_comment.call_args[0][0]
+            assert "automatically assigned to @testuser" in (
+                issue.create_comment.call_args[0][0]
+            )
 
     def test_silent_failure_posts_fallback_message(self, bot_env):
         bot = IssueAssignmentBot()
@@ -327,6 +340,7 @@ class TestAutoAssignIssuesFromPR:
         fallback = mock_issue.create_comment.call_args[0][0]
         assert "@nonmember" in fallback
         assert "openwisp-companion assign" in fallback
+        assert "requires external contributors to comment on the issue" in fallback
         assert "automatically assigned" not in fallback
 
     def test_verification_error_stays_silent(self, bot_env):
@@ -368,7 +382,9 @@ class TestAutoAssignIssuesFromPR:
         assigned = bot.auto_assign_issues_from_pr(100, "someuser", "Fixes #123")
         assert assigned == [123]
         initial_issue.create_comment.assert_called_once()
-        assert "automatically assigned" in initial_issue.create_comment.call_args[0][0]
+        assert "automatically assigned to @someuser" in (
+            initial_issue.create_comment.call_args[0][0]
+        )
 
     def test_skip_closed_issue_in_pr_flow(self, bot_env):
         bot = IssueAssignmentBot()
@@ -857,8 +873,9 @@ class TestHandleBotAssignRequest:
         comment = mock_issue.create_comment.call_args[0][0]
         assert "assigned to @contributor" in comment
         assert "PR #200" in comment
+        assert "🎯" in comment
 
-    def test_ignores_invalid_pr(self, bot_env):
+    def test_warns_external_contributor_about_unvalidated_issue(self, bot_env):
         bot = IssueAssignmentBot()
         bot.is_pr_author_exempt = Mock(return_value=False)
         bot.validate_issue = Mock(return_value=False)
@@ -869,7 +886,31 @@ class TestHandleBotAssignRequest:
         assert bot.handle_bot_assign_request(123, "contributor")
         bot.validate_issue.assert_called_once_with("openwisp", "openwisp-utils", 123)
         mock_issue.add_to_assignees.assert_not_called()
-        mock_issue.create_comment.assert_not_called()
+        mock_issue.create_comment.assert_called_once()
+        comment = mock_issue.create_comment.call_args[0][0]
+        assert "not currently available to external contributors" in comment
+        assert "#look-for-validated-issues" in comment
+
+    def test_warns_before_searching_for_pr_on_unvalidated_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=False)
+        mock_issue = _make_bot_assign_issue()
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_bot_assign_request(123, "contributor")
+        bot_env["github"].search_issues.assert_not_called()
+        mock_issue.create_comment.assert_called_once()
+
+    def test_exempt_contributor_can_assign_unvalidated_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=False)
+        mock_issue = _make_issue_with_assignment("contributor")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123")
+        ]
+        assert bot.handle_bot_assign_request(123, "contributor", is_exempt=True)
+        bot.validate_issue.assert_not_called()
+        mock_issue.add_to_assignees.assert_called_once_with("contributor")
 
     def test_replies_when_no_open_pr(self, bot_env):
         bot = IssueAssignmentBot()
@@ -955,6 +996,7 @@ class TestHandleBotAssignRequest:
         assert bot.handle_bot_assign_request(123, "contributor")
         mock_issue.add_to_assignees.assert_called_once_with("contributor")
         comment_text = mock_issue.create_comment.call_args[0][0]
+        assert "Sorry @contributor" in comment_text
         assert "manually" in comment_text
 
     def test_accepts_related_to_pr_reference(self, bot_env):
@@ -989,6 +1031,51 @@ class TestHandleIssueCommentBotCommand:
         ]
         assert bot.handle_issue_comment()
         mock_issue.add_to_assignees.assert_called_once_with("contributor")
+
+    def test_exempt_commenter_can_request_assignment_on_unvalidated_issue(
+        self, bot_env
+    ):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=False)
+        bot.load_event_payload(
+            {
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": "@openwisp-companion assign",
+                    "user": {"login": "maintainer"},
+                    "author_association": "MEMBER",
+                },
+            }
+        )
+        mock_issue = _make_issue_with_assignment("maintainer")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        bot_env["github"].search_issues.return_value = [
+            _make_search_result(200, "Fixes #123", user_login="maintainer")
+        ]
+        assert bot.handle_issue_comment()
+        bot.validate_issue.assert_not_called()
+        mock_issue.add_to_assignees.assert_called_once_with("maintainer")
+
+    def test_exempt_commenter_can_start_unvalidated_issue(self, bot_env):
+        bot = IssueAssignmentBot()
+        bot.validate_issue = Mock(return_value=False)
+        bot.load_event_payload(
+            {
+                "issue": {"number": 123, "pull_request": None},
+                "comment": {
+                    "body": "assign to me",
+                    "user": {"login": "maintainer"},
+                    "author_association": "MEMBER",
+                },
+            }
+        )
+        mock_issue = _make_issue_with_assignment("maintainer")
+        bot_env["repo"].get_issue.return_value = mock_issue
+        assert bot.handle_issue_comment()
+        bot.validate_issue.assert_not_called()
+        comment = mock_issue.create_comment.call_args[0][0]
+        assert "not currently available to external contributors" not in comment
+        assert "Thanks for your interest in contributing to OpenWISP" in comment
 
     def test_ignores_bot_own_comments(self, bot_env):
         bot = IssueAssignmentBot()

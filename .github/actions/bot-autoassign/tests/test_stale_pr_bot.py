@@ -584,6 +584,8 @@ class TestSendStaleWarning:
         assert "@testuser" in comment
         assert "7 days" in comment
         assert "<!-- bot:stale_warning -->" in comment
+        assert "Address the requested changes, push updates, or reply" in comment
+        assert "Thanks for your contribution" in comment
 
 
 class TestMarkPRStale:
@@ -603,6 +605,8 @@ class TestMarkPRStale:
         mock_pr.create_issue_comment.assert_called_once()
         comment = mock_pr.create_issue_comment.call_args[0][0]
         assert "<!-- bot:stale -->" in comment
+        assert "One or more linked issues were unassigned" in comment
+        assert "Your contribution is still welcome" in comment
         mock_pr.add_to_labels.assert_called_once_with("stale")
         mock_issue.remove_from_assignees.assert_called_once_with("testuser")
 
@@ -616,6 +620,16 @@ class TestMarkPRStale:
         mock_pr.create_issue_comment.assert_not_called()
         mock_pr.add_to_labels.assert_not_called()
 
+    def test_reports_when_no_linked_issues_are_unassigned(self, bot_env):
+        bot = StalePRBot()
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        bot.unassign_linked_issues = Mock(return_value=0)
+        assert bot.mark_pr_stale(mock_pr, 14)
+        comment = mock_pr.create_issue_comment.call_args[0][0]
+        assert "No linked issues were unassigned" in comment
+        assert "One or more linked issues were unassigned" not in comment
+
 
 class TestSendFinalFollowup:
     def test_success(self, bot_env):
@@ -626,6 +640,9 @@ class TestSendFinalFollowup:
         mock_pr.create_issue_comment.assert_called_once()
         comment = mock_pr.create_issue_comment.call_args[0][0]
         assert "<!-- bot:final_followup -->" in comment
+        assert "Push updates or reply if you plan to continue" in comment
+        assert "We would be glad to see it move forward" in comment
+        assert "Closing the PR helps maintainers" in comment
         mock_pr.edit.assert_not_called()
 
 
@@ -986,8 +1003,8 @@ class TestStalePRBotInvalidCheck:
             assert bot.process_stale_prs()
             mock_pr.remove_from_labels.assert_not_called()
             mock_pr.create_issue_comment.assert_called_once()
-            assert (
-                "automatically closed" in mock_pr.create_issue_comment.call_args[0][0]
+            assert "was not linked to a validated issue within 24 hours" in (
+                mock_pr.create_issue_comment.call_args[0][0]
             )
             mock_pr.edit.assert_called_once_with(state="closed")
 

@@ -238,16 +238,12 @@ class StalePRBot(GitHubBot):
                 "<!-- bot:final_followup -->",
                 f"Hi @{pr_author} 👋,",
                 "",
-                (
-                    f"This PR has been inactive for **{days_inactive} days**"
-                    " since changes were requested. Are you still working on it?"
-                ),
+                f"This PR has been inactive for **{days_inactive} days** since changes "
+                "were requested.",
                 "",
-                (
-                    "If yes, push new commits or reply to let us know."
-                    " If you've moved on, please close the PR or comment"
-                    " so another contributor can pick it up."
-                ),
+                "We would be glad to see it move forward. Push updates or reply if you "
+                "plan to continue. Otherwise, please close the PR. Closing the PR helps "
+                "maintainers keep the contribution queue clear.",
             ]
             pr.create_issue_comment("\n".join(followup_lines))
             print(f"Sent final follow-up for PR #{pr.number}")
@@ -261,40 +257,25 @@ class StalePRBot(GitHubBot):
             pr_author = pr.user.login if pr.user else None
             if not pr_author:
                 return False
+            unassigned_count = self.unassign_linked_issues(pr)
+            unassignment_message = (
+                "One or more linked issues were unassigned so other contributors can "
+                "work on them."
+                if unassigned_count
+                else "No linked issues were unassigned."
+            )
             unassign_lines = [
                 "<!-- bot:stale -->",
                 f"Hi @{pr_author} 👋,",
                 "",
-                (
-                    "This pull request has been marked"
-                    " as **stale** due to"
-                    f" **{days_inactive} days of inactivity**"
-                    " after changes were requested."
-                ),
+                f"This pull request is now **stale** after **{days_inactive} days** "
+                "without activity following requested changes.",
                 "",
-                (
-                    "As a result, **any linked issues are being"
-                    " unassigned** from you so other contributors"
-                    " can pick them up."
-                ),
+                unassignment_message,
                 "",
-                (
-                    "However, **you can still continue"
-                    " working on this PR**!"
-                    " If you push new commits or respond"
-                    " to the review feedback:"
-                ),
-                "- The issue will be reassigned to you",
-                "- Your contribution is still very welcome",
-                "",
-                (
-                    "If you need more time or have questions"
-                    " about the requested changes, please"
-                    " let us know."
-                    " We're happy to help! 🤝"
-                ),
+                "Your contribution is still welcome. Push updates or reply to resume work "
+                "and be reassigned. We are happy to help if you have questions.",
             ]
-            unassigned_count = self.unassign_linked_issues(pr)
             pr.create_issue_comment("\n".join(unassign_lines))
             try:
                 pr.add_to_labels("stale")
@@ -319,37 +300,15 @@ class StalePRBot(GitHubBot):
                 "<!-- bot:stale_warning -->",
                 f"Hi @{pr_author} 👋,",
                 "",
-                (
-                    "This is a friendly reminder that"
-                    " this pull request has had"
-                    f" **no activity for {days_inactive}"
-                    " days** since changes were requested."
-                ),
+                f"This pull request has been inactive for **{days_inactive} days** since "
+                "changes were requested.",
                 "",
-                (
-                    "We'd love to see this contribution"
-                    " merged! Please take a moment to:"
-                ),
-                "- Address the review feedback",
-                "- Push your changes",
-                ("- Let us know if you have any questions" " or need clarification"),
+                "Address the requested changes, push updates, or reply if you need help "
+                "or more time.",
                 "",
-                (
-                    "If you're busy or need more time,"
-                    " no worries! Just leave a comment"
-                    " to let us know you're still"
-                    " working on it."
-                ),
+                f"Linked issues will be unassigned in **{remaining} days**.",
                 "",
-                (
-                    f"**Note:** within"
-                    f" **{remaining} more days**,"
-                    " the linked issue will be unassigned"
-                    " to allow other contributors"
-                    " to work on it."
-                ),
-                "",
-                "Thank you for your contribution! 🙏",
+                "Thanks for your contribution!",
             ]
             pr.create_issue_comment("\n".join(warning_lines))
             print(f"Sent stale warning for PR #{pr.number}")
@@ -396,9 +355,8 @@ class StalePRBot(GitHubBot):
                                 ).total_seconds() >= 24 * 3600:
                                     close_message = (
                                         "<!-- bot:invalid_unvalidated_issue_closed -->\n\n"
-                                        "This pull request has been automatically closed because it has "
-                                        "been flagged as invalid (not referencing a validated issue) "
-                                        "for more than 24 hours."
+                                        "This pull request was closed because it was not linked to a "
+                                        "validated issue within 24 hours."
                                     )
                                     try:
                                         pr.create_issue_comment(close_message)

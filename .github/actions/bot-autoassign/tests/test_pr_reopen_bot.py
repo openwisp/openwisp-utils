@@ -61,6 +61,8 @@ class TestPRReopenBot:
         comment = mock_issue.create_comment.call_args[0][0]
         assert "@testuser" in comment
         assert "PR #100" in comment
+        assert "has been reassigned" in comment
+        assert "Welcome back" in comment
 
     def test_reassign_silent_rejection_skips_welcome_comment(self, bot_env):
         bot = PRReopenBot()
@@ -211,6 +213,44 @@ class TestPRActivityBot:
         mock_pr.create_issue_comment.assert_called_once()
         comment = mock_pr.create_issue_comment.call_args[0][0]
         assert "@testuser" in comment
+        assert "The stale label was removed" in comment
+        assert "Thanks for following up" in comment
+        assert "at least one linked issue was reassigned" in comment
+
+    def test_reports_partial_reassignment(self, bot_env):
+        bot = PRActivityBot()
+        bot.load_event_payload(
+            {
+                "issue": {
+                    "number": 100,
+                    "pull_request": {
+                        "url": ("https://api.github.com" "/repos/owner/repo/pulls/100")
+                    },
+                },
+                "comment": {"user": {"login": "testuser"}},
+            }
+        )
+        mock_pr = Mock()
+        mock_pr.user.login = "testuser"
+        mock_pr.body = "Fixes #123 and closes #456"
+        mock_label = Mock()
+        mock_label.name = "stale"
+        mock_pr.get_labels.return_value = [mock_label]
+        available_issue = Mock()
+        available_issue.assignees = []
+        _attach_assign_simulation(available_issue)
+        assigned_issue = Mock()
+        assigned_issue.assignees = [Mock(login="otheruser")]
+        bot_env["repo"].get_issue.return_value = available_issue
+        bot_env["repo"].get_pull.return_value = mock_pr
+        with patch(
+            "pr_reopen_bot.get_valid_linked_issues",
+            return_value=[(123, available_issue), (456, assigned_issue)],
+        ):
+            assert bot.handle_contributor_activity()
+        comment = mock_pr.create_issue_comment.call_args[0][0]
+        assert "at least one linked issue was reassigned" in comment
+        assert "linked issues were reassigned" not in comment
 
     def test_handle_contributor_activity_silent_rejection_skips_comment(self, bot_env):
         bot = PRActivityBot()
