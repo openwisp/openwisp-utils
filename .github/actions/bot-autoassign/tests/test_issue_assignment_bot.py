@@ -99,6 +99,7 @@ class TestAssignmentRequest:
             "The assignment looks wrong",
             "Please do not assign to me",
             "Don't assign me",
+            "I don't want you to assign me",
             "",
             None,
         ],
