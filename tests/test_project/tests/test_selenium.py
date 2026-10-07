@@ -651,7 +651,10 @@ class TestAutocompleteFilter(
         select_id = "id-shelf__id-dal-filter"
         filter_css_selector = f"#select2-{select_id}-container"
         filter_options = f'//*[@id="select2-{select_id}-results"]/li'
-        filter_option_xpath = f'//*[@id="select2-{select_id}-results"]/li[2]'
+        filter_option_xpath = (
+            f'//*[@id="select2-{select_id}-results"]/li'
+            f'[contains(text(), "{factual_shelf.name}")]'
+        )
 
         result_xpath = '//*[@id="result_list"]/tbody/tr/th/a[contains(text(), "{}")]'
         self.open(url)
