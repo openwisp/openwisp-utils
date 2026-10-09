@@ -20,6 +20,8 @@ on:
         required: true
       private_key:
         required: false
+      OPENWISP_BOT_PRIVATE_KEY:
+        required: false
 
 jobs:
   parse:

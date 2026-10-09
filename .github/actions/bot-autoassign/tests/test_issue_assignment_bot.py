@@ -1645,8 +1645,7 @@ class TestPRValidation:
             mock_pr_obj.create_issue_comment.assert_not_called()
             mock_pr_obj.add_to_labels.assert_not_called()
 
-    def test_workflow_has_members_read_permission(self):
-        """Verify that the reusable workflow requests permission-members: read."""
+    def test_workflow_does_not_request_members_permission(self):
         workflow_path = os.path.join(
             os.path.dirname(
                 os.path.dirname(
@@ -1659,23 +1658,7 @@ class TestPRValidation:
         assert os.path.exists(
             workflow_path
         ), f"Workflow file not found at {workflow_path}"
-        in_write_token_step = False
-        with_indent = None
         with open(workflow_path, "r") as f:
-            for raw_line in f:
-                stripped = raw_line.strip()
-                if stripped == "- name: Generate repository write token":
-                    in_write_token_step = True
-                    with_indent = None
-                elif in_write_token_step and stripped.startswith("- name:"):
-                    in_write_token_step = False
-                    with_indent = None
-                elif in_write_token_step and stripped == "with:":
-                    with_indent = len(raw_line) - len(raw_line.lstrip())
-                elif with_indent is not None:
-                    current_indent = len(raw_line) - len(raw_line.lstrip())
-                    if current_indent <= with_indent:
-                        with_indent = None
-                    elif stripped == "permission-members: read":
-                        return
-        pytest.fail("permission-members: read is not requested in write-token step")
+            assert (
+                "permission-members:" not in f.read()
+            ), "Contributor exemptions use author_association, not membership API calls"

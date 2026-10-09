@@ -31,7 +31,7 @@ on:
       OPENWISP_BOT_APP_ID:
         required: true
       OPENWISP_BOT_PRIVATE_KEY:
-        required: false
+        required: true
 
 env:
   PUBLIC_VALIDATION_REPOSITORIES: |

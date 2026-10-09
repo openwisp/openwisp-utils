@@ -31,6 +31,8 @@ on:
         required: true
       PRIVATE_KEY:
         required: false
+      OPENWISP_BOT_PRIVATE_KEY:
+        required: false
 
 permissions:
   actions: read

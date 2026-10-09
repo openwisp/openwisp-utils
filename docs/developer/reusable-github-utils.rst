@@ -133,8 +133,8 @@ ambient token is not used for these mutations.
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
 - ``OPENWISP_BOT_PRIVATE_KEY``: OpenWISP Bot GitHub App private key. Store
   this in the protected environment described in
-  :ref:`utils_github_app_security`, rather than forwarding it from a
-  repository or organization secret.
+  :ref:`utils_github_app_security`. Pass its name explicitly from the
+  caller; no repository or organization copy is needed.
 
 The OpenWISP Bot needs **Projects: Read** permission at the org level to
 check issue project assignments via GraphQL. Without it, valid external
@@ -180,6 +180,7 @@ Create the following workflow files in your repository.
           bot_command: issue_assignment
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 **2. PR Issue Link**
 (``.github/workflows/bot-autoassign-pr-issue-link.yml``)
@@ -207,6 +208,7 @@ Create the following workflow files in your repository.
           bot_command: issue_assignment
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 **3. PR Reopen** (``.github/workflows/bot-autoassign-pr-reopen.yml``)
 
@@ -236,6 +238,7 @@ Create the following workflow files in your repository.
           bot_command: pr_reopen
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
       handle-pr-activity:
         if: >
           github.repository == 'openwisp/your-repo' &&
@@ -247,6 +250,7 @@ Create the following workflow files in your repository.
           bot_command: pr_reopen
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 
@@ -280,6 +284,7 @@ Create the following workflow files in your repository.
           bot_command: stale_pr
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 **Overriding the bot username**
 
@@ -299,6 +304,7 @@ different GitHub App username:
           bot_username: my-custom-bot
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 GitHub Workflows
 ----------------
@@ -330,8 +336,13 @@ Configure each repository as follows:
    ``OPENWISP_BOT_APP_ID`` as a repository or organization secret and pass
    it to the reusable workflow. Remove repository and organization-level
    copies of the private key accessible to that repository. Rotate the key
-   if it may previously have been exposed. Private-key forwarding remains
-   supported for compatibility, but does not provide this isolation.
+   if it may previously have been exposed. Callers must explicitly pass
+   ``OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}``
+   even when the key exists only in the environment. The called job's
+   environment supplies its value. Backport and CI-failure workflows still
+   accept the legacy ``private_key`` and ``PRIVATE_KEY`` aliases,
+   respectively; migrate callers to the canonical name when moving the key
+   into the environment.
 4. Protect ``master`` against direct contributor pushes. Require trusted
    reviews, including code-owner approval for privileged workflows,
    actions, and executed scripts. Configure ``CODEOWNERS`` with your
@@ -429,6 +440,7 @@ example:
           install_package: true
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 
@@ -487,6 +499,7 @@ not yet merged, the workflow exits safely without failing.
           commit_sha: ${{ github.sha }}
         secrets:
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
       backport-on-comment:
         if: >
@@ -503,6 +516,7 @@ not yet merged, the workflow exits safely without failing.
           comment_body: ${{ github.event.comment.body }}
         secrets:
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. _utils_ci_failure_bot:
 
@@ -649,6 +663,7 @@ job:
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. _utils_changelog_bot:
 
@@ -815,6 +830,7 @@ retrieves the PR metadata and calls the reusable changelog workflow.
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 

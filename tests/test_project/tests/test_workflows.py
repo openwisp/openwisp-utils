@@ -60,6 +60,26 @@ class TestWorkflowSecurity(TestCase):
                     tokens, expected, "App token grants must be explicit and minimal"
                 )
 
+    def test_app_secret_forwarding(self):
+        for path in self.workflows.glob("*.yml"):
+            workflow = self.workflow(path.stem)
+            for name, job in workflow["jobs"].items():
+                target = job.get("uses", "").split("/")[-1].split("@")[0]
+                if not target.startswith("reusable-"):
+                    continue
+                with self.subTest(workflow=path.name, job=name):
+                    self.assertEqual(
+                        job["secrets"]["OPENWISP_BOT_PRIVATE_KEY"],
+                        "${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}",
+                        "Environment-only App secrets must be explicitly forwarded by name",
+                    )
+                    called = self.workflow(target.removesuffix(".yml"))
+                    trigger = called.get("on", called.get(True))
+                    self.assertIn(
+                        "OPENWISP_BOT_PRIVATE_KEY",
+                        trigger["workflow_call"]["secrets"],
+                    )
+
     def test_replication_trust_boundary(self):
         workflow = self.workflow("reusable-version-branch")
         self.assertEqual(workflow["permissions"], {"contents": "read"})

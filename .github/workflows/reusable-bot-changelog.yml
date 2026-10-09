@@ -16,7 +16,7 @@ on:
         required: true
       OPENWISP_BOT_PRIVATE_KEY:
         description: "Private key (prefer the openwisp-bot environment secret)"
-        required: false
+        required: true
 
 jobs:
   generate-changelog:
