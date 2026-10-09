@@ -6,6 +6,19 @@ Version 1.4.0a [unreleased]
 
 Work in progress.
 
+Version 1.3.1 [2026-10-09]
+--------------------------
+
+Changes
+~~~~~~~
+
+Dependencies
+++++++++++++
+
+- Pinned drf-yasg >=1.21.14,<1.21.17
+
+  Due to https://github.com/axnsan12/drf-yasg/issues/980.
+
 Version 1.3.0 [2026-08-29]
 --------------------------
 
