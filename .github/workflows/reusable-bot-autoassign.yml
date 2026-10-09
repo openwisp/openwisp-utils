@@ -31,7 +31,7 @@ on:
       OPENWISP_BOT_APP_ID:
         required: true
       OPENWISP_BOT_PRIVATE_KEY:
-        required: true
+        required: false
 
 env:
   PUBLIC_VALIDATION_REPOSITORIES: |
@@ -75,6 +75,7 @@ env:
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    environment: openwisp-bot
     steps:
       - name: Generate repository write token
         id: write-token
@@ -86,7 +87,6 @@ jobs:
           repositories: ${{ github.event.repository.name }}
           permission-issues: write
           permission-pull-requests: write
-          permission-members: read
 
       - name: Check validation repository list
         run: |
@@ -106,7 +106,6 @@ jobs:
           repositories: ${{ env.PUBLIC_VALIDATION_REPOSITORIES }}
           permission-issues: read
           permission-organization-projects: read
-          permission-repository-projects: read
 
       - name: Checkout openwisp-utils
         uses: actions/checkout@v7
@@ -114,6 +113,7 @@ jobs:
           repository: ${{ inputs.openwisp_utils_repo }}
           ref: ${{ inputs.openwisp_utils_ref }}
           path: openwisp-utils
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v7

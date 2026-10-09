@@ -30,7 +30,7 @@ on:
       APP_ID:
         required: true
       PRIVATE_KEY:
-        required: true
+        required: false
 
 permissions:
   actions: read
@@ -40,13 +40,18 @@ permissions:
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    environment: openwisp-bot
     steps:
       - name: Generate Bot Token
         id: generate-token
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.PRIVATE_KEY }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY || secrets.PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-actions: write
+          permission-pull-requests: write
 
       - name: Checkout Reusable Workflow
         uses: actions/checkout@v7
@@ -54,6 +59,7 @@ jobs:
           repository: openwisp/openwisp-utils
           ref: master
           path: trusted_scripts
+          persist-credentials: false
 
       - name: Checkout PR Code
         uses: actions/checkout@v7
@@ -63,6 +69,7 @@ jobs:
           path: pr_code
           fetch-depth: 1
           submodules: false
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v7

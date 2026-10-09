@@ -15,12 +15,13 @@ on:
         description: "GitHub App ID for OpenWISP Bot"
         required: true
       OPENWISP_BOT_PRIVATE_KEY:
-        description: "Private key for GitHub App authentication"
-        required: true
+        description: "Private key (prefer the openwisp-bot environment secret)"
+        required: false
 
 jobs:
   generate-changelog:
     runs-on: ubuntu-latest
+    environment: openwisp-bot
     permissions:
       contents: read
       pull-requests: write
@@ -32,6 +33,7 @@ jobs:
         with:
           ref: refs/pull/${{ inputs.pr_number }}/head
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Generate App Token
         uses: actions/create-github-app-token@v3
@@ -39,6 +41,10 @@ jobs:
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-pull-requests: write
+          permission-issues: read
 
       - name: Checkout openwisp-utils for action
         uses: actions/checkout@v7
@@ -48,6 +54,7 @@ jobs:
           sparse-checkout: |
             .github/actions/bot-changelog-generator
           path: openwisp-utils-action
+          persist-credentials: false
 
       - name: Generate changelog
         uses: ./openwisp-utils-action/.github/actions/bot-changelog-generator

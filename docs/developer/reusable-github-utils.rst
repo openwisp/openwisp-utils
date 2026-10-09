@@ -131,8 +131,10 @@ to validate linked issues and project assignments. The caller workflow's
 ambient token is not used for these mutations.
 
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
-- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
-  key.
+- ``OPENWISP_BOT_PRIVATE_KEY``: OpenWISP Bot GitHub App private key. Store
+  this in the protected environment described in
+  :ref:`utils_github_app_security`, rather than forwarding it from a
+  repository or organization secret.
 
 The OpenWISP Bot needs **Projects: Read** permission at the org level to
 check issue project assignments via GraphQL. Without it, valid external
@@ -178,7 +180,6 @@ Create the following workflow files in your repository.
           bot_command: issue_assignment
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 **2. PR Issue Link**
 (``.github/workflows/bot-autoassign-pr-issue-link.yml``)
@@ -206,7 +207,6 @@ Create the following workflow files in your repository.
           bot_command: issue_assignment
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 **3. PR Reopen** (``.github/workflows/bot-autoassign-pr-reopen.yml``)
 
@@ -236,7 +236,6 @@ Create the following workflow files in your repository.
           bot_command: pr_reopen
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
       handle-pr-activity:
         if: >
           github.repository == 'openwisp/your-repo' &&
@@ -248,7 +247,6 @@ Create the following workflow files in your repository.
           bot_command: pr_reopen
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 
@@ -282,7 +280,6 @@ Create the following workflow files in your repository.
           bot_command: stale_pr
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 **Overriding the bot username**
 
@@ -302,10 +299,80 @@ different GitHub App username:
           bot_username: my-custom-bot
         secrets:
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 GitHub Workflows
 ----------------
+
+.. _utils_github_app_security:
+
+GitHub App Permissions and Credential Protection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The App-authenticated reusable workflows use an ``openwisp-bot`` GitHub
+Actions environment. **An administrator must configure this environment
+before enabling the workflows.** Referencing an environment in YAML does
+not create deployment restrictions or protect version branches.
+
+Configure each repository as follows:
+
+1. Grant the existing OpenWISP Companion App **Contents: Read and write**
+   permission and approve the updated permissions for its installation.
+   Install it only on repositories that need it. Retain the permissions
+   needed by the other bots; do not grant **Workflows: Write** merely to
+   bypass a rejected push.
+2. Create the ``openwisp-bot`` environment under **Settings >
+   Environments**. Restrict deployment branches to the protected
+   ``master`` branch (or the trusted default branch for other
+   repositories), with no permitted tags. Optionally require approval by
+   trusted maintainers and prevent self-review. Disable administrator
+   bypass where available.
+3. Store ``OPENWISP_BOT_PRIVATE_KEY`` as an **environment secret**. Keep
+   ``OPENWISP_BOT_APP_ID`` as a repository or organization secret and pass
+   it to the reusable workflow. Remove repository and organization-level
+   copies of the private key accessible to that repository. Rotate the key
+   if it may previously have been exposed. Private-key forwarding remains
+   supported for compatibility, but does not provide this isolation.
+4. Protect ``master`` against direct contributor pushes. Require trusted
+   reviews, including code-owner approval for privileged workflows,
+   actions, and executed scripts. Configure ``CODEOWNERS`` with your
+   trusted maintainers, and protect changes to that file too. Do not run
+   contributor-controlled code, refs, or dependencies with App credentials
+   available.
+5. Create an **active branch ruleset** targeting all version branches,
+   including future versions. Enable **Restrict creations**, **Restrict
+   updates**, **Restrict deletions**, and **Block force pushes**. Add only
+   the installed App to the bypass list in **Always** mode. Do not add
+   contributor roles, teams, or other automation identities. Check the
+   target preview carefully so that ``master`` and temporary ``backport/``
+   branches are not included.
+6. Verify that ordinary contributors cannot create, update, delete, or
+   force-push version branches, while the replication workflow can update
+   them. Audit existing version-branch commits before trusting those
+   branches; access restrictions do not remove previously injected code.
+
+App permissions and rulesets must be configured in GitHub; these workflows
+cannot apply those administrator settings. Administrators able to change
+the protections remain trusted.
+
+Each token requests explicit permissions. Replication uses **Contents:
+Write**; backporting uses **Contents: Write** and **Pull requests:
+Write**. The changelog bot uses **Pull requests: Write** and **Issues:
+Read**. The CI failure bot uses **Actions: Write** (including retries) and
+**Pull requests: Write**. Autoassignment uses **Issues: Write** and **Pull
+requests: Write**, with a separate allowlisted validation token requesting
+**Issues: Read** and **Organization projects: Read**. Mutation tokens are
+scoped to the current repository. Workflow ``permissions`` settings
+constrain ``GITHUB_TOKEN``, not installation tokens.
+
+.. warning::
+
+    Bypass belongs to the App identity, not a workflow filename. The
+    backport workflow also needs a Contents-write token and therefore
+    shares the App's bypass capability, although it only opens backport
+    PRs. Any holder of the App's private key can mint new tokens with the
+    App's granted permissions. A separate replication App provides
+    stronger isolation if the existing App's other uses cannot be equally
+    protected.
 
 Replicate Commits to Version Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -328,6 +395,14 @@ these version branches manually is time-consuming, which is why this
 re-usable GitHub workflow automates the process of keeping version
 branches synchronized with the ``master`` branch.
 
+Complete :ref:`utils_github_app_security` before using replication. Only
+push events on ``master`` are accepted. Version detection and optional
+package installation run in a separate read-only job without App
+credentials. The push job rebases onto the triggering commit and generates
+a repository-scoped Contents-write App token only after preparing the
+branch. The token is used for that push without persisting it in the Git
+configuration.
+
 You can invoke this workflow from another workflow using the following
 example:
 
@@ -340,6 +415,9 @@ example:
         branches:
           - master
 
+    permissions:
+      contents: read
+
     jobs:
       version-branch:
         if: github.repository == 'openwisp/your-repo'
@@ -349,21 +427,18 @@ example:
           module_name: openwisp_utils
           # Whether to install the Python package. Defaults to false.
           install_package: true
+        secrets:
+          OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
 
 .. note::
 
-    If the ``master`` branch is force-pushed, this workflow will fail due
-    to conflicts. To resolve this, you must manually synchronize the
-    version branch with the ``master`` branch. You can use the following
-    commands to perform this synchronization:
-
-    .. code-block:: bash
-
-        VERSION=<enter-version-number> # e.g. 1.2
-        git fetch origin
-        git checkout $VERSION
-        git reset --hard origin/master
-        git push origin $VERSION --force-with-lease
+    Replication preserves version-branch-specific commits; it is not an
+    exact mirror or a mechanism for removing malicious commits. If source
+    history is rewritten or the destination has diverged, a rebase or
+    non-fast-forward push may fail. Have a trusted administrator review
+    and restore the branch through a controlled recovery procedure. Do not
+    grant contributors bypass or enable routine force pushes to resolve
+    the failure.
 
 Backport Fixes to Stable Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -412,7 +487,6 @@ not yet merged, the workflow exits safely without failing.
           commit_sha: ${{ github.sha }}
         secrets:
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
       backport-on-comment:
         if: >
@@ -429,7 +503,6 @@ not yet merged, the workflow exits safely without failing.
           comment_body: ${{ github.event.comment.body }}
         secrets:
           app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. _utils_ci_failure_bot:
 
@@ -446,11 +519,11 @@ actionable remediation plan directly to the Pull Request.
 When the bot detects that all failures are transient (e.g., network
 errors, browser crashes, Coveralls flakiness), it automatically re-runs
 the failed jobs up to 3 times and posts a short notification instead of
-the full analysis. This requires ``actions: write`` permission in the
-caller workflow and the GitHub App must have the **Actions** permission
-enabled. If the permission is not granted (e.g., in repositories that
-haven't updated their caller workflow yet), the auto-retry is skipped
-gracefully and the full analysis is posted instead.
+the full analysis. The GitHub App installation must grant **Actions:
+Write** and **Pull requests: Write**, as the workflow explicitly requests
+both permissions. Caller ``GITHUB_TOKEN`` permissions do not control this
+App token. A rejected retry request is handled gracefully and the full
+analysis is posted instead.
 
 **Retry mode configuration**
 
@@ -576,7 +649,6 @@ job:
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. _utils_changelog_bot:
 
@@ -602,8 +674,9 @@ to secrets, and is the one that generates and posts the changelog comment.
 
 - ``GEMINI_API_KEY`` (required): Google Gemini API key.
 - ``OPENWISP_BOT_APP_ID`` (required): OpenWISP Bot GitHub App ID.
-- ``OPENWISP_BOT_PRIVATE_KEY`` (required): OpenWISP Bot GitHub App private
-  key.
+- ``OPENWISP_BOT_PRIVATE_KEY``: OpenWISP Bot GitHub App private key,
+  stored in the protected ``openwisp-bot`` environment. See
+  :ref:`utils_github_app_security`.
 
 **Model configuration**
 
@@ -742,7 +815,6 @@ retrieves the PR metadata and calls the reusable changelog workflow.
         secrets:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}
-          OPENWISP_BOT_PRIVATE_KEY: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 

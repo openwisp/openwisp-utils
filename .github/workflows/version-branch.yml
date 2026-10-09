@@ -5,9 +5,14 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+
 jobs:
   version-branch:
     if: github.repository == 'openwisp/openwisp-utils'
     uses: openwisp/openwisp-utils/.github/workflows/reusable-version-branch.yml@master
     with:
       module_name: openwisp_utils
+    secrets:
+      OPENWISP_BOT_APP_ID: ${{ secrets.OPENWISP_BOT_APP_ID }}

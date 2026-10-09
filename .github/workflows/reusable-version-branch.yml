@@ -12,14 +12,27 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      OPENWISP_BOT_APP_ID:
+        required: true
+      OPENWISP_BOT_PRIVATE_KEY:
+        required: false
+
+permissions:
+  contents: read
 
 jobs:
-  replicate:
+  prepare:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -36,26 +49,72 @@ jobs:
           pip install .
 
       - name: Get version
-        id: get_version
+        id: get-version
+        env:
+          MODULE_NAME: ${{ inputs.module_name }}
         run: |
-          VERSION=$(python -c "
-          from ${{ inputs.module_name }} import VERSION
-          print(f'{VERSION[0]}.{VERSION[1]}')
-          ")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          python - <<'PY'
+          import importlib
+          import os
+          import re
+
+          name = os.environ["MODULE_NAME"]
+          if not re.fullmatch(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*", name):
+              raise ValueError("Invalid Python module name")
+          version = importlib.import_module(name).VERSION
+          major, minor = version[:2]
+          if any(type(part) is not int or part < 0 for part in (major, minor)):
+              raise ValueError("Version must start with non-negative integers")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"version={major}.{minor}\n")
+          PY
+
+  replicate:
+    needs: prepare
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: openwisp-bot
+    concurrency:
+      group: version-branch-${{ github.repository }}-${{ needs.prepare.outputs.version }}
+      cancel-in-progress: false
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Configure Git
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git config user.name 'OpenWISP Companion'
+          git config user.email 'support@openwisp.io'
 
       - name: Rebase changes onto version branch
         run: |
-          if git ls-remote --heads origin $VERSION | grep -sw $VERSION; then
-            git fetch origin --unshallow
-            git checkout -b $VERSION origin/$VERSION
-            git rebase origin/master
+          if git show-ref --verify --quiet "refs/remotes/origin/$VERSION"; then
+            git checkout -b "$VERSION" "origin/$VERSION"
+            git rebase "$GITHUB_SHA"
           else
-            git checkout -b $VERSION
+            git checkout -b "$VERSION"
           fi
-          git push origin $VERSION
+
+      - name: Generate replication token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
+      - name: Push version branch
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          AUTH=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          git -c "http.${GITHUB_SERVER_URL}/.extraheader=AUTHORIZATION: basic $AUTH" \
+            push origin "HEAD:refs/heads/$VERSION"

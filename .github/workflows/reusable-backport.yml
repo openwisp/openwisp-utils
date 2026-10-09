@@ -19,7 +19,7 @@ on:
       app_id:
         required: true
       private_key:
-        required: true
+        required: false
 
 jobs:
   parse:
@@ -65,6 +65,7 @@ jobs:
     needs: parse
     if: needs.parse.outputs.branches != '' && needs.parse.outputs.branches != '[]' && needs.parse.outputs.sha != ''
     runs-on: ubuntu-latest
+    environment: openwisp-bot
     strategy:
       fail-fast: false
       matrix:
@@ -75,7 +76,11 @@ jobs:
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.app_id }}
-          private-key: ${{ secrets.private_key }}
+          private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY || secrets.private_key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
 
       - uses: actions/checkout@v7
         with:
