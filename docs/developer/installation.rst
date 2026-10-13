@@ -33,14 +33,16 @@ Install the system dependencies:
 
     sudo apt-get install sqlite3 libsqlite3-dev
 
-    # For running E2E Selenium tests
-    sudo apt install chromium
+    # For running E2E Selenium tests (Firefox is the default browser)
+    sudo apt install firefox chromium
 
-Fork and clone the forked repository:
+Fork the `openwisp-utils repository
+<https://github.com/openwisp/openwisp-utils>`_ on GitHub, then clone your
+fork. Replace ``YOUR_GITHUB_USERNAME`` with your GitHub username:
 
 .. code-block:: shell
 
-    git clone git://github.com/<your_fork>/openwisp-utils
+    git clone git@github.com:YOUR_GITHUB_USERNAME/openwisp-utils.git
 
 Navigate into the cloned repository:
 
@@ -128,8 +130,8 @@ To install the latest development version tarball via HTTPs:
 
     pip install https://github.com/openwisp/openwisp-utils/tarball/master
 
-Alternatively you can use the git protocol:
+Alternatively you can install the latest development version from Git:
 
 .. code-block:: shell
 
-    pip install -e git+git://github.com/openwisp/openwisp-utils#egg=openwisp_utils
+    pip install -e git+https://github.com/openwisp/openwisp-utils#egg=openwisp_utils
