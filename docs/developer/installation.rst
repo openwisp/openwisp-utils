@@ -38,11 +38,11 @@ Install the system dependencies:
 
 Fork the `openwisp-utils repository
 <https://github.com/openwisp/openwisp-utils>`_ on GitHub, then clone your
-fork:
+fork. Replace ``YOUR_GITHUB_USERNAME`` with your GitHub username:
 
 .. code-block:: shell
 
-    git clone git@github.com:<your_fork>/openwisp-utils.git
+    git clone git@github.com:YOUR_GITHUB_USERNAME/openwisp-utils.git
 
 Navigate into the cloned repository:
 
