@@ -6,6 +6,7 @@ from django.urls import reverse
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 from ..models import Book, Operator, Shelf
 from . import CreateMixin
@@ -689,6 +690,73 @@ class TestAutocompleteFilter(
         self.find_element(By.CSS_SELECTOR, ".select2-container--open")
         for option in self.web_driver.find_elements(By.XPATH, filter_options):
             self.assertNotEqual(option.text, "-")
+
+    def test_autocomplete_filter_dropdown_animation(self):
+        """Tests the opening animation of the autocomplete filter dropdown."""
+        url = reverse("admin:test_project_book_changelist")
+        self._create_shelf(name="Horror", books_type="HORROR", owner=self.admin)
+        select_id = "id-shelf__id-dal-filter"
+        filter_css_selector = f"#select2-{select_id}-container"
+        dropdown_css_selector = ".ow2-autocomplete-dropdown"
+        search_field_css_selector = ".ow2-autocomplete-dropdown .select2-search__field"
+        self.open(url)
+
+        with self.subTest("Opening the dropdown applies the animation classes"):
+            self.find_element(By.CSS_SELECTOR, filter_css_selector).click()
+            self.wait_for_script(
+                "const dropdown ="
+                " document.querySelector('.ow2-autocomplete-dropdown');"
+                "return dropdown &&"
+                " dropdown.classList.contains('ow-dropdown-animated') &&"
+                " dropdown.classList.contains('ow-dropdown-open');"
+            )
+            # Transitions are disabled during tests (see base_site.html),
+            # therefore the stylesheet rule is checked instead of the
+            # computed style.
+            transition = self.wait_for_script(
+                "for (const sheet of document.styleSheets) {"
+                "  try {"
+                "    for (const rule of sheet.cssRules) {"
+                "      if (rule.selectorText ==="
+                "          '.ow2-autocomplete-dropdown.select2-dropdown') {"
+                "        return rule.style.transition || false;"
+                "      }"
+                "    }"
+                "  } catch (e) {}"
+                "}"
+                "return false;",
+                timeout=5,
+            )
+            self.assertIn("opacity", transition)
+            self.assertIn("transform", transition)
+
+        with self.subTest("Reduced motion skips the dropdown animation"):
+            self.web_driver.execute_script(
+                "window.__owOriginalMatchMedia = window.matchMedia;"
+                "window.matchMedia = function (query) {"
+                "  const mql = window.__owOriginalMatchMedia.call(window, query);"
+                "  if (query === '(prefers-reduced-motion: reduce)') {"
+                "    Object.defineProperty(mql, 'matches', { value: true });"
+                "  }"
+                "  return mql;"
+                "};"
+            )
+            self.find_element(By.CSS_SELECTOR, search_field_css_selector).send_keys(
+                Keys.ESCAPE
+            )
+            self.wait_for_script(
+                "return !document.querySelector('.ow2-autocomplete-dropdown');"
+            )
+            self.find_element(By.CSS_SELECTOR, filter_css_selector).click()
+            self.wait_for_presence(By.CSS_SELECTOR, dropdown_css_selector)
+            classes = self.web_driver.execute_script(
+                "return document.querySelector('.ow2-autocomplete-dropdown').className;"
+            )
+            self.assertNotIn(
+                "ow-dropdown-animated",
+                classes,
+                "Reduced motion should not apply the dropdown animation",
+            )
 
     def test_autocomplete_owner_filter(self):
         """Tests the null option of the AutocompleteFilter."""
