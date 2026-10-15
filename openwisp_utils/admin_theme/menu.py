@@ -191,7 +191,13 @@ def register_menu_group(position, config):
     if position in MENU:
         if MENU[position].config == config:
             if isinstance(MENU[position], MenuGroup):
-                MENU[position].set_items(config["items"], config)
+                missing_items = {
+                    pos: item
+                    for pos, item in config["items"].items()
+                    if pos not in MENU[position].items
+                }
+                if missing_items:
+                    MENU[position].set_items(missing_items, config)
             logger.info(
                 f"A group/link with config {config} is already registered at"
                 f' position "{position}", skipping re-registration.'
