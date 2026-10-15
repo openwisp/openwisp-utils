@@ -296,6 +296,78 @@ is provided in the function.
     It is recommended to use ``register_menu_subitem`` in the ``ready``
     method of the ``AppConfig``.
 
+The ``unregister_menu_group`` function
+--------------------------------------
+
+Allows unregistering a menu item or group from the Main Navigation Menu.
+
+**Syntax:**
+
+.. code-block:: python
+
+    unregister_menu_group(position)
+
+============= ==================================================
+**Parameter** **Description**
+``position``  (``int``) Position of the group or item to remove.
+============= ==================================================
+
+Code example:
+
+.. code-block:: python
+
+    from openwisp_utils.admin_theme.menu import unregister_menu_group
+
+    unregister_menu_group(position=899)
+
+An ``ImproperlyConfigured`` exception is raised if ``position`` is not an
+``int`` or if no menu group or item is registered at the specified
+``position``.
+
+.. note::
+
+    It is recommended to use ``unregister_menu_group`` in the ``ready``
+    method of the ``AppConfig`` of an app listed after the app that
+    registered the menu group in ``INSTALLED_APPS``.
+
+The ``unregister_menu_subitem`` function
+----------------------------------------
+
+Allows unregistering an item from a registered menu group.
+
+**Syntax:**
+
+.. code-block:: python
+
+    unregister_menu_subitem(group_position, item_position)
+
+================== ===================================================
+**Parameter**      **Description**
+``group_position`` (``int``) Position of the group from which the item
+                   should be removed.
+``item_position``  (``int``) Position of the item inside the group to
+                   remove.
+================== ===================================================
+
+Code example:
+
+.. code-block:: python
+
+    from openwisp_utils.admin_theme.menu import unregister_menu_subitem
+
+    unregister_menu_subitem(group_position=32, item_position=2)
+
+An ``ImproperlyConfigured`` exception is raised if ``group_position`` or
+``item_position`` is not an ``int``, if no ``MenuGroup`` is registered at
+``group_position``, or if no sub-item is registered at ``item_position``
+within that group.
+
+.. note::
+
+    It is recommended to use ``unregister_menu_subitem`` in the ``ready``
+    method of the ``AppConfig`` of an app listed after the app that
+    registered the menu sub-item in ``INSTALLED_APPS``.
+
 How to Use Custom Icons in the Menu
 -----------------------------------
 
