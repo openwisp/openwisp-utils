@@ -12,6 +12,8 @@ from openwisp_utils.admin_theme.menu import (
     ModelLink,
     register_menu_group,
     register_menu_subitem,
+    unregister_menu_group,
+    unregister_menu_subitem,
 )
 from openwisp_utils.utils import SortedOrderedDict
 
@@ -216,6 +218,85 @@ class TestMenuSchema(TestCase):
             model_link_context = model_link_item.get_context(request)
             registered_model_context = MENU[100].items[4].get_context(request)
             self.assertEqual(model_link_context, registered_model_context)
+
+    @patch(
+        "openwisp_utils.admin_theme.menu.MENU",
+        new_callable=SortedOrderedDict,
+    )
+    def test_unregister_menu_group(self, menu):
+        model_link_config = self._get_model_link_config()
+        menu_link_config = self._get_menu_link_config()
+        menu_group_config = self._get_menu_group_config()
+        register_menu_group(position=1, config=menu_link_config)
+        register_menu_group(position=2, config=model_link_config)
+        register_menu_group(position=3, config=menu_group_config)
+
+        with self.subTest("Unregistering menu group with invalid position"):
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_group(position="invalid_position")
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_group(position=True)
+
+        with self.subTest("Unregistering non-existent menu group"):
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_group(position=999)
+
+        with self.subTest("Unregistering existing menu group and re-registering"):
+            self.assertIn(1, menu)
+            unregister_menu_group(position=1)
+            self.assertNotIn(1, menu)
+            register_menu_group(position=1, config=model_link_config)
+            self.assertIsInstance(menu[1], ModelLink)
+
+    @patch(
+        "openwisp_utils.admin_theme.menu.MENU",
+        new_callable=SortedOrderedDict,
+    )
+    def test_unregister_menu_subitem(self, menu):
+        register_menu_group(position=100, config=self._get_menu_group_config())
+        register_menu_group(position=102, config=self._get_menu_link_config())
+        menu_link_config = self._get_menu_link_config()
+
+        with self.subTest("Unregistering menu subitem with invalid positions"):
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_subitem(group_position="invalid", item_position=1)
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_subitem(group_position=True, item_position=1)
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_subitem(group_position=100, item_position="invalid")
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_subitem(group_position=100, item_position=True)
+
+        with self.subTest(
+            "Unregistering menu subitem with wrong group or item position"
+        ):
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_subitem(group_position=101, item_position=1)
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_subitem(group_position=102, item_position=1)
+            with self.assertRaises(ImproperlyConfigured):
+                unregister_menu_subitem(group_position=100, item_position=99)
+
+        with self.subTest("Unregistering existing menu subitem and re-registering"):
+            unregister_menu_subitem(group_position=100, item_position=2)
+            self.assertNotIn(2, menu[100].items)
+            register_menu_subitem(
+                group_position=100, item_position=2, config=menu_link_config
+            )
+            self.assertIsInstance(menu[100].items[2], MenuLink)
+            unregister_menu_subitem(group_position=100, item_position=1)
+            self.assertNotIn(1, menu[100].items)
+            with self.assertLogs("openwisp_utils.admin_theme.menu", level="INFO"):
+                register_menu_group(position=100, config=self._get_menu_group_config())
+            self.assertIn(1, menu[100].items)
+            self.assertIsInstance(menu[100].items[2], MenuLink)
+
+        with self.subTest("Unregistering all subitems hides empty MenuGroup"):
+            group = menu[100]
+            for item_pos in list(group.items.keys()):
+                unregister_menu_subitem(group_position=100, item_position=item_pos)
+            self.assertEqual(len(group.items), 0)
+            self.assertIsNone(group.create_context(None))
 
     def test_menu_link(self):
         with self.subTest("Menu Link with invalid config"):

@@ -190,6 +190,14 @@ def register_menu_group(position, config):
         raise ImproperlyConfigured('config should be a type of "dict"')
     if position in MENU:
         if MENU[position].config == config:
+            if isinstance(MENU[position], MenuGroup):
+                missing_items = {
+                    pos: item
+                    for pos, item in config["items"].items()
+                    if pos not in MENU[position].items
+                }
+                if missing_items:
+                    MENU[position].set_items(missing_items, config)
             logger.info(
                 f"A group/link with config {config} is already registered at"
                 f' position "{position}", skipping re-registration.'
@@ -268,6 +276,44 @@ def register_menu_subitem(group_position, item_position, config):
             at the same position.'
         )
     group.items.update({item_position: item})
+
+
+def unregister_menu_group(position):
+    if not isinstance(position, int) or isinstance(position, bool):
+        raise ImproperlyConfigured('group position should be a type of "int"')
+    if position not in MENU:
+        raise ImproperlyConfigured(
+            f'No group/link is registered at position "{position}".'
+        )
+    MENU.pop(position)
+
+
+def unregister_menu_subitem(group_position, item_position):
+    if not isinstance(group_position, int) or isinstance(group_position, bool):
+        raise ImproperlyConfigured(
+            f'Invalid group_position "{group_position}". It should be a type of "int"'
+        )
+    if not isinstance(item_position, int) or isinstance(item_position, bool):
+        raise ImproperlyConfigured(
+            f'Invalid item_position "{item_position}". It should be a type of "int"'
+        )
+    if group_position not in MENU:
+        raise ImproperlyConfigured(
+            f"A group item is being unregistered from a group at position"
+            f' "{group_position}" which does not exist.'
+        )
+    group = MENU[group_position]
+    if not isinstance(group, MenuGroup):
+        raise ImproperlyConfigured(
+            f"A group item is being unregistered from group_position"
+            f' "{group_position}" which does not contain any group.'
+        )
+    if item_position not in group.items:
+        raise ImproperlyConfigured(
+            f'No group item is registered at position "{item_position}"'
+            f' in the group at position "{group_position}".'
+        )
+    group.items.pop(item_position)
 
 
 def build_menu_groups(request):
