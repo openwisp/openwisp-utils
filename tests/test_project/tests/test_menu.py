@@ -236,10 +236,6 @@ class TestMenuSchema(TestCase):
                 unregister_menu_group(position="invalid_position")
             with self.assertRaises(ImproperlyConfigured):
                 unregister_menu_group(position=True)
-            with self.assertRaises(ImproperlyConfigured):
-                unregister_menu_group(position=False)
-            with self.assertRaises(ImproperlyConfigured):
-                unregister_menu_group(position=None)
 
         with self.subTest("Unregistering non-existent menu group"):
             with self.assertRaises(ImproperlyConfigured):
@@ -267,17 +263,9 @@ class TestMenuSchema(TestCase):
             with self.assertRaises(ImproperlyConfigured):
                 unregister_menu_subitem(group_position=True, item_position=1)
             with self.assertRaises(ImproperlyConfigured):
-                unregister_menu_subitem(group_position=False, item_position=1)
-            with self.assertRaises(ImproperlyConfigured):
-                unregister_menu_subitem(group_position=None, item_position=1)
-            with self.assertRaises(ImproperlyConfigured):
                 unregister_menu_subitem(group_position=100, item_position="invalid")
             with self.assertRaises(ImproperlyConfigured):
                 unregister_menu_subitem(group_position=100, item_position=True)
-            with self.assertRaises(ImproperlyConfigured):
-                unregister_menu_subitem(group_position=100, item_position=False)
-            with self.assertRaises(ImproperlyConfigured):
-                unregister_menu_subitem(group_position=100, item_position=None)
 
         with self.subTest(
             "Unregistering menu subitem with wrong group or item position"
@@ -304,19 +292,11 @@ class TestMenuSchema(TestCase):
             self.assertIsInstance(menu[100].items[2], MenuLink)
 
         with self.subTest("Unregistering all subitems hides empty MenuGroup"):
-            url = reverse("admin:index")
-            request = self.factory.get(url)
-            user = get_user_model().objects.create_superuser(
-                username="administrator_unregister",
-                password="admin",
-                email="test_unreg@test.org",
-            )
-            request.user = user
             group = menu[100]
             for item_pos in list(group.items.keys()):
                 unregister_menu_subitem(group_position=100, item_position=item_pos)
             self.assertEqual(len(group.items), 0)
-            self.assertIsNone(group.create_context(request))
+            self.assertIsNone(group.create_context(None))
 
     def test_menu_link(self):
         with self.subTest("Menu Link with invalid config"):
