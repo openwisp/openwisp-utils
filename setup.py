@@ -75,6 +75,7 @@ setup(
             "questionary~=2.1.0",
             "pypandoc~=1.15",
             "pypandoc-binary~=1.15",
+            "tomli>=1.1.0; python_version < '3.11'",
         ],
         "github_actions": [
             "google-genai>=1.62.0,<3.0.0",

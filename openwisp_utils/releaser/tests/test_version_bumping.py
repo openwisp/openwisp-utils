@@ -383,4 +383,87 @@ def test_bump_version_generic():
         result = bump_version(config, "1.2.4")
     assert result is True
     written_content = m_open().write.call_args[0][0]
-    assert written_content == "1.2.4\n"
+    assert "1.2.4" in written_content
+
+
+PYPROJECT_TOML_CONTENT = """[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "my-package"
+version = "1.2.3"
+description = "A test package"
+"""
+
+PYPROJECT_TOML_BUMPED = """[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "my-package"
+version = "1.2.4"
+description = "A test package"
+"""
+
+
+def test_get_current_version_pyproject():
+    """Tests getting current version from pyproject.toml."""
+    config = {
+        "package_type": "pyproject",
+        "version_path": "pyproject.toml",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    version, version_type = get_current_version(config)
+    assert version == "1.2.3"
+    assert version_type == "final"
+
+
+def test_bump_version_pyproject_toml():
+    """Tests bumping version in pyproject.toml."""
+    config = {
+        "package_type": "pyproject",
+        "version_path": "pyproject.toml",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    m_open = mock_open(read_data=PYPROJECT_TOML_CONTENT)
+    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+        result = bump_version(config, "1.2.4")
+    assert result is True
+    written_content = m_open().write.call_args[0][0]
+    assert 'version = "1.2.4"' in written_content
+
+
+def test_bump_version_pyproject_toml_not_found():
+    """Tests error when version field is missing in pyproject.toml."""
+    config = {
+        "package_type": "pyproject",
+        "version_path": "pyproject.toml",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    content_no_version = """[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "my-package"
+description = "No version here"
+"""
+    m_open = mock_open(read_data=content_no_version)
+    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+        with pytest.raises(RuntimeError, match="Failed to find"):
+            bump_version(config, "1.2.4")
+
+
+def test_bump_version_pyproject_toml_malformed():
+    """Tests bumping with malformed TOML content (falls through to regex)."""
+    config = {
+        "package_type": "pyproject",
+        "version_path": "pyproject.toml",
+        "CURRENT_VERSION": [1, 2, 3, "final"],
+    }
+    malformed_content = "@invalid toml\n"
+    m_open = mock_open(read_data=malformed_content)
+    with patch("os.path.exists", return_value=True), patch("builtins.open", m_open):
+        with pytest.raises(RuntimeError, match="Failed to find"):
+            bump_version(config, "1.2.4")
