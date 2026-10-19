@@ -69,7 +69,7 @@ Install development dependencies:
 
 .. code-block:: shell
 
-    pip install -e .[all]
+    pip install -e ".[all]"
     pip install -r requirements-test.txt
     sudo npm install -g prettier
 
