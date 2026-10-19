@@ -69,7 +69,7 @@ Install development dependencies:
 
 .. code-block:: shell
 
-    pip install -e .[qa,rest,selenium,celery,channels]
+    pip install -e .[all]
     pip install -r requirements-test.txt
     sudo npm install -g prettier
 
