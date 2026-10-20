@@ -93,7 +93,7 @@ Summary of Automated Steps
 Once you confirm the change log, the tool automates the rest of the
 process:
 
-1. Updates the version number in your project's ``__init__.py``.
+1. Updates the version number in the project's detected Python package.
 2. Writes the new release notes to your ``CHANGES.rst`` or ``CHANGES.md``
    file.
 3. Creates a ``release/<version>`` branch and commits the changes.
