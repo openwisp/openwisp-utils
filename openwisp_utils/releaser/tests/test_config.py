@@ -231,6 +231,33 @@ def test_python_version_detection_from_import_package(
     assert config["CURRENT_VERSION"] == [0, 3, 0, "final"]
 
 
+def test_python_version_ignores_invalid_discovered_package(
+    project_dir,
+    create_changelog,
+    init_git_repo,
+    mocker,
+):
+    (project_dir / "setup.py").write_text(
+        'from setuptools import setup\nsetup(name="openvpn-status-parser")'
+    )
+    invalid_package_dir = project_dir / "invalid_package"
+    invalid_package_dir.mkdir()
+    (invalid_package_dir / "__init__.py").write_text("VERSION = (1, 2)")
+    package_dir = project_dir / "openvpn_status"
+    package_dir.mkdir()
+    (package_dir / "__init__.py").write_text("# No version here\n")
+    (package_dir / "version.py").write_text("VERSION = (0, 3, 0, 'final')")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    mocker.patch(
+        "openwisp_utils.releaser.config.find_packages",
+        return_value=["invalid_package", "openvpn_status"],
+    )
+    config = load_config()
+    assert config["version_path"] == "openvpn_status/version.py"
+    assert config["CURRENT_VERSION"] == [0, 3, 0, "final"]
+
+
 def test_python_version_ignores_version_py_when_init_py_defines_version(
     project_dir,
     create_setup_py,

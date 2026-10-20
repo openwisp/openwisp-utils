@@ -80,12 +80,14 @@ def _handle_python_version(config):
                 content = f.read()
                 version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
                 if version_match:
-                    config["version_path"] = version_path
                     try:
                         version_tuple = ast.literal_eval(f"({version_match.group(1)})")
-                        config["CURRENT_VERSION"] = list(version_tuple)
                     except (ValueError, SyntaxError, TypeError):
-                        config["CURRENT_VERSION"] = None
+                        continue
+                    if not isinstance(version_tuple, tuple) or len(version_tuple) < 3:
+                        continue
+                    config["version_path"] = version_path
+                    config["CURRENT_VERSION"] = list(version_tuple)
                     return
 
 
