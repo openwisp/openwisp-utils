@@ -4,6 +4,8 @@ import os
 import re
 import subprocess
 
+from setuptools import find_packages
+
 
 def get_package_name_from_setup():
     """Parses setup.py to find the package name without raising an error."""
@@ -60,25 +62,33 @@ def _handle_python_version(config):
     project_name = get_package_name_from_setup()
     if not project_name:
         return
-    package_directory = project_name.replace("-", "_")
-    candidate_files = [
-        os.path.join(package_directory, "__init__.py"),
-        os.path.join(package_directory, "version.py"),
-    ]
-    for version_path in candidate_files:
-        if not os.path.exists(version_path):
-            continue
-        with open(version_path, "r") as f:
-            content = f.read()
-            version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
-            if version_match:
-                config["version_path"] = version_path
-                try:
-                    version_tuple = ast.literal_eval(f"({version_match.group(1)})")
+    package_directories = [project_name.replace("-", "_")]
+    package_directories.extend(
+        package.replace(".", os.sep)
+        for package in find_packages()
+        if package.replace(".", os.sep) not in package_directories
+    )
+    for package_directory in package_directories:
+        candidate_files = [
+            os.path.join(package_directory, "__init__.py"),
+            os.path.join(package_directory, "version.py"),
+        ]
+        for version_path in candidate_files:
+            if not os.path.exists(version_path):
+                continue
+            with open(version_path, "r") as f:
+                content = f.read()
+                version_match = re.search(r"^VERSION\s*=\s*\((.*)\)", content, re.M)
+                if version_match:
+                    try:
+                        version_tuple = ast.literal_eval(f"({version_match.group(1)})")
+                    except (ValueError, SyntaxError, TypeError):
+                        continue
+                    if not isinstance(version_tuple, tuple) or len(version_tuple) < 3:
+                        continue
+                    config["version_path"] = version_path
                     config["CURRENT_VERSION"] = list(version_tuple)
-                except (ValueError, SyntaxError, TypeError):
-                    config["CURRENT_VERSION"] = None
-                return
+                    return
 
 
 def _handle_npm_version(config):

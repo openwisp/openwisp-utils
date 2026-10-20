@@ -32,6 +32,7 @@ extras_require = {
         "questionary~=2.1.0",
         "pypandoc~=1.15",
         "pypandoc-binary~=1.15",
+        "setuptools",
     ],
     "github_actions": [
         "google-genai>=1.62.0,<3.0.0",
