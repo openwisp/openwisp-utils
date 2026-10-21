@@ -31,3 +31,5 @@ jobs:
         run: python -m build
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          skip-existing: true
