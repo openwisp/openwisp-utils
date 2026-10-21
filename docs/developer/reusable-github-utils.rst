@@ -340,30 +340,65 @@ example:
         branches:
           - master
 
+    permissions:
+      contents: read
+
     jobs:
       version-branch:
         if: github.repository == 'openwisp/your-repo'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-version-branch.yml@master
         with:
-          # The name of the Python package (required)
           module_name: openwisp_utils
-          # Whether to install the Python package. Defaults to false.
           install_package: true
+        secrets:
+          app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 
-    If the ``master`` branch is force-pushed, this workflow will fail due
-    to conflicts. To resolve this, you must manually synchronize the
-    version branch with the ``master`` branch. You can use the following
-    commands to perform this synchronization:
+    The caller must pass ``app_id`` and ``private_key`` secrets, normally
+    mapped from ``OPENWISP_BOT_APP_ID`` and ``OPENWISP_BOT_PRIVATE_KEY``.
+    The OpenWISP GitHub App needs **Contents: write** and **Workflows:
+    write** permissions: the latter is needed when a synchronized commit
+    changes ``.github/workflows/``.
+
+    The workflow creates a missing version branch or fast-forwards it to
+    the triggering ``master`` commit. It never rebases, merges, or
+    force-pushes the branch. If the ``master`` branch is force-pushed,
+    this workflow will fail due to conflicts. To resolve this, you must
+    manually synchronize the version branch with the ``master`` branch.
+    You can use the following commands to perform this synchronization
+    without resetting or force-pushing the version branch:
 
     .. code-block:: bash
 
-        VERSION=<enter-version-number> # e.g. 1.2
+        VERSION=<version-number> # e.g. 1.2
         git fetch origin
-        git checkout $VERSION
-        git reset --hard origin/master
-        git push origin $VERSION --force-with-lease
+        git checkout -b reconcile-$VERSION origin/$VERSION
+        git merge origin/master
+        # Resolve conflicts and complete the merge if necessary.
+        git push origin reconcile-$VERSION
+        # Open a pull request from reconcile-$VERSION to $VERSION.
+
+Requirements for securing branch replication
+++++++++++++++++++++++++++++++++++++++++++++
+
+Create the following separate GitHub rulesets for branches matching
+``1.*``:
+
+1. **Version Branch - Authorized Writers**: enable **Restrict creations**
+   and **Restrict updates**. Add the authorized OpenWISP maintainer team
+   and the OpenWISP GitHub App to the bypass list with **Always allow**.
+2. **Version Branch - Pull Request Requirements**: enable **Require a pull
+   request before merging**, require at least one approval, and select the
+   repository's required CI status checks. Add only the OpenWISP GitHub
+   App to the bypass list with **Always allow**.
+3. **Version Branch - History Protection**: enable **Block force pushes**
+   and **Restrict deletions**. Do not add a routine bypass.
+
+Keeping writer authorization separate from pull-request requirements
+ensures that maintainers cannot bypass review. The backport workflow
+continues to open pull requests and follows normal review requirements.
 
 Backport Fixes to Stable Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

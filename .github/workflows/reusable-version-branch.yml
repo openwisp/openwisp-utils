@@ -12,14 +12,26 @@ on:
         required: false
         type: boolean
         default: false
+    secrets:
+      app_id:
+        required: true
+      private_key:
+        required: true
+
+permissions:
+  contents: read
 
 jobs:
-  replicate:
+  prepare:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -37,25 +49,74 @@ jobs:
 
       - name: Get version
         id: get_version
+        env:
+          MODULE_NAME: ${{ inputs.module_name }}
         run: |
-          VERSION=$(python -c "
-          from ${{ inputs.module_name }} import VERSION
-          print(f'{VERSION[0]}.{VERSION[1]}')
-          ")
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          python - <<'PY'
+          import importlib
+          import os
 
-      - name: Configure Git
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          version = importlib.import_module(os.environ["MODULE_NAME"]).VERSION
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write(f"version={version[0]}.{version[1]}\n")
+          PY
 
-      - name: Rebase changes onto version branch
+  replicate:
+    needs: prepare
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check version branch
+        id: sync
         run: |
-          if git ls-remote --heads origin $VERSION | grep -sw $VERSION; then
-            git fetch origin --unshallow
-            git checkout -b $VERSION origin/$VERSION
-            git rebase origin/master
+          # Protected branches permit only creation and fast-forward updates;
+          # divergent histories need manual reconciliation rather than a rewrite.
+          if ! git show-ref --verify --quiet "refs/remotes/origin/$VERSION"; then
+            echo "Version branch '$VERSION' does not exist and will be created"
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          elif git merge-base --is-ancestor "$GITHUB_SHA" "origin/$VERSION"; then
+            # A delayed run must not move an already advanced branch backwards.
+            echo "Version branch '$VERSION' already contains this master commit"
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          elif git merge-base --is-ancestor "origin/$VERSION" "$GITHUB_SHA"; then
+            # Only a fast-forward update preserves the protected branch history.
+            echo "Version branch '$VERSION' can be fast-forwarded"
+            echo "push=true" >> "$GITHUB_OUTPUT"
           else
-            git checkout -b $VERSION
+            # Preserve branch-only commits instead of requiring a force push.
+            echo "::error::Version branch '$VERSION' has diverged from master; synchronization cannot proceed without rewriting history." >&2
+            echo "Commits only in '$VERSION':" >&2
+            git log --oneline "$GITHUB_SHA..origin/$VERSION" >&2
+            echo "Reconcile the histories without rewriting the version branch, then run the workflow again." >&2
+            exit 1
           fi
-          git push origin $VERSION
+
+      - name: Generate GitHub App Token
+        id: generate-token
+        if: steps.sync.outputs.push == 'true'
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.app_id }}
+          private-key: ${{ secrets.private_key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          # GitHub requires Workflows: write when a push changes .github/workflows/.
+          permission-workflows: write
+
+      - name: Push version branch
+        if: steps.sync.outputs.push == 'true'
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          gh auth setup-git
+          # A normal push prevents overwriting a concurrent or divergent update.
+          git push origin "$GITHUB_SHA:refs/heads/$VERSION"
