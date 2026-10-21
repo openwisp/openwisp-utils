@@ -384,7 +384,10 @@ Requirements for securing branch replication
 ++++++++++++++++++++++++++++++++++++++++++++
 
 Create the following separate GitHub rulesets for branches matching
-``1.*``:
+``[0-9]*.[0-9]*``. This GitHub glob pattern protects version branches such
+as ``1.4``, ``2.0``, and ``12.3`` without requiring a new target when the
+package advances to a new major version. It also matches branch names such
+as ``1.2-hotfix`` and ``1.2.3``.
 
 1. **Version Branch - Authorized Writers**: enable **Restrict creations**
    and **Restrict updates**. Add the authorized OpenWISP maintainer team
