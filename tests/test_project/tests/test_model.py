@@ -1,4 +1,6 @@
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
+from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.db import connection, models
@@ -12,6 +14,60 @@ from . import CreateMixin
 
 class TestModel(TestCase):
     TEST_KEY = "w1gwJxKaHcamUw62TQIPgYchwLKn3AA0"
+
+    def test_timestamped_model_ordering(self):
+        old_shelf = Shelf.objects.create(
+            id=UUID("00000000-0000-0000-0000-000000000001"), name="Old shelf"
+        )
+        tied_shelf = Shelf.objects.create(
+            id=UUID("00000000-0000-0000-0000-000000000002"), name="Tied shelf"
+        )
+        newest_shelf = Shelf.objects.create(
+            id=UUID("00000000-0000-0000-0000-000000000003"), name="Newest shelf"
+        )
+        old_book = Book.objects.create(
+            id=UUID("00000000-0000-0000-0000-000000000004"),
+            name="Same book",
+            author="Author",
+            shelf=old_shelf,
+        )
+        tied_book = Book.objects.create(
+            id=UUID("00000000-0000-0000-0000-000000000005"),
+            name="Same book",
+            author="Author",
+            shelf=tied_shelf,
+        )
+        newest_book = Book.objects.create(
+            id=UUID("00000000-0000-0000-0000-000000000006"),
+            name="Other book",
+            author="Author",
+            shelf=newest_shelf,
+        )
+        created = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        Shelf.objects.filter(pk__in=[old_shelf.pk, tied_shelf.pk]).update(
+            created=created
+        )
+        Shelf.objects.filter(pk=newest_shelf.pk).update(
+            created=created + timedelta(days=1)
+        )
+        Book.objects.filter(pk__in=[old_book.pk, tied_book.pk]).update(created=created)
+        Book.objects.filter(pk=newest_book.pk).update(
+            created=created + timedelta(days=1)
+        )
+        self.assertEqual(Shelf._meta.ordering, ("-created", "-pk"))
+        self.assertEqual(Book._meta.ordering, ("name", "pk"))
+        self.assertEqual(
+            list(Shelf.objects.values_list("pk", flat=True)),
+            [newest_shelf.pk, tied_shelf.pk, old_shelf.pk],
+        )
+        self.assertEqual(
+            list(Book.objects.values_list("pk", flat=True)),
+            [newest_book.pk, old_book.pk, tied_book.pk],
+        )
+        self.assertEqual(
+            list(Shelf.objects.order_by("name").values_list("pk", flat=True)),
+            [newest_shelf.pk, old_shelf.pk, tied_shelf.pk],
+        )
 
     def test_key_validator(self):
         p = Project.objects.create(name="test_project")
