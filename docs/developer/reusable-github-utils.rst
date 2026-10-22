@@ -405,9 +405,8 @@ as ``1.2-hotfix`` and ``1.2.3``.
    **Require status checks to pass before merging**, and select the
    repository's required CI status checks. Add only the OpenWISP GitHub
    App to the bypass list with **Always allow**.
-3. **Version Branch - History Protection**: enable **Require linear
-   history**, **Block force pushes**, and **Restrict deletions**. Do not
-   add a routine bypass.
+3. **Version Branch - History Protection**: enable **Block force pushes**,
+   and **Restrict deletions**. Do not add a routine bypass.
 
 Keeping writer authorization separate from pull-request requirements
 ensures that maintainers cannot bypass review. The backport workflow
