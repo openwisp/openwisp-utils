@@ -349,25 +349,24 @@ example:
         uses: openwisp/openwisp-utils/.github/workflows/reusable-version-branch.yml@master
         with:
           module_name: openwisp_utils
+          client_id: ${{ vars.OPENWISP_BOT_CLIENT_ID }}
           install_package: true
         secrets:
-          client_id: ${{ secrets.OPENWISP_BOT_CLIENT_ID }}
           private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 
-    The caller must pass the ``client_id`` and ``private_key`` secrets,
-    normally mapped from ``OPENWISP_BOT_CLIENT_ID`` and
-    ``OPENWISP_BOT_PRIVATE_KEY``. The OpenWISP GitHub App needs
-    **Contents: write** and **Workflows: write** permissions: the latter
-    is needed when a synchronized commit changes ``.github/workflows/``.
+    The caller must pass the ``client_id`` input and ``private_key``
+    secret, normally mapped from the ``OPENWISP_BOT_CLIENT_ID``
+    organization variable and ``OPENWISP_BOT_PRIVATE_KEY`` secret. The
+    OpenWISP GitHub App needs **Contents: write** and **Workflows: write**
+    permissions: the latter is needed when a synchronized commit changes
+    ``.github/workflows/``.
 
     The workflow creates a missing version branch or fast-forwards an
     existing branch to the triggering ``master`` commit. It never rewrites
     history or creates merge commits. If the branches diverge, the
     workflow fails instead of force-pushing the protected version branch.
-    Version branches must not receive branch-only commits, and the
-    ``master`` branch must not be force-pushed.
 
     If ``master`` is force-pushed intentionally, first verify that the
     version branch has no commits which must be retained. Temporarily add

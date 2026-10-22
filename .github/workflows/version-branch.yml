@@ -14,6 +14,6 @@ jobs:
     uses: openwisp/openwisp-utils/.github/workflows/reusable-version-branch.yml@master
     with:
       module_name: openwisp_utils
+      client_id: ${{ vars.OPENWISP_BOT_CLIENT_ID }}
     secrets:
-      client_id: ${{ secrets.OPENWISP_BOT_CLIENT_ID }}
       private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
