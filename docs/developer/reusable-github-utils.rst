@@ -340,30 +340,54 @@ example:
         branches:
           - master
 
+    permissions:
+      contents: read
+
     jobs:
       version-branch:
         if: github.repository == 'openwisp/your-repo'
         uses: openwisp/openwisp-utils/.github/workflows/reusable-version-branch.yml@master
         with:
-          # The name of the Python package (required)
           module_name: openwisp_utils
-          # Whether to install the Python package. Defaults to false.
+          client_id: ${{ vars.OPENWISP_BOT_CLIENT_ID }}
           install_package: true
+        secrets:
+          private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 
-    If the ``master`` branch is force-pushed, this workflow will fail due
-    to conflicts. To resolve this, you must manually synchronize the
-    version branch with the ``master`` branch. You can use the following
-    commands to perform this synchronization:
+    The caller must pass the ``client_id`` input and ``private_key``
+    secret for the `OpenWISP Companion bot
+    <https://github.com/apps/openwisp-companion>`_, normally mapped from
+    its ``OPENWISP_BOT_CLIENT_ID`` organization variable and
+    ``OPENWISP_BOT_PRIVATE_KEY`` secret. The OpenWISP GitHub App needs
+    **Contents: write** and **Workflows: write** permissions: the latter
+    is needed when a synchronized commit changes ``.github/workflows/``.
+
+    The workflow creates a missing version branch or fast-forwards an
+    existing branch to the triggering ``master`` commit. It never rewrites
+    history or creates merge commits. If the branches diverge, the
+    workflow fails instead of force-pushing the protected version branch.
+
+    If ``master`` is force-pushed intentionally, first verify that the
+    version branch has no commits which must be retained. Temporarily add
+    the maintainer performing the recovery to the pull-request and
+    history-protection ruleset bypass lists, then reset the derived
+    version branch with an explicit lease. The push fails if the remote
+    version branch changes after it is fetched:
 
     .. code-block:: bash
 
-        VERSION=<enter-version-number> # e.g. 1.2
+        VERSION=<version-number> # e.g. 1.2
         git fetch origin
-        git checkout $VERSION
-        git reset --hard origin/master
-        git push origin $VERSION --force-with-lease
+        git log --oneline origin/master..origin/$VERSION
+        EXPECTED_SHA=$(git rev-parse origin/$VERSION)
+        git checkout -B $VERSION origin/master
+        git push \
+          --force-with-lease=refs/heads/$VERSION:$EXPECTED_SHA \
+          origin $VERSION
+
+    Remove both temporary bypasses immediately after the update.
 
 Backport Fixes to Stable Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
