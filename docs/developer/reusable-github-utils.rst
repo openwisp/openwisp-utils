@@ -351,34 +351,43 @@ example:
           module_name: openwisp_utils
           install_package: true
         secrets:
-          app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+          client_id: ${{ secrets.OPENWISP_BOT_CLIENT_ID }}
           private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
 
 .. note::
 
-    The caller must pass ``app_id`` and ``private_key`` secrets, normally
-    mapped from ``OPENWISP_BOT_APP_ID`` and ``OPENWISP_BOT_PRIVATE_KEY``.
-    The OpenWISP GitHub App needs **Contents: write** and **Workflows:
-    write** permissions: the latter is needed when a synchronized commit
-    changes ``.github/workflows/``.
+    The caller must pass the ``client_id`` and ``private_key`` secrets,
+    normally mapped from ``OPENWISP_BOT_CLIENT_ID`` and
+    ``OPENWISP_BOT_PRIVATE_KEY``. The OpenWISP GitHub App needs
+    **Contents: write** and **Workflows: write** permissions: the latter
+    is needed when a synchronized commit changes ``.github/workflows/``.
 
-    The workflow creates a missing version branch or fast-forwards it to
-    the triggering ``master`` commit. It never rebases, merges, or
-    force-pushes the branch. If the ``master`` branch is force-pushed,
-    this workflow will fail due to conflicts. To resolve this, you must
-    manually synchronize the version branch with the ``master`` branch.
-    You can use the following commands to perform this synchronization
-    without resetting or force-pushing the version branch:
+    The workflow creates a missing version branch or fast-forwards an
+    existing branch to the triggering ``master`` commit. It never rewrites
+    history or creates merge commits. If the branches diverge, the
+    workflow fails instead of force-pushing the protected version branch.
+    Version branches must not receive branch-only commits, and the
+    ``master`` branch must not be force-pushed.
+
+    If ``master`` is force-pushed intentionally, first verify that the
+    version branch has no commits which must be retained. Temporarily add
+    the maintainer performing the recovery to the pull-request and
+    history-protection ruleset bypass lists, then reset the derived
+    version branch with an explicit lease. The push fails if the remote
+    version branch changes after it is fetched:
 
     .. code-block:: bash
 
         VERSION=<version-number> # e.g. 1.2
         git fetch origin
-        git checkout -b reconcile-$VERSION origin/$VERSION
-        git merge origin/master
-        # Resolve conflicts and complete the merge if necessary.
-        git push origin reconcile-$VERSION
-        # Open a pull request from reconcile-$VERSION to $VERSION.
+        git log --oneline origin/master..origin/$VERSION
+        EXPECTED_SHA=$(git rev-parse origin/$VERSION)
+        git checkout -B $VERSION origin/master
+        git push \
+          --force-with-lease=refs/heads/$VERSION:$EXPECTED_SHA \
+          origin $VERSION
+
+    Remove both temporary bypasses immediately after the update.
 
 Requirements for securing branch replication
 ++++++++++++++++++++++++++++++++++++++++++++
@@ -393,11 +402,13 @@ as ``1.2-hotfix`` and ``1.2.3``.
    and **Restrict updates**. Add the authorized OpenWISP maintainer team
    and the OpenWISP GitHub App to the bypass list with **Always allow**.
 2. **Version Branch - Pull Request Requirements**: enable **Require a pull
-   request before merging**, require at least one approval, and select the
+   request before merging**, require at least one approval, enable
+   **Require status checks to pass before merging**, and select the
    repository's required CI status checks. Add only the OpenWISP GitHub
    App to the bypass list with **Always allow**.
-3. **Version Branch - History Protection**: enable **Block force pushes**
-   and **Restrict deletions**. Do not add a routine bypass.
+3. **Version Branch - History Protection**: enable **Require linear
+   history**, **Block force pushes**, and **Restrict deletions**. Do not
+   add a routine bypass.
 
 Keeping writer authorization separate from pull-request requirements
 ensures that maintainers cannot bypass review. The backport workflow

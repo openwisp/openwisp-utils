@@ -15,5 +15,5 @@ jobs:
     with:
       module_name: openwisp_utils
     secrets:
-      app_id: ${{ secrets.OPENWISP_BOT_APP_ID }}
+      client_id: ${{ secrets.OPENWISP_BOT_CLIENT_ID }}
       private_key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}

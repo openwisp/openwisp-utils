@@ -13,7 +13,7 @@ on:
         type: boolean
         default: false
     secrets:
-      app_id:
+      client_id:
         required: true
       private_key:
         required: true
@@ -74,37 +74,25 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Check version branch
-        id: sync
+      - name: Fast-forward version branch
         run: |
-          # Protected branches permit only creation and fast-forward updates;
-          # divergent histories need manual reconciliation rather than a rewrite.
-          if ! git show-ref --verify --quiet "refs/remotes/origin/$VERSION"; then
-            echo "Version branch '$VERSION' does not exist and will be created"
-            echo "push=true" >> "$GITHUB_OUTPUT"
-          elif git merge-base --is-ancestor "$GITHUB_SHA" "origin/$VERSION"; then
-            # A delayed run must not move an already advanced branch backwards.
-            echo "Version branch '$VERSION' already contains this master commit"
-            echo "push=false" >> "$GITHUB_OUTPUT"
-          elif git merge-base --is-ancestor "origin/$VERSION" "$GITHUB_SHA"; then
-            # Only a fast-forward update preserves the protected branch history.
-            echo "Version branch '$VERSION' can be fast-forwarded"
-            echo "push=true" >> "$GITHUB_OUTPUT"
+          if git show-ref --verify --quiet "refs/remotes/origin/$VERSION"; then
+            git checkout -B "$VERSION" "origin/$VERSION"
+            # Delayed runs are no-ops; divergence fails without rewriting history.
+            if ! git merge --ff-only "$GITHUB_SHA"; then
+              echo "::error::Version branch '$VERSION' has diverged from master. Follow the documented manual recovery procedure." >&2
+              exit 1
+            fi
           else
-            # Preserve branch-only commits instead of requiring a force push.
-            echo "::error::Version branch '$VERSION' has diverged from master; synchronization cannot proceed without rewriting history." >&2
-            echo "Commits only in '$VERSION':" >&2
-            git log --oneline "$GITHUB_SHA..origin/$VERSION" >&2
-            echo "Reconcile the histories without rewriting the version branch, then run the workflow again." >&2
-            exit 1
+            # The normal push creates a missing remote version branch.
+            git checkout -b "$VERSION" "$GITHUB_SHA"
           fi
 
       - name: Generate GitHub App Token
         id: generate-token
-        if: steps.sync.outputs.push == 'true'
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
         with:
-          app-id: ${{ secrets.app_id }}
+          client-id: ${{ secrets.client_id }}
           private-key: ${{ secrets.private_key }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
@@ -113,10 +101,8 @@ jobs:
           permission-workflows: write
 
       - name: Push version branch
-        if: steps.sync.outputs.push == 'true'
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           gh auth setup-git
-          # A normal push prevents overwriting a concurrent or divergent update.
-          git push origin "$GITHUB_SHA:refs/heads/$VERSION"
+          git push origin "$VERSION"
