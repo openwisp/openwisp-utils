@@ -69,6 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: version-branch-replication-${{ github.repository }}
+      queue: max
       cancel-in-progress: false
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
