@@ -357,11 +357,12 @@ example:
 .. note::
 
     The caller must pass the ``client_id`` input and ``private_key``
-    secret, normally mapped from the ``OPENWISP_BOT_CLIENT_ID``
-    organization variable and ``OPENWISP_BOT_PRIVATE_KEY`` secret. The
-    OpenWISP GitHub App needs **Contents: write** and **Workflows: write**
-    permissions: the latter is needed when a synchronized commit changes
-    ``.github/workflows/``.
+    secret for the `OpenWISP Companion bot
+    <https://github.com/apps/openwisp-companion>`_, normally mapped from
+    its ``OPENWISP_BOT_CLIENT_ID`` organization variable and
+    ``OPENWISP_BOT_PRIVATE_KEY`` secret. The OpenWISP GitHub App needs
+    **Contents: write** and **Workflows: write** permissions: the latter
+    is needed when a synchronized commit changes ``.github/workflows/``.
 
     The workflow creates a missing version branch or fast-forwards an
     existing branch to the triggering ``master`` commit. It never rewrites
@@ -387,30 +388,6 @@ example:
           origin $VERSION
 
     Remove both temporary bypasses immediately after the update.
-
-Requirements for securing branch replication
-++++++++++++++++++++++++++++++++++++++++++++
-
-Create the following separate GitHub rulesets for branches matching
-``[0-9]*.[0-9]*``. This GitHub glob pattern protects version branches such
-as ``1.4``, ``2.0``, and ``12.3`` without requiring a new target when the
-package advances to a new major version. It also matches branch names such
-as ``1.2-hotfix`` and ``1.2.3``.
-
-1. **Version Branch - Authorized Writers**: enable **Restrict creations**
-   and **Restrict updates**. Add the authorized OpenWISP maintainer team
-   and the OpenWISP GitHub App to the bypass list with **Always allow**.
-2. **Version Branch - Pull Request Requirements**: enable **Require a pull
-   request before merging**, require at least one approval, enable
-   **Require status checks to pass before merging**, and select the
-   repository's required CI status checks. Add only the OpenWISP GitHub
-   App to the bypass list with **Always allow**.
-3. **Version Branch - History Protection**: enable **Block force pushes**,
-   and **Restrict deletions**. Do not add a routine bypass.
-
-Keeping writer authorization separate from pull-request requirements
-ensures that maintainers cannot bypass review. The backport workflow
-continues to open pull requests and follows normal review requirements.
 
 Backport Fixes to Stable Branch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
