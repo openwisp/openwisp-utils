@@ -4,7 +4,7 @@ import tempfile
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_loader
 from os import path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from django.test import TestCase
 from openwisp_utils.qa import check_commit_message, check_migration_name
@@ -661,8 +661,19 @@ class TestPrePushHook(TestCase):
                 "subprocess.Popen", return_value=Mock(returncode=0)
             ) as mocked_popen:
                 hook.run_checks()
-            self.assertEqual(mocked_popen.call_count, 2)
-            mocked_popen.assert_called_with([runtests])
+            self.assertEqual(
+                mocked_popen.call_args_list,
+                [call([run_qa_checks, "--pre-push"]), call([runtests])],
+            )
+
+        with self.subTest("qa checks fail"):
+            with patch("os.path.exists", return_value=True), patch(
+                "subprocess.Popen", return_value=Mock(returncode=1)
+            ) as mocked_popen:
+                with self.assertRaises(SystemExit) as context:
+                    hook.run_checks()
+            self.assertEqual(context.exception.code, 1)
+            mocked_popen.assert_called_once_with([run_qa_checks, "--pre-push"])
 
         with self.subTest("runtests fails"):
             processes = [Mock(returncode=0), Mock(returncode=1)]
