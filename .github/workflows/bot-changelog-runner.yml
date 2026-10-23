@@ -73,7 +73,7 @@ jobs:
       needs.fetch-metadata.outputs.pr_number != ''
     permissions:
       contents: read
-    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-changelog.yml@3497e3fbd42dff2a59f566184a1bf8e1b2ab57ea # master
+    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-changelog.yml@0bd0c3190d6081ec776baa96d73d8a8a3e059a73 # master
     with:
       pr_number: ${{ needs.fetch-metadata.outputs.pr_number }}
     secrets:
