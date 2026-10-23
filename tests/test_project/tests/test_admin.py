@@ -16,6 +16,7 @@ from openwisp_utils.admin_theme import settings as admin_theme_settings
 from openwisp_utils.admin_theme.apps import OpenWispAdminThemeConfig, _staticfy
 from openwisp_utils.admin_theme.checks import admin_theme_settings_checks
 from openwisp_utils.admin_theme.filters import (
+    AutocompleteFilter,
     InputFilter,
     SimpleInputFilter,
     SubFilterMixin,
@@ -545,26 +546,14 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         with self.subTest("Test when number of filters is less than equal to 4"):
             url = reverse("admin:test_project_operator_changelist")
             response = self.client.get(url)
-            real_count = self._assert_contains(
-                response,
-                'class="ow-filter',
-                status_code=response.status_code,
-                msg_prefix="",
-                html=False,
-            )[1]
+            real_count = response.content.decode().count('class="ow-filter')
             self.assertLessEqual(real_count, 4)
             self.assertNotContains(response, 'id="ow-apply-filter"')
 
         with self.subTest("Test when number of filters is greater than 5"):
             url = reverse("admin:test_project_shelf_changelist")
             response = self.client.get(url)
-            real_count = self._assert_contains(
-                response,
-                'class="ow-filter',
-                status_code=response.status_code,
-                msg_prefix="",
-                html=False,
-            )[1]
+            real_count = response.content.decode().count('class="ow-filter')
             self.assertGreater(real_count, 5)
             self.assertContains(response, 'id="ow-apply-filter"')
 
@@ -628,6 +617,15 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "“invalid” is not a valid UUID.")
 
+    def test_ow_autocomplete_filter_queryset_for_field(self):
+        with self.subTest("Forward relation"):
+            queryset = AutocompleteFilter.get_queryset_for_field(Book, "shelf")
+            self.assertEqual(queryset.model, Shelf)
+
+        with self.subTest("Many to many relation"):
+            queryset = AutocompleteFilter.get_queryset_for_field(Shelf, "writers")
+            self.assertEqual(queryset.model, User)
+
     def test_organization_radius_settings_admin(self):
         org_rad_settings = self._create_org_radius_settings(
             is_active=True,
@@ -639,6 +637,10 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             "admin:test_project_organizationradiussettings_change",
             args=[org_rad_settings.pk],
         )
+
+        blank_label = self.org_radius_settings_model._meta.get_field(
+            "is_first_name_required"
+        ).get_choices()[0][1]
 
         with self.subTest("Test default values are rendered"):
             response = self.client.get(url)
@@ -655,7 +657,7 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertContains(
                 response,
                 '<select name="is_first_name_required" id="id_is_first_name_required">'
-                '<option value="">---------</option>'
+                f'<option value="">{blank_label}</option>'
                 '<option value="disabled" selected>Disabled</option>'
                 '<option value="allowed">Allowed</option>'
                 '<option value="mandatory">Mandatory</option></select>',
