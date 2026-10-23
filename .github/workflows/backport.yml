@@ -4,23 +4,24 @@ on:
   push:
     branches:
       - master
-  issue_comment:
+  issue_comment: # zizmor: ignore[dangerous-triggers] Required for member or owner backport commands on merged PRs; branch names are validated.
     types: [created]
+
+permissions: {}
 
 concurrency:
   group: backport-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
-
-permissions:
-  contents: write
-  pull-requests: write
 
 jobs:
   backport-on-push:
     if: >
       github.repository == 'openwisp/openwisp-utils' &&
       github.event_name == 'push'
-    uses: ./.github/workflows/reusable-backport.yml
+    permissions:
+      contents: read
+      pull-requests: read # Resolves the merged pull request from a pushed commit.
+    uses: $/.github/workflows/reusable-backport.yml
     with:
       commit_sha: ${{ github.sha }}
     secrets:
@@ -36,7 +37,10 @@ jobs:
       github.event.issue.state == 'closed' &&
       contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association) &&
       startsWith(github.event.comment.body, '/backport')
-    uses: ./.github/workflows/reusable-backport.yml
+    permissions:
+      contents: read
+      pull-requests: read # Resolves the merge commit before handling a backport command.
+    uses: $/.github/workflows/reusable-backport.yml
     with:
       pr_number: ${{ github.event.issue.number }}
       comment_body: ${{ github.event.comment.body }}
