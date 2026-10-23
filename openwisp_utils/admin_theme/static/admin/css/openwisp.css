@@ -476,6 +476,51 @@ textarea,
 .aligned label {
   float: left;
 }
+@media (min-width: 768px) {
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) {
+    flex-flow: row wrap;
+    gap: 0;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > label {
+    width: 160px;
+    padding: 4px 10px 0 0;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > ul.errorlist {
+    order: -1;
+    flex-basis: 100%;
+    margin-left: 170px;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > .help {
+    order: 2;
+    flex-basis: 100%;
+    margin-left: 170px;
+  }
+  .aligned .form-row > fieldset > legend {
+    width: 160px;
+    padding: 4px 10px 0 0;
+  }
+  .aligned .form-row > fieldset > .flex-container {
+    width: auto;
+  }
+  .aligned .form-row > fieldset > .flex-container > ul.errorlist,
+  .aligned .form-row > fieldset > .flex-container > .help {
+    margin-left: 0;
+  }
+}
+#main .aligned .form-row > fieldset > legend {
+  color: var(--ow-form-label);
+  font-size: 15px;
+}
+#main .form-row p.datetime label {
+  float: none;
+  display: inline;
+  padding: 0;
+  font-weight: bold;
+}
+.form-row .datetime input.vDateField,
+.form-row .datetime input.vTimeField {
+  margin-left: 5px;
+}
 input.readonly {
   border: 1px solid var(--ow-form-readonly-border) !important;
   background-color: var(--ow-form-readonly-bg);
@@ -670,6 +715,10 @@ ol.breadcrumbs {
 #main-content div.breadcrumbs,
 #main-content ol.breadcrumbs {
   padding: 1rem 2.5rem;
+}
+#main-content ol.breadcrumbs li {
+  font-size: inherit;
+  line-height: inherit;
 }
 #main .selector-chosen h2,
 #main .aligned .selector-chosen-title {
