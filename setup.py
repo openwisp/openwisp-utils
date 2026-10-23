@@ -15,7 +15,7 @@ extras_require = {
     "rest": [
         "djangorestframework~=3.18.0",
         "django-filter>=25.1,<27.0",  # django-filter uses CalVer
-        "drf-yasg>=1.21.14,<1.21.17",
+        "drf-yasg>=1.21.14,<1.21.19",
     ],
     "channels": [
         "channels[daphne]~=4.3.0",
