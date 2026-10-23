@@ -5,6 +5,10 @@ from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db.models.fields import CharField, UUIDField
+from django.db.models.fields.related_descriptors import (
+    ForwardManyToOneDescriptor,
+    ReverseOneToOneDescriptor,
+)
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -108,6 +112,15 @@ class AutocompleteFilter(BaseAutocompleteFilter):
 
     def get_autocomplete_url(self, request, model_admin):
         return reverse("admin:ow-auto-filter")
+
+    @staticmethod
+    def get_queryset_for_field(model, name):
+        descriptor = getattr(model, name, None)
+        if isinstance(
+            descriptor, (ForwardManyToOneDescriptor, ReverseOneToOneDescriptor)
+        ):
+            return model._meta.get_field(name).related_model._base_manager.all()
+        return BaseAutocompleteFilter.get_queryset_for_field(model, name)
 
     def __init__(self, *args, **kwargs):
         try:

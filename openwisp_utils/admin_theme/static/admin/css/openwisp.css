@@ -302,6 +302,15 @@ a:visited {
   color: var(--ow-link-color);
   text-decoration: none;
 }
+a:not(
+    [role="button"],
+    #header a,
+    #nav-sidebar a,
+    #content-main.app-list a,
+    .object-tools a
+  ):is(.button, .deletelink, :not(:hover, :focus)) {
+  text-decoration: none;
+}
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after {
   color: var(--ow-link-hover);
@@ -466,6 +475,51 @@ textarea,
 }
 .aligned label {
   float: left;
+}
+@media (min-width: 768px) {
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) {
+    flex-flow: row wrap;
+    gap: 0;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > label {
+    width: 160px;
+    padding: 4px 10px 0 0;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > ul.errorlist {
+    order: -1;
+    flex-basis: 100%;
+    margin-left: 170px;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > .help {
+    order: 2;
+    flex-basis: 100%;
+    margin-left: 170px;
+  }
+  .aligned .form-row > fieldset > legend {
+    width: 160px;
+    padding: 4px 10px 0 0;
+  }
+  .aligned .form-row > fieldset > .flex-container {
+    width: auto;
+  }
+  .aligned .form-row > fieldset > .flex-container > ul.errorlist,
+  .aligned .form-row > fieldset > .flex-container > .help {
+    margin-left: 0;
+  }
+}
+#main .aligned .form-row > fieldset > legend {
+  color: var(--ow-form-label);
+  font-size: 15px;
+}
+#main .form-row p.datetime label {
+  float: none;
+  display: inline;
+  padding: 0;
+  font-weight: bold;
+}
+.form-row .datetime input.vDateField,
+.form-row .datetime input.vTimeField {
+  margin-left: 5px;
 }
 input.readonly {
   border: 1px solid var(--ow-form-readonly-border) !important;
@@ -652,13 +706,19 @@ html {
     opacity: 0;
   }
 }
-div.breadcrumbs {
+div.breadcrumbs,
+ol.breadcrumbs {
   background: var(--ow-breadcrumb-bg);
   color: var(--ow-breadcrumb-text);
   border-bottom: 2px solid var(--ow-breadcrumb-border);
 }
-#main-content div.breadcrumbs {
+#main-content div.breadcrumbs,
+#main-content ol.breadcrumbs {
   padding: 1rem 2.5rem;
+}
+#main-content ol.breadcrumbs li {
+  font-size: inherit;
+  line-height: inherit;
 }
 #main .selector-chosen h2,
 #main .aligned .selector-chosen-title {
@@ -1103,6 +1163,9 @@ input[type="button"]:hover,
   margin-top: -4px;
   margin-bottom: 20px;
 }
+.title-wrapper .object-tools {
+  float: right;
+}
 .title-wrapper .object-tools li {
   height: auto;
 }
@@ -1249,7 +1312,8 @@ div.calendar-shortcuts a:hover {
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
-  #main-content div.breadcrumbs {
+  #main-content div.breadcrumbs,
+  #main-content ol.breadcrumbs {
     padding: 1rem 1.875rem;
   }
   #main-content #header {
@@ -1260,7 +1324,8 @@ div.calendar-shortcuts a:hover {
   }
 }
 @media (max-width: 768px) {
-  #main-content div.breadcrumbs {
+  #main-content div.breadcrumbs,
+  #main-content ol.breadcrumbs {
     padding: 1rem 0.938rem;
   }
   #main-content #header {
@@ -1290,6 +1355,7 @@ div.calendar-shortcuts a:hover {
     display: block;
   }
   .title-wrapper .object-tools {
+    float: none;
     display: inline-block;
     margin-bottom: 15px !important;
   }
