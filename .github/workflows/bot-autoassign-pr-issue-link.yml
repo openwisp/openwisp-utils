@@ -1,10 +1,13 @@
 name: PR Issue Auto-Assignment
 
 on:
-  pull_request_target: # zizmor: ignore[dangerous-triggers] Required for issue assignment on fork PRs; the workflow runs trusted bot code only.
+  pull_request_target:
     types: [opened, reopened, closed, edited, ready_for_review]
 
-permissions: {}
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
 
 concurrency:
   group: bot-autoassign-pr-link-${{ github.repository }}-${{ github.event.pull_request.number }}
@@ -15,9 +18,7 @@ jobs:
     if: >
       github.repository == 'openwisp/openwisp-utils' &&
       (github.event.action != 'closed' || github.event.pull_request.merged == false)
-    permissions:
-      contents: read
-    uses: $/.github/workflows/reusable-bot-autoassign.yml
+    uses: ./.github/workflows/reusable-bot-autoassign.yml
     with:
       bot_command: issue_assignment
     secrets:

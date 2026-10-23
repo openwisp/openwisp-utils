@@ -1,12 +1,15 @@
 name: CI Failure Bot
 
 on:
-  workflow_run: # zizmor: ignore[dangerous-triggers] Privileged analysis follows failed PR CI and treats PR code and logs as data only.
+  workflow_run:
     workflows: ["OpenWISP Utils CI Build"]
     types:
       - completed
 
-permissions: {}
+permissions:
+  pull-requests: read
+  actions: read
+  contents: read
 
 concurrency:
   group: ci-failure-${{ github.repository }}-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_branch }}
@@ -14,16 +17,11 @@ concurrency:
 
 jobs:
   find-pr:
-    name: Find failed CI pull request
     runs-on: ubuntu-latest
     if: >
       github.repository == 'openwisp/openwisp-utils' &&
-      github.event.workflow_run.name == 'OpenWISP Utils CI Build' &&
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.event == 'pull_request'
-    permissions:
-      pull-requests: read # Locates the pull request associated with the failed workflow run.
-      actions: read # Queries failed workflow runs when the event payload lacks a PR number.
     outputs:
       pr_number: ${{ steps.pr.outputs.number }}
       pr_author: ${{ steps.pr.outputs.author }}
@@ -76,8 +74,10 @@ jobs:
       github.repository == 'openwisp/openwisp-utils' &&
       needs.find-pr.outputs.pr_number != ''
     permissions:
+      pull-requests: write
+      actions: write
       contents: read
-    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@3497e3fbd42dff2a59f566184a1bf8e1b2ab57ea # master
+    uses: openwisp/openwisp-utils/.github/workflows/reusable-bot-ci-failure.yml@master
     with:
       pr_number: ${{ needs.find-pr.outputs.pr_number }}
       head_sha: ${{ github.event.workflow_run.head_sha }}

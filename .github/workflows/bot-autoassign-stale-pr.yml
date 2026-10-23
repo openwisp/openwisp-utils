@@ -5,7 +5,10 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: bot-autoassign-stale-pr-${{ github.repository }}
@@ -14,9 +17,7 @@ concurrency:
 jobs:
   manage-stale-prs-python:
     if: github.repository == 'openwisp/openwisp-utils'
-    permissions:
-      contents: read
-    uses: $/.github/workflows/reusable-bot-autoassign.yml
+    uses: ./.github/workflows/reusable-bot-autoassign.yml
     with:
       bot_command: stale_pr
     secrets:

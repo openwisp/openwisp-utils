@@ -18,36 +18,39 @@ on:
         description: "Private key for GitHub App authentication"
         required: true
 
-permissions: {}
-
 jobs:
   generate-changelog:
-    name: Generate changelog entry
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
+      issues: write
 
     steps:
-      # The generator reads the PR diff and changelog format from this checkout.
-      # It does not execute files from the PR.
       - name: Checkout PR repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@v7
         with:
           ref: refs/pull/${{ inputs.pr_number }}/head
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Generate App Token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
-          permission-issues: read
-          permission-pull-requests: write
+
+      - name: Checkout openwisp-utils for action
+        uses: actions/checkout@v7
+        with:
+          repository: openwisp/openwisp-utils
+          ref: master
+          sparse-checkout: |
+            .github/actions/bot-changelog-generator
+          path: openwisp-utils-action
 
       - name: Generate changelog
-        uses: $/.github/actions/bot-changelog-generator
+        uses: ./openwisp-utils-action/.github/actions/bot-changelog-generator
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}

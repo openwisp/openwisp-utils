@@ -21,15 +21,9 @@ on:
       private_key:
         required: true
 
-permissions: {}
-
 jobs:
   parse:
-    name: Parse backport request
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read # Resolves the merge commit and backport targets for the source PR.
     outputs:
       branches: ${{ steps.extract.outputs.branches }}
       sha: ${{ steps.extract.outputs.sha }}
@@ -68,11 +62,9 @@ jobs:
           echo "sha=$SHA" >> $GITHUB_OUTPUT
 
   backport:
-    name: Backport changes
     needs: parse
     if: needs.parse.outputs.branches != '' && needs.parse.outputs.branches != '[]' && needs.parse.outputs.sha != ''
     runs-on: ubuntu-latest
-    permissions: {}
     strategy:
       fail-fast: false
       matrix:
@@ -80,18 +72,15 @@ jobs:
     steps:
       - name: Generate GitHub App Token
         id: generate-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.app_id }}
           private-key: ${{ secrets.private_key }}
-          permission-contents: write
-          permission-pull-requests: write
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           token: ${{ steps.generate-token.outputs.token }}
-          persist-credentials: true # zizmor: ignore[artipacked] required for git push
 
       - name: Configure Git
         run: |
@@ -105,6 +94,7 @@ jobs:
           BRANCH: ${{ matrix.branch }}
           REPO: ${{ github.repository }}
         run: |
+          SHA="${{ needs.parse.outputs.sha }}"
           if [ -z "$SHA" ]; then
             echo "No SHA to cherry-pick, skipping"
             exit 0

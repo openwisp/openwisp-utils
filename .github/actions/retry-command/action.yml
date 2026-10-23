@@ -20,21 +20,16 @@ runs:
   steps:
     - name: Retry Command
       shell: bash
-      env:
-        COMMAND: ${{ inputs.command }}
-        DELAY_SECONDS: ${{ inputs.delay_seconds }}
-        MAX_ATTEMPTS: ${{ inputs.max_attempts }}
       run: |
-        readonly COMMAND DELAY_SECONDS MAX_ATTEMPTS
         attempts=0
-        until [ "$attempts" -ge "$MAX_ATTEMPTS" ]
+        until [ $attempts -ge ${{ inputs.max_attempts }} ]
         do
-          echo "Attempt $((attempts+1)) of $MAX_ATTEMPTS..."
-          eval "$COMMAND" && break
+          echo "Attempt $((attempts+1)) of ${{ inputs.max_attempts }}..."
+          eval "${{ inputs.command }}" && break
           attempts=$((attempts+1))
-          if [ "$attempts" -lt "$MAX_ATTEMPTS" ]; then
-            echo "Command failed. Waiting ${DELAY_SECONDS}s before retry..."
-            sleep "$DELAY_SECONDS"
+          if [ $attempts -lt ${{ inputs.max_attempts }} ]; then
+            echo "Command failed. Waiting ${{ inputs.delay_seconds }}s before retry..."
+            sleep ${{ inputs.delay_seconds }}
           else
             echo "Command failed after $attempts attempts."
             exit 1

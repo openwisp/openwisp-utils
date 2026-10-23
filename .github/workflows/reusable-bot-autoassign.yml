@@ -72,18 +72,13 @@ env:
     openwisp/django-minify-compress-staticfiles
     openwisp/bot-testing-ground
 
-permissions: {}
-
 jobs:
   run-bot:
-    name: Run assignment bot
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Generate repository write token
         id: write-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
@@ -103,7 +98,7 @@ jobs:
 
       - name: Generate validation token
         id: validation-token
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.OPENWISP_BOT_APP_ID }}
           private-key: ${{ secrets.OPENWISP_BOT_PRIVATE_KEY }}
@@ -114,15 +109,14 @@ jobs:
           permission-repository-projects: read
 
       - name: Checkout openwisp-utils
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@v7
         with:
           repository: ${{ inputs.openwisp_utils_repo }}
           ref: ${{ inputs.openwisp_utils_ref }}
           path: openwisp-utils
-          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 

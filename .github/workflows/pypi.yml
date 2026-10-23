@@ -4,11 +4,8 @@ on:
   release:
     types: [published]
 
-permissions: {}
-
-concurrency:
-  group: pypi-publish-${{ github.repository }}
-  cancel-in-progress: false
+permissions:
+  id-token: write
 
 jobs:
   pypi-publish:
@@ -19,14 +16,11 @@ jobs:
       name: pypi
       url: https://pypi.org/p/openwisp-utils
     permissions:
-      contents: read
-      id-token: write # Required for trusted publishing to PyPI.
+      id-token: write
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
+      - uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        uses: actions/setup-python@v7
         with:
           python-version: "3.10"
       - name: Install dependencies
@@ -36,4 +30,4 @@ jobs:
       - name: Build package
         run: python -m build
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@v1.14.2
