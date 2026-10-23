@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 extras_require = {
     "qa": [
         "black>=25.1,<26.6",
-        "flake8~=7.3.0",
+        "flake8~=7.4.1",
         "isort>=6.0.1,<8.1.0",
         "coverage>=7.10.0,<7.17.0",
         "tblib~=3.2.2",
