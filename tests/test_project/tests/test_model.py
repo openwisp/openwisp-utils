@@ -13,6 +13,13 @@ from . import CreateMixin
 class TestModel(TestCase):
     TEST_KEY = "w1gwJxKaHcamUw62TQIPgYchwLKn3AA0"
 
+    def test_ci_failure_bot_fork_validation(self):
+        self.assertEqual(
+            True,
+            False,
+            'Intentional failure to validate fork PR CI-failure reporting.',
+        )
+
     def test_key_validator(self):
         p = Project.objects.create(name="test_project")
         p.key = "key/key"
