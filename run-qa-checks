@@ -8,15 +8,6 @@ qa-checks () {
         --migration-path "./tests/test_project/migrations"
 }
 
-pre-push-checks () {
-    checks=(
-        "./runtests.py --parallel"
-    )
-    for (( i = 0; i < ${#checks[@]} ; i++ )); do
-        eval "${checks[$i]}" || { echo "'${checks[$i]}' failed!"; exit 1; }
-    done
-}
-
 # If no arguments given, only run QA checks
 if [[ $1 == "" ]] 
 then
@@ -32,7 +23,6 @@ case $i in
     # Used by openwisp-pre-push-hook
     --pre-push)
         qa-checks || { echo "qa-checks failed!"; exit 1; }
-        pre-push-checks
     ;;
 
     # Any other argument is ignored
