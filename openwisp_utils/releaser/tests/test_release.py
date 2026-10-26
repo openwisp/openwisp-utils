@@ -131,9 +131,10 @@ def test_main_aborts_when_remote_base_branch_is_missing(mock_all, mocker):
         "openwisp_utils.releaser.release.remote_branch_exists", return_value=False
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as excinfo:
         run_release()
 
+    assert excinfo.value.code == 1
     mock_all["run_git_cliff"].assert_not_called()
     mock_all["update_changelog"].assert_not_called()
     mock_all["bump_version"].assert_not_called()
@@ -155,6 +156,7 @@ def test_bugfix_flow_skip_porting(mock_all):
     run_release()
     mock_gh = mock_all["GitHub"].return_value
     assert mock_gh.create_pr.call_count == 1
+    mock_all["remote_branch_exists"].assert_called_with("1.1.x")
 
 
 def test_check_prerequisites_config_load_error(mocker):

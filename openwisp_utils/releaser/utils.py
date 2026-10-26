@@ -97,12 +97,35 @@ def branch_exists(branch_name):
 
 def remote_branch_exists(branch_name):
     """Check if a Git branch exists on origin."""
-    result = subprocess.run(
-        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch_name],
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0
+    command = [
+        "git",
+        "ls-remote",
+        "--exit-code",
+        "--heads",
+        "origin",
+        f"refs/heads/{branch_name}",
+    ]
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError(
+            "Timed out while checking the remote branch on origin."
+        ) from e
+    if result.returncode == 2:
+        return False
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(
+            result.returncode,
+            command,
+            output=result.stdout,
+            stderr=result.stderr,
+        )
+    return True
 
 
 def rst_to_markdown(text):
