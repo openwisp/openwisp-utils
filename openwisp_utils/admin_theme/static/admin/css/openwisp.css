@@ -515,9 +515,10 @@ textarea,
 }
 #main .form-row p.datetime label {
   float: none;
+  font-weight: bold;
+  /* for Django <= 6.0 */
   display: inline;
   padding: 0;
-  font-weight: bold;
 }
 .form-row .datetime input.vDateField,
 .form-row .datetime input.vTimeField {

@@ -58,6 +58,7 @@ class ReadOnlyAdmin(ModelAdmin):
         ]
 
     def get_actions(self, request, action_location=None):
+        # for Django <= 6.0, which does not accept action_location
         kwargs = {"action_location": action_location} if action_location else {}
         actions = super().get_actions(request, **kwargs)
         if "delete_selected" in actions:  # pragma: no cover
