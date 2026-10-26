@@ -57,8 +57,9 @@ class ReadOnlyAdmin(ModelAdmin):
             f.name for f in self.model._meta.fields if f.name not in exclude
         ]
 
-    def get_actions(self, request):
-        actions = super().get_actions(request)
+    def get_actions(self, request, action_location=None):
+        kwargs = {"action_location": action_location} if action_location else {}
+        actions = super().get_actions(request, **kwargs)
         if "delete_selected" in actions:  # pragma: no cover
             del actions["delete_selected"]
         return actions
