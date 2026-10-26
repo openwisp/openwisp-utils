@@ -125,6 +125,22 @@ def test_main_flow_user_rejects_changelog(mock_all):
         run_release()
 
 
+def test_main_aborts_when_remote_base_branch_is_missing(mock_all, mocker):
+    """Release stops before modifying files when its remote base branch is deleted."""
+    mocker.patch(
+        "openwisp_utils.releaser.release.remote_branch_exists", return_value=False
+    )
+
+    with pytest.raises(SystemExit):
+        run_release()
+
+    mock_all["run_git_cliff"].assert_not_called()
+    mock_all["update_changelog"].assert_not_called()
+    mock_all["bump_version"].assert_not_called()
+    output = "".join(str(call) for call in mock_all["print"].call_args_list)
+    assert "Remote branch 'main' does not exist on origin" in output
+
+
 def test_bugfix_flow_skip_porting(mock_all):
     """Tests a full bugfix release but declines the final changelog porting step."""
     mock_all["_git_command_map"][

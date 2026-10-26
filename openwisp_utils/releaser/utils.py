@@ -95,6 +95,16 @@ def branch_exists(branch_name):
     return result.returncode == 0
 
 
+def remote_branch_exists(branch_name):
+    """Check if a Git branch exists on origin."""
+    result = subprocess.run(
+        ["git", "ls-remote", "--exit-code", "--heads", "origin", branch_name],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
     escaped_text = re.sub(r"(?<!`)_", r"\\_", text)
