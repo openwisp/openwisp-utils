@@ -198,6 +198,9 @@ class TestGetRepoContext(unittest.TestCase):
         result = self.read_context(diff, max_chars=200)
         self.assertIn("CONTEXT TRUNCATED", result)
         self.assertLessEqual(len(result), 200)
+        self.assertIn(
+            "+a", result, "Truncated context must keep accumulated source lines."
+        )
 
     def test_keeps_later_hunks_in_the_same_file(self):
         diff = self.make_diff() + "@@ -10 +10 @@\n-second_old\n+second_new\n"
