@@ -7,8 +7,8 @@ from unittest.mock import MagicMock, mock_open, patch
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from analyze_failure import _extract_failed_tests  # noqa: E402
 from analyze_failure import (  # noqa: E402
-    _extract_failed_tests,
     _fix_markdown_rendering,
     _is_transient_failure,
     _normalize_for_dedup,
@@ -23,6 +23,25 @@ from analyze_failure import (  # noqa: E402
 
 
 class TestReusableWorkflow(unittest.TestCase):
+    def test_fetches_the_failed_run_diff_without_checkout(self):
+        workflow = (
+            Path(__file__).resolve().parents[3]
+            / ".github/workflows/reusable-bot-ci-failure.yml"
+        ).read_text()
+        self.assertNotIn("Checkout PR Code", workflow)
+        self.assertNotIn("path: pr_code", workflow)
+        self.assertIn("BASE_SHA: ${{ inputs.base_sha }}", workflow)
+        self.assertIn('"repos/$REPO/compare/$BASE_SHA...$HEAD_SHA"', workflow)
+
+    def test_passes_the_failed_run_base_sha(self):
+        workflow = (
+            Path(__file__).resolve().parents[3] / ".github/workflows/bot-ci-failure.yml"
+        ).read_text()
+        self.assertIn(
+            "base_sha: ${{ github.event.workflow_run.pull_requests[0].base.sha }}",
+            workflow,
+        )
+
     def test_allows_escape_sequences_when_fetching_job_logs(self):
         workflow = (
             Path(__file__).resolve().parents[3]
@@ -76,86 +95,74 @@ class TestGetErrorLogs(unittest.TestCase):
 
 
 class TestGetRepoContext(unittest.TestCase):
-    """Tests for get_repo_context function."""
+    @staticmethod
+    def make_diff(path="main.py", before="old", after="new", old_path=None):
+        old_path = old_path or path
+        return (
+            f"diff --git a/{old_path} b/{path}\n"
+            f"--- a/{old_path}\n"
+            f"+++ b/{path}\n"
+            f"@@ -1 +1 @@\n-{before}\n+{after}\n"
+        )
 
-    @patch("analyze_failure.os.path.exists")
-    def test_returns_default_when_dir_missing(self, mock_exists):
-        mock_exists.return_value = False
-        result = get_repo_context("fake_dir")
-        self.assertEqual(result, "No repository context available.")
+    def read_context(self, diff, **kwargs):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "pr.diff"
+            path.write_text(diff, encoding="utf-8")
+            return get_repo_context(path, **kwargs)
 
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    @patch("builtins.open", new_callable=mock_open, read_data="print('hello')")
-    def test_reads_allowed_files_and_ignores_blocklist(
-        self, mock_file, mock_walk, mock_exists
-    ):
-        mock_exists.return_value = True
-        mock_walk.return_value = [
-            ("pr_code", ["docs"], ["main.py", "style.css", "Dockerfile"]),
-        ]
-        result = get_repo_context("pr_code")
-        self.assertIn('<file path="main.py">', result)
-        self.assertIn('<file path="Dockerfile">', result)
-        self.assertIn("print('hello')", result)
-        self.assertNotIn('<file path="style.css">', result)
+    def test_reads_allowed_source_without_deleted_lines(self):
+        result = self.read_context(self.make_diff(before="deleted_secret"))
+        self.assertIn("main.py", result)
+        self.assertIn("+new", result)
+        self.assertNotIn("deleted_secret", result)
 
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    @patch("builtins.open", new_callable=mock_open, read_data="a" * 1000)
-    def test_truncates_when_max_chars_exceeded(self, mock_file, mock_walk, mock_exists):
-        mock_exists.return_value = True
-        mock_walk.return_value = [("pr_code", [], ["file1.py", "file2.py"])]
-        result = get_repo_context("pr_code", max_chars=100)
-        self.assertIn("SYSTEM WARNING: REPO CONTEXT TRUNCATED", result)
-        self.assertLessEqual(len(result), 300)
+    def test_filters_excluded_and_renamed_sensitive_files(self):
+        result = self.read_context(
+            self.make_diff("docs/example.py", after="excluded")
+            + self.make_diff("config.py", old_path=".env.py", after="secret")
+            + self.make_diff(after="included")
+        )
+        self.assertIn("included", result)
+        self.assertNotIn("excluded", result)
+        self.assertNotIn("secret", result)
 
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    def test_skips_files_with_unicode_errors(self, mock_walk, mock_exists):
-        mock_exists.return_value = True
-        mock_walk.return_value = [("pr_code", [], ["binary.py"])]
-        with patch("builtins.open") as mock_file:
-            mock_file.side_effect = UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")
-            result = get_repo_context("pr_code")
-        self.assertEqual(result, "No relevant source files found in repository.")
+    def test_keeps_header_like_source_lines_with_their_file(self):
+        diff = """\
+diff --git a/.env.py b/.env.py
+new file mode 100644
+--- /dev/null
++++ b/.env.py
+@@ -0,0 +1,4 @@
++value = \"\"\"
++++ b/main.py
++SECRET_VALUE
++\"\"\"
+diff --git a/main.py b/main.py
+--- a/main.py
++++ b/main.py
+@@ -1 +1,4 @@
+-old
++value = \"\"\"
++++ b/.env.py
++preserved
++\"\"\"
+"""
+        result = self.read_context(diff)
+        self.assertNotIn("SECRET_VALUE", result)
+        self.assertIn("+++ b/.env.py", result)
+        self.assertIn("+preserved", result)
 
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    def test_returns_default_when_no_relevant_files(self, mock_walk, mock_exists):
-        mock_exists.return_value = True
-        mock_walk.return_value = [
-            ("pr_code", [], ["image.png", "style.css", "readme.md"])
-        ]
-        result = get_repo_context("pr_code")
-        self.assertEqual(result, "No relevant source files found in repository.")
+    def test_returns_default_for_missing_or_empty_diff(self):
+        self.assertEqual(
+            get_repo_context("missing.diff"), "No repository context available."
+        )
+        self.assertEqual(self.read_context(""), "No repository context available.")
 
-    def test_lib_exclusion(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with open(os.path.join(temp_dir, "main.py"), "w") as f:
-                f.write("print('included')")
-            lib_dir = os.path.join(temp_dir, "lib")
-            os.makedirs(lib_dir)
-            with open(os.path.join(lib_dir, "ignored.py"), "w") as f:
-                f.write("print('ignored')")
-            deep_lib_dir = os.path.join(
-                temp_dir,
-                "openwisp_controller",
-                "config",
-                "static",
-                "config",
-                "js",
-                "lib",
-            )
-            os.makedirs(deep_lib_dir)
-            with open(os.path.join(deep_lib_dir, "jquery.js"), "w") as f:
-                f.write("console.log('massive library ignored')")
-            result = get_repo_context(temp_dir)
-            self.assertIn("main.py", result)
-            self.assertNotIn("ignored.py", result)
-            self.assertNotIn("jquery.js", result)
-            self.assertNotIn("print('ignored')", result)
-            self.assertNotIn("massive library ignored", result)
+    def test_truncates_context_within_its_limit(self):
+        result = self.read_context(self.make_diff(after="a" * 1000), max_chars=200)
+        self.assertIn("CONTEXT TRUNCATED", result)
+        self.assertLessEqual(len(result), 200)
 
 
 class TestExtractFailedTests(unittest.TestCase):
