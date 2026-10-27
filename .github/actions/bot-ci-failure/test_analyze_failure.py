@@ -85,12 +85,91 @@ class TestGetErrorLogs(unittest.TestCase):
 
 
 class TestGetRepoContext(unittest.TestCase):
-    def test_reads_downloaded_diff(self):
-        diff = "diff --git a/main.py b/main.py\n@@ -1 +1 @@\n-old\n+new\n"
+    @staticmethod
+    def make_diff(path="main.py", before="old", after="new", old_path=None):
+        old_path = old_path or path
+        return (
+            f"diff --git a/{old_path} b/{path}\n"
+            f"--- a/{old_path}\n+++ b/{path}\n"
+            f"@@ -1 +1 @@\n-{before}\n+{after}\n"
+        )
+
+    def read_context(self, diff, **kwargs):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "pr.diff"
             path.write_text(diff, encoding="utf-8")
-            self.assertEqual(get_repo_context(path), diff)
+            return get_repo_context(path, **kwargs)
+
+    def test_reads_changed_source_without_deleted_lines(self):
+        result = self.read_context(self.make_diff(before="deleted_credential"))
+        self.assertIn("+new", result)
+        self.assertIn("main.py", result)
+        self.assertNotIn("deleted_credential", result)
+        self.assertIn("removed lines omitted", result)
+
+    def test_filters_sensitive_generated_and_unsupported_files_before_limit(self):
+        for path in (
+            ".env",
+            "config/.env.py",
+            "private.pem",
+            "private.KEY",
+            "certificate.crt",
+            "bundle.p12",
+            "docs/example.py",
+            "static/bundle.js",
+            "locale/messages.py",
+            ".github/workflows/test.yml",
+            "node_modules/app.js",
+            "venv/lib/app.py",
+            "assets/logo.svg",
+            "README.md",
+        ):
+            with self.subTest(path=path):
+                result = self.read_context(
+                    self.make_diff(path, after="excluded_secret" * 200)
+                    + self.make_diff(after="included_source"),
+                    max_chars=250,
+                )
+                self.assertNotIn("excluded_secret", result)
+                self.assertIn("included_source", result)
+                self.assertNotIn("CONTEXT TRUNCATED", result)
+
+    def test_sensitive_rename_is_filtered(self):
+        result = self.read_context(
+            self.make_diff("config.py", old_path=".env.py", after="secret")
+        )
+        self.assertNotIn("secret", result)
+        self.assertEqual(result, "No relevant source changes found.")
+
+    def test_added_deleted_binary_and_quoted_paths(self):
+        diff = (
+            "diff --git a/added.py b/added.py\n--- /dev/null\n+++ b/added.py\n"
+            "@@ -0,0 +1 @@\n+added_source\n"
+            "diff --git a/deleted.py b/deleted.py\n--- a/deleted.py\n+++ /dev/null\n"
+            "@@ -1 +0,0 @@\n-deleted_secret\n"
+            "diff --git a/image.png b/image.png\nBinary files differ\n"
+            'diff --git "a/space name.py" "b/space name.py"\n'
+            '--- "a/space name.py"\n+++ "b/space name.py"\n'
+            "@@ -1 +1 @@\n-removed\n+quoted_source\n"
+        )
+        result = self.read_context(diff)
+        self.assertIn("added_source", result)
+        self.assertIn("quoted_source", result)
+        self.assertNotIn("deleted_secret", result)
+        self.assertNotIn("image.png", result)
+
+    def test_context_and_hunk_lines_are_preserved(self):
+        diff = self.make_diff().replace("-old", " context\n-old")
+        self.assertIn(" context\n", self.read_context(diff))
+        self.assertIn("@@ -1 +1 @@", self.read_context(diff))
+
+    def test_malformed_headers_are_ignored(self):
+        for header in ('"b/bad.py', '"b/bad.py"junk', "wrong-prefix.py"):
+            with self.subTest(header=header):
+                diff = self.make_diff().replace("+++ b/main.py", "+++ " + header)
+                self.assertEqual(
+                    self.read_context(diff), "No relevant source changes found."
+                )
 
     def test_missing_empty_or_unreadable_diff(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -104,19 +183,14 @@ class TestGetRepoContext(unittest.TestCase):
                     )
 
     def test_truncates_large_diff(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "pr.diff"
-            path.write_text("a" * 1000, encoding="utf-8")
-            result = get_repo_context(path, max_chars=100)
-            self.assertTrue(result.startswith("a" * 100))
-            self.assertIn("CONTEXT TRUNCATED", result)
-            self.assertLess(len(result), 200)
+        result = self.read_context(self.make_diff(after="a" * 1000), max_chars=200)
+        self.assertIn("CONTEXT TRUNCATED", result)
+        self.assertLess(len(result), 300)
 
     def test_exact_limit_is_not_truncated(self):
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "pr.diff"
-            path.write_text("a" * 100, encoding="utf-8")
-            self.assertEqual(get_repo_context(path, max_chars=100), "a" * 100)
+        diff = self.make_diff()
+        expected = self.read_context(diff)
+        self.assertEqual(self.read_context(diff, max_chars=len(expected)), expected)
 
     @patch("builtins.open", side_effect=PermissionError)
     def test_handles_read_error(self, mock_file):

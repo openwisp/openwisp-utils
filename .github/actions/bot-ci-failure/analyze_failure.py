@@ -1,3 +1,4 @@
+import ast
 import os
 import re
 import secrets
@@ -215,21 +216,98 @@ def get_error_logs():
         return f"Error reading logs: {e}", False, False
 
 
+def _context_path_allowed(path):
+    if path == "/dev/null":
+        return True
+    if path.startswith('"'):
+        try:
+            path = ast.literal_eval(path)
+        except (SyntaxError, ValueError):
+            return False
+    if not path.startswith(("a/", "b/")):
+        return False
+    parts = path[2:].split("/")
+    ignore_dirs = {
+        ".git",
+        ".github",
+        "docs",
+        "static",
+        "locale",
+        "__pycache__",
+        "node_modules",
+        "venv",
+        ".tox",
+        "env",
+        "lib",
+    }
+    allow_exts = {".py", ".js", ".jsx", ".ts", ".tsx", ".yaml", ".yml", ".sh", ".lua"}
+    name = parts[-1]
+    return (
+        not any(part in ignore_dirs for part in parts[:-1])
+        and not name.startswith(".env")
+        and (
+            os.path.splitext(name)[1].lower() in allow_exts
+            or name in {"Dockerfile", "Makefile"}
+        )
+    )
+
+
 def get_repo_context(diff_path="pr.diff", max_chars=500000):
-    """Read the API diff as data without checking out or executing PR code."""
+    """Read changed source as text, retaining the source-tree privacy filters."""
+    parts = []
+    length = 0
+    saw_content = False
+    header = ""
+    old_header = ""
+    new_header = ""
+    allowed = False
+    in_hunk = False
     try:
         with open(diff_path, "r", encoding="utf-8") as diff:
-            context = diff.read(max_chars + 1)
-    except (UnicodeDecodeError, OSError):
+            for line in diff:
+                saw_content = saw_content or bool(line.strip())
+                if line.startswith("diff --git "):
+                    header = line
+                    old_header = new_header = ""
+                    allowed = in_hunk = False
+                elif not in_hunk and line.startswith("--- "):
+                    old_header = line
+                elif not in_hunk and line.startswith("+++ "):
+                    new_header = line
+                    new_path = line[4:].rstrip("\n")
+                    allowed = (
+                        bool(header and old_header)
+                        and new_path != "/dev/null"
+                        and _context_path_allowed(old_header[4:].rstrip("\n"))
+                        and _context_path_allowed(new_path)
+                    )
+                elif allowed and line.startswith("@@ "):
+                    if not in_hunk:
+                        line = header + old_header + new_header + line
+                    in_hunk = True
+                    if not parts:
+                        line = (
+                            "Changed source excerpts (removed lines omitted):\n\n"
+                            + line
+                        )
+                elif not (allowed and in_hunk and line.startswith(("+", " ", "\\"))):
+                    continue
+                if not (allowed and in_hunk):
+                    continue
+                # Filter paths and removed lines before applying the prompt budget.
+                if length + len(line) > max_chars:
+                    parts.append(line[: max_chars - length])
+                    parts.append(
+                        "\n\n... [ SYSTEM WARNING: REPO CONTEXT TRUNCATED DUE TO SIZE LIMITS. ] ..."
+                    )
+                    return "".join(parts)
+                parts.append(line)
+                length += len(line)
+    except (OSError, UnicodeDecodeError):
         return "No repository context available."
-    if not context.strip():
+    if not saw_content:
         return "No repository context available."
-    if len(context) > max_chars:
-        return (
-            context[:max_chars]
-            + "\n\n... [REPO CONTEXT TRUNCATED DUE TO SIZE LIMITS.] ..."
-        )
-    return context
+    return "".join(parts) or "No relevant source changes found."
 
 
 def _fix_markdown_rendering(text):
