@@ -115,6 +115,13 @@ class AutocompleteFilter(BaseAutocompleteFilter):
 
     @staticmethod
     def get_queryset_for_field(model, name):
+        """Return a relation queryset without a model instance.
+
+        Django 6 requires an instance for forward relations and reverse
+        one-to-one descriptors, but ``admin_auto_filters`` calls this
+        method without one. Remove when ``admin_auto_filters`` supports
+        Django 6.
+        """
         descriptor = getattr(model, name, None)
         if isinstance(
             descriptor, (ForwardManyToOneDescriptor, ReverseOneToOneDescriptor)
