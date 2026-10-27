@@ -185,7 +185,27 @@ class TestGetRepoContext(unittest.TestCase):
     def test_truncates_large_diff(self):
         result = self.read_context(self.make_diff(after="a" * 1000), max_chars=200)
         self.assertIn("CONTEXT TRUNCATED", result)
-        self.assertLess(len(result), 300)
+        self.assertLessEqual(len(result), 200)
+
+    def test_truncation_respects_small_budgets(self):
+        for limit in (0, 1, 71, 72, 73):
+            with self.subTest(limit=limit):
+                result = self.read_context(self.make_diff(), max_chars=limit)
+                self.assertLessEqual(len(result), limit)
+
+    def test_truncation_can_reclaim_previously_accumulated_content(self):
+        diff = self.make_diff(after="\n+".join("a" for _ in range(200)))
+        result = self.read_context(diff, max_chars=200)
+        self.assertIn("CONTEXT TRUNCATED", result)
+        self.assertLessEqual(len(result), 200)
+
+    def test_keeps_later_hunks_in_the_same_file(self):
+        diff = self.make_diff() + "@@ -10 +10 @@\n-second_old\n+second_new\n"
+        result = self.read_context(diff)
+        self.assertIn("+new", result)
+        self.assertIn("+second_new", result)
+        self.assertNotIn("second_old", result)
+        self.assertEqual(result.count("@@ "), 2)
 
     def test_exact_limit_is_not_truncated(self):
         diff = self.make_diff()

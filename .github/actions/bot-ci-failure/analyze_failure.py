@@ -297,10 +297,9 @@ def get_repo_context(diff_path="pr.diff", max_chars=500000):
                 # Filter paths and removed lines before applying the prompt budget.
                 if length + len(line) > max_chars:
                     parts.append(line[: max_chars - length])
-                    parts.append(
-                        "\n\n... [ SYSTEM WARNING: REPO CONTEXT TRUNCATED DUE TO SIZE LIMITS. ] ..."
-                    )
-                    return "".join(parts)
+                    marker = "\n\n... [ SYSTEM WARNING: REPO CONTEXT TRUNCATED DUE TO SIZE LIMITS. ] ..."
+                    context = "".join(parts)[: max(0, max_chars - len(marker))]
+                    return context + marker[:max_chars]
                 parts.append(line)
                 length += len(line)
     except (OSError, UnicodeDecodeError):
