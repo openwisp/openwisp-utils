@@ -441,14 +441,18 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
             self.wait_for_visibility(By.CSS_SELECTOR, "#site-name")
             self.assertEqual(self.check_exists_by_id("changelist-filter-clear"), True)
             paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
-            self.assertEqual(paginator.get_attribute("innerText"), "2 shelfs")
+            self.assertEqual(
+                paginator.get_attribute("innerText").splitlines()[-1], "2 shelfs"
+            )
 
         with self.subTest("Test clear filter button"):
             clear_button = self._get_clear_button()
             clear_button.click()
             self.wait_for_visibility(By.CSS_SELECTOR, "#site-name")
             paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
-            self.assertEqual(paginator.get_attribute("innerText"), "4 shelfs")
+            self.assertEqual(
+                paginator.get_attribute("innerText").splitlines()[-1], "4 shelfs"
+            )
 
         with self.subTest("Test multiple filters"):
             # Select Fantasy book type
@@ -471,7 +475,9 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
             filter_button.click()
             self.wait_for_visibility(By.CSS_SELECTOR, "#site-name")
             paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
-            self.assertEqual(paginator.get_attribute("innerText"), "0 shelfs")
+            self.assertEqual(
+                paginator.get_attribute("innerText").splitlines()[-1], "0 shelfs"
+            )
 
     def test_book_filter(self):
         # It has total number of filters less than 4
@@ -514,7 +520,9 @@ class TestBasicFilter(SeleniumTestMixin, ChannelsLiveServerTestCase, CreateMixin
                 "#changelist",
             )
             paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
-            self.assertEqual(paginator.get_attribute("innerText"), "1 book")
+            self.assertEqual(
+                paginator.get_attribute("innerText").splitlines()[-1], "1 book"
+            )
 
 
 @tag("selenium_tests")
@@ -804,7 +812,7 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
         self.open(f"{url}?shelf__books_type__exact=HORROR")
         self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
         paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
-        self.assertEqual(paginator.text.strip(), "3 books")
+        self.assertEqual(paginator.text.splitlines()[-1], "3 books")
 
     def test_sub_filter_applies_backend_filter(self):
         self.login()
@@ -812,7 +820,7 @@ class TestSubFilter(SeleniumTestMixin, CreateMixin, ChannelsLiveServerTestCase):
         self.open(f"{url}?shelf__books_type__exact=HORROR&created=has_date")
         self.wait_for_visibility(By.CSS_SELECTOR, ".ow-filter-group")
         paginator = self.find_element(By.CSS_SELECTOR, ".paginator")
-        self.assertEqual(paginator.text.strip(), "3 books")
+        self.assertEqual(paginator.text.splitlines()[-1], "3 books")
 
     def test_sub_filter_hidden_when_parent_filter_dropdown_open(self):
         self.login()

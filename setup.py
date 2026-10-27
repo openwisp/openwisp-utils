@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 extras_require = {
     "qa": [
         "black>=25.1,<26.6",
-        "flake8~=7.3.0",
+        "flake8~=7.4.1",
         "isort>=6.0.1,<8.1.0",
         "coverage>=7.10.0,<7.17.0",
         "tblib~=3.2.2",
@@ -26,7 +26,7 @@ extras_require = {
         "pytest-django>=4.10,<4.15",
     ],
     "celery": ["celery~=5.6.1"],
-    "selenium": ["selenium>=4.32,<4.50"],
+    "selenium": ["selenium>=4.32,<4.52"],
     "releaser": [
         "git-cliff~=2.14.2",
         "questionary~=2.1.0",

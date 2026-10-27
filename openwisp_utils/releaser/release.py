@@ -24,6 +24,7 @@ from openwisp_utils.releaser.utils import (
     format_file_with_docstrfmt,
     get_current_branch,
     normalize_markdown,
+    remote_branch_exists,
     rst_to_markdown,
 )
 from openwisp_utils.releaser.version import (
@@ -199,6 +200,13 @@ def port_changelog_to_main(gh, config, version, changelog_body, original_branch)
 def main():
     config, gh = check_prerequisites()
     original_branch = get_current_branch()
+    if not remote_branch_exists(original_branch):
+        print(
+            f"❌ Remote branch '{original_branch}' does not exist on origin. "
+            "Release cancelled."
+        )
+        sys.exit(1)
+
     is_bugfix = original_branch not in MAIN_BRANCHES
     release_type = "Bugfix" if is_bugfix else "Feature"
 

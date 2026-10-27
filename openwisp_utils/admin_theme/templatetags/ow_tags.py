@@ -1,6 +1,6 @@
 import logging
 
-from django import template
+from django import VERSION, template
 from django.template.defaultfilters import stringfilter
 from django.template.loader import get_template
 from django.utils.safestring import mark_safe
@@ -113,3 +113,13 @@ def has_sub_filters(filter_specs):
 def join_string(value):
     """Can be used to join strings with "-" to make id or class."""
     return value.lower().replace(" ", "-")
+
+
+@register.simple_tag
+def django_6_or_newer():
+    """Return whether Django 6.0 or newer is installed.
+
+    For internal use only. Remove when support for Django <= 5.2 is
+    dropped.
+    """
+    return VERSION >= (6, 0)

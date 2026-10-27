@@ -462,10 +462,17 @@ Automated CI Failure Bot
 
 To assist contributors with debugging, this reusable workflow leverages
 Google's Gemini API to analyze continuous integration failures in
-real-time. Upon detecting a failed CI run, it intelligently gathers the
-relevant source code context (safely bypassing unnecessary assets)
-alongside the raw error logs. It then posts a concise summary and an
-actionable remediation plan directly to the Pull Request.
+real-time. Upon detecting a failed CI run, it fetches the pull request
+diff through the GitHub API without checking out untrusted pull request
+code. It includes changed lines from supported source files alongside the
+raw error logs, then posts a concise summary and an actionable remediation
+plan directly to the Pull Request.
+
+Pass ``base_sha: ${{ github.event.workflow_run.pull_requests[0].base.sha
+}}`` to analyze the failed run's exact pull request diff. When it is
+unavailable, the reusable workflow falls back to the current pull request
+base. If it cannot fetch a diff, analysis continues without source
+context.
 
 When the bot detects that all failures are transient (e.g., network
 errors, browser crashes, Coveralls flakiness), it automatically re-runs
@@ -592,6 +599,7 @@ job:
         with:
           pr_number: ${{ needs.find-pr.outputs.pr_number }}
           head_sha: ${{ github.event.workflow_run.head_sha }}
+          base_sha: ${{ github.event.workflow_run.pull_requests[0].base.sha }}
           head_repo: ${{ github.event.workflow_run.head_repository.full_name }}
           base_repo: ${{ github.repository }}
           run_id: ${{ github.event.workflow_run.id }}
