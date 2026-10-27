@@ -5,6 +5,10 @@ from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.admin.utils import NotRelationField, get_model_from_relation
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db.models.fields import CharField, UUIDField
+from django.db.models.fields.related_descriptors import (
+    ForwardManyToOneDescriptor,
+    ReverseOneToOneDescriptor,
+)
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -108,6 +112,22 @@ class AutocompleteFilter(BaseAutocompleteFilter):
 
     def get_autocomplete_url(self, request, model_admin):
         return reverse("admin:ow-auto-filter")
+
+    @staticmethod
+    def get_queryset_for_field(model, name):
+        """Return a relation queryset without a model instance.
+
+        Django 6 requires an instance for forward relations and reverse
+        one-to-one descriptors, but ``admin_auto_filters`` calls this
+        method without one. Remove when ``admin_auto_filters`` supports
+        Django 6.
+        """
+        descriptor = getattr(model, name, None)
+        if isinstance(
+            descriptor, (ForwardManyToOneDescriptor, ReverseOneToOneDescriptor)
+        ):
+            return model._meta.get_field(name).related_model._base_manager.all()
+        return BaseAutocompleteFilter.get_queryset_for_field(model, name)
 
     def __init__(self, *args, **kwargs):
         try:

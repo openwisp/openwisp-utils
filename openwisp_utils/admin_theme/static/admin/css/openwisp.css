@@ -302,6 +302,15 @@ a:visited {
   color: var(--ow-link-color);
   text-decoration: none;
 }
+a:not(
+    [role="button"],
+    #header a,
+    #nav-sidebar a,
+    #content-main.app-list a,
+    .object-tools a
+  ):is(.button, .deletelink, :not(:hover, :focus)) {
+  text-decoration: none;
+}
 table thead th.sorted .sortoptions a.sortremove:focus:after,
 table thead th.sorted .sortoptions a.sortremove:hover:after {
   color: var(--ow-link-hover);
@@ -466,6 +475,54 @@ textarea,
 }
 .aligned label {
   float: left;
+}
+@media (min-width: 768px) {
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) {
+    flex-flow: row wrap;
+    gap: 0;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > label {
+    width: 160px;
+    padding: 4px 0 0;
+    padding-inline-end: 10px;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > ul.errorlist {
+    order: -1;
+    flex-basis: 100%;
+    margin-inline-start: 170px;
+  }
+  .aligned .flex-container:not(.checkbox-row, .form-multiline) > .help {
+    order: 2;
+    flex-basis: 100%;
+    margin-inline-start: 170px;
+  }
+  .aligned .form-row > fieldset > legend {
+    width: 160px;
+    padding: 4px 0 0;
+    padding-inline-end: 10px;
+  }
+  .aligned .form-row > fieldset > .flex-container {
+    width: auto;
+  }
+  .aligned .form-row > fieldset > .flex-container > ul.errorlist,
+  .aligned .form-row > fieldset > .flex-container > .help {
+    margin-inline-start: 0;
+  }
+}
+#main .aligned .form-row > fieldset > legend {
+  color: var(--ow-form-label);
+  font-size: 15px;
+}
+#main .form-row p.datetime label {
+  float: none;
+  font-weight: bold;
+  /* for Django <= 6.0 */
+  display: inline;
+  padding: 0;
+}
+.form-row .datetime input.vDateField,
+.form-row .datetime input.vTimeField {
+  margin-inline-start: 5px;
 }
 input.readonly {
   border: 1px solid var(--ow-form-readonly-border) !important;
@@ -652,13 +709,19 @@ html {
     opacity: 0;
   }
 }
-div.breadcrumbs {
+div.breadcrumbs,
+ol.breadcrumbs {
   background: var(--ow-breadcrumb-bg);
   color: var(--ow-breadcrumb-text);
   border-bottom: 2px solid var(--ow-breadcrumb-border);
 }
-#main-content div.breadcrumbs {
+#main-content div.breadcrumbs,
+#main-content ol.breadcrumbs {
   padding: 1rem 2.5rem;
+}
+#main-content ol.breadcrumbs li {
+  font-size: inherit;
+  line-height: inherit;
 }
 #main .selector-chosen h2,
 #main .aligned .selector-chosen-title {
@@ -1103,6 +1166,9 @@ input[type="button"]:hover,
   margin-top: -4px;
   margin-bottom: 20px;
 }
+.title-wrapper .object-tools {
+  float: right;
+}
 .title-wrapper .object-tools li {
   height: auto;
 }
@@ -1110,28 +1176,31 @@ input[type="button"]:hover,
   box-sizing: border-box;
   font-size: 14px;
 }
-#changelist p.paginator a,
-#changelist p.paginator .this-page {
+#changelist .paginator a,
+/* for Django <= 5.2 */
+#changelist .paginator .this-page {
   background: var(--ow-paginator-bg);
   padding: 5px 10px;
   margin-right: 5px;
   border-radius: 2px;
 }
-#changelist p.paginator .this-page {
+#changelist .paginator a[aria-current="page"],
+/* for Django <= 5.2 */
+#changelist .paginator .this-page {
   background: transparent;
   border: 1px solid var(--ow-paginator-border-color);
   padding: 4px 9px;
 }
-#changelist p.paginator a:focus,
-#changelist p.paginator a:hover {
+#changelist .paginator a:not([aria-current="page"], .showall):focus,
+#changelist .paginator a:not([aria-current="page"], .showall):hover {
   background: var(--ow-paginator-hover);
 }
-#changelist p.paginator a.showall {
+#changelist .paginator a.showall {
   background: none;
   color: var(--ow-paginator-showall-text);
 }
-#changelist p.paginator a.showall:focus,
-#changelist p.paginator a.showall:hover {
+#changelist .paginator a.showall:focus,
+#changelist .paginator a.showall:hover {
   color: var(--ow-paginator-showall-hover);
 }
 div#toolbar #searchbar {
@@ -1249,7 +1318,8 @@ div.calendar-shortcuts a:hover {
 
 /* RESPONSIVE */
 @media (max-width: 1024px) {
-  #main-content div.breadcrumbs {
+  #main-content div.breadcrumbs,
+  #main-content ol.breadcrumbs {
     padding: 1rem 1.875rem;
   }
   #main-content #header {
@@ -1260,7 +1330,8 @@ div.calendar-shortcuts a:hover {
   }
 }
 @media (max-width: 768px) {
-  #main-content div.breadcrumbs {
+  #main-content div.breadcrumbs,
+  #main-content ol.breadcrumbs {
     padding: 1rem 0.938rem;
   }
   #main-content #header {
@@ -1290,6 +1361,7 @@ div.calendar-shortcuts a:hover {
     display: block;
   }
   .title-wrapper .object-tools {
+    float: none;
     display: inline-block;
     margin-bottom: 15px !important;
   }
@@ -1307,6 +1379,36 @@ div.calendar-shortcuts a:hover {
 #main .form-row .selector-chosen-title label,
 #container #main .form-row .selector-chosen-title .helptext {
   color: var(--ow-selector-chosen-text);
+}
+#main .selector-chooseall,
+#main .selector-clearall {
+  line-height: 16px;
+  font-family: inherit;
+  font-weight: bold;
+  color: var(--body-quiet-color);
+  border-radius: 0;
+}
+#main :enabled.selector-chooseall:focus,
+#main :enabled.selector-chooseall:hover,
+#main :enabled.selector-clearall:focus,
+#main :enabled.selector-clearall:hover {
+  color: var(--link-fg);
+}
+#main .selector-chooseall {
+  padding: 0 20px 0 0;
+  background: url(../img/selector-icons.svg) right -96px no-repeat;
+}
+#main :enabled.selector-chooseall:focus,
+#main :enabled.selector-chooseall:hover {
+  background-position: right -112px;
+}
+#main .selector-clearall {
+  padding: 0 0 0 20px;
+  background: url(../img/selector-icons.svg) 0 -64px no-repeat;
+}
+#main :enabled.selector-clearall:focus,
+#main :enabled.selector-clearall:hover {
+  background-position: 0 -80px;
 }
 
 @media (max-width: 1226px) and (min-width: 1024px) {
