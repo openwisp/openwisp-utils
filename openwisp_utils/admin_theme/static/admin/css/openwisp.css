@@ -1176,28 +1176,31 @@ input[type="button"]:hover,
   box-sizing: border-box;
   font-size: 14px;
 }
-#changelist p.paginator a,
-#changelist p.paginator .this-page {
+#changelist .paginator a,
+/* for Django <= 5.2 */
+#changelist .paginator .this-page {
   background: var(--ow-paginator-bg);
   padding: 5px 10px;
   margin-right: 5px;
   border-radius: 2px;
 }
-#changelist p.paginator .this-page {
+#changelist .paginator a[aria-current="page"],
+/* for Django <= 5.2 */
+#changelist .paginator .this-page {
   background: transparent;
   border: 1px solid var(--ow-paginator-border-color);
   padding: 4px 9px;
 }
-#changelist p.paginator a:focus,
-#changelist p.paginator a:hover {
+#changelist .paginator a:not([aria-current="page"], .showall):focus,
+#changelist .paginator a:not([aria-current="page"], .showall):hover {
   background: var(--ow-paginator-hover);
 }
-#changelist p.paginator a.showall {
+#changelist .paginator a.showall {
   background: none;
   color: var(--ow-paginator-showall-text);
 }
-#changelist p.paginator a.showall:focus,
-#changelist p.paginator a.showall:hover {
+#changelist .paginator a.showall:focus,
+#changelist .paginator a.showall:hover {
   color: var(--ow-paginator-showall-hover);
 }
 div#toolbar #searchbar {
@@ -1376,6 +1379,36 @@ div.calendar-shortcuts a:hover {
 #main .form-row .selector-chosen-title label,
 #container #main .form-row .selector-chosen-title .helptext {
   color: var(--ow-selector-chosen-text);
+}
+#main .selector-chooseall,
+#main .selector-clearall {
+  line-height: 16px;
+  font-family: inherit;
+  font-weight: bold;
+  color: var(--body-quiet-color);
+  border-radius: 0;
+}
+#main :enabled.selector-chooseall:focus,
+#main :enabled.selector-chooseall:hover,
+#main :enabled.selector-clearall:focus,
+#main :enabled.selector-clearall:hover {
+  color: var(--link-fg);
+}
+#main .selector-chooseall {
+  padding: 0 20px 0 0;
+  background: url(../img/selector-icons.svg) right -96px no-repeat;
+}
+#main :enabled.selector-chooseall:focus,
+#main :enabled.selector-chooseall:hover {
+  background-position: right -112px;
+}
+#main .selector-clearall {
+  padding: 0 0 0 20px;
+  background: url(../img/selector-icons.svg) 0 -64px no-repeat;
+}
+#main :enabled.selector-clearall:focus,
+#main :enabled.selector-clearall:hover {
+  background-position: 0 -80px;
 }
 
 @media (max-width: 1226px) and (min-width: 1024px) {
