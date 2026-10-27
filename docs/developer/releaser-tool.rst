@@ -49,6 +49,13 @@ pull requests, tags, and releases on your behalf.
 .. image:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/releaser/github-access-token.png
     :alt: Screenshot showing the required repository permissions for a new fine-grained GitHub Personal Access Token.
 
+**3. Remote Release Branch**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The branch from which you run the tool must still exist on ``origin``. The
+releaser verifies this before generating the changelog or modifying files
+and cancels the release if the branch is missing.
+
 Usage
 -----
 
