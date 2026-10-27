@@ -9,6 +9,9 @@ on:
       head_sha:
         required: true
         type: string
+      base_sha:
+        required: false
+        type: string
       head_repo:
         required: true
         type: string
@@ -55,14 +58,24 @@ jobs:
           ref: master
           path: trusted_scripts
 
-      - name: Checkout PR Code
-        uses: actions/checkout@v7
-        with:
-          repository: ${{ inputs.head_repo }}
-          ref: ${{ inputs.head_sha }}
-          path: pr_code
-          fetch-depth: 1
-          submodules: false
+      - name: Fetch PR Diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_SHA: ${{ inputs.base_sha }}
+          HEAD_SHA: ${{ inputs.head_sha }}
+          PR_NUM: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.base_repo }}
+        run: |
+          set -eo pipefail
+          : > pr.diff
+          if [ -z "$BASE_SHA" ]; then
+            BASE_SHA=$(gh pr view "$PR_NUM" --repo "$REPO" --json baseRefOid --jq '.baseRefOid') || true
+          fi
+          if [ -z "$BASE_SHA" ] || ! gh api -H "Accept: application/vnd.github.diff" \
+            "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" > pr.diff; then
+            : > pr.diff
+            echo "::warning::Could not fetch the PR diff; continuing without code context."
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v7
