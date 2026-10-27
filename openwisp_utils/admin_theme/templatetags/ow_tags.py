@@ -117,4 +117,9 @@ def join_string(value):
 
 @register.simple_tag
 def django_6_or_newer():
+    """Return whether Django 6.0 or newer is installed.
+
+    For internal use only. Remove when support for Django <= 5.2 is
+    dropped.
+    """
     return VERSION >= (6, 0)
