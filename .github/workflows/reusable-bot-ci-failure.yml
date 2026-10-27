@@ -55,14 +55,25 @@ jobs:
           ref: master
           path: trusted_scripts
 
-      - name: Checkout PR Code
-        uses: actions/checkout@v7
-        with:
-          repository: ${{ inputs.head_repo }}
-          ref: ${{ inputs.head_sha }}
-          path: pr_code
-          fetch-depth: 1
-          submodules: false
+      - name: Fetch PR Diff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUM: ${{ inputs.pr_number }}
+          REPO: ${{ inputs.base_repo }}
+          HEAD_SHA: ${{ inputs.head_sha }}
+        run: |
+          set -eo pipefail
+          : > pr.diff
+          if ! BASE_SHA=$(gh pr view "$PR_NUM" --repo "$REPO" --json baseRefOid --jq '.baseRefOid'); then
+            echo "::warning::Could not fetch the PR base; continuing without code context."
+            exit 0
+          fi
+          # Use the failed commit, even if the contributor has since pushed another commit.
+          if [ -z "$BASE_SHA" ] || ! gh api -H "Accept: application/vnd.github.diff" \
+            "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" > pr.diff; then
+            : > pr.diff
+            echo "::warning::Could not fetch the PR diff; continuing without code context."
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v7

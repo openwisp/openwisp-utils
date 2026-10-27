@@ -23,6 +23,15 @@ from analyze_failure import (  # noqa: E402
 
 
 class TestReusableWorkflow(unittest.TestCase):
+    def test_pr_context_does_not_require_an_untrusted_checkout(self):
+        workflow = (
+            Path(__file__).resolve().parents[3]
+            / ".github/workflows/reusable-bot-ci-failure.yml"
+        ).read_text()
+        self.assertNotIn("path: pr_code", workflow)
+        self.assertNotIn("allow-unsafe-pr-checkout", workflow)
+        self.assertIn('"repos/$REPO/compare/$BASE_SHA...$HEAD_SHA"', workflow)
+
     def test_allows_escape_sequences_when_fetching_job_logs(self):
         workflow = (
             Path(__file__).resolve().parents[3]
@@ -76,86 +85,42 @@ class TestGetErrorLogs(unittest.TestCase):
 
 
 class TestGetRepoContext(unittest.TestCase):
-    """Tests for get_repo_context function."""
+    def test_reads_downloaded_diff(self):
+        diff = "diff --git a/main.py b/main.py\n@@ -1 +1 @@\n-old\n+new\n"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "pr.diff"
+            path.write_text(diff, encoding="utf-8")
+            self.assertEqual(get_repo_context(path), diff)
 
-    @patch("analyze_failure.os.path.exists")
-    def test_returns_default_when_dir_missing(self, mock_exists):
-        mock_exists.return_value = False
-        result = get_repo_context("fake_dir")
-        self.assertEqual(result, "No repository context available.")
+    def test_missing_empty_or_unreadable_diff(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "pr.diff"
+            for content in (None, b"", b" \n", b"\xff"):
+                with self.subTest(content=content):
+                    if content is not None:
+                        path.write_bytes(content)
+                    self.assertEqual(
+                        get_repo_context(path), "No repository context available."
+                    )
 
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    @patch("builtins.open", new_callable=mock_open, read_data="print('hello')")
-    def test_reads_allowed_files_and_ignores_blocklist(
-        self, mock_file, mock_walk, mock_exists
-    ):
-        mock_exists.return_value = True
-        mock_walk.return_value = [
-            ("pr_code", ["docs"], ["main.py", "style.css", "Dockerfile"]),
-        ]
-        result = get_repo_context("pr_code")
-        self.assertIn('<file path="main.py">', result)
-        self.assertIn('<file path="Dockerfile">', result)
-        self.assertIn("print('hello')", result)
-        self.assertNotIn('<file path="style.css">', result)
+    def test_truncates_large_diff(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "pr.diff"
+            path.write_text("a" * 1000, encoding="utf-8")
+            result = get_repo_context(path, max_chars=100)
+            self.assertTrue(result.startswith("a" * 100))
+            self.assertIn("CONTEXT TRUNCATED", result)
+            self.assertLess(len(result), 200)
 
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    @patch("builtins.open", new_callable=mock_open, read_data="a" * 1000)
-    def test_truncates_when_max_chars_exceeded(self, mock_file, mock_walk, mock_exists):
-        mock_exists.return_value = True
-        mock_walk.return_value = [("pr_code", [], ["file1.py", "file2.py"])]
-        result = get_repo_context("pr_code", max_chars=100)
-        self.assertIn("SYSTEM WARNING: REPO CONTEXT TRUNCATED", result)
-        self.assertLessEqual(len(result), 300)
+    def test_exact_limit_is_not_truncated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "pr.diff"
+            path.write_text("a" * 100, encoding="utf-8")
+            self.assertEqual(get_repo_context(path, max_chars=100), "a" * 100)
 
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    def test_skips_files_with_unicode_errors(self, mock_walk, mock_exists):
-        mock_exists.return_value = True
-        mock_walk.return_value = [("pr_code", [], ["binary.py"])]
-        with patch("builtins.open") as mock_file:
-            mock_file.side_effect = UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")
-            result = get_repo_context("pr_code")
-        self.assertEqual(result, "No relevant source files found in repository.")
-
-    @patch("analyze_failure.os.path.exists")
-    @patch("analyze_failure.os.walk")
-    def test_returns_default_when_no_relevant_files(self, mock_walk, mock_exists):
-        mock_exists.return_value = True
-        mock_walk.return_value = [
-            ("pr_code", [], ["image.png", "style.css", "readme.md"])
-        ]
-        result = get_repo_context("pr_code")
-        self.assertEqual(result, "No relevant source files found in repository.")
-
-    def test_lib_exclusion(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with open(os.path.join(temp_dir, "main.py"), "w") as f:
-                f.write("print('included')")
-            lib_dir = os.path.join(temp_dir, "lib")
-            os.makedirs(lib_dir)
-            with open(os.path.join(lib_dir, "ignored.py"), "w") as f:
-                f.write("print('ignored')")
-            deep_lib_dir = os.path.join(
-                temp_dir,
-                "openwisp_controller",
-                "config",
-                "static",
-                "config",
-                "js",
-                "lib",
-            )
-            os.makedirs(deep_lib_dir)
-            with open(os.path.join(deep_lib_dir, "jquery.js"), "w") as f:
-                f.write("console.log('massive library ignored')")
-            result = get_repo_context(temp_dir)
-            self.assertIn("main.py", result)
-            self.assertNotIn("ignored.py", result)
-            self.assertNotIn("jquery.js", result)
-            self.assertNotIn("print('ignored')", result)
-            self.assertNotIn("massive library ignored", result)
+    @patch("builtins.open", side_effect=PermissionError)
+    def test_handles_read_error(self, mock_file):
+        self.assertEqual(get_repo_context(), "No repository context available.")
 
 
 class TestExtractFailedTests(unittest.TestCase):

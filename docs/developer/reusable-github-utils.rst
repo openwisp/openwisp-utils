@@ -462,10 +462,12 @@ Automated CI Failure Bot
 
 To assist contributors with debugging, this reusable workflow leverages
 Google's Gemini API to analyze continuous integration failures in
-real-time. Upon detecting a failed CI run, it intelligently gathers the
-relevant source code context (safely bypassing unnecessary assets)
-alongside the raw error logs. It then posts a concise summary and an
-actionable remediation plan directly to the Pull Request.
+real-time. Upon detecting a failed CI run, it gathers a diff of the failed
+commit through the GitHub API instead of checking out the pull request's
+code. The diff is read only as text, capped at 500,000 characters, and
+omitted if unavailable. It combines this code context with the raw error
+logs. It then posts a concise summary and an actionable remediation plan
+directly to the Pull Request.
 
 When the bot detects that all failures are transient (e.g., network
 errors, browser crashes, Coveralls flakiness), it automatically re-runs

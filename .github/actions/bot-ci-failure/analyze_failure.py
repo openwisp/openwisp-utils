@@ -215,57 +215,21 @@ def get_error_logs():
         return f"Error reading logs: {e}", False, False
 
 
-def get_repo_context(base_dir="pr_code", max_chars=500000):
-    if not os.path.exists(base_dir):
+def get_repo_context(diff_path="pr.diff", max_chars=500000):
+    """Read the API diff as data without checking out or executing PR code."""
+    try:
+        with open(diff_path, "r", encoding="utf-8") as diff:
+            context = diff.read(max_chars + 1)
+    except (UnicodeDecodeError, OSError):
         return "No repository context available."
-    ignore_dirs = {
-        ".git",
-        ".github",
-        "docs",
-        "static",
-        "locale",
-        "__pycache__",
-        "node_modules",
-        "venv",
-        ".tox",
-        "env",
-        "lib",
-    }
-    allow_exts = {".py", ".js", ".jsx", ".ts", ".tsx", ".yaml", ".yml", ".sh", ".lua"}
-    allow_files = {"Dockerfile", "Makefile"}
-    sensitive_exts = {".pem", ".key", ".crt", ".p12"}
-    context_parts = []
-    current_length = 0
-    for root, dirs, files in os.walk(base_dir):
-        dirs[:] = [d for d in dirs if d not in ignore_dirs]
-        for file in files:
-            if (
-                file.startswith(".env")
-                or os.path.splitext(file)[1].lower() in sensitive_exts
-            ):
-                continue
-            ext = os.path.splitext(file)[1].lower()
-            if ext in allow_exts or file in allow_files:
-                filepath = os.path.join(root, file)
-                rel_path = os.path.relpath(filepath, base_dir)
-                try:
-                    with open(filepath, "r", encoding="utf-8") as f:
-                        content = f.read()
-                except (UnicodeDecodeError, OSError):
-                    continue
-                file_xml = f'<file path="{rel_path}">\n{content}\n</file>\n'
-                if current_length + len(file_xml) > max_chars:
-                    remaining_space = max_chars - current_length
-                    context_parts.append(
-                        file_xml[:remaining_space]
-                        + "\n\n... [ SYSTEM WARNING: REPO CONTEXT TRUNCATED DUE TO SIZE LIMITS. ] ..."
-                    )
-                    return "".join(context_parts)
-                context_parts.append(file_xml)
-                current_length += len(file_xml)
-    if not context_parts:
-        return "No relevant source files found in repository."
-    return "".join(context_parts)
+    if not context.strip():
+        return "No repository context available."
+    if len(context) > max_chars:
+        return (
+            context[:max_chars]
+            + "\n\n... [REPO CONTEXT TRUNCATED DUE TO SIZE LIMITS.] ..."
+        )
+    return context
 
 
 def _fix_markdown_rendering(text):
