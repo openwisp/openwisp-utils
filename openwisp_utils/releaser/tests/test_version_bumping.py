@@ -166,6 +166,7 @@ def test_determine_new_version_preserves_zero_padding(mock_questionary):
     mock_questionary.confirm.return_value.ask.return_value = True
     assert determine_new_version("26.09.0", "final", is_bugfix=True) == "26.09.1"
     assert determine_new_version("26.09.0", "final", is_bugfix=False) == "26.10.0"
+    assert determine_new_version("26.08.0", "final", is_bugfix=False) == "26.09.0"
 
 
 @patch("openwisp_utils.releaser.version.questionary")

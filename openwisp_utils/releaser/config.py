@@ -145,7 +145,7 @@ def _handle_docker_version(config):
             raise ValueError(
                 f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
             )
-        if not all(part.isdigit() for part in parts):
+        if not all(part.isdecimal() for part in parts):
             raise ValueError(f"Version '{version_str}' has non-numeric parts")
         # Strings preserve zero-padded components, e.g. "26.09.0"
         config["CURRENT_VERSION"] = [*parts, "final"]
@@ -175,7 +175,7 @@ def _handle_ansible_version(config):
                 raise ValueError(
                     f"Version '{version_str}' does not have expected 3 parts (X.Y.Z)"
                 )
-            if not all(part.isdigit() for part in parts):
+            if not all(part.isdecimal() for part in parts):
                 raise ValueError(f"Version '{version_str}' has non-numeric parts")
             # Strings preserve zero-padded components, e.g. "26.09.0"
             config["CURRENT_VERSION"] = [*parts, "final"]
