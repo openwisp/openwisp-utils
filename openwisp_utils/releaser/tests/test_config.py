@@ -366,22 +366,31 @@ def test_npm_package_invalid_version(
 DOCKER_VERSION_PATH = os.path.join("images", "common", "openwisp", "VERSION")
 
 
+@pytest.mark.parametrize(
+    "version, expected",
+    [
+        ("26.09.0", ["26", "09", "0", "final"]),
+        ("25.10.0", ["25", "10", "0", "final"]),
+    ],
+)
 def test_docker_package_detection(
     project_dir,
     create_docker_compose,
     create_docker_version_file,
     create_changelog,
     init_git_repo,
+    version,
+    expected,
 ):
     """Tests that docker type is detected when docker-compose.yml exists."""
     create_docker_compose(project_dir)
-    create_docker_version_file(project_dir, version="1.2.3")
+    create_docker_version_file(project_dir, version=version)
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
     assert config["package_type"] == "docker"
     assert config["version_path"] == DOCKER_VERSION_PATH
-    assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
+    assert config["CURRENT_VERSION"] == expected
 
 
 def test_docker_package_without_version_file(
@@ -435,23 +444,50 @@ def test_docker_package_invalid_version(
     assert config["CURRENT_VERSION"] is None
 
 
+def test_docker_package_non_numeric_version(
+    project_dir,
+    create_docker_compose,
+    create_docker_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests docker package with a non-numeric component in the VERSION file."""
+    create_docker_compose(project_dir)
+    create_docker_version_file(project_dir, version="26.09.x")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "docker"
+    assert config["version_path"] == DOCKER_VERSION_PATH
+    assert config["CURRENT_VERSION"] is None
+
+
 # Ansible Package Tests
+@pytest.mark.parametrize(
+    "version, expected",
+    [
+        ("26.09.0", ["26", "09", "0", "final"]),
+        ("25.10.0", ["25", "10", "0", "final"]),
+    ],
+)
 def test_ansible_package_detection(
     project_dir,
     create_ansible_lint,
     create_ansible_version_file,
     create_changelog,
     init_git_repo,
+    version,
+    expected,
 ):
     """Tests that ansible package type is detected when .ansible-lint exists."""
     create_ansible_lint(project_dir)
-    create_ansible_version_file(project_dir, version="1.2.3")
+    create_ansible_version_file(project_dir, version=version)
     create_changelog(project_dir)
     init_git_repo(project_dir)
     config = load_config()
     assert config["package_type"] == "ansible"
     assert config["version_path"] == "templates/openwisp2/version.py"
-    assert config["CURRENT_VERSION"] == [1, 2, 3, "final"]
+    assert config["CURRENT_VERSION"] == expected
 
 
 def test_ansible_package_without_version_file(
@@ -480,6 +516,23 @@ def test_ansible_package_malformed_version(
     config = load_config()
     assert config["package_type"] == "ansible"
     assert config["version_path"] == "templates/openwisp2/version.py"
+    assert config["CURRENT_VERSION"] is None
+
+
+def test_ansible_package_non_numeric_version(
+    project_dir,
+    create_ansible_lint,
+    create_ansible_version_file,
+    create_changelog,
+    init_git_repo,
+):
+    """Tests ansible package with a non-numeric version component."""
+    create_ansible_lint(project_dir)
+    create_ansible_version_file(project_dir, version="26.09.x")
+    create_changelog(project_dir)
+    init_git_repo(project_dir)
+    config = load_config()
+    assert config["package_type"] == "ansible"
     assert config["CURRENT_VERSION"] is None
 
 
