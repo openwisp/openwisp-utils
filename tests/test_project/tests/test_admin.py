@@ -898,3 +898,18 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             )
         finally:
             BookAdmin.list_filter = original_list_filter
+
+    def test_changelist_renders_save_button_for_list_editable(self):
+        """Ensure list-editable changes can be submitted with Django 6.1.
+
+        Its Save button is rendered in `changelist-footer`, so this
+        override must retain that footer or editable values cannot be
+        saved.
+        """
+        shelf = self._create_shelf()
+        self._create_book(shelf=shelf)
+        with patch.object(BookAdmin, "list_display", ("name", "author")), patch.object(
+            BookAdmin, "list_editable", ("author",)
+        ):
+            response = self.client.get(reverse("admin:test_project_book_changelist"))
+        self.assertContains(response, 'name="_save"')
