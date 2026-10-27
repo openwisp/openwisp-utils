@@ -908,8 +908,18 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         """
         shelf = self._create_shelf()
         self._create_book(shelf=shelf)
-        with patch.object(BookAdmin, "list_display", ("name", "author")), patch.object(
-            BookAdmin, "list_editable", ("author",)
-        ):
-            response = self.client.get(reverse("admin:test_project_book_changelist"))
-        self.assertContains(response, 'name="_save"')
+        url = reverse("admin:test_project_book_changelist")
+        with self.subTest("List editable"):
+            with patch.object(
+                BookAdmin, "list_display", ("name", "author")
+            ), patch.object(BookAdmin, "list_editable", ("author",)):
+                response = self.client.get(url)
+            self.assertEqual(
+                response.content.count(b'name="_save"'),
+                1,
+                "List-editable changelists must display exactly one Save button.",
+            )
+
+        with self.subTest("No list editable"):
+            response = self.client.get(url)
+            self.assertNotContains(response, 'name="_save"')
