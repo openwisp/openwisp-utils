@@ -192,6 +192,29 @@ class TestQa(TestCase):
                     check_commit_message()
 
     @capture_stdout()
+    def test_commit_missing_description(self, captured_output):
+        for message in ("[fix]", "[fix] ", "[fix] \t", "[fix]\n\nsome body"):
+            for quiet in (False, True):
+                with self.subTest(message=message, quiet=quiet):
+                    captured_output.seek(0)
+                    captured_output.truncate(0)
+                    options = ["checkcommit", "--message", message]
+                    if quiet:
+                        options.append("--quiet")
+                    with patch("argparse._sys.argv", options):
+                        with self.assertRaises(SystemExit) as result:
+                            check_commit_message()
+                    self.assertEqual(result.exception.code, 1)
+                    output = captured_output.getvalue()
+                    if quiet:
+                        self.assertEqual(output, "")
+                    else:
+                        self.assertIn(
+                            "please add a description after the prefix", output
+                        )
+                        self.assertIn("Please read our guidelines at:", output)
+
+    @capture_stdout()
     def test_commit_failure_message(self, captured_output):
         bad_commit = [
             "commitcheck",
