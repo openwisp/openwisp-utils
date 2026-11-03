@@ -13,6 +13,14 @@ DATABASES = {
         "NAME": "openwisp_utils.db",
     }
 }
+
+# Force in-memory DB for QA migration checks
+if os.environ.get("OWQA_USE_IN_MEMORY_DB"):
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
+
 if TESTING and "--exclude-tag=selenium_tests" not in sys.argv:
     DATABASES["default"]["TEST"] = {
         "NAME": os.path.join(BASE_DIR, "openwisp_utils_tests.db"),
