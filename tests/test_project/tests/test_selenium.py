@@ -701,6 +701,23 @@ class TestAutocompleteFilter(
         search_field_css_selector = ".ow2-autocomplete-dropdown .select2-search__field"
         self.open(url)
 
+        # The animation is expected to run in the first subTest, so the
+        # prefers-reduced-motion query is forced to return false in case it
+        # is enabled in the environment running the tests.
+        self.web_driver.execute_script(
+            "const originalMatchMedia = window.matchMedia.bind(window);"
+            "window.matchMedia = function (query) {"
+            "  const mql = originalMatchMedia(query);"
+            "  if (query === '(prefers-reduced-motion: reduce)') {"
+            "    Object.defineProperty(mql, 'matches', {"
+            "      value: false,"
+            "      configurable: true,"
+            "    });"
+            "  }"
+            "  return mql;"
+            "};"
+        )
+
         with self.subTest("Opening the dropdown applies the animation classes"):
             self.find_element(By.CSS_SELECTOR, filter_css_selector).click()
             self.wait_for_script(
