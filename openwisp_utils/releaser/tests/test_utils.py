@@ -13,6 +13,7 @@ from openwisp_utils.releaser.utils import (
     branch_exists,
     format_file_with_docstrfmt,
     normalize_markdown,
+    remote_branch_exists,
     retryable_request,
 )
 
@@ -349,3 +350,52 @@ def test_branch_exists_failure(mock_run):
     """branch_exists returns False when git exit code is non-zero."""
     mock_run.return_value = MagicMock(returncode=1)
     assert branch_exists("non-existent") is False
+
+
+@pytest.mark.parametrize(
+    ("returncode", "expected"),
+    [(0, True), (2, False)],
+)
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_remote_branch_exists(mock_run, returncode, expected):
+    """remote_branch_exists checks the branch directly on origin."""
+    mock_run.return_value = MagicMock(returncode=returncode)
+
+    assert remote_branch_exists("1.2") is expected
+    mock_run.assert_called_once_with(
+        [
+            "git",
+            "ls-remote",
+            "--exit-code",
+            "--heads",
+            "origin",
+            "refs/heads/1.2",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_remote_branch_exists_propagates_git_errors(mock_run):
+    """remote_branch_exists propagates errors other than a missing branch."""
+    mock_run.return_value = MagicMock(
+        returncode=128,
+        stdout="",
+        stderr="fatal: could not read from remote repository",
+    )
+
+    with pytest.raises(subprocess.CalledProcessError) as excinfo:
+        remote_branch_exists("1.2")
+
+    assert excinfo.value.stderr == "fatal: could not read from remote repository"
+
+
+@patch("openwisp_utils.releaser.utils.subprocess.run")
+def test_remote_branch_exists_reports_timeout(mock_run):
+    """remote_branch_exists reports a timed-out remote check."""
+    mock_run.side_effect = subprocess.TimeoutExpired("git", 30)
+
+    with pytest.raises(RuntimeError, match="Timed out while checking"):
+        remote_branch_exists("1.2")

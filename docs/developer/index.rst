@@ -16,7 +16,6 @@ Developer Docs
     ./admin-utilities.rst
     ./test-utilities.rst
     ./other-utilities.rst
-    ./reusable-github-utils.rst
     ./releaser-tool.rst
 
 Other useful resources:

@@ -49,6 +49,7 @@ If instructions conflict, repository config and CI workflows win first, official
 - When separate tests cover different cases of the same feature, share almost identical setup, and primarily vary in input or expected outcome, group them in one test method with `subTest`. Keep each subtest's setup explicit and independent, and retain separate test methods when cases exercise genuinely distinct behavior. Leave one blank line before each with `self.subTest(...)` statement only when a test method contains multiple such statements. Do not add a blank line for a single `subTest` statement inside a loop.
 - Prefer method decorators for context managers that apply to the entire test method and would otherwise create unnecessary nesting, unless decorator ordering conflicts or the context manager requires data unavailable when the method is defined.
 - Use targeted tests while iterating, then run the documented full test command.
+- Focused tests are enough for changes to the releaser tool and any other self contained utilities that doesn't impact the OpenWISP django app. The full test suite is unnecessary and slower.
 - Run the full test suite with a timeout of at least 15 minutes (`timeout=900000`).
 - Keep tests quiet on success. When code under test writes to stdout or stderr, use `capture_stdout`, `capture_stderr`, or `capture_any_output` from `openwisp_utils.tests` and assert the expected output. Do not leave unasserted output, logs, or warnings in test runs.
 

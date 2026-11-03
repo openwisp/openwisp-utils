@@ -220,6 +220,9 @@ def mock_all(mocker):
         "check_prerequisites": mocker.patch(
             "openwisp_utils.releaser.release.check_prerequisites"
         ),
+        "remote_branch_exists": mocker.patch(
+            "openwisp_utils.releaser.release.remote_branch_exists", return_value=True
+        ),
         "run_git_cliff": mocker.patch(
             "openwisp_utils.releaser.release.run_git_cliff",
             return_value="[unreleased]\n----\n- A new feature.",
