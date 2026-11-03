@@ -27,6 +27,12 @@ Which use respectively ``AutoCreatedField``, ``AutoLastModifiedField``
 from ``model_utils.fields`` (self-updating fields providing the creation
 date-time and the last modified date-time).
 
+By default, querysets are ordered by newest creation time and then by
+primary key, using ``("-created", "-pk")``. A subclass defining its own
+``Meta`` class must inherit ``TimeStampedEditableModel.Meta`` to preserve
+this ordering. Explicit model ordering and ``QuerySet.order_by()`` calls
+override it.
+
 REST API Utilities
 ------------------
 
