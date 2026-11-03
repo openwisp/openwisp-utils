@@ -32,23 +32,35 @@ django.jQuery(document).ready(function () {
   setAllPlaceholder(".auto-filter .select2-selection__placeholder");
   initSelect2NullOption();
 
-  django.jQuery(".auto-filter").on("select2:open", function (event) {
-    var optionsContainer = django
-        .jQuery(event.target)
-        .parent()
-        .parent()
-        .siblings()
-        .last(),
-      dropDownContainer = django
-        .jQuery(optionsContainer)
-        .find(".select2-container--open")[1];
-    django.jQuery(optionsContainer).css("min-height", "14.75rem");
-    django.jQuery(dropDownContainer).appendTo(optionsContainer);
-    django.jQuery(dropDownContainer).removeAttr("style");
+  function getDropdown(event) {
+    var select2 = django.jQuery(event.target).data("select2");
+    return select2 && select2.dropdown ? select2.dropdown.$dropdown : django.jQuery();
+  }
+
+  function prefersReducedMotion() {
+    return (
+      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+  }
+
+  django.jQuery(".auto-filter").on("select2:opening", function (event) {
+    var dropDown = getDropdown(event);
+    dropDown.removeClass("ow-dropdown-open");
+    if (prefersReducedMotion()) {
+      dropDown.removeClass("ow-dropdown-animated");
+      return;
+    }
+    dropDown.addClass("ow-dropdown-animated");
   });
 
-  django.jQuery(".auto-filter").on("select2:close", function () {
-    django.jQuery(".auto-filter-choices").css("min-height", "");
+  django.jQuery(".auto-filter").on("select2:open", function (event) {
+    if (prefersReducedMotion()) {
+      return;
+    }
+    var dropDown = getDropdown(event);
+    setTimeout(function () {
+      dropDown.addClass("ow-dropdown-open");
+    }, 10);
   });
 
   function applyFilter(target) {

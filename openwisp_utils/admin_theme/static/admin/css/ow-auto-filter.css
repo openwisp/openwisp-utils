@@ -48,7 +48,8 @@
 .auto-filter .select2-selection[aria-expanded="true"] {
   border-color: var(--ow-selected-filter-option-bg) !important;
 }
-.auto-filter .select2-selection[aria-expanded="true"] .select2-selection__rendered {
+.auto-filter .select2-selection[aria-expanded="true"] .select2-selection__rendered,
+.auto-filter .select2-selection[aria-expanded="true"] .select2-selection__placeholder {
   color: var(--ow-active-filter-title) !important;
 }
 .auto-filter .select2-selection__placeholder {
@@ -58,43 +59,37 @@
   display: block;
   border: none;
 }
-.auto-filter-choices .select2-container--open {
+.ow2-autocomplete-dropdown.select2-dropdown {
+  background: var(--body-bg);
   border: none !important;
-  top: 17px !important;
-  left: 0 !important;
+  border-radius: 0.35rem !important;
+  box-shadow: 0px 1px 4px #00000040;
+  max-height: 18.75rem;
+  overflow-y: auto;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
-.auto-filter-choices .select2-search--dropdown {
+.ow2-autocomplete-dropdown.ow-dropdown-animated {
+  opacity: 0;
+  transform: translateY(44px);
+}
+.ow2-autocomplete-dropdown.ow-dropdown-animated.ow-dropdown-open {
+  opacity: 1;
+  transform: translateY(0);
+}
+.ow2-autocomplete-dropdown .select2-search--dropdown {
   background: var(--body-bg) !important;
 }
-.auto-filter-choices .select2-dropdown--below {
-  border-radius: 0.35rem;
-  width: min-content;
-  background: var(--body-bg);
-  width: min-content;
-  max-height: 18.75rem;
-  min-width: 100%;
-  border: none !important;
-  box-shadow: 0px 1px 4px #00000040;
-  overflow-y: auto;
-}
-.auto-filter-choices .select2-results ul {
-  margin: 0;
-  padding: 0;
-}
-.auto-filter-choices .select2-results li {
-  margin: 0;
-  list-style-type: none;
+.ow2-autocomplete-dropdown .select2-results__option {
   color: var(--ow-color-fg-dark);
   font-size: 14px;
   border-radius: 4px;
-  font-weight: 500;
+  margin: 0.12rem !important;
+  padding: 0.5rem 0.75rem !important;
   transition:
     color 0.15s,
     background 0.15s;
-}
-.auto-filter-choices .select2-results__option[aria-selected="true"] {
-  color: var(--ow-selected-filter-option-text) !important;
-  background: var(--ow-selected-filter-option-bg) !important;
 }
 .change-list
   .select2-container--admin-autocomplete
