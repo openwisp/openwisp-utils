@@ -1,15 +1,20 @@
 import os
 import subprocess
 import tempfile
+from importlib.machinery import SourceFileLoader
+from importlib.util import module_from_spec, spec_from_loader
 from os import path
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
 from django.test import TestCase
 from openwisp_utils.qa import check_commit_message, check_migration_name
-from openwisp_utils.tests import capture_stderr, capture_stdout
+from openwisp_utils.tests import capture_any_output, capture_stderr, capture_stdout
 
 MIGRATIONS_DIR = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "migrations"
+)
+REPO_ROOT_DIR = path.dirname(
+    path.dirname(path.dirname(path.dirname(path.abspath(__file__))))
 )
 
 
@@ -633,4 +638,58 @@ class TestQa(TestCase):
             self.assertEqual(result.returncode, 1)
             self.assertIn(
                 "./file with spaces.py needs newline at the end", result.stdout
+            )
+
+
+class TestPrePushHook(TestCase):
+    def _load_hook(self):
+        hook_path = path.join(REPO_ROOT_DIR, "openwisp-pre-push-hook")
+        loader = SourceFileLoader("openwisp_pre_push_hook", hook_path)
+        hook = module_from_spec(spec_from_loader(loader.name, loader))
+        loader.exec_module(hook)
+        hook.REPO_ROOT_DIR = REPO_ROOT_DIR
+        return hook
+
+    @capture_any_output()
+    def test_pre_push_hook(self, stdout, stderr):
+        hook = self._load_hook()
+        run_qa_checks = path.join(REPO_ROOT_DIR, "run-qa-checks")
+        runtests = path.join(REPO_ROOT_DIR, "runtests")
+
+        with self.subTest("runtests passes"):
+            with patch("os.path.exists", return_value=True), patch(
+                "subprocess.Popen", return_value=Mock(returncode=0)
+            ) as mocked_popen:
+                hook.run_checks()
+            self.assertEqual(
+                mocked_popen.call_args_list,
+                [call([run_qa_checks, "--pre-push"]), call([runtests])],
+            )
+
+        with self.subTest("qa checks fail"):
+            with patch("os.path.exists", return_value=True), patch(
+                "subprocess.Popen", return_value=Mock(returncode=1)
+            ) as mocked_popen:
+                with self.assertRaises(SystemExit) as context:
+                    hook.run_checks()
+            self.assertEqual(context.exception.code, 1)
+            mocked_popen.assert_called_once_with([run_qa_checks, "--pre-push"])
+
+        with self.subTest("runtests fails"):
+            processes = [Mock(returncode=0), Mock(returncode=1)]
+            with patch("os.path.exists", return_value=True), patch(
+                "subprocess.Popen", side_effect=processes
+            ):
+                with self.assertRaises(SystemExit) as context:
+                    hook.run_checks()
+            self.assertEqual(context.exception.code, 1)
+
+        with self.subTest("runtests missing"):
+            with patch("os.path.exists", return_value=False), patch(
+                "subprocess.Popen", return_value=Mock(returncode=0)
+            ) as mocked_popen:
+                hook.run_checks()
+            mocked_popen.assert_called_once_with([run_qa_checks, "--pre-push"])
+            self.assertIn(
+                "'runtests' script not found, skipping tests", stderr.getvalue()
             )
