@@ -26,6 +26,7 @@ extras_require = {
         "pytest-django>=4.10,<4.15",
     ],
     "celery": ["celery~=5.6.1"],
+    "reversion": ["django-reversion>=6.4.0,<6.6.0"],
     "selenium": ["selenium>=4.32,<4.52"],
     "releaser": [
         "git-cliff~=2.14.2",
