@@ -1,8 +1,9 @@
 import importlib
+import os
 import sys
 from types import ModuleType
 from unittest import TestResult, TestSuite, skip
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -326,3 +327,32 @@ class TestSpatiaLiteFindLibraryMemoization(SimpleTestCase):
                 sys.modules.pop(spatialite_base_module_path, None)
             else:
                 sys.modules[spatialite_base_module_path] = original_spatialite_base
+
+
+class TestSeleniumMixinWebDriver(SimpleTestCase):
+    def test_get_chrome_webdriver_default(self):
+        with patch.dict(os.environ, {}, clear=True):
+            with patch("selenium.webdriver.Chrome") as mock_chrome:
+                SeleniumTestMixin.get_chrome_webdriver()
+                self.assertEqual(mock_chrome.call_count, 1)
+                call_kwargs = mock_chrome.call_args[1]
+                self.assertIn("options", call_kwargs)
+                self.assertNotIn("service", call_kwargs)
+
+    def test_get_chrome_webdriver_with_chromedriver_log(self):
+        with patch.dict(os.environ, {"CHROMEDRIVER_LOG": "1"}, clear=True):
+            with patch("selenium.webdriver.Chrome") as mock_chrome:
+                with patch("selenium.webdriver.ChromeService") as mock_service:
+                    SeleniumTestMixin.get_chrome_webdriver()
+                    self.assertEqual(mock_service.call_count, 1)
+                    service_kwargs = mock_service.call_args[1]
+                    self.assertEqual(
+                        service_kwargs.get("service_args"),
+                        ["--verbose", "--log-path=chromedriver.log"],
+                    )
+                    self.assertEqual(mock_chrome.call_count, 1)
+                    call_kwargs = mock_chrome.call_args[1]
+                    self.assertEqual(
+                        call_kwargs.get("service"),
+                        mock_service.return_value,
+                    )
