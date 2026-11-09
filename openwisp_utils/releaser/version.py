@@ -154,6 +154,11 @@ def bump_version(config, new_version):
     return True
 
 
+def _increment(component):
+    """Increments a version component, preserving its zero-padded width."""
+    return str(int(component) + 1).zfill(len(component))
+
+
 def determine_new_version(current_version_str, current_type, is_bugfix):
     """Automatically determines the new version based on the current version and branch."""
     if not current_version_str:
@@ -161,17 +166,17 @@ def determine_new_version(current_version_str, current_type, is_bugfix):
             "Could not determine the current version. Please enter the new version:"
         ).ask()
 
-    major, minor, patch = map(int, current_version_str.split("."))
+    major, minor, patch = current_version_str.split(".")
 
     if current_type != "final":
         # If the current version is not final, suggest the same version
         suggested_version = f"{major}.{minor}.{patch}"
     elif is_bugfix:
         # Bump patch for bugfix branches
-        suggested_version = f"{major}.{minor}.{patch + 1}"
+        suggested_version = f"{major}.{minor}.{_increment(patch)}"
     else:
         # Bump minor for main branches
-        suggested_version = f"{major}.{minor + 1}.0"
+        suggested_version = f"{major}.{_increment(minor)}.0"
 
     print(f"\nSuggesting new version: {suggested_version}")
     use_suggested = questionary.confirm(

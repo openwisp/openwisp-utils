@@ -161,6 +161,15 @@ def test_determine_new_version_feature_suggestion(mock_questionary):
 
 
 @patch("openwisp_utils.releaser.version.questionary")
+def test_determine_new_version_preserves_zero_padding(mock_questionary):
+    """Tests that zero-padded version components keep their width."""
+    mock_questionary.confirm.return_value.ask.return_value = True
+    assert determine_new_version("26.09.0", "final", is_bugfix=True) == "26.09.1"
+    assert determine_new_version("26.09.0", "final", is_bugfix=False) == "26.10.0"
+    assert determine_new_version("26.08.0", "final", is_bugfix=False) == "26.09.0"
+
+
+@patch("openwisp_utils.releaser.version.questionary")
 def test_determine_new_version_user_provides_own(mock_questionary):
     """Tests the flow where the user rejects the suggested version."""
     # User rejects the suggestion
