@@ -4,10 +4,10 @@ from setuptools import find_packages, setup
 
 extras_require = {
     "qa": [
-        "black>=25.1,<26.6",
+        "black>=25.1,<26.11",
         "flake8~=7.4.1",
         "isort>=6.0.1,<8.1.0",
-        "coverage>=7.10.0,<7.17.0",
+        "coverage>=7.10.0,<7.18.0",
         "tblib~=3.2.2",
         "docstrfmt>=2.0.0,<2.3.0",
         "commitizen>=4.13.0,<5.0.0",
