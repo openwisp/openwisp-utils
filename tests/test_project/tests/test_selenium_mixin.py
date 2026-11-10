@@ -1,8 +1,9 @@
 import importlib
+import os
 import sys
 from types import ModuleType
 from unittest import TestResult, TestSuite, skip
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -326,3 +327,46 @@ class TestSpatiaLiteFindLibraryMemoization(SimpleTestCase):
                 sys.modules.pop(spatialite_base_module_path, None)
             else:
                 sys.modules[spatialite_base_module_path] = original_spatialite_base
+
+
+class TestSeleniumMixinDriverLogs(SimpleTestCase):
+    @patch("openwisp_utils.tests.selenium.webdriver.ChromeService")
+    @patch("openwisp_utils.tests.selenium.webdriver.Chrome")
+    def test_get_chrome_webdriver_log(self, chrome, chrome_service):
+        with self.subTest("log disabled by default"):
+            with patch.dict(os.environ):
+                os.environ.pop("SELENIUM_LOG", None)
+                SeleniumTestMixin.get_chrome_webdriver()
+            chrome_service.assert_not_called()
+            self.assertNotIn("service", chrome.call_args.kwargs)
+
+        with self.subTest("SELENIUM_LOG enables chromedriver.log"):
+            with patch.dict(os.environ, {"SELENIUM_LOG": "1"}):
+                SeleniumTestMixin.get_chrome_webdriver()
+            chrome_service.assert_called_once_with(
+                log_output="chromedriver.log", service_args=["--log-level=INFO"]
+            )
+            self.assertIs(
+                chrome.call_args.kwargs["service"], chrome_service.return_value
+            )
+
+    @patch("openwisp_utils.tests.selenium.webdriver.FirefoxService")
+    @patch("openwisp_utils.tests.selenium.webdriver.Firefox")
+    def test_get_firefox_webdriver_log(self, firefox, firefox_service):
+        with self.subTest("log disabled by default"):
+            with patch.dict(os.environ):
+                os.environ.pop("SELENIUM_LOG", None)
+                os.environ.pop("GECKO_LOG", None)
+                SeleniumTestMixin.get_firefox_webdriver()
+            firefox_service.assert_not_called()
+            self.assertNotIn("service", firefox.call_args.kwargs)
+
+        for env_var in ("SELENIUM_LOG", "GECKO_LOG"):
+            with self.subTest(f"{env_var} enables geckodriver.log"):
+                firefox_service.reset_mock()
+                with patch.dict(os.environ, {env_var: "1"}):
+                    SeleniumTestMixin.get_firefox_webdriver()
+                firefox_service.assert_called_once_with(log_output="geckodriver.log")
+                self.assertIs(
+                    firefox.call_args.kwargs["service"], firefox_service.return_value
+                )

@@ -89,11 +89,18 @@ jobs:
         run: ./runtests
         env:
           SELENIUM_HEADLESS: 1
-          GECKO_LOG: 1
+          SELENIUM_LOG: 1
 
-      - name: Show gecko web driver log on failures
+      - name: Show web driver logs on failures
         if: failure()
-        run: cat geckodriver.log
+        run: |
+          for log in geckodriver.log chromedriver.log; do
+            if [ -f "$log" ]; then
+              echo "::group::$log"
+              cat "$log"
+              echo "::endgroup::"
+            fi
+          done
 
       - name: Upload Coverage
         if: success()

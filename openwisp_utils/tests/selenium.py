@@ -181,6 +181,13 @@ class SeleniumTestMixin:
             return cls.get_firefox_webdriver()
         return cls.get_chrome_webdriver()
 
+    @staticmethod
+    def _driver_log_enabled(*legacy_env_vars):
+        """SELENIUM_LOG enables the web driver log file of any browser."""
+        return any(
+            os.environ.get(env_var) for env_var in ("SELENIUM_LOG", *legacy_env_vars)
+        )
+
     @classmethod
     def get_firefox_webdriver(cls):
         options = Options()
@@ -214,10 +221,9 @@ class SeleniumTestMixin:
             "moz:firefoxOptions", {"args": ["--marionette-port", free_port()]}
         )
         kwargs = dict(options=options)
-        # Optional: Store logs in a file
-        # Pass GECKO_LOG=1 when running tests
-        GECKO_LOG = os.environ.get("GECKO_LOG", None)
-        if GECKO_LOG:
+        # Optional: store the GeckoDriver log in a file
+        # Pass SELENIUM_LOG=1 (or the legacy GECKO_LOG=1) when running tests
+        if cls._driver_log_enabled("GECKO_LOG"):
             kwargs["service"] = webdriver.FirefoxService(log_output="geckodriver.log")
         web_driver = webdriver.Firefox(**kwargs)
         # Firefox does not support the WebDriver.get_log API. Capture console
@@ -277,9 +283,14 @@ class SeleniumTestMixin:
         # generate a unique port for each browser instance.
         options.add_argument(f"--remote-debugging-port={free_port()}")
         options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
-        return webdriver.Chrome(
-            options=options,
-        )
+        kwargs = dict(options=options)
+        # Optional: store the ChromeDriver log in a file
+        # Pass SELENIUM_LOG=1 when running tests
+        if cls._driver_log_enabled():
+            kwargs["service"] = webdriver.ChromeService(
+                log_output="chromedriver.log", service_args=["--log-level=INFO"]
+            )
+        return webdriver.Chrome(**kwargs)
 
     def setUp(self):
         self.admin = self._create_admin(

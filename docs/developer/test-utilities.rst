@@ -251,8 +251,8 @@ Applies a number of settings by default to improve test reliability.
 
   - Uses the ``GECKO_BIN`` environment variable to specify a custom
     Firefox binary location.
-  - Uses the ``GECKO_LOG`` environment variable to enable GeckoDriver
-    logging to ``geckodriver.log``.
+  - Uses the ``SELENIUM_LOG`` environment variable (or the legacy
+    ``GECKO_LOG``) to enable GeckoDriver logging to ``geckodriver.log``.
   - Uses ``page_load_strategy = "eager"`` to start interacting with the
     page before it's fully loaded.
   - Disables hardware acceleration for improved stability
@@ -268,6 +268,8 @@ Applies a number of settings by default to improve test reliability.
 
   - Uses the ``CHROME_BIN`` environment variable to specify a custom
     Chrome binary location.
+  - Uses the ``SELENIUM_LOG`` environment variable to enable ChromeDriver
+    logging to ``chromedriver.log``.
   - Uses ``page_load_strategy = "eager"`` to start interacting with the
     page before it's fully loaded.
   - Adds flags: ``--ignore-certificate-errors``, ``--no-sandbox``,
