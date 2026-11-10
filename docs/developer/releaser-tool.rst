@@ -78,6 +78,11 @@ different version manually.
 .. image:: https://raw.githubusercontent.com/openwisp/openwisp-utils/media/docs/releaser/version-confirmation.png
     :alt: Screenshot showing the tool suggesting a new version number and asking for user confirmation.
 
+For Docker and Ansible projects, zero-padded version components are
+preserved, except that feature releases reset the patch to a single ``0``.
+For example, ``26.09.0`` becomes ``26.09.1`` (bugfix) or ``26.10.0``
+(feature).
+
 **2. Change Log Generation & Review** A changelog is generated from your
 recent commits. Entries include commit bodies but omit Git trailers and
 issue-reference footers. Backport markers in the format ``[backport
