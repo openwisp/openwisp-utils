@@ -1,5 +1,5 @@
 # For testing Dependency loaders
-openwisp_controller @ https://github.com/openwisp/openwisp-controller/archive/refs/heads/master.tar.gz
+openwisp-controller>=1.3.2,<1.4.0
 freezegun
 pytest
 pytest-mock
