@@ -41,6 +41,22 @@ def run_checks():
                 "or use '--no-verify' to skip them"
             )
             sys.exit(1)
+        runtests_path = os.path.join(REPO_ROOT_DIR, 'runtests')
+        if os.path.exists(runtests_path):
+            task = subprocess.Popen([runtests_path])
+            task.communicate()
+            if task.returncode:
+                print("---------------------------")
+                print(
+                    "Some tests failed. Please make sure they pass, "
+                    "or use '--no-verify' to skip them"
+                )
+                sys.exit(1)
+        else:
+            print(
+                "'runtests' script not found, skipping tests",
+                file=sys.stderr,
+            )
     except FileNotFoundError:
         print("Could not access 'run-qa-checks'")
 

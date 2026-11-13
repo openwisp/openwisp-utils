@@ -81,6 +81,10 @@ operation will be aborted:
 
     openwisp-pre-push-hook --install
 
+The hook first runs the QA checks then runs the ``runtests`` script if it
+exists. If the script is missing the tests are skipped and a warning is
+printed.
+
 Create database:
 
 .. code-block:: shell
