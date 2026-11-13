@@ -75,7 +75,7 @@ jobs:
         run: |
           pip install -U pip wheel setuptools
           pip install -U -r requirements-test.txt
-          pip install -e '.[qa,rest,selenium,celery,channels,releaser]'
+          pip install -e '.[qa,rest,selenium,celery,channels,releaser,reversion]'
           pip install "$DJANGO_VERSION"
           sudo npm install -g prettier
 
