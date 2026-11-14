@@ -5,6 +5,7 @@ import time
 from math import ceil
 from uuid import uuid4
 
+import django
 from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
 from selenium import webdriver
@@ -14,6 +15,11 @@ from selenium.webdriver.common.utils import free_port
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+try:
+    from daphne.testing import DaphneProcess
+except ImportError:  # daphne is optional; required only by ASGI live-server tests
+    DaphneProcess = None
 
 # Maps the console method that produced a log entry to the level names also
 # returned by Chrome's get_log("browser") API, so get_browser_logs() yields a
@@ -53,8 +59,12 @@ class SeleniumTestMixin:
 
     @classmethod
     def setUpClass(cls):
+        if DaphneProcess is not None and (
+            getattr(cls, "ProtocolServerProcess", None) is DaphneProcess
+        ):
+            cls.ProtocolServerProcess = DjangoDaphneProcess
         # Apply before super().setUpClass() so the patch is active before the
-        # live server (and any forked Daphne process) starts.
+        # live server (and any forked/forkserver Daphne process) starts.
         cls._serialize_db_connection_lifecycle()
         super().setUpClass()
         cls.web_driver = cls.get_webdriver()
@@ -450,3 +460,30 @@ class SeleniumTestMixin:
         # Only wait if element exists
         if element_exists:
             self.wait_for_invisibility(By.ID, html_id, timeout, driver)
+
+
+if DaphneProcess is not None:
+
+    # Temporary workaround: the test server process starts without Django
+    # initialized, so routing modules that import models fail under the
+    # forkserver start method used by Python 3.14 and later. Remove once the
+    # upstream test helper initializes Django before importing the application.
+    class DjangoDaphneProcess(DaphneProcess):
+        """Daphne test process that initializes Django before loading the app."""
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.allowed_hosts = list(settings.ALLOWED_HOSTS)
+
+        def run(self):
+            django.setup(set_prefix=False)
+            # Channels appends the live-server host in the parent; transfer it
+            # because fresh forkserver/spawn children load the base setting.
+            settings.ALLOWED_HOSTS = self.allowed_hosts
+            # Fresh forkserver/spawn children do not inherit the parent's
+            # SQLite connection-serialization patch, so apply it again.
+            SeleniumTestMixin._serialize_db_connection_lifecycle()
+            super().run()
+
+else:  # pragma: no cover
+    DjangoDaphneProcess = None

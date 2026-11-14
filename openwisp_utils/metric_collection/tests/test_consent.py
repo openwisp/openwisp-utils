@@ -97,7 +97,8 @@ class TestConsent(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "messagelist")
 
-    def test_consent_change(self):
+    @patch("openwisp_utils.metric_collection.models.post_metrics")
+    def test_consent_change(self, _mock_post_metrics):
         non_superuser = self._get_user(is_staff=True, is_superuser=False)
         superuser = self._get_user(
             username="superuser",

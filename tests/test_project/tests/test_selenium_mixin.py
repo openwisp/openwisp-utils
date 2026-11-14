@@ -2,13 +2,15 @@ import importlib
 import sys
 from types import ModuleType
 from unittest import TestResult, TestSuite, skip
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
+from daphne.testing import DaphneProcess
 from django.conf import settings
+from django.core.asgi import get_asgi_application
 from django.db.backends.base.base import BaseDatabaseWrapper
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings, tag
 from django.test.runner import RemoteTestRunner
-from openwisp_utils.tests.selenium import SeleniumTestMixin
+from openwisp_utils.tests.selenium import DjangoDaphneProcess, SeleniumTestMixin
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 
@@ -326,3 +328,78 @@ class TestSpatiaLiteFindLibraryMemoization(SimpleTestCase):
                 sys.modules.pop(spatialite_base_module_path, None)
             else:
                 sys.modules[spatialite_base_module_path] = original_spatialite_base
+
+
+def _model_importing_application():
+    # Import a model before Django is initialized, mirroring downstream ASGI
+    # routing modules that import consumers/models at import time.
+    from test_project.models import Book  # noqa: F401
+
+    return get_asgi_application()
+
+
+@tag("selenium_tests")
+class TestDjangoDaphneProcess(SimpleTestCase):
+    def test_starts_when_application_imports_models(self):
+        process = DjangoDaphneProcess(
+            host="localhost", get_application=_model_importing_application
+        )
+        process.start()
+        try:
+            self.assertTrue(
+                process.ready.wait(10),
+                "Daphne process did not start with a model-importing ASGI module",
+            )
+        finally:
+            process.terminate()
+            process.join()
+
+
+class TestDjangoDaphneProcessRun(SimpleTestCase):
+    @override_settings(ALLOWED_HOSTS=["live-server.example"])
+    @patch.object(DaphneProcess, "run")
+    @patch.object(SeleniumTestMixin, "_serialize_db_connection_lifecycle")
+    @patch("openwisp_utils.tests.selenium.django.setup")
+    def test_run_initializes_django_before_daphne(
+        self, mocked_setup, mocked_serialize, mocked_run
+    ):
+        process = DjangoDaphneProcess(
+            host="localhost", get_application=_model_importing_application
+        )
+        with override_settings(ALLOWED_HOSTS=[]):
+            process.run()
+            self.assertEqual(settings.ALLOWED_HOSTS, ["live-server.example"])
+        mocked_setup.assert_called_once_with(set_prefix=False)
+        mocked_serialize.assert_called_once_with()
+        mocked_run.assert_called_once_with()
+
+
+class TestSeleniumMixinDaphneProcessSelection(SimpleTestCase):
+    def test_setup_class_selects_process_class(self):
+        class CustomProcess(DaphneProcess):
+            pass
+
+        for process_cls, expected in (
+            (DaphneProcess, DjangoDaphneProcess),
+            (CustomProcess, CustomProcess),
+        ):
+            with self.subTest(process_cls=process_cls.__name__):
+
+                class FakeDaphneTest(SeleniumTestMixin, SimpleTestCase):
+                    ProtocolServerProcess = process_cls
+
+                    @classmethod
+                    def get_webdriver(cls):
+                        return Mock()
+
+                try:
+                    with patch.object(
+                        SeleniumTestMixin, "_serialize_db_connection_lifecycle"
+                    ):
+                        FakeDaphneTest.setUpClass()
+                    self.assertIs(FakeDaphneTest.ProtocolServerProcess, expected)
+                finally:
+                    try:
+                        FakeDaphneTest.tearDownClass()
+                    finally:
+                        FakeDaphneTest.doClassCleanups()

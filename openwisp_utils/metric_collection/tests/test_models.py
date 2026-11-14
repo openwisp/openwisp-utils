@@ -23,6 +23,10 @@ from . import (
 
 class TestOpenwispVersion(TestCase):
     def setUp(self):
+        # Forkserver workers are fresh interpreters, so the runner's
+        # setup_databases() patch is not inherited.
+        if not hasattr(utils.requests.Session, "_original_post"):
+            utils.requests.Session._original_post = utils.requests.Session.post
         # The post_migrate signal creates the first OpenwispVersion object
         # and uses the actual modules installed in the Python environment.
         # This would cause tests to fail when other modules are also installed.
