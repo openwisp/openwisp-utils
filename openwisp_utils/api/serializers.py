@@ -1,8 +1,5 @@
-from django.core.exceptions import (
-    FieldDoesNotExist,
-    ImproperlyConfigured,
-    ValidationError as DjangoValidationError,
-)
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from django.db.models.fields.reverse_related import ForeignObjectRel
 
