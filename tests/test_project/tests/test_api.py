@@ -55,6 +55,32 @@ class TestApi(CreateMixin, TestCase):
             serializer = ShelfSerializer(instance=s1)
             serializer.validate({"name": "Intentional_Test_Fail"})
 
+    def test_validate_preserves_clean_corrections(self):
+        # Regression test for openwisp-utils#760: on the update path,
+        # validate() used to run full_clean() on a copy of the instance,
+        # so corrections made by Model.clean() by assignment were lost
+        # when DRF saved the original instance.
+        s1 = self._create_shelf(name="shelf1", books_type="Mystery", locked=False)
+        data = {"name": "shelf1", "books_type": "Biographies"}
+        serializer = ShelfSerializer(instance=s1, data=data)
+        serializer.is_valid()
+        serializer.save()
+        s1.refresh_from_db()
+        self.assertEqual(s1.locked, True)
+
+    def test_failed_validation_does_not_mutate_instance(self):
+        # The other side of openwisp-utils#760: the pre-1.3 behavior
+        # (validating the real instance) mutated the DB instance even
+        # when validation failed. Failed validation must leave the
+        # instance untouched.
+        s1 = self._create_shelf(name="shelf1")
+        serializer = ShelfSerializer(instance=s1)
+        with self.assertRaises(DRFValidationError):
+            serializer.validate({"name": "Intentional_Test_Fail"})
+        self.assertEqual(s1.name, "shelf1")
+        s1.refresh_from_db()
+        self.assertEqual(s1.name, "shelf1")
+
     def test_exclude_validation(self):
         s1 = self._create_shelf(name="shelf1")
         with self.assertRaises(DRFValidationError):

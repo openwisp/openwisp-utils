@@ -62,6 +62,10 @@ class Shelf(TimeStampedEditableModel):
     def clean(self):
         if self.name == "Intentional_Test_Fail":
             raise ValidationError("Intentional_Test_Fail")
+        # correction by assignment, like openwisp-controller's Template.clean():
+        # changing one field triggers a correction on another
+        if self.books_type == "Biographies":
+            self.locked = True
         return self
 
 
