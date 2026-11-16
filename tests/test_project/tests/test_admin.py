@@ -714,7 +714,8 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
         def _assert_system_information(response):
             self.assertContains(response, "<li>openwisp-utils: 1.4.0</li>")
             self.assertContains(response, "<li>netjsonconfig: 1.3.0</li>")
-            self.assertContains(response, "<h2>OS Information</h2>")            self.assertContains(
+            self.assertContains(response, "<h2>OS Information</h2>")
+            self.assertContains(
                 response,
                 '<a href="https://www.gnu.org/licenses/gpl-3.0.html">'
                 "GNU General Public License version 3</a>",
