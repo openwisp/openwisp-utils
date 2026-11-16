@@ -37,6 +37,7 @@ Opting Out from Metric Collection
 
 You can opt-out from sharing this data any time from the "System Info"
 page.
+The page also displays the OpenWISP license and links to the full license text.
 
 .. note::
 
