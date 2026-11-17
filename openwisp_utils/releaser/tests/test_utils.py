@@ -47,11 +47,9 @@ MD_EXPECTED = """
 
 def test_rst_to_markdown_conversion():
     """Test basic reStructuredText to Markdown conversion."""
-    # Test that the function calls it correctly.
-    with patch("pypandoc.convert_text", return_value="Converted") as mock_convert:
-        result = rst_to_markdown(RST_SAMPLE)
-        assert result == "Converted"
-        mock_convert.assert_called_once()
+    converted = rst_to_markdown(RST_SAMPLE)
+    assert "# Features" in converted
+    assert "- A new feature." in converted
 
 
 @pytest.mark.parametrize(
@@ -78,6 +76,33 @@ def test_rst_to_markdown_preserves_underscores(rst, expected):
     converted = rst_to_markdown(rst)
     assert expected == converted
     assert expected == normalize_markdown(converted)
+
+
+@pytest.mark.parametrize(
+    ("rst", "expected"),
+    [
+        (
+            "`>=3.12,<3.19\n  <https://example.com/releases>`_",
+            r"[\>=3.12,\<3.19](https://example.com/releases)",
+        ),
+        (
+            "`dj-rest-auth>=7.2.0,<7.3 <https://example.com/foo_bar>`__",
+            r"[dj-rest-auth\>=7.2.0,\<7.3](https://example.com/foo_bar)",
+        ),
+        (
+            r"`>=3.12,\<3.19 <https://example.com>`_",
+            r"[\>=3.12,\<3.19](https://example.com)",
+        ),
+        (
+            "``Example: `>=3.12,<3.19 <https://example.com>`_``",
+            "`` Example: `>=3.12,<3.19 <https://example.com>`_ ``",
+        ),
+    ],
+)
+def test_rst_to_markdown_version_links(rst, expected):
+    converted = rst_to_markdown(rst)
+    assert converted == expected
+    assert normalize_markdown(converted) == expected
 
 
 def test_adjust_markdown_headings():

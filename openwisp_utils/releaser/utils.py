@@ -1,3 +1,4 @@
+import json
 import re
 import subprocess
 import sys
@@ -130,9 +131,29 @@ def remote_branch_exists(branch_name):
 
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
-    # Escaping underscores before parsing corrupts literals and RST references.
+    # Parse the original RST: pre-escaping underscores corrupts literals and links.
+    document = json.loads(pypandoc.convert_text(text, "json", format="rst"))
+
+    def repair_links(node):
+        if isinstance(node, list):
+            for item in node:
+                repair_links(item)
+        elif isinstance(node, dict):
+            if node.get("t") == "Link":
+                _, label, target = node["c"]
+                # Pandoc mistakes the version bound for the link target.
+                match = re.fullmatch(
+                    r"(=?\d[^\s<>]*)\s*<(https?://[^\s<>]+)", target[0]
+                )
+                if match:
+                    label.append({"t": "Str", "c": f"<{match[1]}"})
+                    target[0] = match[2]
+            for value in node.values():
+                repair_links(value)
+
+    repair_links(document)
     return pypandoc.convert_text(
-        text, "gfm", format="rst", extra_args=["--wrap=none"]
+        json.dumps(document), "gfm", format="json", extra_args=["--wrap=none"]
     ).strip()
 
 
