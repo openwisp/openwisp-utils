@@ -47,11 +47,100 @@ MD_EXPECTED = """
 
 def test_rst_to_markdown_conversion():
     """Test basic reStructuredText to Markdown conversion."""
-    # Test that the function calls it correctly.
-    with patch("pypandoc.convert_text", return_value="Converted") as mock_convert:
-        result = rst_to_markdown(RST_SAMPLE)
-        assert result == "Converted"
-        mock_convert.assert_called_once()
+    converted = rst_to_markdown(RST_SAMPLE)
+    assert "# Features" in converted
+    assert "- A new feature." in converted
+
+
+@pytest.mark.parametrize(
+    ("rst", "expected"),
+    [
+        ("``INGRESS_IPV6_ENABLED=true``", "`INGRESS_IPV6_ENABLED=true`"),
+        (
+            "Example::\n\n    INGRESS_IPV6_ENABLED=true",
+            "Example:\n\n    INGRESS_IPV6_ENABLED=true",
+        ),
+        ("Use INGRESS_IPV6_ENABLED here.", "Use INGRESS_IPV6_ENABLED here."),
+        (
+            "`link_name <https://example.com/foo_bar>`_",
+            "[link_name](https://example.com/foo_bar)",
+        ),
+        ("`link <https://example.com>`__", "[link](https://example.com)"),
+        (
+            "See example_ for details.\n\n.. _example: https://example.com",
+            "See [example](https://example.com) for details.",
+        ),
+    ],
+)
+def test_rst_to_markdown_preserves_underscores(rst, expected):
+    converted = rst_to_markdown(rst)
+    assert expected == converted
+    assert expected == normalize_markdown(converted)
+
+
+@pytest.mark.parametrize(
+    ("rst", "expected"),
+    [
+        ("`<3.19 <https://example.com>`_", r"[\<3.19](https://example.com)"),
+        ("`<=3.19 <https://example.com>`_", r"[\<=3.19](https://example.com)"),
+        (
+            "`>=3.12,<3.19\n  <https://example.com/releases>`_",
+            r"[\>=3.12,\<3.19](https://example.com/releases)",
+        ),
+        (
+            "`dj-rest-auth>=7.2.0,<7.3 <https://example.com/foo_bar>`__",
+            r"[dj-rest-auth\>=7.2.0,\<7.3](https://example.com/foo_bar)",
+        ),
+        (
+            r"`>=3.12,\<3.19 <https://example.com>`_",
+            r"[\>=3.12,\<3.19](https://example.com)",
+        ),
+        (
+            "``Example: `>=3.12,<3.19 <https://example.com>`_``",
+            "`` Example: `>=3.12,<3.19 <https://example.com>`_ ``",
+        ),
+    ],
+)
+def test_rst_to_markdown_version_links(rst, expected):
+    converted = rst_to_markdown(rst)
+    assert converted == expected
+    assert normalize_markdown(converted) == expected
+
+
+@pytest.mark.parametrize(
+    ("rst", "broken", "expected"),
+    [
+        (
+            "`>=3.12,<3.19\n"
+            "  <https://www.django-rest-framework.org/community/release-notes/#318x-series>`_",
+            r"[\>=3.12,](3.19<https://www.django-rest-framework.org/community/release-notes/#318x-series)",
+            r"[\>=3.12,\<3.19](https://www.django-rest-framework.org/community/release-notes/#318x-series)",
+        ),
+        (
+            "`dj-rest-auth>=7.2.0,<7.3\n"
+            "  <https://github.com/iMerica/dj-rest-auth/releases/tag/7.2.0>`_",
+            r"[dj-rest-auth\>=7.2.0,](7.3<https://github.com/iMerica/dj-rest-auth/releases/tag/7.2.0)",
+            r"[dj-rest-auth\>=7.2.0,\<7.3](https://github.com/iMerica/dj-rest-auth/releases/tag/7.2.0)",
+        ),
+        (
+            "`geoip2>=5.3.0,<6.0.0\n"
+            "  <https://github.com/maxmind/GeoIP2-python/releases/tag/v5.3.0>`_",
+            r"[geoip2\>=5.3.0,](6.0.0<https://github.com/maxmind/GeoIP2-python/releases/tag/v5.3.0)",
+            r"[geoip2\>=5.3.0,\<6.0.0](https://github.com/maxmind/GeoIP2-python/releases/tag/v5.3.0)",
+        ),
+        (
+            "`>=25.3.0,<27.0.0\n"
+            "  <https://www.pyopenssl.org/en/26.0.0/changelog.html>`_",
+            r"[\>=25.3.0,](27.0.0<https://www.pyopenssl.org/en/26.0.0/changelog.html)",
+            r"[\>=25.3.0,\<27.0.0](https://www.pyopenssl.org/en/26.0.0/changelog.html)",
+        ),
+    ],
+)
+def test_rst_to_markdown_published_version_links(rst, broken, expected):
+    # Keep the original broken release output as well as the tagged RST input.
+    converted = normalize_markdown(rst_to_markdown(rst))
+    assert converted == expected
+    assert converted != broken
 
 
 def test_adjust_markdown_headings():
