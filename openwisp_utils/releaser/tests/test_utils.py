@@ -81,6 +81,8 @@ def test_rst_to_markdown_preserves_underscores(rst, expected):
 @pytest.mark.parametrize(
     ("rst", "expected"),
     [
+        ("`<3.19 <https://example.com>`_", r"[\<3.19](https://example.com)"),
+        ("`<=3.19 <https://example.com>`_", r"[\<=3.19](https://example.com)"),
         (
             "`>=3.12,<3.19\n  <https://example.com/releases>`_",
             r"[\>=3.12,\<3.19](https://example.com/releases)",

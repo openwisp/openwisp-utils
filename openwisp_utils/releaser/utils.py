@@ -148,7 +148,12 @@ def rst_to_markdown(text):
                     r"(=?\d[^\s<>]*)\s*<(https?://[^\s<>]+)", target[0]
                 )
                 if match:
-                    label.append({"t": "Str", "c": f"<{match[1]}"})
+                    bound = {"t": "Str", "c": f"<{match[1]}"}
+                    # Without a prefix, Pandoc uses the broken target as the label.
+                    if label == [{"t": "Str", "c": target[0]}]:
+                        label[:] = [bound]
+                    else:
+                        label.append(bound)
                     target[0] = match[2]
             for value in node.values():
                 repair_links(value)
