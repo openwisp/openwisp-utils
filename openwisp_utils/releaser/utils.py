@@ -131,7 +131,9 @@ def remote_branch_exists(branch_name):
 
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
-    # Parse the original RST: pre-escaping underscores corrupts literals and links.
+    # Pandoc can misinterpret a version bound such as <3.19 as part of a link
+    # target, producing broken links in changelogs and release notes. Repair
+    # the parsed JSON document so raw RST literals and links remain untouched.
     document = json.loads(pypandoc.convert_text(text, "json", format="rst"))
 
     def repair_links(node):

@@ -105,6 +105,42 @@ def test_rst_to_markdown_version_links(rst, expected):
     assert normalize_markdown(converted) == expected
 
 
+@pytest.mark.parametrize(
+    ("rst", "broken", "expected"),
+    [
+        (
+            "`>=3.12,<3.19\n"
+            "  <https://www.django-rest-framework.org/community/release-notes/#318x-series>`_",
+            r"[\>=3.12,](3.19<https://www.django-rest-framework.org/community/release-notes/#318x-series)",
+            r"[\>=3.12,\<3.19](https://www.django-rest-framework.org/community/release-notes/#318x-series)",
+        ),
+        (
+            "`dj-rest-auth>=7.2.0,<7.3\n"
+            "  <https://github.com/iMerica/dj-rest-auth/releases/tag/7.2.0>`_",
+            r"[dj-rest-auth\>=7.2.0,](7.3<https://github.com/iMerica/dj-rest-auth/releases/tag/7.2.0)",
+            r"[dj-rest-auth\>=7.2.0,\<7.3](https://github.com/iMerica/dj-rest-auth/releases/tag/7.2.0)",
+        ),
+        (
+            "`geoip2>=5.3.0,<6.0.0\n"
+            "  <https://github.com/maxmind/GeoIP2-python/releases/tag/v5.3.0>`_",
+            r"[geoip2\>=5.3.0,](6.0.0<https://github.com/maxmind/GeoIP2-python/releases/tag/v5.3.0)",
+            r"[geoip2\>=5.3.0,\<6.0.0](https://github.com/maxmind/GeoIP2-python/releases/tag/v5.3.0)",
+        ),
+        (
+            "`>=25.3.0,<27.0.0\n"
+            "  <https://www.pyopenssl.org/en/26.0.0/changelog.html>`_",
+            r"[\>=25.3.0,](27.0.0<https://www.pyopenssl.org/en/26.0.0/changelog.html)",
+            r"[\>=25.3.0,\<27.0.0](https://www.pyopenssl.org/en/26.0.0/changelog.html)",
+        ),
+    ],
+)
+def test_rst_to_markdown_published_version_links(rst, broken, expected):
+    # Keep the original broken release output as well as the tagged RST input.
+    converted = normalize_markdown(rst_to_markdown(rst))
+    assert converted == expected
+    assert converted != broken
+
+
 def test_adjust_markdown_headings():
     """Test that markdown headings are correctly adjusted for the CHANGES.md file."""
     raw_md = """
