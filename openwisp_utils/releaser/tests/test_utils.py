@@ -54,6 +54,32 @@ def test_rst_to_markdown_conversion():
         mock_convert.assert_called_once()
 
 
+@pytest.mark.parametrize(
+    ("rst", "expected"),
+    [
+        ("``INGRESS_IPV6_ENABLED=true``", "`INGRESS_IPV6_ENABLED=true`"),
+        (
+            "Example::\n\n    INGRESS_IPV6_ENABLED=true",
+            "Example:\n\n    INGRESS_IPV6_ENABLED=true",
+        ),
+        ("Use INGRESS_IPV6_ENABLED here.", "Use INGRESS_IPV6_ENABLED here."),
+        (
+            "`link_name <https://example.com/foo_bar>`_",
+            "[link_name](https://example.com/foo_bar)",
+        ),
+        ("`link <https://example.com>`__", "[link](https://example.com)"),
+        (
+            "See example_ for details.\n\n.. _example: https://example.com",
+            "See [example](https://example.com) for details.",
+        ),
+    ],
+)
+def test_rst_to_markdown_preserves_underscores(rst, expected):
+    converted = rst_to_markdown(rst)
+    assert expected == converted
+    assert expected == normalize_markdown(converted)
+
+
 def test_adjust_markdown_headings():
     """Test that markdown headings are correctly adjusted for the CHANGES.md file."""
     raw_md = """

@@ -130,9 +130,9 @@ def remote_branch_exists(branch_name):
 
 def rst_to_markdown(text):
     """Convert reStructuredText to Markdown using pypandoc."""
-    escaped_text = re.sub(r"(?<!`)_", r"\\_", text)
+    # Escaping underscores before parsing corrupts literals and RST references.
     return pypandoc.convert_text(
-        escaped_text, "gfm", format="rst", extra_args=["--wrap=none"]
+        text, "gfm", format="rst", extra_args=["--wrap=none"]
     ).strip()
 
 
