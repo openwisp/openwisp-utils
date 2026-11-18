@@ -715,6 +715,13 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertContains(response, "<li>openwisp-utils: 1.4.0</li>")
             self.assertContains(response, "<li>netjsonconfig: 1.3.0</li>")
             self.assertContains(response, "<h2>OS Information</h2>")
+            self.assertContains(
+                response,
+                '<a href="https://www.gnu.org/licenses/gpl-3.0.html">'
+                "GNU General Public License version 3</a>",
+                html=True,
+            )
+
             self.assertContains(response, "<strong>OS version:</strong>")
             self.assertContains(response, "<strong>Kernel version:</strong>")
             self.assertContains(response, "<strong>Hardware platform:</strong>")
