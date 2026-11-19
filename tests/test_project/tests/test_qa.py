@@ -634,3 +634,29 @@ class TestQa(TestCase):
             self.assertIn(
                 "./file with spaces.py needs newline at the end", result.stdout
             )
+
+    def test_pre_push_hook_runtests(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "openwisp-pre-push-hook")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            subprocess.run(["git", "init", "--quiet"], cwd=temp_dir, check=True)
+            qa_checks_path = path.join(temp_dir, "run-qa-checks")
+            with open(qa_checks_path, "w") as f:
+                f.write("#!/bin/sh\n")
+            os.chmod(qa_checks_path, 0o755)
+            result = subprocess.run(
+                [script_path], cwd=temp_dir, capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("'runtests' not found", result.stderr)
+            runtests_path = path.join(temp_dir, "runtests")
+            for exit_code in (0, 1):
+                with open(runtests_path, "w") as f:
+                    f.write(f"#!/bin/sh\necho 'runtests called'\nexit {exit_code}\n")
+                os.chmod(runtests_path, 0o755)
+                result = subprocess.run(
+                    [script_path], cwd=temp_dir, capture_output=True, text=True
+                )
+                with self.subTest(f"Check runtests exiting with {exit_code}"):
+                    self.assertIn("runtests called", result.stdout)
+                    self.assertEqual(result.returncode, exit_code, result.stderr)
