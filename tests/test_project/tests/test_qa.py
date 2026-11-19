@@ -660,3 +660,13 @@ class TestQa(TestCase):
                 with self.subTest(f"Check runtests exiting with {exit_code}"):
                     self.assertIn("runtests called", result.stdout)
                     self.assertEqual(result.returncode, exit_code, result.stderr)
+            with self.subTest("Check runtests is not run if QA checks fail"):
+                with open(qa_checks_path, "w") as f:
+                    f.write("#!/bin/sh\nexit 1\n")
+                with open(runtests_path, "w") as f:
+                    f.write("#!/bin/sh\ntouch runtests-called\n")
+                result = subprocess.run(
+                    [script_path], cwd=temp_dir, capture_output=True, text=True
+                )
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertFalse(path.exists(path.join(temp_dir, "runtests-called")))
