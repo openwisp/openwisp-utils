@@ -78,7 +78,7 @@ Attribution
   is licensed by Gregbaker, under `CC BY-SA 4.0
   <https://creativecommons.org/licenses/by-sa/4.0>`_ , via `Wikimedia
   Commons <https://commons.wikimedia.org/wiki/File:Wireless-icon.svg>`_.
-- `Roboto webfont <https://www.google.com/fonts/specimen/Roboto>`_ is
-  licensed under the `Apache License, Version 2.0
+- `Roboto webfont <https://fonts.google.com/specimen/Roboto>`_ is licensed
+  under the `Apache License, Version 2.0
   <https://www.apache.org/licenses/LICENSE-2.0>`_. WOFF files extracted
   using https://github.com/majodev/google-webfonts-helper.
