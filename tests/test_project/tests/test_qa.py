@@ -638,14 +638,29 @@ class TestQa(TestCase):
     def test_pre_push_hook_runtests(self):
         script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
         script_path = path.join(script_path, "openwisp-pre-push-hook")
+        # this test can run inside a real pre-push hook: don't let git
+        # variables pointing to that repository leak into the temporary one
+        git_vars = subprocess.run(
+            ["git", "rev-parse", "--local-env-vars"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.split()
+        env = {k: v for k, v in os.environ.items() if k not in git_vars}
         with tempfile.TemporaryDirectory() as temp_dir:
-            subprocess.run(["git", "init", "--quiet"], cwd=temp_dir, check=True)
+            subprocess.run(
+                ["git", "init", "--quiet"], cwd=temp_dir, env=env, check=True
+            )
             qa_checks_path = path.join(temp_dir, "run-qa-checks")
             with open(qa_checks_path, "w") as f:
                 f.write("#!/bin/sh\n")
             os.chmod(qa_checks_path, 0o755)
             result = subprocess.run(
-                [script_path], cwd=temp_dir, capture_output=True, text=True
+                [script_path],
+                cwd=temp_dir,
+                env=env,
+                capture_output=True,
+                text=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("'runtests' not found", result.stderr)
@@ -655,7 +670,11 @@ class TestQa(TestCase):
                     f.write(f"#!/bin/sh\necho 'runtests called'\nexit {exit_code}\n")
                 os.chmod(runtests_path, 0o755)
                 result = subprocess.run(
-                    [script_path], cwd=temp_dir, capture_output=True, text=True
+                    [script_path],
+                    cwd=temp_dir,
+                    env=env,
+                    capture_output=True,
+                    text=True,
                 )
                 with self.subTest(f"Check runtests exiting with {exit_code}"):
                     self.assertIn("runtests called", result.stdout)
@@ -666,7 +685,34 @@ class TestQa(TestCase):
                 with open(runtests_path, "w") as f:
                     f.write("#!/bin/sh\ntouch runtests-called\n")
                 result = subprocess.run(
-                    [script_path], cwd=temp_dir, capture_output=True, text=True
+                    [script_path],
+                    cwd=temp_dir,
+                    env=env,
+                    capture_output=True,
+                    text=True,
                 )
                 self.assertEqual(result.returncode, 1, result.stderr)
                 self.assertFalse(path.exists(path.join(temp_dir, "runtests-called")))
+
+    def test_run_qa_checks_pre_push_skips_runtests(self):
+        script_path = path.abspath(path.join(path.dirname(__file__), "../../.."))
+        script_path = path.join(script_path, "run-qa-checks")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            qa_check_path = path.join(temp_dir, "openwisp-qa-check")
+            with open(qa_check_path, "w") as f:
+                f.write("#!/bin/sh\n")
+            os.chmod(qa_check_path, 0o755)
+            runtests_path = path.join(temp_dir, "runtests.py")
+            with open(runtests_path, "w") as f:
+                f.write("#!/bin/sh\ntouch runtests-called\n")
+            os.chmod(runtests_path, 0o755)
+            env = dict(os.environ, PATH=f"{temp_dir}{os.pathsep}{os.environ['PATH']}")
+            result = subprocess.run(
+                [script_path, "--pre-push"],
+                cwd=temp_dir,
+                env=env,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse(path.exists(path.join(temp_dir, "runtests-called")))
