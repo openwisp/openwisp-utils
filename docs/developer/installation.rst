@@ -109,6 +109,23 @@ Run quality assurance tests with:
 
     ./run-qa-checks
 
+Optional django-reversion Dependency
+------------------------------------
+
+OpenWISP modules that use django-reversion can install it through the
+shared ``reversion`` extra:
+
+.. code-block:: shell
+
+    pip install "openwisp-utils[reversion]"
+
+This extra provides a centrally maintained dependency constraint without
+changing the base installation requirements. It is also included in
+``openwisp-utils[all]``.
+
+Downstream packages can adopt the extra once a compatible openwisp-utils
+version has been released.
+
 Alternative Sources
 -------------------
 
