@@ -16,7 +16,7 @@ jobs:
       github.event.action == 'reopened'
     permissions:
       contents: read
-    uses: openwisp/openwisp-actions/.github/workflows/reusable-bot-autoassign.yml@181637bcf201c137cf836f841e1ddf85df44f277 # post-0.1.1
+    uses: openwisp/openwisp-actions/.github/workflows/reusable-bot-autoassign.yml@719b0b61df04e63c11deb48f7f9562d23df01f4b # 0.2.0
     with:
       bot_command: pr_reopen
     secrets:
@@ -30,7 +30,7 @@ jobs:
       github.event.issue.user.login == github.event.comment.user.login
     permissions:
       contents: read
-    uses: openwisp/openwisp-actions/.github/workflows/reusable-bot-autoassign.yml@181637bcf201c137cf836f841e1ddf85df44f277 # post-0.1.1
+    uses: openwisp/openwisp-actions/.github/workflows/reusable-bot-autoassign.yml@719b0b61df04e63c11deb48f7f9562d23df01f4b # 0.2.0
     with:
       bot_command: pr_reopen
     secrets:
