@@ -717,8 +717,9 @@ class TestAdmin(AdminTestMixin, CreateMixin, TestCase):
             self.assertContains(response, "<h2>OS Information</h2>")
             self.assertContains(
                 response,
-                '<a href="https://www.gnu.org/licenses/gpl-3.0.html">'
-                "GNU General Public License version 3</a>",
+                '<p>OpenWISP is licensed under the <a href="'
+                'https://www.gnu.org/licenses/gpl-3.0.html">'
+                "GNU General Public License version 3</a>.</p>",
                 html=True,
             )
 
