@@ -62,6 +62,8 @@ def parse_test_arguments(
         if argument in allowed_flags:
             flags.append(argument)
             continue
+        if argument.startswith("-"):
+            raise InvalidTestArgument("Unsupported test argument")
         match = label_pattern.fullmatch(argument)
         if not match:
             raise InvalidTestArgument("Unsupported test argument")

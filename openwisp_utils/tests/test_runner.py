@@ -483,3 +483,12 @@ class TestTestRunner(unittest.TestCase):
             parse_test_arguments(["invalid\n::warning::forged##[warning]forged"])
         self.assertNotIn("\n", str(raised.exception))
         self.assertNotIn("forged", str(raised.exception))
+
+    def test_custom_file_pattern_cannot_accept_an_unapproved_option(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "-sample.test.js").touch()
+            with self.assertRaises(InvalidTestArgument):
+                parse_test_files(
+                    ["-sample.test.js"], re.compile(r".*\.test\.js"), root=root
+                )
