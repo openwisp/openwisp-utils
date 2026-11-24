@@ -381,3 +381,47 @@ mixin's configured ignored-message filtering.
 
 Waits for Django admin's ``.messagelist .success`` confirmation message
 and returns the matching element.
+
+Focused test argument validation
+--------------------------------
+
+``openwisp_utils.test_runner`` helps a test entry point validate focused
+test labels and explicitly permitted flags. The caller supplies a compiled
+regular expression for its own test modules. Use named ``module`` and
+``class`` groups when validating classes:
+
+.. code-block:: python
+
+    import re
+    import sys
+
+    from openwisp_utils.test_runner import (
+        InvalidTestArgument,
+        parse_test_arguments,
+        validate_test_classes,
+    )
+
+    pattern = re.compile(
+        r"(?P<module>tests\.test_\w+)" r"(?:\.(?P<class>[A-Z]\w*)(?:\.test_\w+)?)?"
+    )
+    try:
+        labels, flags = parse_test_arguments(
+            sys.argv[1:], pattern, ("-q", "--failfast"), require_label=True
+        )
+        validate_test_classes(labels)
+    except InvalidTestArgument as error:
+        print(error, file=sys.stderr)
+        sys.exit(2)
+
+    # Pass the selected labels and flags to the project's test runner.
+
+Initialize Django or another required framework before calling
+``validate_test_classes``. The function imports modules to check that
+selected classes inherit from ``unittest.TestCase``. It reports missing
+requested modules as invalid labels, but leaves missing dependencies
+inside an existing test module visible to the caller.
+
+Choose the expression and flags carefully for the project's test layout.
+Do not let the module expression consume a class or method as a nested
+module, because that could allow a non-test callable to reach the runner.
+Argument validation does not sandbox test code or its configuration.
