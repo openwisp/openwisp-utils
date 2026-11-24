@@ -483,9 +483,10 @@ For runners that select test files instead of Python labels:
 - ``parse_test_files`` accepts the arguments, a file pattern, and allowed
   flags. It rejects paths containing ``..``, symbolic links, and missing
   files. ``root`` selects the directory used to check files and defaults
-  to the current directory. Set ``max_files`` to limit how many files can
-  be selected, or ``require_exists=False`` when the underlying runner
-  checks existence.
+  to the current directory. Run the test command from the same directory
+  as ``root``: the returned matches contain the original relative paths.
+  Set ``max_files`` to limit how many files can be selected, or
+  ``require_exists=False`` when the underlying runner checks existence.
 - ``TEST_CLASS_LABEL_PATTERN`` accepts class and test method names without
   a module prefix. The caller must check that the selected class is a
   test.

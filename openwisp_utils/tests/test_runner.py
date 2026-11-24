@@ -444,3 +444,15 @@ class TestTestRunner(unittest.TestCase):
                 )
                 with self.assertRaises(InvalidTestArgument):
                     validate_test_labels(labels)
+
+    def test_rejects_traversal_even_when_target_exists(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "client").mkdir()
+            (root / "outside").mkdir()
+            (root / "outside" / "widget.test.js").touch()
+            pattern = compile_test_file_pattern("client", kind="jest")
+            with self.assertRaises(InvalidTestArgument):
+                parse_test_files(
+                    ["client/../outside/widget.test.js"], pattern, root=root
+                )
