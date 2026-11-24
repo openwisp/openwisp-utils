@@ -469,10 +469,11 @@ For example, django-x509 uses both kinds:
 Pass the resulting ``pattern`` as ``label_pattern`` to
 ``parse_test_arguments``.
 
-``validate_test_labels(labels)`` checks that the requested modules exist
-and that selected classes inherit from ``unittest.TestCase``. Initialize
-Django or another required framework before calling it. An import error
-inside an existing test module remains visible.
+``validate_test_labels(labels)`` checks that the requested modules exist,
+that selected classes inherit from ``unittest.TestCase``, and that
+selected methods are regular instance methods. Initialize Django or
+another required framework before calling it. An import error inside an
+existing test module remains visible.
 
 For runners that select test files instead of Python labels:
 
@@ -488,6 +489,9 @@ For runners that select test files instead of Python labels:
 - ``TEST_CLASS_LABEL_PATTERN`` accepts class and test method names without
   a module prefix. The caller must check that the selected class is a
   test.
+
+When passing validated files to Jest, include ``--runTestsByPath`` so Jest
+uses exact paths instead of treating the arguments as regular expressions.
 
 These checks limit which tests and flags can be selected. They do not make
 the tests safe: test code and its configuration can still execute code.

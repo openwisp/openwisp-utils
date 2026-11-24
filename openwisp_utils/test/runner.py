@@ -1,9 +1,11 @@
 """Validate focused test labels without choosing a test runner."""
 
 import re
+import sys
 from importlib import import_module
+from inspect import getattr_static
 from pathlib import Path
-from types import ModuleType
+from types import FunctionType, ModuleType
 from unittest import TestCase
 
 
@@ -87,11 +89,33 @@ def validate_test_labels(labels):
             raise
         if not isinstance(module, ModuleType):
             raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
-        if not match.group("class"):
+        # unittest traverses package attributes even when the module is cached.
+        parts = module_name.split(".")
+        for index in range(1, len(parts)):
+            parent = sys.modules.get(".".join(parts[:index]))
+            child = sys.modules.get(".".join(parts[: index + 1]))
+            if (
+                parent is None
+                or child is None
+                or vars(parent).get(parts[index]) is not child
+            ):
+                raise InvalidTestArgument(
+                    f"Unsupported test argument: {match.group(0)}"
+                )
+        class_name = match.group("class")
+        if not class_name:
             continue
-        candidate = getattr(module, match.group("class"), None)
+        candidate = getattr(module, class_name, None)
         if not isinstance(candidate, type) or not issubclass(candidate, TestCase):
             raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
+        prefix = f"{module_name}.{class_name}."
+        if match.group(0).startswith(prefix):
+            method_name = match.group(0).removeprefix(prefix)
+            method = getattr_static(candidate, method_name, None)
+            if not isinstance(method, FunctionType):
+                raise InvalidTestArgument(
+                    f"Unsupported test argument: {match.group(0)}"
+                )
 
 
 def compile_test_file_pattern(roots=("tests",), kind="python"):

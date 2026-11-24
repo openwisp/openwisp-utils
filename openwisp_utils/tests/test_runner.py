@@ -54,7 +54,8 @@ class TestTestRunner(unittest.TestCase):
 
     def test_only_accepts_unittest_testcase_classes(self):
         class TestExample(unittest.TestCase):
-            pass
+            def test_ok(self):
+                pass
 
         matches, _ = parse_test_arguments(
             ["tests.test_one.TestExample.test_ok"], PATTERN, FLAGS
@@ -63,13 +64,16 @@ class TestTestRunner(unittest.TestCase):
             module = ModuleType("tests.test_one")
             module.TestExample = TestExample
             importer.return_value = module
-            validate_test_labels(matches)
-            importer.assert_called_once_with("tests.test_one")
-            module.TestExample = object
-            with self.assertRaisesRegex(
-                InvalidTestArgument, "tests.test_one.TestExample"
-            ):
+            parent = ModuleType("tests")
+            parent.test_one = module
+            with patch.dict(sys.modules, {"tests": parent, "tests.test_one": module}):
                 validate_test_labels(matches)
+                importer.assert_called_once_with("tests.test_one")
+                module.TestExample = object
+                with self.assertRaisesRegex(
+                    InvalidTestArgument, "tests.test_one.TestExample"
+                ):
+                    validate_test_labels(matches)
 
     def test_missing_requested_module_is_an_invalid_label(self):
         matches, _ = parse_test_arguments(
@@ -95,12 +99,16 @@ class TestTestRunner(unittest.TestCase):
     def test_module_only_label_must_resolve_to_a_module(self):
         matches, _ = parse_test_arguments(["tests.test_one"], PATTERN, FLAGS)
         with patch("openwisp_utils.test.runner.import_module") as importer:
-            importer.return_value = ModuleType("tests.test_one")
-            validate_test_labels(matches)
-            importer.assert_called_once_with("tests.test_one")
-            importer.return_value = lambda: None
-            with self.assertRaisesRegex(InvalidTestArgument, "tests.test_one"):
+            module = ModuleType("tests.test_one")
+            parent = ModuleType("tests")
+            parent.test_one = module
+            importer.return_value = module
+            with patch.dict(sys.modules, {"tests": parent, "tests.test_one": module}):
                 validate_test_labels(matches)
+                importer.assert_called_once_with("tests.test_one")
+                importer.return_value = lambda: None
+                with self.assertRaisesRegex(InvalidTestArgument, "tests.test_one"):
+                    validate_test_labels(matches)
 
     def test_parsing_can_be_used_with_a_non_module_selector(self):
         pattern = re.compile(r"(?P<class>Test[A-Za-z0-9_]+)(?:\.test_\w+)?")
@@ -359,3 +367,56 @@ class TestTestRunner(unittest.TestCase):
         self.assertIsNotNone(
             pattern.fullmatch(".github/actions/example/tests/test_example.py")
         )
+
+    def test_rejects_class_and_static_methods_as_test_methods(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "runner_probe"
+            package.mkdir()
+            (package / "__init__.py").touch()
+            (package / "test_example.py").write_text(
+                "import unittest\n"
+                "class TestExample(unittest.TestCase):\n"
+                "    @staticmethod\n"
+                "    def test_static(): return unittest.TestSuite()\n"
+                "    @classmethod\n"
+                "    def test_class(cls): return unittest.TestSuite()\n"
+                "    def test_normal(self): pass\n"
+            )
+            pattern = compile_test_label_pattern("runner_probe")
+            with patch.object(sys, "path", [str(root), *sys.path]), patch.dict(
+                sys.modules
+            ):
+                importlib.invalidate_caches()
+                for method in ("test_static", "test_class"):
+                    with self.subTest(method=method):
+                        labels, _ = parse_test_arguments(
+                            [f"runner_probe.test_example.TestExample.{method}"], pattern
+                        )
+                        with self.assertRaises(InvalidTestArgument):
+                            validate_test_labels(labels)
+                labels, _ = parse_test_arguments(
+                    ["runner_probe.test_example.TestExample.test_normal"], pattern
+                )
+                validate_test_labels(labels)
+
+    def test_rejects_a_module_shadowed_by_a_package_attribute(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "runner_probe"
+            package.mkdir()
+            (package / "__init__.py").touch()
+            (package / "test_example.py").touch()
+            with patch.object(sys, "path", [str(root), *sys.path]), patch.dict(
+                sys.modules
+            ):
+                importlib.invalidate_caches()
+                module = importlib.import_module("runner_probe.test_example")
+                sys.modules["runner_probe"].test_example = lambda: unittest.TestSuite()
+                labels, _ = parse_test_arguments(
+                    ["runner_probe.test_example"],
+                    compile_test_label_pattern("runner_probe"),
+                )
+                self.assertIs(sys.modules["runner_probe.test_example"], module)
+                with self.assertRaises(InvalidTestArgument):
+                    validate_test_labels(labels)
