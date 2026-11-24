@@ -70,10 +70,13 @@ class TestTestRunner(unittest.TestCase):
                 validate_test_labels(matches)
                 importer.assert_called_once_with("tests.test_one")
                 module.TestExample = object
+                class_only, _ = parse_test_arguments(
+                    ["tests.test_one.TestExample"], PATTERN, FLAGS
+                )
                 with self.assertRaisesRegex(
                     InvalidTestArgument, "tests.test_one.TestExample"
                 ):
-                    validate_test_labels(matches)
+                    validate_test_labels(class_only)
 
     def test_missing_requested_module_is_an_invalid_label(self):
         matches, _ = parse_test_arguments(
@@ -418,5 +421,26 @@ class TestTestRunner(unittest.TestCase):
                     compile_test_label_pattern("runner_probe"),
                 )
                 self.assertIs(sys.modules["runner_probe.test_example"], module)
+                with self.assertRaises(InvalidTestArgument):
+                    validate_test_labels(labels)
+
+    def test_later_import_cannot_shadow_an_earlier_selected_module(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "runner_probe"
+            package.mkdir()
+            (package / "__init__.py").touch()
+            (package / "test_first.py").touch()
+            (package / "test_second.py").write_text(
+                "import runner_probe\n" "runner_probe.test_first = lambda: None\n"
+            )
+            with patch.object(sys, "path", [str(root), *sys.path]), patch.dict(
+                sys.modules
+            ):
+                importlib.invalidate_caches()
+                labels, _ = parse_test_arguments(
+                    ["runner_probe.test_first", "runner_probe.test_second"],
+                    compile_test_label_pattern("runner_probe"),
+                )
                 with self.assertRaises(InvalidTestArgument):
                     validate_test_labels(labels)

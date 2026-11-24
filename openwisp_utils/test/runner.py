@@ -77,6 +77,7 @@ def validate_test_labels(labels):
     Call this after the caller has initialized any framework needed to
     import its test modules. Labels and test code remain untrusted.
     """
+    modules = []
     for match in labels:
         module_name = match.group("module")
         try:
@@ -89,6 +90,10 @@ def validate_test_labels(labels):
             raise
         if not isinstance(module, ModuleType):
             raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
+        modules.append((match, module))
+    # Import all selected modules first: a later import can change an earlier one.
+    for match, module in modules:
+        module_name = match.group("module")
         # unittest traverses package attributes even when the module is cached.
         parts = module_name.split(".")
         for index in range(1, len(parts)):
