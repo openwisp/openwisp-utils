@@ -456,3 +456,22 @@ class TestTestRunner(unittest.TestCase):
                 parse_test_files(
                     ["client/../outside/widget.test.js"], pattern, root=root
                 )
+
+    def test_single_allowed_flag_requires_an_exact_match(self):
+        self.assertEqual(
+            parse_test_arguments(["--failfast"], allowed_flags="--failfast"),
+            ([], ["--failfast"]),
+        )
+        with self.assertRaises(InvalidTestArgument):
+            parse_test_arguments(["ast"], allowed_flags="--failfast")
+
+    def test_rejects_absolute_files_with_a_custom_pattern(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "tests").mkdir()
+            outside = root / "test_outside.py"
+            outside.touch()
+            with self.assertRaises(InvalidTestArgument):
+                parse_test_files(
+                    [str(outside)], re.compile(r".*test_\w+\.py"), root=root / "tests"
+                )

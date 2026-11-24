@@ -54,6 +54,8 @@ def parse_test_arguments(
     require_label=False,
 ):
     """Return matched labels and flags, rejecting unsupported arguments."""
+    if isinstance(allowed_flags, str):
+        allowed_flags = (allowed_flags,)
     labels = []
     flags = []
     for argument in arguments:
@@ -161,7 +163,11 @@ def parse_test_files(
     matches, flags = parse_test_arguments(arguments, file_pattern, allowed_flags)
     for index, match in enumerate(matches):
         name = match.group(0)
-        if (max_files is not None and index >= max_files) or ".." in name:
+        if (
+            (max_files is not None and index >= max_files)
+            or ".." in name
+            or Path(name).anchor
+        ):
             raise InvalidTestArgument(f"Unsupported test argument: {name}")
         path = Path(root)
         for part in Path(name).parts:
