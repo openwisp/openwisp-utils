@@ -74,7 +74,7 @@ class TestTestRunner(unittest.TestCase):
                     ["tests.test_one.TestExample"], PATTERN, FLAGS
                 )
                 with self.assertRaisesRegex(
-                    InvalidTestArgument, "tests.test_one.TestExample"
+                    InvalidTestArgument, "Unsupported test argument"
                 ):
                     validate_test_labels(class_only)
 
@@ -85,7 +85,7 @@ class TestTestRunner(unittest.TestCase):
         error = ModuleNotFoundError("not found", name="tests.test_missing")
         with patch("openwisp_utils.test.runner.import_module", side_effect=error):
             with self.assertRaisesRegex(
-                InvalidTestArgument, "tests.test_missing.TestExample"
+                InvalidTestArgument, "Unsupported test argument"
             ):
                 validate_test_labels(matches)
 
@@ -110,7 +110,9 @@ class TestTestRunner(unittest.TestCase):
                 validate_test_labels(matches)
                 importer.assert_called_once_with("tests.test_one")
                 importer.return_value = lambda: None
-                with self.assertRaisesRegex(InvalidTestArgument, "tests.test_one"):
+                with self.assertRaisesRegex(
+                    InvalidTestArgument, "Unsupported test argument"
+                ):
                     validate_test_labels(matches)
 
     def test_parsing_can_be_used_with_a_non_module_selector(self):
@@ -170,7 +172,7 @@ class TestTestRunner(unittest.TestCase):
             ):
                 importlib.invalidate_caches()
                 with self.assertRaisesRegex(
-                    InvalidTestArgument, "runner_probe.test_action"
+                    InvalidTestArgument, "Unsupported test argument"
                 ):
                     validate_test_labels(labels)
 
@@ -478,5 +480,6 @@ class TestTestRunner(unittest.TestCase):
 
     def test_rejected_argument_cannot_add_a_log_line(self):
         with self.assertRaises(InvalidTestArgument) as raised:
-            parse_test_arguments(["invalid\n::warning::forged"])
+            parse_test_arguments(["invalid\n::warning::forged##[warning]forged"])
         self.assertNotIn("\n", str(raised.exception))
+        self.assertNotIn("forged", str(raised.exception))
