@@ -1,0 +1,144 @@
+"""Validate focused test labels without choosing a test runner."""
+
+import re
+from importlib import import_module
+from pathlib import Path
+from types import ModuleType
+from unittest import TestCase
+
+
+class InvalidTestArgument(ValueError):
+    """A test argument is outside the caller's reviewed allowlist."""
+
+
+def compile_test_label_pattern(
+    module_roots=("tests",), exact_modules=(), allow_subpackages=False
+):
+    """Build a pattern for test modules under trusted roots or exact modules."""
+    if isinstance(module_roots, str):
+        module_roots = (module_roots,)
+    if isinstance(exact_modules, str):
+        exact_modules = (exact_modules,)
+    module_roots = tuple(module_roots)
+    exact_modules = tuple(exact_modules)
+    names = (*module_roots, *exact_modules)
+    if not names or any(
+        not isinstance(name, str)
+        or not re.fullmatch(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*", name, re.ASCII)
+        for name in names
+    ):
+        raise ValueError("Test module roots must be dotted Python identifiers")
+    # A package segment cannot consume a test module and hide a callable.
+    subpackages = r"(?:\.(?!test_)[a-z_]\w*)*" if allow_subpackages else ""
+    modules = [rf"{re.escape(root)}{subpackages}\.test_\w+" for root in module_roots]
+    modules.extend(re.escape(name) for name in exact_modules)
+    return re.compile(
+        rf"(?P<module>{'|'.join(modules)})"
+        r"(?:\.(?P<class>[A-Z]\w*)(?:\.test_\w+)?)?",
+        re.ASCII,
+    )
+
+
+DEFAULT_TEST_LABEL_PATTERN = compile_test_label_pattern()
+TEST_CLASS_LABEL_PATTERN = re.compile(
+    r"(?P<class>Test[A-Za-z0-9_]+)(?:\.test_[A-Za-z0-9_]+)?", re.ASCII
+)
+
+
+def parse_test_arguments(
+    arguments,
+    label_pattern=DEFAULT_TEST_LABEL_PATTERN,
+    allowed_flags=(),
+    require_label=False,
+):
+    """Return matched labels and flags, rejecting unsupported arguments."""
+    labels = []
+    flags = []
+    for argument in arguments:
+        if argument in allowed_flags:
+            flags.append(argument)
+            continue
+        match = label_pattern.fullmatch(argument)
+        if not match:
+            raise InvalidTestArgument(f"Unsupported test argument: {argument}")
+        labels.append(match)
+    if require_label and not labels:
+        raise InvalidTestArgument(
+            "Unsupported test arguments: a test label is required"
+        )
+    return labels, flags
+
+
+def validate_test_labels(labels):
+    """Require test modules and reject classes that are not unittest TestCases.
+
+    Call this after the caller has initialized any framework needed to
+    import its test modules. Labels and test code remain untrusted.
+    """
+    for match in labels:
+        module_name = match.group("module")
+        try:
+            module = import_module(module_name)
+        except ModuleNotFoundError as error:
+            if error.name == module_name or module_name.startswith(f"{error.name}."):
+                raise InvalidTestArgument(
+                    f"Unsupported test argument: {match.group(0)}"
+                ) from error
+            raise
+        if not isinstance(module, ModuleType):
+            raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
+        if not match.group("class"):
+            continue
+        candidate = getattr(module, match.group("class"), None)
+        if not isinstance(candidate, type) or not issubclass(candidate, TestCase):
+            raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
+
+
+def compile_test_file_pattern(roots=("tests",), kind="python"):
+    """Build a pattern for Python, Lua, or Jest test files under trusted roots."""
+    if isinstance(roots, str):
+        roots = (roots,)
+    roots = tuple(roots)
+    if not roots or any(
+        not isinstance(root, str)
+        or not re.fullmatch(r"\.?[A-Za-z0-9_-]+(?:/\.?[A-Za-z0-9_-]+)*", root)
+        for root in roots
+    ):
+        raise ValueError("Test roots must be relative directory names")
+    filenames = {
+        "python": r"test_[A-Za-z0-9_]+\.py",
+        "lua": r"test_[A-Za-z0-9_]+\.lua",
+        "jest": r"[A-Za-z0-9_./-]+\.(?:test|spec)\.jsx?",
+    }
+    if kind not in filenames:
+        raise ValueError(f"Unsupported test file kind: {kind}")
+    return re.compile(
+        rf"(?:{'|'.join(re.escape(root) for root in roots)})/{filenames[kind]}"
+    )
+
+
+DEFAULT_TEST_FILE_PATTERN = compile_test_file_pattern()
+
+
+def parse_test_files(
+    arguments,
+    file_pattern=DEFAULT_TEST_FILE_PATTERN,
+    allowed_flags=(),
+    root=".",
+    max_files=None,
+    require_exists=True,
+):
+    """Validate test files and flags, rejecting missing files and symlinks."""
+    matches, flags = parse_test_arguments(arguments, file_pattern, allowed_flags)
+    for index, match in enumerate(matches):
+        name = match.group(0)
+        if (max_files is not None and index >= max_files) or ".." in name:
+            raise InvalidTestArgument(f"Unsupported test argument: {name}")
+        path = Path(root)
+        for part in Path(name).parts:
+            path /= part
+            if path.is_symlink():
+                raise InvalidTestArgument(f"Unsupported test argument: {name}")
+        if require_exists and not path.is_file():
+            raise InvalidTestArgument(f"Unsupported test argument: {name}")
+    return matches, flags
