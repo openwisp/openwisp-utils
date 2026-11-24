@@ -64,7 +64,7 @@ def parse_test_arguments(
             continue
         match = label_pattern.fullmatch(argument)
         if not match:
-            raise InvalidTestArgument(f"Unsupported test argument: {argument}")
+            raise InvalidTestArgument(f"Unsupported test argument: {argument!r}")
         labels.append(match)
     if require_label and not labels:
         raise InvalidTestArgument(
@@ -87,11 +87,11 @@ def validate_test_labels(labels):
         except ModuleNotFoundError as error:
             if error.name == module_name or module_name.startswith(f"{error.name}."):
                 raise InvalidTestArgument(
-                    f"Unsupported test argument: {match.group(0)}"
+                    f"Unsupported test argument: {match.group(0)!r}"
                 ) from error
             raise
         if not isinstance(module, ModuleType):
-            raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
+            raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)!r}")
         modules.append((match, module))
     # Import all selected modules first: a later import can change an earlier one.
     for match, module in modules:
@@ -107,21 +107,21 @@ def validate_test_labels(labels):
                 or vars(parent).get(parts[index]) is not child
             ):
                 raise InvalidTestArgument(
-                    f"Unsupported test argument: {match.group(0)}"
+                    f"Unsupported test argument: {match.group(0)!r}"
                 )
         class_name = match.group("class")
         if not class_name:
             continue
         candidate = getattr(module, class_name, None)
         if not isinstance(candidate, type) or not issubclass(candidate, TestCase):
-            raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
+            raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)!r}")
         prefix = f"{module_name}.{class_name}."
         if match.group(0).startswith(prefix):
             method_name = match.group(0).removeprefix(prefix)
             method = getattr_static(candidate, method_name, None)
             if not isinstance(method, FunctionType):
                 raise InvalidTestArgument(
-                    f"Unsupported test argument: {match.group(0)}"
+                    f"Unsupported test argument: {match.group(0)!r}"
                 )
 
 
@@ -168,12 +168,12 @@ def parse_test_files(
             or ".." in name
             or Path(name).anchor
         ):
-            raise InvalidTestArgument(f"Unsupported test argument: {name}")
+            raise InvalidTestArgument(f"Unsupported test argument: {name!r}")
         path = Path(root)
         for part in Path(name).parts:
             path /= part
             if path.is_symlink():
-                raise InvalidTestArgument(f"Unsupported test argument: {name}")
+                raise InvalidTestArgument(f"Unsupported test argument: {name!r}")
         if require_exists and not path.is_file():
-            raise InvalidTestArgument(f"Unsupported test argument: {name}")
+            raise InvalidTestArgument(f"Unsupported test argument: {name!r}")
     return matches, flags

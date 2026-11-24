@@ -475,3 +475,8 @@ class TestTestRunner(unittest.TestCase):
                 parse_test_files(
                     [str(outside)], re.compile(r".*test_\w+\.py"), root=root / "tests"
                 )
+
+    def test_rejected_argument_cannot_add_a_log_line(self):
+        with self.assertRaises(InvalidTestArgument) as raised:
+            parse_test_arguments(["invalid\n::warning::forged"])
+        self.assertNotIn("\n", str(raised.exception))
