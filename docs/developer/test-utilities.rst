@@ -398,7 +398,7 @@ regular expression for its own test modules. Use named ``module`` and
     from openwisp_utils.test_runner import (
         InvalidTestArgument,
         parse_test_arguments,
-        validate_test_classes,
+        validate_test_labels,
     )
 
     pattern = re.compile(
@@ -408,7 +408,7 @@ regular expression for its own test modules. Use named ``module`` and
         labels, flags = parse_test_arguments(
             sys.argv[1:], pattern, ("-q", "--failfast"), require_label=True
         )
-        validate_test_classes(labels)
+        validate_test_labels(labels)
     except InvalidTestArgument as error:
         print(error, file=sys.stderr)
         sys.exit(2)
@@ -416,10 +416,10 @@ regular expression for its own test modules. Use named ``module`` and
     # Pass the selected labels and flags to the project's test runner.
 
 Initialize Django or another required framework before calling
-``validate_test_classes``. The function imports modules to check that
-selected classes inherit from ``unittest.TestCase``. It reports missing
-requested modules as invalid labels, but leaves missing dependencies
-inside an existing test module visible to the caller.
+``validate_test_labels``. The function checks that each label names a
+module and that selected classes inherit from ``unittest.TestCase``. It
+reports missing requested modules as invalid labels, but leaves missing
+dependencies inside an existing test module visible to the caller.
 
 Choose the expression and flags carefully for the project's test layout.
 Do not let the module expression consume a class or method as a nested

@@ -7,13 +7,13 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType
 from unittest.mock import patch
 
 from openwisp_utils.test_runner import (
     InvalidTestArgument,
     parse_test_arguments,
-    validate_test_classes,
+    validate_test_labels,
 )
 
 PATTERN = re.compile(
@@ -56,14 +56,16 @@ class TestTestRunner(unittest.TestCase):
             ["tests.test_one.TestExample.test_ok"], PATTERN, FLAGS
         )
         with patch("openwisp_utils.test_runner.import_module") as importer:
-            importer.return_value = SimpleNamespace(TestExample=TestExample)
-            validate_test_classes(matches)
+            module = ModuleType("tests.test_one")
+            module.TestExample = TestExample
+            importer.return_value = module
+            validate_test_labels(matches)
             importer.assert_called_once_with("tests.test_one")
-            importer.return_value = SimpleNamespace(TestExample=object)
+            module.TestExample = object
             with self.assertRaisesRegex(
                 InvalidTestArgument, "tests.test_one.TestExample"
             ):
-                validate_test_classes(matches)
+                validate_test_labels(matches)
 
     def test_missing_requested_module_is_an_invalid_label(self):
         matches, _ = parse_test_arguments(
@@ -74,7 +76,7 @@ class TestTestRunner(unittest.TestCase):
             with self.assertRaisesRegex(
                 InvalidTestArgument, "tests.test_missing.TestExample"
             ):
-                validate_test_classes(matches)
+                validate_test_labels(matches)
 
     def test_missing_dependency_of_a_test_module_is_not_hidden(self):
         matches, _ = parse_test_arguments(
@@ -83,14 +85,18 @@ class TestTestRunner(unittest.TestCase):
         error = ModuleNotFoundError("missing dependency", name="some_dependency")
         with patch("openwisp_utils.test_runner.import_module", side_effect=error):
             with self.assertRaises(ModuleNotFoundError) as raised:
-                validate_test_classes(matches)
+                validate_test_labels(matches)
         self.assertIs(raised.exception, error)
 
-    def test_module_only_label_does_not_import_a_class(self):
+    def test_module_only_label_must_resolve_to_a_module(self):
         matches, _ = parse_test_arguments(["tests.test_one"], PATTERN, FLAGS)
         with patch("openwisp_utils.test_runner.import_module") as importer:
-            validate_test_classes(matches)
-            importer.assert_not_called()
+            importer.return_value = ModuleType("tests.test_one")
+            validate_test_labels(matches)
+            importer.assert_called_once_with("tests.test_one")
+            importer.return_value = lambda: None
+            with self.assertRaisesRegex(InvalidTestArgument, "tests.test_one"):
+                validate_test_labels(matches)
 
     def test_parsing_can_be_used_with_a_non_module_selector(self):
         pattern = re.compile(r"(?P<class>Test[A-Za-z0-9_]+)(?:\.test_\w+)?")
@@ -123,10 +129,32 @@ class TestTestRunner(unittest.TestCase):
                     ):
                         importlib.invalidate_caches()
                         labels, _ = parse_test_arguments([label], pattern, ())
-                        validate_test_classes(labels)
+                        validate_test_labels(labels)
                         suite = unittest.defaultTestLoader.loadTestsFromName(label)
                         result = unittest.TextTestRunner(stream=io.StringIO()).run(
                             suite
                         )
                     self.assertEqual(result.testsRun, 1)
                     self.assertEqual(result.wasSuccessful(), should_pass)
+
+    def test_rejects_a_callable_disguised_as_a_module(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "runner_probe"
+            package.mkdir()
+            (package / "__init__.py").write_text(
+                "import unittest\n" "def test_action(): return unittest.TestSuite()\n"
+            )
+            pattern = re.compile(
+                r"(?P<module>runner_probe\.test_\w+)"
+                r"(?:\.(?P<class>[A-Z]\w*)(?:\.test_\w+)?)?"
+            )
+            labels, _ = parse_test_arguments(["runner_probe.test_action"], pattern, ())
+            with patch.object(sys, "path", [str(root), *sys.path]), patch.dict(
+                sys.modules
+            ):
+                importlib.invalidate_caches()
+                with self.assertRaisesRegex(
+                    InvalidTestArgument, "runner_probe.test_action"
+                ):
+                    validate_test_labels(labels)

@@ -1,6 +1,7 @@
 """Validate focused test labels without choosing a test runner."""
 
 from importlib import import_module
+from types import ModuleType
 from unittest import TestCase
 
 
@@ -27,15 +28,13 @@ def parse_test_arguments(arguments, label_pattern, allowed_flags, require_label=
     return labels, flags
 
 
-def validate_test_classes(labels):
-    """Reject class labels that do not identify a unittest TestCase.
+def validate_test_labels(labels):
+    """Require test modules and reject classes that are not unittest TestCases.
 
     Call this after the caller has initialized any framework needed to
     import its test modules. Labels and test code remain untrusted.
     """
     for match in labels:
-        if not match.group("class"):
-            continue
         module_name = match.group("module")
         try:
             module = import_module(module_name)
@@ -45,6 +44,10 @@ def validate_test_classes(labels):
                     f"Unsupported test argument: {match.group(0)}"
                 ) from error
             raise
+        if not isinstance(module, ModuleType):
+            raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
+        if not match.group("class"):
+            continue
         candidate = getattr(module, match.group("class"), None)
         if not isinstance(candidate, type) or not issubclass(candidate, TestCase):
             raise InvalidTestArgument(f"Unsupported test argument: {match.group(0)}")
