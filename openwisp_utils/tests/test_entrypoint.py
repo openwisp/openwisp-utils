@@ -34,7 +34,13 @@ class TestEntrypoint(unittest.TestCase):
         self.assertIn(" passed", result.stdout)
 
     def test_invalid_arguments_are_rejected(self):
-        for argument in ("--settings=untrusted", "os.system", "--noinput"):
+        for argument in (
+            "--settings=untrusted",
+            "os.system",
+            "--noinput",
+            "openwisp_utils.tests.test_missing_entrypoint_probe",
+            "openwisp_utils/releaser/tests/test_missing_entrypoint_probe.py",
+        ):
             with self.subTest(argument=argument):
                 result = self.run_entrypoint(argument)
                 self.assertEqual(result.returncode, 2, result.stderr)

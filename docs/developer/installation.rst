@@ -97,7 +97,7 @@ Launch development server:
 
 You can access the admin interface at ``http://127.0.0.1:8000/admin/``.
 
-Run tests with:
+Run tests from the repository root with:
 
 .. code-block:: shell
 
