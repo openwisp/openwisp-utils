@@ -1,9 +1,83 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env python
+"""Run the CI suite or selected Django and releaser tests."""
 
-coverage erase
+import os
+import subprocess
+import sys
 
-coverage run runtests.py --parallel --exclude-tag=selenium_tests
-coverage run runtests.py --tag=selenium_tests
-coverage combine
-coverage xml
+from openwisp_utils.test.runner import (
+    InvalidTestArgument,
+    compile_test_file_pattern,
+    compile_test_label_pattern,
+    parse_test_arguments,
+    parse_test_files,
+    validate_test_labels,
+)
+
+
+def main():
+    if len(sys.argv) == 1:
+        for arguments in (
+            ["coverage", "erase"],
+            [
+                "coverage",
+                "run",
+                "runtests.py",
+                "--parallel",
+                "--exclude-tag=selenium_tests",
+            ],
+            ["coverage", "run", "runtests.py", "--tag=selenium_tests"],
+            ["coverage", "combine"],
+            ["coverage", "xml"],
+        ):
+            result = subprocess.run(arguments)
+            if result.returncode:
+                return result.returncode
+        return 0
+
+    arguments = sys.argv[1:]
+    try:
+        if any("/" in argument for argument in arguments):
+            pattern = compile_test_file_pattern("openwisp_utils/releaser/tests")
+            files, flags = parse_test_files(arguments, pattern, ("-q", "-v"))
+            if not files:
+                raise InvalidTestArgument("A test file is required")
+            sys.path.insert(0, "tests")
+            os.environ["GITHUB_TOKEN"] = ""
+            os.environ.setdefault("DJANGO_SETTINGS_MODULE", "openwisp2.settings")
+            import pytest
+
+            return pytest.main([*flags, "--", *[match.group(0) for match in files]])
+
+        pattern = compile_test_label_pattern(
+            (
+                "test_project.tests",
+                "openwisp_utils.metric_collection.tests",
+                "openwisp_utils.tests",
+            )
+        )
+        labels, flags = parse_test_arguments(
+            arguments, pattern, ("--failfast", "--noinput"), require_label=True
+        )
+        sys.path.insert(0, "tests")
+        sys.argv.insert(1, "test")
+        os.environ["GITHUB_TOKEN"] = ""
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "openwisp2.settings")
+        import django
+
+        django.setup()
+        validate_test_labels(labels)
+    except InvalidTestArgument as error:
+        print(error, file=sys.stderr)
+        return 2
+
+    from django.core.management import execute_from_command_line
+
+    execute_from_command_line(
+        [sys.argv[0], "test", *[match.group(0) for match in labels], *flags]
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

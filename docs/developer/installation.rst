@@ -103,6 +103,13 @@ Run tests with:
 
     ./runtests
 
+To run a focused Django test or a releaser test file instead:
+
+.. code-block:: shell
+
+    ./runtests test_project.tests.test_test_utils.TestUtils.test_time_logging_runner --noinput
+    ./runtests openwisp_utils/releaser/tests/test_github.py -q
+
 Run quality assurance tests with:
 
 .. code-block:: shell
