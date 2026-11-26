@@ -1,8 +1,9 @@
 import importlib
+import os
 import sys
 from types import ModuleType
 from unittest import TestResult, TestSuite, skip
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
@@ -326,3 +327,27 @@ class TestSpatiaLiteFindLibraryMemoization(SimpleTestCase):
                 sys.modules.pop(spatialite_base_module_path, None)
             else:
                 sys.modules[spatialite_base_module_path] = original_spatialite_base
+
+
+class TestChromeWebDriverLogging(SimpleTestCase):
+    @patch("openwisp_utils.tests.selenium.webdriver.Chrome")
+    @patch("openwisp_utils.tests.selenium.webdriver.ChromeService")
+    def test_chromedriver_log_disabled_by_default(self, mock_service, mock_chrome):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("CHROMEDRIVER_LOG", None)
+            SeleniumTestMixin.get_chrome_webdriver()
+        mock_service.assert_not_called()
+        mock_chrome.assert_called_once()
+        self.assertNotIn("service", mock_chrome.call_args.kwargs)
+
+    @patch("openwisp_utils.tests.selenium.webdriver.Chrome")
+    @patch("openwisp_utils.tests.selenium.webdriver.ChromeService")
+    def test_chromedriver_log_enabled(self, mock_service, mock_chrome):
+        with patch.dict(os.environ, {"CHROMEDRIVER_LOG": "1"}):
+            SeleniumTestMixin.get_chrome_webdriver()
+        mock_service.assert_called_once_with(log_output="chromedriver.log")
+        mock_chrome.assert_called_once()
+        self.assertIs(
+            mock_chrome.call_args.kwargs["service"],
+            mock_service.return_value,
+        )
