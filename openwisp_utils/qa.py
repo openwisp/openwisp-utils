@@ -105,7 +105,9 @@ def check_commit_message():
     else:
         # ensure there's a capital letter after the prefix
         suffix = short_desc.replace(prefix.group(), "").strip()
-        if not suffix[0].isupper():
+        if not suffix:
+            errors.append("please add a description after the prefix")
+        elif not suffix[0].isupper():
             errors.append("please add a capital letter after the prefix")
     # default issue mentions
     issues = []
