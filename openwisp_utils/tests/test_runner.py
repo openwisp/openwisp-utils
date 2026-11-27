@@ -492,3 +492,37 @@ class TestTestRunner(unittest.TestCase):
                 parse_test_files(
                     ["-sample.test.js"], re.compile(r".*\.test\.js"), root=root
                 )
+
+    def test_rejects_test_classes_without_tests(self):
+        class EmptyCase(unittest.TestCase):
+            pass
+
+        class TestExample(unittest.TestCase):
+            def test_ok(self):
+                pass
+
+        class RunTestCase(unittest.TestCase):
+            def runTest(self):
+                pass
+
+        module = ModuleType("tests.test_one")
+        module.TestCase = unittest.TestCase
+        module.EmptyCase = EmptyCase
+        module.TestExample = TestExample
+        module.RunTestCase = RunTestCase
+        parent = ModuleType("tests")
+        parent.test_one = module
+        with patch(
+            "openwisp_utils.test.runner.import_module", return_value=module
+        ), patch.dict(sys.modules, {"tests": parent, "tests.test_one": module}):
+            for name in ("TestCase", "EmptyCase"):
+                with self.subTest(name=name):
+                    labels, _ = parse_test_arguments(
+                        [f"tests.test_one.{name}"], PATTERN
+                    )
+                    with self.assertRaises(InvalidTestArgument):
+                        validate_test_labels(labels)
+            labels, _ = parse_test_arguments(["tests.test_one.TestExample"], PATTERN)
+            validate_test_labels(labels)
+            labels, _ = parse_test_arguments(["tests.test_one.RunTestCase"], PATTERN)
+            validate_test_labels(labels)
