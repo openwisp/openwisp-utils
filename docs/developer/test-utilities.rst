@@ -470,10 +470,10 @@ Pass the resulting ``pattern`` as ``label_pattern`` to
 ``parse_test_arguments``.
 
 ``validate_test_labels(labels)`` checks that the requested modules exist,
-that selected classes inherit from ``unittest.TestCase``, and that
-selected methods are regular instance methods. Initialize Django or
-another required framework before calling it. An import error inside an
-existing test module remains visible.
+that selected classes inherit from ``unittest.TestCase`` and contain
+tests, and that selected methods are regular instance methods. Initialize
+Django or another required framework before calling it. An import error
+inside an existing test module remains visible.
 
 For runners that select test files instead of Python labels:
 
