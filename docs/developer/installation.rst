@@ -97,11 +97,18 @@ Launch development server:
 
 You can access the admin interface at ``http://127.0.0.1:8000/admin/``.
 
-Run tests with:
+Run tests from the repository root with:
 
 .. code-block:: shell
 
     ./runtests
+
+To run a focused Django test or a releaser test file instead:
+
+.. code-block:: shell
+
+    ./runtests test_project.tests.test_test_utils.TestUtils.test_time_logging_runner --noinput
+    ./runtests openwisp_utils/releaser/tests/test_github.py -q
 
 Run quality assurance tests with:
 

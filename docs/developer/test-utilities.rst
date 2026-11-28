@@ -381,3 +381,119 @@ mixin's configured ignored-message filtering.
 
 Waits for Django admin's ``.messagelist .success`` confirmation message
 and returns the matching element.
+
+Focused test argument validation
+--------------------------------
+
+OpenWISP modules need a standard ``./runtests`` entry point for the `AI
+reviewer
+<https://github.com/openwisp/openwisp-actions#on-demand-ai-review>`_ to
+run tests. For security, the entry point must limit the options it
+accepts. To avoid duplicating this logic in each module,
+``openwisp-utils`` provides shared test runner helpers.
+
+The following example validates focused test labels and the ``-q`` and
+``-v`` flags before passing the original arguments to nose2:
+
+.. code-block:: python
+
+    import sys
+
+    import nose2
+
+    from openwisp_utils.test.runner import (
+        InvalidTestArgument,
+        parse_test_arguments,
+        validate_test_labels,
+    )
+
+    try:
+        labels, _ = parse_test_arguments(sys.argv[1:], allowed_flags=("-q", "-v"))
+        validate_test_labels(labels)
+    except InvalidTestArgument as error:
+        print(error, file=sys.stderr)
+        sys.exit(2)
+
+    nose2.discover()
+
+For example, ``./runtests tests.test_parser.TestParser.test_parse`` runs
+one test. Without a label, nose2 discovers the full suite.
+
+Available options
+~~~~~~~~~~~~~~~~~
+
+``parse_test_arguments`` accepts:
+
+- ``arguments``: the test labels and flags supplied to the entry point.
+- ``label_pattern``: a compiled pattern for accepted test labels. The
+  default accepts modules directly under ``tests``, such as
+  ``tests.test_parser``, plus their test classes and methods.
+- ``allowed_flags``: the exact flags the entry point accepts. No flags are
+  allowed by default.
+- ``require_label``: set this to ``True`` to reject a command without a
+  test label. The default is ``False``.
+
+It returns two lists: regular expression matches for the labels and the
+accepted flags. Use ``match.group(0)`` to get a label. It raises
+``InvalidTestArgument`` for unsupported input.
+
+``compile_test_label_pattern`` builds a pattern for projects with a
+different test layout. It accepts:
+
+- ``module_roots``: packages containing ``test_*.py`` modules. The default
+  is ``("tests",)``.
+- ``exact_modules``: full test module names that do not follow that naming
+  convention. The default is an empty tuple.
+- ``allow_subpackages``: set this to ``True`` to accept test modules
+  inside subpackages, such as ``tests.parsers.test_parser``. The default
+  is ``False``.
+
+Each of ``module_roots`` and ``exact_modules`` accepts one name or a list
+of names.
+
+List packages whose names start with ``test_`` explicitly in
+``module_roots``, for example ``("tests", "tests.test_snmp")``. To accept
+only exact modules, set ``module_roots=()``.
+
+For example, django-x509 uses both kinds:
+
+.. code-block:: python
+
+    from openwisp_utils.test.runner import compile_test_label_pattern
+
+    pattern = compile_test_label_pattern(
+        module_roots=("django_x509.tests",),
+        exact_modules=("openwisp2.sample_x509.tests",),
+    )
+
+Pass the resulting ``pattern`` as ``label_pattern`` to
+``parse_test_arguments``.
+
+``validate_test_labels(labels)`` checks that the requested modules exist,
+that selected classes inherit from ``unittest.TestCase``, and that
+selected methods are regular instance methods. Initialize Django or
+another required framework before calling it. An import error inside an
+existing test module remains visible.
+
+For runners that select test files instead of Python labels:
+
+- ``compile_test_file_pattern(roots, kind)`` builds a pattern for
+  ``python``, ``lua``, or ``jest`` test files under the named directories.
+  The defaults are ``roots=("tests",)`` and ``kind="python"``.
+- ``parse_test_files`` accepts the arguments, a file pattern, and allowed
+  flags. It rejects paths containing ``..``, symbolic links, and missing
+  files. ``root`` selects the directory used to check files and defaults
+  to the current directory. Run the test command from the same directory
+  as ``root``: the returned matches contain the original relative paths.
+  Set ``max_files`` to limit how many files can be selected, or
+  ``require_exists=False`` when the underlying runner checks existence.
+- ``TEST_CLASS_LABEL_PATTERN`` accepts class and test method names without
+  a module prefix. The caller must check that the selected class is a
+  test.
+
+When passing validated files to Jest, include ``--runTestsByPath`` so Jest
+uses exact paths instead of treating the arguments as regular expressions.
+
+These checks limit which tests and flags can be selected. They do not make
+the tests safe: test code and its configuration can still execute code.
+Run untrusted pull request code in an isolated, unprivileged environment.
