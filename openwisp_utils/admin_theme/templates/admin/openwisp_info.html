@@ -10,6 +10,9 @@
 {% if openwisp_version %}
 <h2>{% trans "OpenWISP Version" %}: {{ openwisp_version }}</h2>
 {% endif %}
+<p>{% blocktrans trimmed %}
+  OpenWISP is licensed under the <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License version 3</a>.
+{% endblocktrans %}</p>
 <h2>{% trans "Installed OpenWISP Modules" %}</h2>
 <ul>
 {% for name, version in enabled_openwisp_modules.items %}
