@@ -29,6 +29,7 @@ from openwisp_utils.releaser.utils import (
     rst_to_markdown,
 )
 from openwisp_utils.releaser.version import (
+    bump_to_alpha,
     bump_version,
     determine_new_version,
     get_current_version,
@@ -494,11 +495,11 @@ def start_next_alpha(gh, base, released_version, next_version):
     # Keep the topic branch checked out if preparing the commit fails, so the
     # user can fix the files and recover without edits leaking to the base.
     start_unreleased_section(config, next_version)
-    bump_version(config, next_version, alpha=True)
+    version_paths = bump_to_alpha(config, next_version)
     changelog = config["changelog_path"]
     if config["changelog_format"] == "rst":
         format_file_with_docstrfmt(changelog)
-    git("commit", "-m", title, "--", changelog, config["version_path"])
+    git("commit", "-m", title, "--", changelog, *version_paths)
 
     try:
         pushed_directly = _push_alpha_to_base(base)

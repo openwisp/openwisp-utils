@@ -1,3 +1,4 @@
+import json
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -502,20 +503,31 @@ def test_start_next_alpha(
     git("config", "commit.gpgsign", "false")
     git("remote", "add", "origin", str(origin))
     version_file = project_dir / version_path
+    paths = [changelog, version_path]
+    lock = None
     if version_path.endswith(".py"):
         version_file.parent.mkdir()
         (project_dir / "setup.py").write_text(
             'from setuptools import setup\nsetup(name="example")\n'
         )
+        paths.append("setup.py")
+    else:
+        lock = {
+            "name": "example",
+            "version": "1.3.0",
+            "lockfileVersion": 3,
+            "packages": {
+                "": {"name": "example", "version": "1.3.0"},
+                "node_modules/dependency": {"version": "1.3.0"},
+            },
+        }
+        (project_dir / "package-lock.json").write_text(
+            json.dumps(lock, indent=2) + "\n"
+        )
+        paths.append("package-lock.json")
     version_file.write_text(final)
     (project_dir / changelog).write_text(previous)
-    git(
-        "add",
-        "--",
-        changelog,
-        version_path,
-        *(["setup.py"] if version_path.endswith(".py") else []),
-    )
+    git("add", "--", *paths)
     git("commit", "-m", "[release] Version 1.3.0")
     git("tag", "--no-sign", "1.3.0")
     git("push", "origin", base, "1.3.0")
@@ -550,10 +562,19 @@ def test_start_next_alpha(
         assert remote_base == git("rev-parse", "HEAD")
         gh.create_pr.assert_not_called()
     assert git("rev-parse", f"{source}^") == git("rev-parse", "1.3.0")
-    assert set(git("diff", "--name-only", "1.3.0", source).splitlines()) == {
-        changelog,
-        version_path,
-    }
+    expected_paths = {changelog, version_path}
+    if lock:
+        expected_paths.add("package-lock.json")
+        lock["version"] = lock["packages"][""]["version"] = "1.4.0-alpha"
+        assert (
+            json.loads(
+                git("--git-dir", str(origin), "show", f"{source}:package-lock.json")
+            )
+            == lock
+        )
+    assert (
+        set(git("diff", "--name-only", "1.3.0", source).splitlines()) == expected_paths
+    )
     assert alpha in git("--git-dir", str(origin), "show", f"{source}:{version_path}")
     new_changelog = git("--git-dir", str(origin), "show", f"{source}:{changelog}")
     assert unreleased in new_changelog

@@ -200,3 +200,36 @@ def determine_new_version(current_version_str, current_type, is_bugfix):
 
 def supports_alpha(config):
     return config.get("package_type") in {"python", "npm"}
+
+
+def bump_to_alpha(config, new_version):
+    """Write the alpha version and return the tracked version files to commit."""
+    if not bump_version(config, new_version, alpha=True):
+        raise RuntimeError("Could not locate the version file for the alpha bump.")
+    paths = [config["version_path"]]
+    if config["package_type"] == "npm":
+        tracked = subprocess.run(
+            ["git", "ls-files", "--", "package-lock.json", "npm-shrinkwrap.json"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.splitlines()
+        for path in tracked:
+            _update_npm_lock_version(path, f"{new_version}-alpha")
+        paths.extend(tracked)
+    return paths
+
+
+def _update_npm_lock_version(path, version):
+    """Update root metadata without running npm lifecycle scripts or resolving dependencies."""
+    with open(path, encoding="utf-8") as lockfile:
+        try:
+            lock = json.load(lockfile)
+        except json.JSONDecodeError as e:
+            raise RuntimeError(f"Malformed JSON in {path}: {e}") from e
+    lock["version"] = version
+    # Lockfile versions 2 and 3 also record the root package under the empty path.
+    if "" in lock.get("packages", {}):
+        lock["packages"][""]["version"] = version
+    with open(path, "w", encoding="utf-8") as lockfile:
+        lockfile.write(json.dumps(lock, indent=2, ensure_ascii=False) + "\n")
