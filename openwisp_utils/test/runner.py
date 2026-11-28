@@ -3,10 +3,10 @@
 import re
 import sys
 from importlib import import_module
-from inspect import getattr_static
+from inspect import getattr_static, isabstract
 from pathlib import Path
 from types import FunctionType, ModuleType
-from unittest import TestCase
+from unittest import TestCase, defaultTestLoader
 
 
 class InvalidTestArgument(ValueError):
@@ -76,7 +76,7 @@ def parse_test_arguments(
 
 
 def validate_test_labels(labels):
-    """Require test modules and reject classes that are not unittest TestCases.
+    """Require test modules and non-empty unittest TestCase classes.
 
     Call this after the caller has initialized any framework needed to
     import its test modules. Labels and test code remain untrusted.
@@ -111,13 +111,25 @@ def validate_test_labels(labels):
         if not class_name:
             continue
         candidate = getattr(module, class_name, None)
-        if not isinstance(candidate, type) or not issubclass(candidate, TestCase):
+        if (
+            not isinstance(candidate, type)
+            or not issubclass(candidate, TestCase)
+            or isabstract(candidate)
+        ):
             raise InvalidTestArgument("Unsupported test argument")
         prefix = f"{module_name}.{class_name}."
         if match.group(0).startswith(prefix):
             method_name = match.group(0).removeprefix(prefix)
             method = getattr_static(candidate, method_name, None)
             if not isinstance(method, FunctionType):
+                raise InvalidTestArgument("Unsupported test argument")
+        else:
+            run_test = getattr_static(candidate, "runTest", None)
+            if isinstance(run_test, (classmethod, staticmethod)):
+                run_test = run_test.__func__
+            if not defaultTestLoader.getTestCaseNames(candidate) and not callable(
+                run_test
+            ):
                 raise InvalidTestArgument("Unsupported test argument")
 
 
