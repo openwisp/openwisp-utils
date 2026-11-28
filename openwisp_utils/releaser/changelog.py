@@ -1,6 +1,7 @@
 import importlib.resources as pkg_resources
 import os
 import re
+import string
 import subprocess
 import sys
 import tempfile
@@ -366,12 +367,22 @@ def update_changelog_file(
     # Markdown may escape the brackets to prevent a reference link.
     markdown_marker = r"\\?\[Unreleased\\?\]"
     version_heading = r"(?:Version[ \t]+)?\d+\.\d+\.\d+[^\n]*"
-    # RST releases can omit the date. The underline distinguishes a heading from prose.
-    rst_release_heading = rf"{version_heading}\n[-=]+[ \t]*$"
+
+    # Match repeated punctuation so undated RST headings still have a clear boundary.
+    def adornment(name):
+        return rf"(?P<{name}>[{re.escape(string.punctuation)}])(?P={name})+[ \t]*"
+
+    release_underline = adornment("release_underline")
+    release_overline = adornment("release_overline")
+    rst_release_heading = (
+        rf"(?:{release_overline}\n)?{version_heading}\n{release_underline}$"
+    )
+    unreleased_underline = adornment("unreleased_underline")
     unreleased_block_regex_str = (
         rf"^(##[ \t]+(?:(?:Version[ \t]+)?\S+[ \t]+)?{markdown_marker}(?:.|\n)*?)(?=\n##\s+|\Z)"
         if is_md
-        else rf"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n{rst_release_heading}|\Z)"
+        else rf"^(?:Version[ \t]+)?\S+[ \t]+\[Unreleased\]\n{unreleased_underline}$"
+        rf"(?:.|\n)*?(?=\n{rst_release_heading}|\Z)"
     )
     unreleased_block_regex = re.compile(
         unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE

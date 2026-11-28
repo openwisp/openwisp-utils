@@ -806,8 +806,20 @@ def test_start_unreleased_section_preserves_existing_notes(
             "Version 1.3.0\n-------------",
             "Version 1.4.0 [2026-02-01]\n--------------------------",
         ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "Version 1.3.0 [2026-01-01]\n~~~~~~~~~~~~~~~~~~~~~~~~~~",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~\nVersion 1.3.0 [2026-01-01]\n~~~~~~~~~~~~~~~~~~~~~~~~~~",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
     ],
-    ids=["markdown", "rst-dated", "rst-undated"],
+    ids=["markdown", "rst-dated", "rst-undated", "rst-tilde-underline", "rst-overline"],
 )
 def test_alpha_cycle_preserves_intro_and_release_history(
     project_dir, ext, title, released, next_release
