@@ -29,8 +29,8 @@ from openwisp_utils.releaser.utils import (
     rst_to_markdown,
 )
 from openwisp_utils.releaser.version import (
-    bump_to_alpha,
     bump_version,
+    bump_version_files,
     determine_new_version,
     get_current_version,
     supports_alpha,
@@ -495,7 +495,9 @@ def start_next_alpha(gh, base, released_version, next_version):
     # Keep the topic branch checked out if preparing the commit fails, so the
     # user can fix the files and recover without edits leaking to the base.
     start_unreleased_section(config, next_version)
-    version_paths = bump_to_alpha(config, next_version)
+    version_paths = bump_version_files(config, next_version, alpha=True)
+    if not version_paths:
+        raise RuntimeError("Could not locate the version file for the alpha bump.")
     changelog = config["changelog_path"]
     if config["changelog_format"] == "rst":
         format_file_with_docstrfmt(changelog)

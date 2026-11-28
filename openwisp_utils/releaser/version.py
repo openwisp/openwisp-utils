@@ -128,13 +128,18 @@ VERSION_BUMP_HANDLERS = {
 }
 
 
-def bump_version(config, new_version, *, alpha=False):
-    """Write the detected version file, returning False if no path is configured."""
+def bump_version(config, new_version):
+    """Return whether the version was updated automatically."""
+    return bool(bump_version_files(config, new_version))
+
+
+def bump_version_files(config, new_version, *, alpha=False):
+    """Update the version and return its files for callers that commit selected paths."""
     version_path = config.get("version_path")
     package_type = config.get("package_type")
     if not version_path:
         # version bumping was not performed
-        return False
+        return []
     try:
         new_version_parts = new_version.split(".")
         if len(new_version_parts) != 3:
@@ -160,7 +165,10 @@ def bump_version(config, new_version, *, alpha=False):
     if new_content is not None:
         with open(version_path, "w") as f:
             f.write(new_content)
-    return True
+    paths = [version_path]
+    if package_type == "npm":
+        paths.extend(_update_npm_lockfiles(json.loads(new_content)["version"]))
+    return paths
 
 
 def _increment(component):
@@ -202,22 +210,16 @@ def supports_alpha(config):
     return config.get("package_type") in {"python", "npm"}
 
 
-def bump_to_alpha(config, new_version):
-    """Write the alpha version and return the tracked version files to commit."""
-    if not bump_version(config, new_version, alpha=True):
-        raise RuntimeError("Could not locate the version file for the alpha bump.")
-    paths = [config["version_path"]]
-    if config["package_type"] == "npm":
-        tracked = subprocess.run(
-            ["git", "ls-files", "--", "package-lock.json", "npm-shrinkwrap.json"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.splitlines()
-        for path in tracked:
-            _update_npm_lock_version(path, f"{new_version}-alpha")
-        paths.extend(tracked)
-    return paths
+def _update_npm_lockfiles(version):
+    tracked = subprocess.run(
+        ["git", "ls-files", "--", "package-lock.json", "npm-shrinkwrap.json"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    for path in tracked:
+        _update_npm_lock_version(path, version)
+    return tracked
 
 
 def _update_npm_lock_version(path, version):

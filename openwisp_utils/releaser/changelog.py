@@ -366,7 +366,7 @@ def update_changelog_file(
     # Markdown may escape the brackets to prevent a reference link.
     markdown_marker = r"\\?\[Unreleased\\?\]"
     unreleased_block_regex_str = (
-        rf"^(##\s+(?:Version\s+)?\S+\s+{markdown_marker}(?:.|\n)*?)(?=\n##\s+(?:Version\s+)?|\Z)"
+        rf"^(##[ \t]+(?:(?:Version[ \t]+)?\S+[ \t]+)?{markdown_marker}(?:.|\n)*?)(?=\n##\s+|\Z)"
         if is_md
         else r"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n(?:Version\s+)?\d+\.\d+\.\d+\s+\[|\Z)"
     )

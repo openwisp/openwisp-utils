@@ -128,8 +128,8 @@ After publishing version ``1.3.0``, for example, the releaser suggests
 ``1.4.0`` for the next cycle. If you accept, it updates the Python version
 tuple to ``(1, 4, 0, "alpha")`` or the npm version to ``1.4.0-alpha`` and
 adds a ``1.4.0 [unreleased]`` section above the released changelog
-entries. For npm, it also updates the version in tracked npm lockfiles
-without changing dependency versions.
+entries. Both alpha bumps and final npm releases update the version in
+tracked npm lockfiles without changing dependency versions.
 
 The releaser first tries to push the alpha commit directly to the release
 branch. If the server rejects that update, for example because the branch
