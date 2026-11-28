@@ -833,6 +833,11 @@ def test_alpha_cycle_preserves_intro_and_release_history(
     start_unreleased_section(config, "1.4.0")
     update_changelog_file(path.name, f"{next_release}\n\n- New entry.")
 
+    if ext == "rst" and "~" in released:
+        release_title = next_release.splitlines()[0]
+        next_release = f"{release_title}\n{'~' * len(release_title)}"
+        if released.startswith("~"):
+            next_release = f"{'~' * len(release_title)}\n{next_release}"
     assert (
         path.read_text()
         == f"{introduction}\n\n{next_release}\n\n- New entry.\n\n{history}"
@@ -881,9 +886,10 @@ def test_release_replaces_overlined_rst_unreleased(project_dir):
     )
     new = "Version 1.4.0 [2026-02-01]"
     update_changelog_file(path.name, f"{new}\n{'-' * len(new)}\n\n- New entry.")
+    new_line = "=" * len(new)
     assert (
         path.read_text()
-        == f"Changelog\n=========\n\n{new}\n{'-' * len(new)}\n\n- New entry.\n\n{history}"
+        == f"Changelog\n=========\n\n{new_line}\n{new}\n{new_line}\n\n- New entry.\n\n{history}"
     )
 
 
@@ -926,3 +932,14 @@ def test_port_preserves_overlined_rst_release(project_dir):
         is_port=True,
     )
     assert history in path.read_text()
+
+
+def test_release_preserves_unreleased_rst_underline(project_dir):
+    path = project_dir / "CHANGES.rst"
+    path.write_text(
+        "Changelog\n=========\n\nVersion 1.4.0 [unreleased]\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"
+        "Work in progress.\n\nVersion 1.3.0\n~~~~~~~~~~~~~\n\n- Old entry.\n"
+    )
+    title = "Version 1.4.0 [2026-02-01]"
+    update_changelog_file(path.name, f"{title}\n{'-' * len(title)}\n\n- New entry.")
+    assert f"{title}\n{'~' * len(title)}\n" in path.read_text()

@@ -402,6 +402,15 @@ def update_changelog_file(
             f"{changelog_path} already has an unreleased section. Review it before bumping to alpha."
         )
 
+    def style_rst_block(block, character, has_overline):
+        title, _, body = block.partition("\n\n")
+        title = title.splitlines()[0]
+        line = character * len(title)
+        heading = f"{title}\n{line}"
+        if has_overline:
+            heading = f"{line}\n{heading}"
+        return f"{heading}\n\n{body}"
+
     if start_unreleased:
         release_heading = (
             rf"##[ \t]+{version_heading}" if is_md else rst_release_heading
@@ -412,13 +421,11 @@ def update_changelog_file(
         if not first_release:
             raise RuntimeError(f"Could not find a release heading in {changelog_path}.")
         if not is_md:
-            title, _, body = new_block.partition("\n\n")
-            title = title.splitlines()[0]
-            line = first_release.group("release_underline") * len(title)
-            heading = f"{title}\n{line}"
-            if first_release.group("release_overline"):
-                heading = f"{line}\n{heading}"
-            new_block = f"{heading}\n\n{body}"
+            new_block = style_rst_block(
+                new_block,
+                first_release.group("release_underline"),
+                first_release.group("release_overline"),
+            )
         # Keep the preamble outside the block that the next release will replace.
         insertion_point = first_release.start()
         new_content = (
@@ -471,13 +478,11 @@ def update_changelog_file(
             overline = re.search(rf"(?m)^{release_overline}$\n\Z", preceding)
             if overline:
                 insertion_point = overline.start()
-            title, _, body = new_block.partition("\n\n")
-            title = title.splitlines()[0]
-            line = unreleased_match.group("unreleased_underline") * len(title)
-            heading = f"{title}\n{line}"
-            if unreleased_match.group("unreleased_overline"):
-                heading = f"{line}\n{heading}"
-            new_block = f"{heading}\n\n{body}"
+            new_block = style_rst_block(
+                new_block,
+                unreleased_match.group("unreleased_underline"),
+                unreleased_match.group("unreleased_overline"),
+            )
         new_content = (
             content[:insertion_point].rstrip()
             + "\n\n"
@@ -489,6 +494,12 @@ def update_changelog_file(
         # For a feature release, REPLACE the entire [Unreleased] block.
         # We add a newline to the replacement to ensure there's a blank line
         # between the new block and the next version.
+        if not is_md:
+            new_block = style_rst_block(
+                new_block,
+                unreleased_match.group("unreleased_underline"),
+                unreleased_match.group("unreleased_overline"),
+            )
         replacement = new_block.strip() + "\n"
         new_content = unreleased_block_regex.sub(replacement, content, count=1)
 

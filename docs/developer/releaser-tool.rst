@@ -137,6 +137,14 @@ For a release, save and temporarily remove each entire fenced block before
 restarting, then restore the blocks during the file review. For an alpha
 bump, update the version and changelog manually.
 
+After restoring blocks during a release, check the published GitHub
+release notes against the changelog and correct them on GitHub if needed.
+Headings inside a restored block may truncate the generated notes.
+
+For a bugfix release, the changelog port runs after publication. If the
+main-branch Markdown changelog contains fenced code, add the release
+section to it manually. Restarting the release does not complete the port.
+
 The releaser first tries to push the alpha commit directly to the release
 branch. If the server rejects that update, for example because the branch
 is protected, the releaser pushes ``chore/bump-version-1.4.0`` to
