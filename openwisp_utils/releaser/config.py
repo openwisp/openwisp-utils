@@ -43,11 +43,10 @@ def detect_changelog_style(changelog_path):
         return True
     with open(changelog_path, "r", encoding="utf-8") as f:
         content = f.read()
-    # Look for a line that starts with 'Version X.Y.Z'
-    if re.search(r"^Version\s+\d+\.\d+\.\d+", content, re.MULTILINE):
+    # Markdown release headings start with '## ', unlike RST headings.
+    if re.search(r"^(?:##[ \t]+)?Version\s+\d+\.\d+\.\d+", content, re.MULTILINE):
         return True
-    # Look for a line that starts with just 'X.Y.Z'
-    if re.search(r"^\d+\.\d+\.\d+", content, re.MULTILINE):
+    if re.search(r"^(?:##[ \t]+)?\d+\.\d+\.\d+", content, re.MULTILINE):
         return False
     # Default to True if no version entries are found yet
     return True

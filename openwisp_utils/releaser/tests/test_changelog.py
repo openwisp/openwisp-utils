@@ -12,6 +12,7 @@ from openwisp_utils.releaser.changelog import (
     get_release_block_from_file,
     process_changelog,
     run_git_cliff,
+    start_unreleased_section,
 )
 from openwisp_utils.releaser.release import main as run_release
 from openwisp_utils.releaser.release import update_changelog_file
@@ -766,3 +767,15 @@ def test_update_changelog_file_not_found():
     assert "Changelog\n=========\n\n" in content
     assert new_block in content
     shutil.rmtree(temp_dir)
+
+
+def test_start_unreleased_section_preserves_existing_notes(project_dir):
+    changelog = project_dir / "CHANGES.md"
+    existing = "# Changelog\n\n## Version 1.4.0 [unreleased]\n\n- An unreleased fix.\n"
+    changelog.write_text(existing)
+    config = {"changelog_path": changelog.name, "changelog_format": "md"}
+
+    with pytest.raises(RuntimeError, match="already has an unreleased section"):
+        start_unreleased_section(config, "1.5.0")
+
+    assert changelog.read_text() == existing

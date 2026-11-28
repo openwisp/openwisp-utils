@@ -349,7 +349,9 @@ def get_release_block_from_file(config, version):
     return "".join(release_lines).strip() if release_lines else None
 
 
-def update_changelog_file(changelog_path, new_block, is_port=False):
+def update_changelog_file(
+    changelog_path, new_block, is_port=False, *, start_unreleased=False
+):
     # Updates the changelog file for all release types.
     # - For a feature release, it replaces the entire [Unreleased] section with the new content.
     # - For a ported bugfix, it inserts the new block in descending version order.
@@ -371,6 +373,11 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
         unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE
     )
     unreleased_match = unreleased_block_regex.search(content)
+
+    if unreleased_match and start_unreleased:
+        raise RuntimeError(
+            f"{changelog_path} already has an unreleased section. Review it before bumping to alpha."
+        )
 
     if not unreleased_match:
         # Fallback if no [Unreleased] section is found: insert after the main title.
@@ -429,3 +436,17 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
 
     with open(changelog_path, "w", encoding="utf-8") as f:
         f.write(final_content)
+
+
+def start_unreleased_section(config, version):
+    prefix = "Version " if config.get("changelog_uses_version_prefix", True) else ""
+    heading = f"{prefix}{version} [unreleased]"
+    if config["changelog_format"] == "md":
+        heading = f"## {heading}"
+    else:
+        heading = f"{heading}\n{'-' * len(heading)}"
+    update_changelog_file(
+        config["changelog_path"],
+        f"{heading}\n\nWork in progress.",
+        start_unreleased=True,
+    )
