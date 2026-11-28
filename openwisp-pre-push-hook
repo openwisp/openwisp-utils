@@ -43,6 +43,19 @@ def run_checks():
             sys.exit(1)
     except FileNotFoundError:
         print("Could not access 'run-qa-checks'")
+    runtests = f'{REPO_ROOT_DIR}/runtests'
+    if not os.path.isfile(runtests):
+        print("'runtests' not found, skipping tests", file=sys.stderr)
+        return
+    task = subprocess.Popen([runtests])
+    task.communicate()
+    if task.returncode:
+        print("---------------------------")
+        print(
+            "Some tests failed. Please make sure they pass, "
+            "or use '--no-verify' to skip them"
+        )
+        sys.exit(1)
 
 
 def install_hook():
