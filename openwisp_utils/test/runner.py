@@ -1,5 +1,6 @@
 """Validate focused test labels without choosing a test runner."""
 
+import os
 import re
 import sys
 from importlib import import_module
@@ -185,3 +186,32 @@ def parse_test_files(
         if require_exists and not path.is_file():
             raise InvalidTestArgument("Unsupported test argument")
     return matches, flags
+
+
+def prepare_focused_django_tests(
+    arguments, label_pattern, sample_modules=(), allowed_flags=()
+):
+    """Prepare validated focused arguments before Django loads its settings.
+
+    Sample and regular tests need different model configurations, so they
+    cannot be mixed. The caller must still initialize Django and validate
+    the returned labels before executing the tests.
+    """
+    if isinstance(sample_modules, str):
+        sample_modules = (sample_modules,)
+    labels, flags = parse_test_arguments(
+        arguments, label_pattern, allowed_flags, require_label=True
+    )
+    sample_labels = [
+        label for label in labels if label.group("module") in sample_modules
+    ]
+    if sample_labels and len(sample_labels) != len(labels):
+        raise InvalidTestArgument(
+            "Unsupported test argument: run sample app tests separately"
+        )
+    if sample_labels:
+        os.environ["SAMPLE_APP"] = "1"
+    else:
+        os.environ.pop("SAMPLE_APP", None)
+    sys.argv[1:] = ["test", *(label.group(0) for label in labels), *flags]
+    return labels
