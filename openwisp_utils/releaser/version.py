@@ -41,10 +41,10 @@ def _bump_with_regex(content, pattern, replacement, version_path, error_msg):
     return new_content
 
 
-def _bump_python_version(content, new_version, version_path):
+def _bump_python_version(content, new_version, version_path, version_type="final"):
     """Handles version bumping for Python packages."""
     major, minor, patch = new_version.split(".")
-    new_tuple_string = f'({major}, {minor}, {patch}, "final")'
+    new_tuple_string = f'({major}, {minor}, {patch}, "{version_type}")'
     return _bump_with_regex(
         content,
         r"^VERSION\s*=\s*\(.*\)",
@@ -54,13 +54,15 @@ def _bump_python_version(content, new_version, version_path):
     )
 
 
-def _bump_npm_version(content, new_version, version_path):
+def _bump_npm_version(content, new_version, version_path, version_type="final"):
     """Handles version bumping for NPM packages."""
     try:
         data = json.loads(content)
     except json.JSONDecodeError as e:
         raise ValueError(f"Malformed JSON in {version_path}: {e}") from e
-    data["version"] = new_version
+    data["version"] = (
+        new_version if version_type == "final" else f"{new_version}-{version_type}"
+    )
     return json.dumps(data, indent=2) + "\n"
 
 
@@ -127,12 +129,17 @@ VERSION_BUMP_HANDLERS = {
 
 
 def bump_version(config, new_version):
-    """Updates the VERSION tuple. Returns True on success, False if version_path is not configured."""
+    """Return whether the version was updated automatically."""
+    return bool(bump_version_files(config, new_version))
+
+
+def bump_version_files(config, new_version, *, alpha=False):
+    """Update the version and return its files for callers that commit selected paths."""
     version_path = config.get("version_path")
     package_type = config.get("package_type")
     if not version_path:
         # version bumping was not performed
-        return False
+        return []
     try:
         new_version_parts = new_version.split(".")
         if len(new_version_parts) != 3:
@@ -145,13 +152,23 @@ def bump_version(config, new_version):
     handler = VERSION_BUMP_HANDLERS.get(package_type)
     if not handler:
         raise RuntimeError(f"Unknown package type: {package_type}")
-    new_content = handler(content, new_version, version_path)
+    if alpha:
+        if not supports_alpha(config):
+            raise ValueError(
+                f"The {package_type} version file cannot store an alpha version."
+            )
+        new_content = handler(content, new_version, version_path, version_type="alpha")
+    else:
+        new_content = handler(content, new_version, version_path)
     # A handler may return None to signal it already wrote the file itself
     # (e.g. docker-openwisp delegates the write to ``make bump``).
     if new_content is not None:
         with open(version_path, "w") as f:
             f.write(new_content)
-    return True
+    paths = [version_path]
+    if package_type == "npm":
+        paths.extend(_update_npm_lockfiles(json.loads(new_content)["version"]))
+    return paths
 
 
 def _increment(component):
@@ -187,3 +204,34 @@ def determine_new_version(current_version_str, current_type, is_bugfix):
         return suggested_version
     else:
         return questionary.text("Please enter the desired version:").ask()
+
+
+def supports_alpha(config):
+    return config.get("package_type") in {"python", "npm"}
+
+
+def _update_npm_lockfiles(version):
+    tracked = subprocess.run(
+        ["git", "ls-files", "--", "package-lock.json", "npm-shrinkwrap.json"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    for path in tracked:
+        _update_npm_lock_version(path, version)
+    return tracked
+
+
+def _update_npm_lock_version(path, version):
+    """Update root metadata without running npm lifecycle scripts or resolving dependencies."""
+    with open(path, encoding="utf-8") as lockfile:
+        try:
+            lock = json.load(lockfile)
+        except json.JSONDecodeError as e:
+            raise RuntimeError(f"Malformed JSON in {path}: {e}") from e
+    lock["version"] = version
+    # Lockfile versions 2 and 3 also record the root package under the empty path.
+    if "" in lock.get("packages", {}):
+        lock["packages"][""]["version"] = version
+    with open(path, "w", encoding="utf-8") as lockfile:
+        lockfile.write(json.dumps(lock, indent=2, ensure_ascii=False) + "\n")

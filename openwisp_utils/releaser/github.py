@@ -44,7 +44,7 @@ class GitHub:
         return response.json().get("merged", False)
 
     def create_release(self, tag_name, title, body):
-        """Creates a draft release on GitHub."""
+        """Publishes a release on GitHub."""
         url = f"{self.base_url}/releases"
         payload = {
             "tag_name": tag_name,

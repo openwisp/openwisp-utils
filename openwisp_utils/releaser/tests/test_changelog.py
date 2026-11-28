@@ -12,6 +12,7 @@ from openwisp_utils.releaser.changelog import (
     get_release_block_from_file,
     process_changelog,
     run_git_cliff,
+    start_unreleased_section,
 )
 from openwisp_utils.releaser.release import main as run_release
 from openwisp_utils.releaser.release import update_changelog_file
@@ -766,3 +767,179 @@ def test_update_changelog_file_not_found():
     assert "Changelog\n=========\n\n" in content
     assert new_block in content
     shutil.rmtree(temp_dir)
+
+
+@pytest.mark.parametrize("heading", ["Version 1.4.0 ", ""])
+@pytest.mark.parametrize("marker", ["[unreleased]", r"\[unreleased\]"])
+def test_start_unreleased_section_preserves_existing_notes(
+    project_dir, heading, marker
+):
+    changelog = project_dir / "CHANGES.md"
+    existing = f"# Changelog\n\n## {heading}{marker}\n\n- An unreleased fix.\n"
+    changelog.write_text(existing)
+    config = {"changelog_path": changelog.name, "changelog_format": "md"}
+
+    with pytest.raises(RuntimeError, match="already has an unreleased section"):
+        start_unreleased_section(config, "1.5.0")
+
+    assert changelog.read_text() == existing
+
+
+@pytest.mark.parametrize(
+    ("ext", "title", "released", "next_release"),
+    [
+        (
+            "md",
+            "# Changelog",
+            "## Version 1.3.0 [2026-01-01]",
+            "## Version 1.4.0 [2026-02-01]",
+        ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "Version 1.3.0 [2026-01-01]\n--------------------------",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "Version 1.3.0\n-------------",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "Version 1.3.0 [2026-01-01]\n~~~~~~~~~~~~~~~~~~~~~~~~~~",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~\nVersion 1.3.0 [2026-01-01]\n~~~~~~~~~~~~~~~~~~~~~~~~~~",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
+    ],
+    ids=["markdown", "rst-dated", "rst-undated", "rst-tilde-underline", "rst-overline"],
+)
+def test_alpha_cycle_preserves_intro_and_release_history(
+    project_dir, ext, title, released, next_release
+):
+    path = project_dir / f"CHANGES.{ext}"
+    introduction = f"{title}\n\nSee the release policy."
+    history = f"{released}\n\n- Historic entry.\n"
+    path.write_text(f"{introduction}\n\n{history}")
+    config = {"changelog_path": path.name, "changelog_format": ext}
+
+    start_unreleased_section(config, "1.4.0")
+    update_changelog_file(path.name, f"{next_release}\n\n- New entry.")
+
+    if ext == "rst" and "~" in released:
+        release_title = next_release.splitlines()[0]
+        next_release = f"{release_title}\n{'~' * len(release_title)}"
+        if released.startswith("~"):
+            next_release = f"{'~' * len(release_title)}\n{next_release}"
+    assert (
+        path.read_text()
+        == f"{introduction}\n\n{next_release}\n\n- New entry.\n\n{history}"
+    )
+
+
+def test_alpha_cycle_rejects_fenced_markdown_before_release(project_dir):
+    path = project_dir / "CHANGES.md"
+    original = "# Changelog\n\n```markdown\n## Version 1.0.0\n```\n\n## Version 1.3.0\n\n- Old entry.\n"
+    path.write_text(original)
+    config = {"changelog_path": path.name, "changelog_format": "md"}
+    with pytest.raises(RuntimeError, match="fenced code"):
+        start_unreleased_section(config, "1.4.0")
+    assert path.read_text() == original
+
+
+def test_release_rejects_fenced_unreleased_example(project_dir):
+    path = project_dir / "CHANGES.md"
+    original = "# Changelog\n\n```markdown\n## [unreleased]\n\nExample.\n```\n\n## 1.3.0\n\n- Old entry.\n"
+    path.write_text(original)
+    with pytest.raises(RuntimeError, match="fenced code"):
+        update_changelog_file(path.name, "## 1.4.0\n\n- New entry.")
+    assert path.read_text() == original
+
+
+def test_alpha_cycle_rejects_unversioned_rst_unreleased(project_dir):
+    path = project_dir / "CHANGES.rst"
+    original = (
+        "Changelog\n=========\n\n[unreleased]\n------------\n\n- Existing.\n\n"
+        "Version 1.3.0\n-------------\n\n- Old entry.\n"
+    )
+    path.write_text(original)
+    config = {"changelog_path": path.name, "changelog_format": "rst"}
+    with pytest.raises(RuntimeError, match="already has an unreleased section"):
+        start_unreleased_section(config, "1.4.0")
+    assert path.read_text() == original
+
+
+def test_release_replaces_overlined_rst_unreleased(project_dir):
+    path = project_dir / "CHANGES.rst"
+    old = "Version 1.4.0 [unreleased]"
+    adornment = "=" * len(old)
+    history = "Version 1.3.0\n-------------\n\n- Old entry.\n"
+    path.write_text(
+        f"Changelog\n=========\n\n{adornment}\n{old}\n{adornment}\n\nWork in progress.\n\n{history}"
+    )
+    new = "Version 1.4.0 [2026-02-01]"
+    update_changelog_file(path.name, f"{new}\n{'-' * len(new)}\n\n- New entry.")
+    new_line = "=" * len(new)
+    assert (
+        path.read_text()
+        == f"Changelog\n=========\n\n{new_line}\n{new}\n{new_line}\n\n- New entry.\n\n{history}"
+    )
+
+
+@pytest.mark.parametrize("overline", [False, True])
+def test_alpha_section_preserves_rst_release_heading_style(project_dir, overline):
+    path = project_dir / "CHANGES.rst"
+    title = "Version 1.3.0"
+    line = "~" * len(title)
+    old_heading = f"{line}\n{title}\n{line}" if overline else f"{title}\n{line}"
+    path.write_text(f"Changelog\n=========\n\n{old_heading}\n\n- Old entry.\n")
+    start_unreleased_section(
+        {"changelog_path": path.name, "changelog_format": "rst"}, "1.4.0"
+    )
+    new_title = "Version 1.4.0 [unreleased]"
+    new_line = "~" * len(new_title)
+    new_heading = (
+        f"{new_line}\n{new_title}\n{new_line}"
+        if overline
+        else f"{new_title}\n{new_line}"
+    )
+    assert (
+        path.read_text()
+        == f"Changelog\n=========\n\n{new_heading}\n\nWork in progress.\n\n{old_heading}\n\n- Old entry.\n"
+    )
+
+
+def test_port_preserves_overlined_rst_release(project_dir):
+    path = project_dir / "CHANGES.rst"
+    old = "Version 1.4.0 [unreleased]"
+    old_line = "~" * len(old)
+    release = "Version 1.3.0"
+    line = "~" * len(release)
+    history = f"{line}\n{release}\n{line}\n\n- Old entry.\n"
+    path.write_text(
+        f"Changelog\n=========\n\n{old_line}\n{old}\n{old_line}\n\nWork in progress.\n\n{history}"
+    )
+    update_changelog_file(
+        path.name,
+        "Version 1.3.1 [2026-02-01]\n--------------------------\n\n- Bugfix.",
+        is_port=True,
+    )
+    assert history in path.read_text()
+
+
+def test_release_preserves_unreleased_rst_underline(project_dir):
+    path = project_dir / "CHANGES.rst"
+    path.write_text(
+        "Changelog\n=========\n\nVersion 1.4.0 [unreleased]\n~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n"
+        "Work in progress.\n\nVersion 1.3.0\n~~~~~~~~~~~~~\n\n- Old entry.\n"
+    )
+    title = "Version 1.4.0 [2026-02-01]"
+    update_changelog_file(path.name, f"{title}\n{'-' * len(title)}\n\n- New entry.")
+    assert f"{title}\n{'~' * len(title)}\n" in path.read_text()

@@ -1,10 +1,13 @@
+import json
+import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
-from openwisp_utils.releaser.release import check_prerequisites
+from openwisp_utils.releaser.release import _push_alpha_to_base, check_prerequisites
 from openwisp_utils.releaser.release import main as run_release
-from openwisp_utils.releaser.release import port_changelog_to_main
+from openwisp_utils.releaser.release import port_changelog_to_main, start_next_alpha
 from openwisp_utils.releaser.utils import SkipSignal
+from openwisp_utils.tests import capture_stdout
 
 
 def test_feature_release_flow_markdown(mock_all, mocker):
@@ -438,3 +441,176 @@ def test_port_changelog_skip_pr_creation(mock_subprocess, mock_branch_exists, mo
         mock_all["questionary_confirm"].assert_any_call(
             "Press Enter when you have created the PR manually."
         )
+
+
+@pytest.mark.parametrize(
+    (
+        "base",
+        "protected",
+        "changelog",
+        "previous",
+        "unreleased",
+        "version_path",
+        "final",
+        "alpha",
+    ),
+    [
+        (
+            "master",
+            False,
+            "CHANGES.rst",
+            "Changelog\n=========\n\n"
+            "Version 1.3.0 [2025-08-11]\n--------------------------\n\n- A feature.\n",
+            "Version 1.4.0 [unreleased]\n--------------------------\n\nWork in progress.",
+            "example/__init__.py",
+            'VERSION = (1, 3, 0, "final")\n',
+            'VERSION = (1, 4, 0, "alpha")',
+        ),
+        (
+            "main",
+            True,
+            "CHANGES.md",
+            "# Changelog\n\n## 1.3.0 [2025-08-11]\n\n- A feature.\n",
+            "## 1.4.0 [unreleased]\n\nWork in progress.",
+            "package.json",
+            '{"name": "example", "version": "1.3.0"}\n',
+            '"version": "1.4.0-alpha"',
+        ),
+    ],
+    ids=["python-direct-push", "npm-protected-branch"],
+)
+def test_start_next_alpha(
+    project_dir,
+    base,
+    protected,
+    changelog,
+    previous,
+    unreleased,
+    version_path,
+    final,
+    alpha,
+):
+    def git(*args):
+        return subprocess.run(
+            ["git", *args], check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    origin = project_dir / "origin.git"
+    git("init", "--bare", str(origin))
+    git("init", "-b", base)
+    git("config", "user.name", "Releaser Test")
+    git("config", "user.email", "releaser@example.com")
+    git("config", "commit.gpgsign", "false")
+    git("remote", "add", "origin", str(origin))
+    version_file = project_dir / version_path
+    paths = [changelog, version_path]
+    lock = None
+    if version_path.endswith(".py"):
+        version_file.parent.mkdir()
+        (project_dir / "setup.py").write_text(
+            'from setuptools import setup\nsetup(name="example")\n'
+        )
+        paths.append("setup.py")
+    else:
+        lock = {
+            "name": "example",
+            "version": "1.3.0",
+            "lockfileVersion": 3,
+            "packages": {
+                "": {"name": "example", "version": "1.3.0"},
+                "node_modules/dependency": {"version": "1.3.0"},
+            },
+        }
+        (project_dir / "package-lock.json").write_text(
+            json.dumps(lock, indent=2) + "\n"
+        )
+        paths.append("package-lock.json")
+    version_file.write_text(final)
+    (project_dir / changelog).write_text(previous)
+    git("add", "--", *paths)
+    git("commit", "-m", "[release] Version 1.3.0")
+    git("tag", "--no-sign", "1.3.0")
+    git("push", "origin", base, "1.3.0")
+    if protected:
+        # Reject only updates to the protected branch, as a Git server would.
+        hook = origin / "hooks" / "update"
+        hook.write_text(f'#!/bin/sh\ntest "$1" != "refs/heads/{base}"\n')
+        hook.chmod(0o755)
+
+    gh = MagicMock()
+    gh.create_pr.return_value = "https://github.com/example/example/pull/1"
+
+    @capture_stdout()
+    def bump_and_check_output(stdout):
+        start_next_alpha(gh, base, "1.3.0", "1.4.0")
+        if protected:
+            assert gh.create_pr.return_value in stdout.getvalue()
+        else:
+            assert f"Pushed the alpha bump to '{base}'" in stdout.getvalue()
+
+    bump_and_check_output()
+    assert git("branch", "--show-current") == base
+    remote_base = git("--git-dir", str(origin), "rev-parse", base)
+    if protected:
+        source = "chore/bump-version-1.4.0"
+        assert remote_base == git("rev-parse", "1.3.0")
+        gh.create_pr.assert_called_once_with(
+            source, base, "[bump] Bumped version to 1.4.0 alpha"
+        )
+    else:
+        source = base
+        assert remote_base == git("rev-parse", "HEAD")
+        gh.create_pr.assert_not_called()
+    assert git("rev-parse", f"{source}^") == git("rev-parse", "1.3.0")
+    expected_paths = {changelog, version_path}
+    if lock:
+        expected_paths.add("package-lock.json")
+        lock["version"] = lock["packages"][""]["version"] = "1.4.0-alpha"
+        assert (
+            json.loads(
+                git("--git-dir", str(origin), "show", f"{source}:package-lock.json")
+            )
+            == lock
+        )
+    assert (
+        set(git("diff", "--name-only", "1.3.0", source).splitlines()) == expected_paths
+    )
+    assert alpha in git("--git-dir", str(origin), "show", f"{source}:{version_path}")
+    new_changelog = git("--git-dir", str(origin), "show", f"{source}:{changelog}")
+    assert unreleased in new_changelog
+    assert new_changelog.index("[unreleased]") < new_changelog.index(
+        "1.3.0 [2025-08-11]"
+    )
+    assert "- A feature." in new_changelog
+
+
+def test_feature_flow_prompts_for_alpha_after_publishing(mock_all, mocker):
+    config, gh = mock_all["check_prerequisites"].return_value
+    config["package_type"] = "python"
+    gh.create_release.return_value = (
+        "https://github.com/example/example/releases/tag/1.3.0"
+    )
+    start_next_alpha = mocker.patch("openwisp_utils.releaser.release.start_next_alpha")
+    calls = MagicMock()
+    calls.attach_mock(gh.create_release, "create_release")
+    calls.attach_mock(start_next_alpha, "start_next_alpha")
+
+    run_release()
+
+    start_next_alpha.assert_called_once_with(gh, "main", "1.3.0", "1.4.0")
+    assert [entry[0] for entry in calls.mock_calls] == [
+        "create_release",
+        "start_next_alpha",
+    ]
+
+
+def test_alpha_does_not_fall_back_on_a_non_fast_forward_push(mock_all):
+    mock_all["subprocess"].side_effect = None
+    mock_all["subprocess"].return_value = subprocess.CompletedProcess(
+        args=["git", "push"],
+        returncode=1,
+        stdout="!\tHEAD:refs/heads/master\t[rejected] (fetch first)\n",
+        stderr="error: failed to push some refs",
+    )
+    with pytest.raises(subprocess.CalledProcessError):
+        _push_alpha_to_base("master")

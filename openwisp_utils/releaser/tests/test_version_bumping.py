@@ -1,3 +1,4 @@
+import json
 import subprocess
 from unittest.mock import mock_open, patch
 
@@ -225,7 +226,8 @@ def test_get_current_version_npm_with_prerelease():
     assert version_type == "beta"
 
 
-def test_bump_version_npm():
+@patch("openwisp_utils.releaser.version._update_npm_lockfiles", return_value=[])
+def test_bump_version_npm(mock_lockfiles):
     """Tests bumping version for npm packages in package.json."""
     config = {
         "package_type": "npm",
@@ -239,6 +241,7 @@ def test_bump_version_npm():
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert '"version": "1.2.4"' in written_content
+    mock_lockfiles.assert_called_once_with("1.2.4")
 
 
 # Docker (docker-openwisp) Package Version Tests
@@ -393,3 +396,24 @@ def test_bump_version_generic():
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert written_content == "1.2.4\n"
+
+
+def test_bump_npm_version_from_alpha_updates_tracked_lock(project_dir, init_git_repo):
+    init_git_repo(project_dir)
+    config = {"version_path": "package.json", "package_type": "npm"}
+    (project_dir / "package.json").write_text('{"version": "1.4.0-alpha"}\n')
+    lock = project_dir / "package-lock.json"
+    lock.write_text(
+        '{"version": "1.4.0-alpha", "packages": {"": {"version": "1.4.0-alpha"}}}\n'
+    )
+    untracked = project_dir / "npm-shrinkwrap.json"
+    untracked.write_text(lock.read_text())
+    subprocess.run(["git", "add", "package-lock.json"], check=True, capture_output=True)
+
+    assert bump_version(config, "1.4.0") is True
+
+    assert json.loads(lock.read_text()) == {
+        "version": "1.4.0",
+        "packages": {"": {"version": "1.4.0"}},
+    }
+    assert json.loads(untracked.read_text())["version"] == "1.4.0-alpha"

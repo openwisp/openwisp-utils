@@ -1,6 +1,7 @@
 import importlib.resources as pkg_resources
 import os
 import re
+import string
 import subprocess
 import sys
 import tempfile
@@ -349,7 +350,9 @@ def get_release_block_from_file(config, version):
     return "".join(release_lines).strip() if release_lines else None
 
 
-def update_changelog_file(changelog_path, new_block, is_port=False):
+def update_changelog_file(
+    changelog_path, new_block, is_port=False, *, start_unreleased=False
+):
     # Updates the changelog file for all release types.
     # - For a feature release, it replaces the entire [Unreleased] section with the new content.
     # - For a ported bugfix, it inserts the new block in descending version order.
@@ -361,18 +364,78 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
     except FileNotFoundError:
         content = "# Change log\n\n" if is_md else "Changelog\n=========\n\n"
 
-    # Regex to find the entire [Unreleased] block, with optional "Version" prefix
+    # Fenced examples can look like release headings and be overwritten.
+    if is_md and re.search(r"(?m)^ {0,3}(?:`{3,}|~{3,})", content):
+        raise RuntimeError(
+            f"{changelog_path} contains fenced code. Update the changelog manually."
+        )
+
+    # Markdown may escape the brackets to prevent a reference link.
+    markdown_marker = r"\\?\[Unreleased\\?\]"
+    version_heading = r"(?:Version[ \t]+)?\d+\.\d+\.\d+[^\n]*"
+
+    # Match repeated punctuation so undated RST headings still have a clear boundary.
+    def adornment(name):
+        return rf"(?P<{name}>[{re.escape(string.punctuation)}])(?P={name})+[ \t]*"
+
+    release_underline = adornment("release_underline")
+    release_overline = adornment("release_overline")
+    rst_release_heading = (
+        rf"(?:{release_overline}\n)?{version_heading}\n{release_underline}$"
+    )
+    unreleased_overline = adornment("unreleased_overline")
+    unreleased_underline = adornment("unreleased_underline")
     unreleased_block_regex_str = (
-        r"^(##\s+(?:Version\s+)?\S+\s+\[Unreleased\](?:.|\n)*?)(?=\n##\s+(?:Version\s+)?|\Z)"
+        rf"^(##[ \t]+(?:(?:Version[ \t]+)?\S+[ \t]+)?{markdown_marker}(?:.|\n)*?)(?=\n##\s+|\Z)"
         if is_md
-        else r"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n(?:Version\s+)?\d+\.\d+\.\d+\s+\[|\Z)"
+        else rf"^(?:{unreleased_overline}\n)?(?:(?:Version[ \t]+)?\S+[ \t]+)?"
+        rf"\[Unreleased\]\n{unreleased_underline}$"
+        rf"(?:.|\n)*?(?=\n{rst_release_heading}|\Z)"
     )
     unreleased_block_regex = re.compile(
         unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE
     )
     unreleased_match = unreleased_block_regex.search(content)
 
-    if not unreleased_match:
+    if unreleased_match and start_unreleased:
+        raise RuntimeError(
+            f"{changelog_path} already has an unreleased section. Review it before bumping to alpha."
+        )
+
+    def style_rst_block(block, character, has_overline):
+        title, _, body = block.partition("\n\n")
+        title = title.splitlines()[0]
+        line = character * len(title)
+        heading = f"{title}\n{line}"
+        if has_overline:
+            heading = f"{line}\n{heading}"
+        return f"{heading}\n\n{body}"
+
+    if start_unreleased:
+        release_heading = (
+            rf"##[ \t]+{version_heading}" if is_md else rst_release_heading
+        )
+        first_release = re.search(
+            rf"^{release_heading}", content, re.MULTILINE | re.IGNORECASE
+        )
+        if not first_release:
+            raise RuntimeError(f"Could not find a release heading in {changelog_path}.")
+        if not is_md:
+            new_block = style_rst_block(
+                new_block,
+                first_release.group("release_underline"),
+                first_release.group("release_overline"),
+            )
+        # Keep the preamble outside the block that the next release will replace.
+        insertion_point = first_release.start()
+        new_content = (
+            content[:insertion_point].rstrip()
+            + "\n\n"
+            + new_block.strip()
+            + "\n\n"
+            + content[insertion_point:]
+        )
+    elif not unreleased_match:
         # Fallback if no [Unreleased] section is found: insert after the main title.
         lines = content.splitlines(keepends=True)
         header_end_index = 1
@@ -398,7 +461,7 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
             release_matches = [
                 match
                 for match in version_header_regex.finditer(content)
-                if "[unreleased]" not in match.group().lower()
+                if not re.search(markdown_marker, match.group(), re.IGNORECASE)
             ]
             insertion_point = next(
                 (
@@ -410,6 +473,16 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
             )
         else:
             insertion_point = unreleased_match.end()
+        if not is_md:
+            preceding = content[:insertion_point]
+            overline = re.search(rf"(?m)^{release_overline}$\n\Z", preceding)
+            if overline:
+                insertion_point = overline.start()
+            new_block = style_rst_block(
+                new_block,
+                unreleased_match.group("unreleased_underline"),
+                unreleased_match.group("unreleased_overline"),
+            )
         new_content = (
             content[:insertion_point].rstrip()
             + "\n\n"
@@ -421,6 +494,12 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
         # For a feature release, REPLACE the entire [Unreleased] block.
         # We add a newline to the replacement to ensure there's a blank line
         # between the new block and the next version.
+        if not is_md:
+            new_block = style_rst_block(
+                new_block,
+                unreleased_match.group("unreleased_underline"),
+                unreleased_match.group("unreleased_overline"),
+            )
         replacement = new_block.strip() + "\n"
         new_content = unreleased_block_regex.sub(replacement, content, count=1)
 
@@ -429,3 +508,17 @@ def update_changelog_file(changelog_path, new_block, is_port=False):
 
     with open(changelog_path, "w", encoding="utf-8") as f:
         f.write(final_content)
+
+
+def start_unreleased_section(config, version):
+    prefix = "Version " if config.get("changelog_uses_version_prefix", True) else ""
+    heading = f"{prefix}{version} [unreleased]"
+    if config["changelog_format"] == "md":
+        heading = f"## {heading}"
+    else:
+        heading = f"{heading}\n{'-' * len(heading)}"
+    update_changelog_file(
+        config["changelog_path"],
+        f"{heading}\n\nWork in progress.",
+        start_unreleased=True,
+    )

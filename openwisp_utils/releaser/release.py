@@ -12,6 +12,7 @@ from openwisp_utils.releaser.changelog import (
     get_release_block_from_file,
     process_changelog,
     run_git_cliff,
+    start_unreleased_section,
     update_changelog_file,
 )
 from openwisp_utils.releaser.config import load_config
@@ -29,8 +30,10 @@ from openwisp_utils.releaser.utils import (
 )
 from openwisp_utils.releaser.version import (
     bump_version,
+    bump_version_files,
     determine_new_version,
     get_current_version,
+    supports_alpha,
 )
 
 MAIN_BRANCHES = ["master", "main"]
@@ -371,7 +374,7 @@ def main():
     try:
         release_body_md = normalize_markdown(release_body_md)
         release_url = gh.create_release(tag_name, release_title, release_body_md)
-        print(f"📦 Draft release created on GitHub: {release_url}")
+        print(f"📦 Release published on GitHub: {release_url}")
     except SkipSignal:
         print(
             "\nOperation skipped. Please create the GitHub release manually."
@@ -379,9 +382,10 @@ def main():
             f"\n  Title: {release_title}"
             "\n  Body: (You can find the content in the latest commit)."
         )
-        questionary.confirm(
+        if not questionary.confirm(
             "Press Enter when you have created the release manually."
-        ).ask()
+        ).ask():
+            return
 
     print("\n🎉 Release process completed successfully!")
 
@@ -403,3 +407,120 @@ def main():
             )
         else:
             print("Skipping changelog port. Please remember to do it manually.")
+    elif (
+        supports_alpha(config)
+        and questionary.confirm(
+            f"Start the next alpha cycle on '{original_branch}' now?", default=True
+        ).ask()
+    ):
+        next_version = determine_new_version(new_version, "final", is_bugfix=False)
+        if next_version:
+            start_next_alpha(gh, original_branch, new_version, next_version)
+
+
+def _push_alpha_to_base(base):
+    """Return False only if the remote rejects the update to the base branch."""
+    destination = f"refs/heads/{base}"
+    push = subprocess.run(
+        [
+            "git",
+            "push",
+            "--porcelain",
+            "--no-follow-tags",
+            "origin",
+            f"HEAD:{destination}",
+        ],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "LC_ALL": "C"},
+    )
+    if push.returncode == 0:
+        return True
+    # Git's porcelain status distinguishes a server refusal from a local hook,
+    # non-fast-forward rejection, or network failure. Only the server refusal
+    # warrants trying a PR with the same commit.
+    for line in push.stdout.splitlines():
+        fields = line.split("\t")
+        if (
+            len(fields) == 3
+            and fields[0] == "!"
+            and fields[1].endswith(f":{destination}")
+            and fields[2].startswith("[remote rejected]")
+        ):
+            return False
+    push.check_returncode()
+
+
+def start_next_alpha(gh, base, released_version, next_version):
+    """Start the next cycle on the checked-out release base, using a PR if required."""
+    component = r"(?:0|[1-9][0-9]*)"
+    if not re.fullmatch(rf"{component}\.{component}\.{component}", next_version) or (
+        tuple(map(int, next_version.split(".")))
+        <= tuple(map(int, released_version.split(".")))
+    ):
+        raise RuntimeError(
+            f"The alpha version must be an X.Y.Z version greater than {released_version}."
+        )
+
+    def git(*args):
+        return subprocess.run(
+            ["git", *args], check=True, capture_output=True, text=True
+        ).stdout.strip()
+
+    if git("status", "--porcelain", "--untracked-files=no"):
+        raise RuntimeError(
+            "Commit or stash tracked changes before starting the next alpha cycle."
+        )
+    git("pull", "--ff-only", "origin", base)
+    # A successful pull can leave local-only commits on the branch. Refuse to
+    # include them in the alpha push or PR.
+    head, remote_tip = git("rev-parse", "HEAD", "FETCH_HEAD").splitlines()
+    if head != remote_tip:
+        raise RuntimeError(
+            f"Local '{base}' must match 'origin/{base}' before starting the next alpha cycle."
+        )
+    config = load_config()
+    if not supports_alpha(config) or get_current_version(config) != (
+        released_version,
+        "final",
+    ):
+        raise RuntimeError(
+            f"Could not verify the final {released_version} version on '{base}'. "
+            "Review the branch before bumping to alpha."
+        )
+
+    branch = f"chore/bump-version-{next_version}"
+    title = f"[bump] Bumped version to {next_version} alpha"
+    git("checkout", "-b", branch)
+    # Keep the topic branch checked out if preparing the commit fails, so the
+    # user can fix the files and recover without edits leaking to the base.
+    start_unreleased_section(config, next_version)
+    version_paths = bump_version_files(config, next_version, alpha=True)
+    if not version_paths:
+        raise RuntimeError("Could not locate the version file for the alpha bump.")
+    changelog = config["changelog_path"]
+    if config["changelog_format"] == "rst":
+        format_file_with_docstrfmt(changelog)
+    git("commit", "-m", title, "--", changelog, *version_paths)
+
+    try:
+        pushed_directly = _push_alpha_to_base(base)
+        if not pushed_directly:
+            print(
+                f"Origin rejected the update to '{base}'. Opening a pull request instead."
+            )
+            ref = f"refs/heads/{branch}"
+            git("push", "--no-follow-tags", "origin", f"{ref}:{ref}")
+            try:
+                print(
+                    f"✅ Alpha bump pull request created: {gh.create_pr(branch, base, title)}"
+                )
+            except SkipSignal:
+                print(
+                    f"Please open the alpha bump pull request manually: {branch} into {base}."
+                )
+    finally:
+        git("checkout", base)
+    if pushed_directly:
+        print(f"✅ Pushed the alpha bump to '{base}'.")
+        git("merge", "--ff-only", branch)

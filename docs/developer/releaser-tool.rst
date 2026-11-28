@@ -4,9 +4,9 @@ The Releaser Tool
 .. include:: ../partials/developer-docs.rst
 
 This interactive command-line tool streamlines the entire project release
-workflow, from generating a change log to creating a draft release on
-GitHub. It is designed to be resilient, allowing you to recover from
-common failures like network errors without starting over.
+workflow, from generating a change log to publishing a release on GitHub.
+It is designed to be resilient, allowing you to recover from common
+failures like network errors without starting over.
 
 Prerequisites
 -------------
@@ -112,9 +112,43 @@ process:
 4. Pushes the new branch to GitHub.
 5. Creates a pull request and waits for you to merge it.
 6. Once merged, it creates and pushes a signed git tag.
-7. Finally, it creates a draft release on GitHub with the changelog notes.
+7. Publishes the GitHub release with the changelog notes.
 8. If releasing a bugfix, it offers to port the changelog to the ``main``
    or ``master`` branch, maintaining descending release-version order.
+9. After a feature release in a Python or npm project, it offers to start
+   the next alpha cycle on the release branch (``master`` or ``main``).
 
 GitHub release descriptions are normalized without paragraph wrapping
 before submission. This does not modify the changelog file.
+
+Starting the Next Alpha Cycle
+-----------------------------
+
+After publishing version ``1.3.0``, for example, the releaser suggests
+``1.4.0`` for the next cycle. If you accept, it updates the Python version
+tuple to ``(1, 4, 0, "alpha")`` or the npm version to ``1.4.0-alpha`` and
+adds a ``1.4.0 [unreleased]`` section above the released changelog
+entries. Both alpha bumps and final npm releases update the version in
+tracked npm lockfiles without changing dependency versions.
+
+If the Markdown changelog contains fenced code blocks, the releaser stops
+before updating it to avoid mistaking an example for a release heading.
+For a release, save and temporarily remove each entire fenced block before
+restarting, then restore the blocks during the file review. For an alpha
+bump, update the version and changelog manually.
+
+After restoring blocks during a release, check the published GitHub
+release notes against the changelog and correct them on GitHub if needed.
+Headings inside a restored block may truncate the generated notes.
+
+For a bugfix release, the changelog port runs after publication. If the
+main-branch Markdown changelog contains fenced code, add the release
+section to it manually. Restarting the release does not complete the port.
+
+The releaser first tries to push the alpha commit directly to the release
+branch. If the server rejects that update, for example because the branch
+is protected, the releaser pushes ``chore/bump-version-1.4.0`` to
+``origin`` and opens a pull request for you to merge. Your Git credentials
+must allow you to push the topic branch to ``origin``. If neither push
+succeeds, the commit remains on the local topic branch so you can retry it
+manually.
