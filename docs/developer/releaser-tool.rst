@@ -131,6 +131,10 @@ adds a ``1.4.0 [unreleased]`` section above the released changelog
 entries. Both alpha bumps and final npm releases update the version in
 tracked npm lockfiles without changing dependency versions.
 
+If the Markdown changelog contains fenced code blocks, the releaser stops
+the alpha bump to avoid mistaking an example for a release heading. Add
+the alpha version and unreleased section manually in that case.
+
 The releaser first tries to push the alpha commit directly to the release
 branch. If the server rejects that update, for example because the branch
 is protected, the releaser pushes ``chore/bump-version-1.4.0`` to

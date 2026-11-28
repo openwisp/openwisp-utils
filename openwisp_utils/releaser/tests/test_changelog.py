@@ -837,3 +837,13 @@ def test_alpha_cycle_preserves_intro_and_release_history(
         path.read_text()
         == f"{introduction}\n\n{next_release}\n\n- New entry.\n\n{history}"
     )
+
+
+def test_alpha_cycle_rejects_fenced_markdown_before_release(project_dir):
+    path = project_dir / "CHANGES.md"
+    original = "# Changelog\n\n```markdown\n## Version 1.0.0\n```\n\n## Version 1.3.0\n\n- Old entry.\n"
+    path.write_text(original)
+    config = {"changelog_path": path.name, "changelog_format": "md"}
+    with pytest.raises(RuntimeError, match="fenced code"):
+        start_unreleased_section(config, "1.4.0")
+    assert path.read_text() == original

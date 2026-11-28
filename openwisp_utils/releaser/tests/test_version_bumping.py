@@ -226,7 +226,8 @@ def test_get_current_version_npm_with_prerelease():
     assert version_type == "beta"
 
 
-def test_bump_version_npm():
+@patch("openwisp_utils.releaser.version._update_npm_lockfiles", return_value=[])
+def test_bump_version_npm(mock_lockfiles):
     """Tests bumping version for npm packages in package.json."""
     config = {
         "package_type": "npm",
@@ -240,6 +241,7 @@ def test_bump_version_npm():
     assert result is True
     written_content = m_open().write.call_args[0][0]
     assert '"version": "1.2.4"' in written_content
+    mock_lockfiles.assert_called_once_with("1.2.4")
 
 
 # Docker (docker-openwisp) Package Version Tests
