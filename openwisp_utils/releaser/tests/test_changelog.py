@@ -908,3 +908,21 @@ def test_alpha_section_preserves_rst_release_heading_style(project_dir, overline
         path.read_text()
         == f"Changelog\n=========\n\n{new_heading}\n\nWork in progress.\n\n{old_heading}\n\n- Old entry.\n"
     )
+
+
+def test_port_preserves_overlined_rst_release(project_dir):
+    path = project_dir / "CHANGES.rst"
+    old = "Version 1.4.0 [unreleased]"
+    old_line = "~" * len(old)
+    release = "Version 1.3.0"
+    line = "~" * len(release)
+    history = f"{line}\n{release}\n{line}\n\n- Old entry.\n"
+    path.write_text(
+        f"Changelog\n=========\n\n{old_line}\n{old}\n{old_line}\n\nWork in progress.\n\n{history}"
+    )
+    update_changelog_file(
+        path.name,
+        "Version 1.3.1 [2026-02-01]\n--------------------------\n\n- Bugfix.",
+        is_port=True,
+    )
+    assert history in path.read_text()

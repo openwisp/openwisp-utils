@@ -133,9 +133,9 @@ tracked npm lockfiles without changing dependency versions.
 
 If the Markdown changelog contains fenced code blocks, the releaser stops
 before updating it to avoid mistaking an example for a release heading.
-For a release, temporarily remove the fences before restarting, then
-restore them during the file review. For an alpha bump, update the version
-and changelog manually.
+For a release, save and temporarily remove each entire fenced block before
+restarting, then restore the blocks during the file review. For an alpha
+bump, update the version and changelog manually.
 
 The releaser first tries to push the alpha commit directly to the release
 branch. If the server rejects that update, for example because the branch

@@ -466,6 +466,18 @@ def update_changelog_file(
             )
         else:
             insertion_point = unreleased_match.end()
+        if not is_md:
+            preceding = content[:insertion_point]
+            overline = re.search(rf"(?m)^{release_overline}$\n\Z", preceding)
+            if overline:
+                insertion_point = overline.start()
+            title, _, body = new_block.partition("\n\n")
+            title = title.splitlines()[0]
+            line = unreleased_match.group("unreleased_underline") * len(title)
+            heading = f"{title}\n{line}"
+            if unreleased_match.group("unreleased_overline"):
+                heading = f"{line}\n{heading}"
+            new_block = f"{heading}\n\n{body}"
         new_content = (
             content[:insertion_point].rstrip()
             + "\n\n"
