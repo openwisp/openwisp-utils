@@ -132,8 +132,10 @@ entries. Both alpha bumps and final npm releases update the version in
 tracked npm lockfiles without changing dependency versions.
 
 If the Markdown changelog contains fenced code blocks, the releaser stops
-the alpha bump to avoid mistaking an example for a release heading. Add
-the alpha version and unreleased section manually in that case.
+before updating it to avoid mistaking an example for a release heading.
+For a release, temporarily remove the fences before restarting, then
+restore them during the file review. For an alpha bump, update the version
+and changelog manually.
 
 The releaser first tries to push the alpha commit directly to the release
 branch. If the server rejects that update, for example because the branch

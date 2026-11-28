@@ -847,3 +847,25 @@ def test_alpha_cycle_rejects_fenced_markdown_before_release(project_dir):
     with pytest.raises(RuntimeError, match="fenced code"):
         start_unreleased_section(config, "1.4.0")
     assert path.read_text() == original
+
+
+def test_release_rejects_fenced_unreleased_example(project_dir):
+    path = project_dir / "CHANGES.md"
+    original = "# Changelog\n\n```markdown\n## [unreleased]\n\nExample.\n```\n\n## 1.3.0\n\n- Old entry.\n"
+    path.write_text(original)
+    with pytest.raises(RuntimeError, match="fenced code"):
+        update_changelog_file(path.name, "## 1.4.0\n\n- New entry.")
+    assert path.read_text() == original
+
+
+def test_alpha_cycle_rejects_unversioned_rst_unreleased(project_dir):
+    path = project_dir / "CHANGES.rst"
+    original = (
+        "Changelog\n=========\n\n[unreleased]\n------------\n\n- Existing.\n\n"
+        "Version 1.3.0\n-------------\n\n- Old entry.\n"
+    )
+    path.write_text(original)
+    config = {"changelog_path": path.name, "changelog_format": "rst"}
+    with pytest.raises(RuntimeError, match="already has an unreleased section"):
+        start_unreleased_section(config, "1.4.0")
+    assert path.read_text() == original

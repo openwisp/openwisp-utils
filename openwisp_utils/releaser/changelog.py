@@ -364,11 +364,10 @@ def update_changelog_file(
     except FileNotFoundError:
         content = "# Change log\n\n" if is_md else "Changelog\n=========\n\n"
 
-    # A fenced example can look like a release heading and receive the new
-    # section inside the code block. Ask for manual editing rather than guess.
-    if start_unreleased and is_md and re.search(r"(?m)^ {0,3}(?:`{3,}|~{3,})", content):
+    # Fenced examples can look like release headings and be overwritten.
+    if is_md and re.search(r"(?m)^ {0,3}(?:`{3,}|~{3,})", content):
         raise RuntimeError(
-            f"{changelog_path} contains fenced code. Add the unreleased section manually."
+            f"{changelog_path} contains fenced code. Update the changelog manually."
         )
 
     # Markdown may escape the brackets to prevent a reference link.
@@ -388,7 +387,7 @@ def update_changelog_file(
     unreleased_block_regex_str = (
         rf"^(##[ \t]+(?:(?:Version[ \t]+)?\S+[ \t]+)?{markdown_marker}(?:.|\n)*?)(?=\n##\s+|\Z)"
         if is_md
-        else rf"^(?:Version[ \t]+)?\S+[ \t]+\[Unreleased\]\n{unreleased_underline}$"
+        else rf"^(?:(?:Version[ \t]+)?\S+[ \t]+)?\[Unreleased\]\n{unreleased_underline}$"
         rf"(?:.|\n)*?(?=\n{rst_release_heading}|\Z)"
     )
     unreleased_block_regex = re.compile(
