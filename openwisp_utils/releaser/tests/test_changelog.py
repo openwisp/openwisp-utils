@@ -869,3 +869,42 @@ def test_alpha_cycle_rejects_unversioned_rst_unreleased(project_dir):
     with pytest.raises(RuntimeError, match="already has an unreleased section"):
         start_unreleased_section(config, "1.4.0")
     assert path.read_text() == original
+
+
+def test_release_replaces_overlined_rst_unreleased(project_dir):
+    path = project_dir / "CHANGES.rst"
+    old = "Version 1.4.0 [unreleased]"
+    adornment = "=" * len(old)
+    history = "Version 1.3.0\n-------------\n\n- Old entry.\n"
+    path.write_text(
+        f"Changelog\n=========\n\n{adornment}\n{old}\n{adornment}\n\nWork in progress.\n\n{history}"
+    )
+    new = "Version 1.4.0 [2026-02-01]"
+    update_changelog_file(path.name, f"{new}\n{'-' * len(new)}\n\n- New entry.")
+    assert (
+        path.read_text()
+        == f"Changelog\n=========\n\n{new}\n{'-' * len(new)}\n\n- New entry.\n\n{history}"
+    )
+
+
+@pytest.mark.parametrize("overline", [False, True])
+def test_alpha_section_preserves_rst_release_heading_style(project_dir, overline):
+    path = project_dir / "CHANGES.rst"
+    title = "Version 1.3.0"
+    line = "~" * len(title)
+    old_heading = f"{line}\n{title}\n{line}" if overline else f"{title}\n{line}"
+    path.write_text(f"Changelog\n=========\n\n{old_heading}\n\n- Old entry.\n")
+    start_unreleased_section(
+        {"changelog_path": path.name, "changelog_format": "rst"}, "1.4.0"
+    )
+    new_title = "Version 1.4.0 [unreleased]"
+    new_line = "~" * len(new_title)
+    new_heading = (
+        f"{new_line}\n{new_title}\n{new_line}"
+        if overline
+        else f"{new_title}\n{new_line}"
+    )
+    assert (
+        path.read_text()
+        == f"Changelog\n=========\n\n{new_heading}\n\nWork in progress.\n\n{old_heading}\n\n- Old entry.\n"
+    )

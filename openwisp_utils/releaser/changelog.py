@@ -383,11 +383,13 @@ def update_changelog_file(
     rst_release_heading = (
         rf"(?:{release_overline}\n)?{version_heading}\n{release_underline}$"
     )
+    unreleased_overline = adornment("unreleased_overline")
     unreleased_underline = adornment("unreleased_underline")
     unreleased_block_regex_str = (
         rf"^(##[ \t]+(?:(?:Version[ \t]+)?\S+[ \t]+)?{markdown_marker}(?:.|\n)*?)(?=\n##\s+|\Z)"
         if is_md
-        else rf"^(?:(?:Version[ \t]+)?\S+[ \t]+)?\[Unreleased\]\n{unreleased_underline}$"
+        else rf"^(?:{unreleased_overline}\n)?(?:(?:Version[ \t]+)?\S+[ \t]+)?"
+        rf"\[Unreleased\]\n{unreleased_underline}$"
         rf"(?:.|\n)*?(?=\n{rst_release_heading}|\Z)"
     )
     unreleased_block_regex = re.compile(
@@ -409,6 +411,14 @@ def update_changelog_file(
         )
         if not first_release:
             raise RuntimeError(f"Could not find a release heading in {changelog_path}.")
+        if not is_md:
+            title, _, body = new_block.partition("\n\n")
+            title = title.splitlines()[0]
+            line = first_release.group("release_underline") * len(title)
+            heading = f"{title}\n{line}"
+            if first_release.group("release_overline"):
+                heading = f"{line}\n{heading}"
+            new_block = f"{heading}\n\n{body}"
         # Keep the preamble outside the block that the next release will replace.
         insertion_point = first_release.start()
         new_content = (
