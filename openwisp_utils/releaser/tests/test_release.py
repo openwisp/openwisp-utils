@@ -517,7 +517,7 @@ def test_start_next_alpha(
         *(["setup.py"] if version_path.endswith(".py") else []),
     )
     git("commit", "-m", "[release] Version 1.3.0")
-    git("tag", "1.3.0")
+    git("tag", "--no-sign", "1.3.0")
     git("push", "origin", base, "1.3.0")
     if protected:
         # Reject only updates to the protected branch, as a Git server would.

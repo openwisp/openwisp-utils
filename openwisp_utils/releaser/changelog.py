@@ -363,9 +363,10 @@ def update_changelog_file(
     except FileNotFoundError:
         content = "# Change log\n\n" if is_md else "Changelog\n=========\n\n"
 
-    # Regex to find the entire [Unreleased] block, with optional "Version" prefix
+    # Markdown may escape the brackets to prevent a reference link.
+    markdown_marker = r"\\?\[Unreleased\\?\]"
     unreleased_block_regex_str = (
-        r"^(##\s+(?:Version\s+)?\S+\s+\[Unreleased\](?:.|\n)*?)(?=\n##\s+(?:Version\s+)?|\Z)"
+        rf"^(##\s+(?:Version\s+)?\S+\s+{markdown_marker}(?:.|\n)*?)(?=\n##\s+(?:Version\s+)?|\Z)"
         if is_md
         else r"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n(?:Version\s+)?\d+\.\d+\.\d+\s+\[|\Z)"
     )
@@ -405,7 +406,7 @@ def update_changelog_file(
             release_matches = [
                 match
                 for match in version_header_regex.finditer(content)
-                if "[unreleased]" not in match.group().lower()
+                if not re.search(markdown_marker, match.group(), re.IGNORECASE)
             ]
             insertion_point = next(
                 (

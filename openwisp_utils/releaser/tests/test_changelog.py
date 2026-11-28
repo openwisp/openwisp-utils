@@ -769,9 +769,10 @@ def test_update_changelog_file_not_found():
     shutil.rmtree(temp_dir)
 
 
-def test_start_unreleased_section_preserves_existing_notes(project_dir):
+@pytest.mark.parametrize("marker", ["[unreleased]", r"\[unreleased\]"])
+def test_start_unreleased_section_preserves_existing_notes(project_dir, marker):
     changelog = project_dir / "CHANGES.md"
-    existing = "# Changelog\n\n## Version 1.4.0 [unreleased]\n\n- An unreleased fix.\n"
+    existing = f"# Changelog\n\n## Version 1.4.0 {marker}\n\n- An unreleased fix.\n"
     changelog.write_text(existing)
     config = {"changelog_path": changelog.name, "changelog_format": "md"}
 
