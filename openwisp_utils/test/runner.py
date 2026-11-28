@@ -3,7 +3,7 @@
 import re
 import sys
 from importlib import import_module
-from inspect import getattr_static
+from inspect import getattr_static, isabstract
 from pathlib import Path
 from types import FunctionType, ModuleType
 from unittest import TestCase, defaultTestLoader
@@ -111,7 +111,11 @@ def validate_test_labels(labels):
         if not class_name:
             continue
         candidate = getattr(module, class_name, None)
-        if not isinstance(candidate, type) or not issubclass(candidate, TestCase):
+        if (
+            not isinstance(candidate, type)
+            or not issubclass(candidate, TestCase)
+            or isabstract(candidate)
+        ):
             raise InvalidTestArgument("Unsupported test argument")
         prefix = f"{module_name}.{class_name}."
         if match.group(0).startswith(prefix):
@@ -119,10 +123,14 @@ def validate_test_labels(labels):
             method = getattr_static(candidate, method_name, None)
             if not isinstance(method, FunctionType):
                 raise InvalidTestArgument("Unsupported test argument")
-        elif not defaultTestLoader.getTestCaseNames(candidate) and not callable(
-            getattr_static(candidate, "runTest", None)
-        ):
-            raise InvalidTestArgument("Unsupported test argument")
+        else:
+            run_test = getattr_static(candidate, "runTest", None)
+            if isinstance(run_test, (classmethod, staticmethod)):
+                run_test = run_test.__func__
+            if not defaultTestLoader.getTestCaseNames(candidate) and not callable(
+                run_test
+            ):
+                raise InvalidTestArgument("Unsupported test argument")
 
 
 def compile_test_file_pattern(roots=("tests",), kind="python"):
