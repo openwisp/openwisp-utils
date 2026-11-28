@@ -365,10 +365,13 @@ def update_changelog_file(
 
     # Markdown may escape the brackets to prevent a reference link.
     markdown_marker = r"\\?\[Unreleased\\?\]"
+    version_heading = r"(?:Version[ \t]+)?\d+\.\d+\.\d+[^\n]*"
+    # RST releases can omit the date. The underline distinguishes a heading from prose.
+    rst_release_heading = rf"{version_heading}\n[-=]+[ \t]*$"
     unreleased_block_regex_str = (
         rf"^(##[ \t]+(?:(?:Version[ \t]+)?\S+[ \t]+)?{markdown_marker}(?:.|\n)*?)(?=\n##\s+|\Z)"
         if is_md
-        else r"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n(?:Version\s+)?\d+\.\d+\.\d+\s+\[|\Z)"
+        else rf"^((?:Version\s+)?\S+\s+\[Unreleased\]\n-+(?:.|\n)*?)(?=\n{rst_release_heading}|\Z)"
     )
     unreleased_block_regex = re.compile(
         unreleased_block_regex_str, re.IGNORECASE | re.MULTILINE
@@ -380,7 +383,25 @@ def update_changelog_file(
             f"{changelog_path} already has an unreleased section. Review it before bumping to alpha."
         )
 
-    if not unreleased_match:
+    if start_unreleased:
+        release_heading = (
+            rf"##[ \t]+{version_heading}" if is_md else rst_release_heading
+        )
+        first_release = re.search(
+            rf"^{release_heading}", content, re.MULTILINE | re.IGNORECASE
+        )
+        if not first_release:
+            raise RuntimeError(f"Could not find a release heading in {changelog_path}.")
+        # Keep the preamble outside the block that the next release will replace.
+        insertion_point = first_release.start()
+        new_content = (
+            content[:insertion_point].rstrip()
+            + "\n\n"
+            + new_block.strip()
+            + "\n\n"
+            + content[insertion_point:]
+        )
+    elif not unreleased_match:
         # Fallback if no [Unreleased] section is found: insert after the main title.
         lines = content.splitlines(keepends=True)
         header_end_index = 1

@@ -783,3 +783,45 @@ def test_start_unreleased_section_preserves_existing_notes(
         start_unreleased_section(config, "1.5.0")
 
     assert changelog.read_text() == existing
+
+
+@pytest.mark.parametrize(
+    ("ext", "title", "released", "next_release"),
+    [
+        (
+            "md",
+            "# Changelog",
+            "## Version 1.3.0 [2026-01-01]",
+            "## Version 1.4.0 [2026-02-01]",
+        ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "Version 1.3.0 [2026-01-01]\n--------------------------",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
+        (
+            "rst",
+            "Changelog\n=========",
+            "Version 1.3.0\n-------------",
+            "Version 1.4.0 [2026-02-01]\n--------------------------",
+        ),
+    ],
+    ids=["markdown", "rst-dated", "rst-undated"],
+)
+def test_alpha_cycle_preserves_intro_and_release_history(
+    project_dir, ext, title, released, next_release
+):
+    path = project_dir / f"CHANGES.{ext}"
+    introduction = f"{title}\n\nSee the release policy."
+    history = f"{released}\n\n- Historic entry.\n"
+    path.write_text(f"{introduction}\n\n{history}")
+    config = {"changelog_path": path.name, "changelog_format": ext}
+
+    start_unreleased_section(config, "1.4.0")
+    update_changelog_file(path.name, f"{next_release}\n\n- New entry.")
+
+    assert (
+        path.read_text()
+        == f"{introduction}\n\n{next_release}\n\n- New entry.\n\n{history}"
+    )
