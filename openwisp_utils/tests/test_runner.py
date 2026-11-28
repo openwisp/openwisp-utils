@@ -592,5 +592,13 @@ class TestFocusedDjangoDispatch(unittest.TestCase):
                     os.environ.pop("SAMPLE_APP", None)
                     with self.assertRaises(InvalidTestArgument):
                         prepare_focused_django_tests(arguments, pattern, (sample,))
-                    self.assertNotIn("SAMPLE_APP", os.environ)
+                    self.assertIsNone(os.environ.get("SAMPLE_APP"))
                     self.assertEqual(sys.argv, ["runtests.py"])
+
+    def test_regular_labels_clear_inherited_sample_mode(self):
+        pattern = compile_test_label_pattern(module_roots=("example.tests",))
+        with patch.dict(os.environ, {"SAMPLE_APP": "1"}), patch.object(
+            sys, "argv", ["runtests.py"]
+        ):
+            prepare_focused_django_tests(["example.tests.test_one.TestCase"], pattern)
+            self.assertIsNone(os.environ.get("SAMPLE_APP"))

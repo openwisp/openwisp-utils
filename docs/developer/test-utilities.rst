@@ -503,8 +503,9 @@ Focused Django tests with sample apps
 
 ``prepare_focused_django_tests(arguments, label_pattern, sample_modules,
 allowed_flags)`` validates focused labels and flags, sets ``SAMPLE_APP=1``
-for sample modules, and prepares ``sys.argv`` for Django. It rejects mixed
-sample and regular labels because they require different settings. Call it
-before Django setup, then pass its returned labels to
-``validate_test_labels`` before running the tests. The caller remains
-responsible for configuring Django and handling ``InvalidTestArgument``.
+for sample modules, clears it for regular labels, and prepares
+``sys.argv`` for Django. It rejects mixed sample and regular labels
+because they require different settings. Call it before Django setup, then
+pass its returned labels to ``validate_test_labels`` before running the
+tests. The caller remains responsible for configuring Django and handling
+``InvalidTestArgument``.

@@ -211,5 +211,7 @@ def prepare_focused_django_tests(
         )
     if sample_labels:
         os.environ["SAMPLE_APP"] = "1"
+    else:
+        os.environ.pop("SAMPLE_APP", None)
     sys.argv[1:] = ["test", *(label.group(0) for label in labels), *flags]
     return labels
