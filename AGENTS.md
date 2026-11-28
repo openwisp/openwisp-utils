@@ -52,6 +52,8 @@ If instructions conflict, repository config and CI workflows win first, official
 - Focused tests are enough for changes to the releaser tool and any other self contained utilities that doesn't impact the OpenWISP django app. The full test suite is unnecessary and slower.
 - Run the full test suite with a timeout of at least 15 minutes (`timeout=900000`).
 - Keep tests quiet on success. When code under test writes to stdout or stderr, use `capture_stdout`, `capture_stderr`, or `capture_any_output` from `openwisp_utils.tests` and assert the expected output. Do not leave unasserted output, logs, or warnings in test runs.
+- For CI configuration, dependency installation, or test entry point changes that do not change application behavior, run focused tests and QA locally. Open the PR after focused verification and require the relevant full suite in CI before declaring it complete.
+- Add CI dependencies to `./install-ci-deps.sh` and cache them. Keep cache inputs in sync with the installer and dependency files. Follow the shared structure and internal naming in `.github/workflows/ci.yml` so OpenWISP automation works across repositories.
 
 ## Coverage Rules
 
