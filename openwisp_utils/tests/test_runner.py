@@ -3,6 +3,7 @@
 import abc
 import importlib
 import io
+import os
 import re
 import sys
 import tempfile
@@ -18,6 +19,7 @@ from openwisp_utils.test.runner import (
     compile_test_label_pattern,
     parse_test_arguments,
     parse_test_files,
+    prepare_focused_django_tests,
     validate_test_labels,
 )
 
@@ -551,3 +553,44 @@ class TestTestRunner(unittest.TestCase):
                         [f"tests.test_one.{name}"], PATTERN
                     )
                     validate_test_labels(labels)
+
+
+class TestFocusedDjangoDispatch(unittest.TestCase):
+    def test_prepares_sample_and_regular_labels(self):
+        sample = "example.sample.tests"
+        pattern = compile_test_label_pattern(
+            module_roots=("example.tests",), exact_modules=(sample,)
+        )
+        for label, expected_mode in (
+            ("example.tests.test_one.TestCase", None),
+            ("example.sample.tests.TestCase", "1"),
+        ):
+            with self.subTest(label=label):
+                with patch.dict(os.environ), patch.object(sys, "argv", ["runtests.py"]):
+                    os.environ.pop("SAMPLE_APP", None)
+                    labels = prepare_focused_django_tests(
+                        ["--noinput", label], pattern, (sample,), ("--noinput",)
+                    )
+                    self.assertEqual([match.group(0) for match in labels], [label])
+                    self.assertEqual(os.environ.get("SAMPLE_APP"), expected_mode)
+                    self.assertEqual(
+                        sys.argv, ["runtests.py", "test", label, "--noinput"]
+                    )
+
+    def test_rejects_invalid_or_mixed_labels_without_changing_process_state(self):
+        sample = "example.sample.tests"
+        pattern = compile_test_label_pattern(
+            module_roots=("example.tests",), exact_modules=(sample,)
+        )
+        for arguments in (
+            [],
+            ["--unsupported"],
+            ["example.sample.tests.TestCase", "example.tests.test_one.TestCase"],
+        ):
+            with self.subTest(arguments=arguments):
+                with patch.dict(os.environ), patch.object(sys, "argv", ["runtests.py"]):
+                    os.environ.pop("SAMPLE_APP", None)
+                    with self.assertRaises(InvalidTestArgument):
+                        prepare_focused_django_tests(arguments, pattern, (sample,))
+                    self.assertNotIn("SAMPLE_APP", os.environ)
+                    self.assertEqual(sys.argv, ["runtests.py"])
